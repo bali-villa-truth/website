@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const IDR_RATE = 16782; 
+const FALLBACK_RATES: Record<string, number> = { USD: 1, IDR: 16782, AUD: 1.53, EUR: 0.92, SGD: 1.34 };
 
 export default function BaliVillaTruth() {
   const [listings, setListings] = useState<any[]>([]);
@@ -18,6 +18,7 @@ export default function BaliVillaTruth() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredRoi, setHoveredRoi] = useState<number | null>(null);
   const [leadCount, setLeadCount] = useState<number>(0);
+  const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
 
   // --- FILTER STATES ---
   const [filterLocation, setFilterLocation] = useState('All');
@@ -28,7 +29,7 @@ export default function BaliVillaTruth() {
   const [filterBeds, setFilterBeds] = useState(0);
   const [filterBaths, setFilterBaths] = useState(0);
   const [filterLeaseType, setFilterLeaseType] = useState('All');
-  const [filterCurrency, setFilterCurrency] = useState<string>('All');
+  const [displayCurrency, setDisplayCurrency] = useState<string>('USD'); // Show all prices in this currency
   const [sortOption, setSortOption] = useState('roi-desc');
 
   useEffect(() => {
@@ -40,7 +41,6 @@ export default function BaliVillaTruth() {
       
       if (error) console.error(error);
       else {
-        // Only show real listings: exclude zero-price / placeholder category pages
         const raw = data || [];
         const real = raw.filter((v: any) => (v.last_price || 0) > 0 && (v.villa_name || '').length > 2);
         setListings(real);
@@ -56,6 +56,21 @@ export default function BaliVillaTruth() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    async function fetchRates() {
+      try {
+        const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const json = await res.json();
+        if (json.rates) {
+          setRates({ USD: 1, ...json.rates });
+        }
+      } catch {
+        // Keep FALLBACK_RATES
+      }
+    }
+    fetchRates();
+  }, []);
+
   // --- HELPER: Parse Bathrooms from "X Bed / Y Bath" string ---
   const getBathCount = (villa: any) => {
     if (!villa.beds_baths) return 0;
@@ -64,29 +79,40 @@ export default function BaliVillaTruth() {
     return parseInt(parts[1]) || 0;
   };
 
-  // --- HELPER: Infer listing currency from price_description or last_price ---
-  const getListingCurrency = (villa: any): string => {
-    const desc = (villa.price_description || '').toUpperCase().trim();
-    if (desc.startsWith('IDR')) return 'IDR';
-    if (desc.startsWith('USD')) return 'USD';
-    if (desc.startsWith('AUD')) return 'AUD';
-    if (desc.startsWith('EUR')) return 'EUR';
-    if (desc.startsWith('SGD')) return 'SGD';
-    // Fallback: very large numbers are typically IDR
+  // --- Parse listing price: amount and currency from price_description or last_price ---
+  const parseListingPrice = (villa: any): { amount: number; currency: string } => {
+    const desc = (villa.price_description || '').trim();
+    const match = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
+    if (match) {
+      const amount = parseFloat(match[2].replace(/\s|,/g, '')) || 0;
+      return { amount, currency: match[1].toUpperCase() };
+    }
     const p = Number(villa.last_price) || 0;
-    if (p >= 1e6) return 'IDR';
-    return 'USD'; // default for display
+    return { amount: p, currency: p >= 1e6 ? 'IDR' : 'USD' };
   };
 
-  // --- FILTER & SORT LOGIC ---
-  const processedListings = useMemo(() => {
-    // 1. Filter
-    const filtered = listings.filter(villa => {
-      // Normalize Price
-      let priceUSD = villa.last_price || 0;
-      if (priceUSD > 100000000) priceUSD = priceUSD / IDR_RATE;
+  // --- Convert listing price to USD for filtering/sorting ---
+  const getPriceUSD = (villa: any): number => {
+    const { amount, currency } = parseListingPrice(villa);
+    const r = rates[currency];
+    if (!r || r <= 0) return amount;
+    return currency === 'USD' ? amount : amount / r;
+  };
 
-      // Basic Filters
+  // --- Convert and format price in display currency (for table) ---
+  const formatPriceInCurrency = (villa: any): string => {
+    const priceUSD = getPriceUSD(villa);
+    const r = rates[displayCurrency];
+    if (!r) return `${displayCurrency} ${priceUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    const value = displayCurrency === 'USD' ? priceUSD : priceUSD * r;
+    if (displayCurrency === 'IDR') return `IDR ${Math.round(value).toLocaleString()}`;
+    return `${displayCurrency} ${value.toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}`;
+  };
+
+  // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
+  const processedListings = useMemo(() => {
+    const filtered = listings.filter(villa => {
+      const priceUSD = getPriceUSD(villa);
       const matchLocation = filterLocation === 'All' || (villa.location && villa.location.includes(filterLocation));
       const matchPrice = priceUSD <= filterPrice;
       const matchRoi = (villa.projected_roi || 0) >= filterRoi;
@@ -94,43 +120,30 @@ export default function BaliVillaTruth() {
       const matchBuild = (villa.building_size || 0) >= filterBuildSize;
       const matchBeds = (villa.bedrooms || 0) >= filterBeds;
       const matchBaths = getBathCount(villa) >= filterBaths;
-
-      // Currency Filter
-      const matchCurrency = filterCurrency === 'All' || getListingCurrency(villa) === filterCurrency;
-
-      // Lease Type Filter
       let matchLease = true;
       if (filterLeaseType !== 'All') {
         const features = (villa.features || '').toLowerCase();
         const years = villa.lease_years || 0;
-        
-        if (filterLeaseType === 'Freehold') {
-            matchLease = features.includes('freehold') || features.includes('hak milik') || years === 999;
-        } else if (filterLeaseType === 'Leasehold') {
-            matchLease = features.includes('leasehold') || features.includes('hak sewa') || (years > 0 && years < 999);
-        }
+        if (filterLeaseType === 'Freehold') matchLease = features.includes('freehold') || features.includes('hak milik') || years === 999;
+        else if (filterLeaseType === 'Leasehold') matchLease = features.includes('leasehold') || features.includes('hak sewa') || (years > 0 && years < 999);
       }
-
-      return matchLocation && matchPrice && matchRoi && matchCurrency && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
+      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
     });
 
-    // 2. Sort
     return filtered.sort((a, b) => {
-        let priceA = a.last_price || 0; if (priceA > 100000000) priceA /= IDR_RATE;
-        let priceB = b.last_price || 0; if (priceB > 100000000) priceB /= IDR_RATE;
-        
-        const roiA = a.projected_roi || 0;
-        const roiB = b.projected_roi || 0;
-
-        switch (sortOption) {
-            case 'price-asc': return priceA - priceB;
-            case 'price-desc': return priceB - priceA;
-            case 'roi-asc': return roiA - roiB;
-            case 'roi-desc': return roiB - roiA;
-            default: return 0;
-        }
+      const priceA = getPriceUSD(a);
+      const priceB = getPriceUSD(b);
+      const roiA = a.projected_roi || 0;
+      const roiB = b.projected_roi || 0;
+      switch (sortOption) {
+        case 'price-asc': return priceA - priceB;
+        case 'price-desc': return priceB - priceA;
+        case 'roi-asc': return roiA - roiB;
+        case 'roi-desc': return roiB - roiA;
+        default: return 0;
+      }
     });
-  }, [listings, filterLocation, filterPrice, filterRoi, filterCurrency, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption]);
+  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates]);
 
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,13 +231,12 @@ export default function BaliVillaTruth() {
                 </div>
                 <div className="relative">
                     <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterCurrency} onChange={(e) => setFilterCurrency(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value="All">All Currencies</option>
-                        <option value="IDR">IDR</option>
-                        <option value="USD">USD</option>
-                        <option value="AUD">AUD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="SGD">SGD</option>
+                    <select value={displayCurrency} onChange={(e) => setDisplayCurrency(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors" title="Show all prices in this currency">
+                        <option value="IDR">Show prices in IDR</option>
+                        <option value="USD">Show prices in USD</option>
+                        <option value="AUD">Show prices in AUD</option>
+                        <option value="EUR">Show prices in EUR</option>
+                        <option value="SGD">Show prices in SGD</option>
                     </select>
                 </div>
                 {/* SORTING - Prominent */}
@@ -274,7 +286,7 @@ export default function BaliVillaTruth() {
                 </div>
 
                 <button 
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterCurrency('All'); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
+                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
                     className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
                 >
                     Reset All
@@ -300,7 +312,7 @@ export default function BaliVillaTruth() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold text-slate-400">
                 <th className="p-5">Asset & Location</th>
-                <th className="p-5">Price (USD)</th>
+                <th className="p-5">Price ({displayCurrency})</th>
                 <th className="p-5 text-center">Verified ROI</th>
                 <th className="p-5">Specs</th>
                 <th className="p-5 text-right">Action</th>
@@ -331,7 +343,7 @@ export default function BaliVillaTruth() {
                         </div>
                         </td>
                         <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
-                         {villa.price_description || villa.last_price?.toLocaleString()}
+                         {formatPriceInCurrency(villa)}
                         </td>
                         <td className="p-5">
                         <div className="flex flex-col items-center relative">
