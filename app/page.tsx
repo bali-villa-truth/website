@@ -125,7 +125,6 @@ export default function BaliVillaTruth() {
               <p>See which villas are worth your time. Unlock the source and our full analysis with your email.</p>
             </div>
           </div>
-        </div>
       </section>
 
       {/* MODAL / POPUP */}
