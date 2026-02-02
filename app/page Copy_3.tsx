@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath } from 'lucide-react';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,20 +23,15 @@ export default function BaliVillaTruth() {
   const [filterLocation, setFilterLocation] = useState('All');
   const [filterPrice, setFilterPrice] = useState(10000000); 
   const [filterRoi, setFilterRoi] = useState(0);
-  const [filterLandSize, setFilterLandSize] = useState(0);
-  const [filterBuildSize, setFilterBuildSize] = useState(0);
-  const [filterBeds, setFilterBeds] = useState(0);
-  const [filterBaths, setFilterBaths] = useState(0);
-  const [filterLeaseType, setFilterLeaseType] = useState('All');
-  const [sortOption, setSortOption] = useState('roi-desc');
+  const [filterSize, setFilterSize] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
       const { data, error } = await supabase
         .from('listings_tracker')
         .select('*')
-        .eq('status', 'audited'); // Fetch all, handle sort client-side
-      
+        .eq('status', 'audited')
+        .order('projected_roi', { ascending: false });
       if (error) console.error(error);
       else setListings(data || []);
       
@@ -50,64 +45,19 @@ export default function BaliVillaTruth() {
     fetchData();
   }, []);
 
-  // --- HELPER: Parse Bathrooms from "X Bed / Y Bath" string ---
-  const getBathCount = (villa: any) => {
-    if (!villa.beds_baths) return 0;
-    const parts = villa.beds_baths.split('/');
-    if (parts.length < 2) return 0;
-    return parseInt(parts[1]) || 0;
-  };
-
-  // --- FILTER & SORT LOGIC ---
-  const processedListings = useMemo(() => {
-    // 1. Filter
-    const filtered = listings.filter(villa => {
-      // Normalize Price
+  const filteredListings = useMemo(() => {
+    return listings.filter(villa => {
       let priceUSD = villa.last_price || 0;
       if (priceUSD > 100000000) priceUSD = priceUSD / IDR_RATE;
 
-      // Basic Filters
       const matchLocation = filterLocation === 'All' || (villa.location && villa.location.includes(filterLocation));
       const matchPrice = priceUSD <= filterPrice;
       const matchRoi = (villa.projected_roi || 0) >= filterRoi;
-      const matchLand = (villa.land_size || 0) >= filterLandSize;
-      const matchBuild = (villa.building_size || 0) >= filterBuildSize;
-      const matchBeds = (villa.bedrooms || 0) >= filterBeds;
-      const matchBaths = getBathCount(villa) >= filterBaths;
+      const matchSize = (villa.land_size || 0) >= filterSize;
 
-      // Lease Type Filter
-      let matchLease = true;
-      if (filterLeaseType !== 'All') {
-        const features = (villa.features || '').toLowerCase();
-        const years = villa.lease_years || 0;
-        
-        if (filterLeaseType === 'Freehold') {
-            matchLease = features.includes('freehold') || features.includes('hak milik') || years === 999;
-        } else if (filterLeaseType === 'Leasehold') {
-            matchLease = features.includes('leasehold') || features.includes('hak sewa') || (years > 0 && years < 999);
-        }
-      }
-
-      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
+      return matchLocation && matchPrice && matchRoi && matchSize;
     });
-
-    // 2. Sort
-    return filtered.sort((a, b) => {
-        let priceA = a.last_price || 0; if (priceA > 100000000) priceA /= IDR_RATE;
-        let priceB = b.last_price || 0; if (priceB > 100000000) priceB /= IDR_RATE;
-        
-        const roiA = a.projected_roi || 0;
-        const roiB = b.projected_roi || 0;
-
-        switch (sortOption) {
-            case 'price-asc': return priceA - priceB;
-            case 'price-desc': return priceB - priceA;
-            case 'roi-asc': return roiA - roiB;
-            case 'roi-desc': return roiB - roiA;
-            default: return 0;
-        }
-    });
-  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption]);
+  }, [listings, filterLocation, filterPrice, filterRoi, filterSize]);
 
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,130 +87,86 @@ export default function BaliVillaTruth() {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-8">
       
       {/* HEADER */}
-      <header className="max-w-7xl mx-auto mb-6">
-        <div className="text-center mb-8">
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
-            Bali Villa <span className="text-blue-600">Truth</span>
-            </h1>
-            <p className="text-slate-500 max-w-xl mx-auto text-sm leading-relaxed">
-            Independent ROI auditing for serious investors. We verify the data agents hide.
-            </p>
-        </div>
+      <header className="max-w-6xl mx-auto mb-6 text-center">
+        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
+          Bali Villa <span className="text-blue-600">Truth</span>
+        </h1>
+        <p className="text-slate-500 max-w-xl mx-auto text-sm leading-relaxed mb-4">
+          Independent ROI auditing for serious investors. We verify the data agents hide.
+        </p>
         
-        {/* FILTER DASHBOARD */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
-            
-            {/* ROW 1: Core Filters */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-3">
-                <div className="relative">
-                    <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value="All">All Locations</option>
-                        <option value="Canggu">Canggu</option>
-                        <option value="Pererenan">Pererenan</option>
-                        <option value="Berawa">Berawa</option>
-                        <option value="Uluwatu">Uluwatu</option>
-                        <option value="Bingin">Bingin</option>
-                        <option value="Sanur">Sanur</option>
-                        <option value="Seseh">Seseh</option>
-                    </select>
-                </div>
-                <div className="relative">
-                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterPrice} onChange={(e) => setFilterPrice(Number(e.target.value))} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value={10000000}>Max Price</option>
-                        <option value={200000}>&lt; $200k USD</option>
-                        <option value={350000}>&lt; $350k USD</option>
-                        <option value={500000}>&lt; $500k USD</option>
-                        <option value={1000000}>&lt; $1M USD</option>
-                    </select>
-                </div>
-                <div className="relative">
-                    <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value={0}>Min ROI</option>
-                        <option value={10}>10%+</option>
-                        <option value={15}>15%+</option>
-                        <option value={20}>20%+</option>
-                        <option value={25}>25%+</option>
-                    </select>
-                </div>
-                <div className="relative">
-                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterLeaseType} onChange={(e) => setFilterLeaseType(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value="All">All Status</option>
-                        <option value="Freehold">Freehold (Hak Milik)</option>
-                        <option value="Leasehold">Leasehold (Hak Sewa)</option>
-                    </select>
-                </div>
-                {/* SORTING - Prominent */}
-                <div className="relative col-span-2 md:col-span-4 lg:col-span-1">
-                    <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
-                    <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-blue-50 border border-blue-200 text-blue-700 font-medium rounded-lg text-sm outline-none cursor-pointer hover:bg-blue-100 transition-colors">
-                        <option value="roi-desc">ROI: High → Low</option>
-                        <option value="roi-asc">ROI: Low → High</option>
-                        <option value="price-asc">Price: Low → High</option>
-                        <option value="price-desc">Price: High → Low</option>
-                    </select>
-                </div>
+        <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold text-slate-600 mb-8">
+          <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <Search size={14} className="text-blue-500" />
+            <span>{listings.length} Villas Audited</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <AlertTriangle size={14} className="text-amber-500" />
+            <span>{flaggedCount} High-ROI Alerts</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <TrendingUp size={14} className="text-green-500" />
+            <span>{leadCount}+ Audits Unlocked</span>
+          </div>
+        </div>
+
+        {/* FILTER BAR */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mx-auto max-w-4xl flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-700 w-full md:w-auto">
+            <Filter size={16} className="text-blue-600" /> Filters:
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+            <div className="relative">
+                <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                    <option value="All">All Locations</option>
+                    <option value="Canggu">Canggu</option>
+                    <option value="Pererenan">Pererenan</option>
+                    <option value="Berawa">Berawa</option>
+                    <option value="Uluwatu">Uluwatu</option>
+                    <option value="Bingin">Bingin</option>
+                    <option value="Sanur">Sanur</option>
+                    <option value="Seseh">Seseh</option>
+                </select>
             </div>
-
-            {/* ROW 2: Detail Filters */}
-            <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-100">
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Bed size={14} className="text-slate-400" />
-                    <select value={filterBeds} onChange={(e) => setFilterBeds(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto">
-                        <option value={0}>Any Beds</option>
-                        <option value={1}>1+ Beds</option>
-                        <option value={2}>2+ Beds</option>
-                        <option value={3}>3+ Beds</option>
-                        <option value={4}>4+ Beds</option>
-                        <option value={5}>5+ Beds</option>
-                    </select>
-                </div>
-                
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Bath size={14} className="text-slate-400" />
-                    <select value={filterBaths} onChange={(e) => setFilterBaths(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto">
-                        <option value={0}>Any Baths</option>
-                        <option value={1}>1+ Baths</option>
-                        <option value={2}>2+ Baths</option>
-                        <option value={3}>3+ Baths</option>
-                    </select>
-                </div>
-
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Ruler size={14} className="text-slate-400" />
-                    <input type="number" placeholder="Min Land m²" value={filterLandSize === 0 ? '' : filterLandSize} onChange={(e) => setFilterLandSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500" />
-                </div>
-
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Layers size={14} className="text-slate-400" />
-                    <input type="number" placeholder="Min Build m²" value={filterBuildSize === 0 ? '' : filterBuildSize} onChange={(e) => setFilterBuildSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500" />
-                </div>
-
-                <button 
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
-                    className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
-                >
-                    Reset All
-                </button>
+            <div className="relative">
+                <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <select value={filterPrice} onChange={(e) => setFilterPrice(Number(e.target.value))} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                    <option value={10000000}>Max Price</option>
+                    <option value={200000}>&lt; $200k USD</option>
+                    <option value={350000}>&lt; $350k USD</option>
+                    <option value={500000}>&lt; $500k USD</option>
+                    <option value={1000000}>&lt; $1M USD</option>
+                </select>
             </div>
+            <div className="relative">
+                <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                    <option value={0}>Min ROI</option>
+                    <option value={10}>10%+</option>
+                    <option value={15}>15%+</option>
+                    <option value={20}>20%+</option>
+                    <option value={25}>25%+</option>
+                </select>
+            </div>
+             <div className="relative">
+                <Ruler size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="number" placeholder="Min m²" value={filterSize === 0 ? '' : filterSize} onChange={(e) => setFilterSize(Number(e.target.value))} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none transition-colors" />
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* RESULTS BAR */}
-      <div className="max-w-7xl mx-auto mb-4 flex justify-between items-center px-2">
-         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Showing {processedListings.length} Properties</p>
-         <div className="flex gap-4">
-            <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-white px-2 py-1 rounded border border-slate-200">
-                <AlertTriangle size={10} className="text-amber-500"/> {flaggedCount} High-ROI
-            </div>
-         </div>
+      {/* RESULTS COUNT */}
+      <div className="max-w-6xl mx-auto mb-4 flex justify-between items-end">
+         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Showing {filteredListings.length} Properties</p>
+         {filteredListings.length === 0 && (
+             <button onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterSize(0)}} className="text-xs text-blue-600 hover:underline">Reset Filters</button>
+         )}
       </div>
 
       {/* TABLE */}
-      <main className="max-w-7xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <main className="max-w-6xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -273,7 +179,7 @@ export default function BaliVillaTruth() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {processedListings.length === 0 ? (
+              {filteredListings.length === 0 ? (
                   <tr>
                       <td colSpan={5} className="p-10 text-center text-slate-400">
                           <Filter size={48} className="mx-auto mb-4 opacity-20" />
@@ -281,14 +187,14 @@ export default function BaliVillaTruth() {
                       </td>
                   </tr>
               ) : (
-                processedListings.map((villa) => {
+                filteredListings.map((villa) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const isHighRoi = villa.projected_roi > 20;
                     
                     return (
-                    <tr key={villa.id} className="hover:bg-blue-50/50 transition-colors group">
+                    <tr key={villa.id} className="hover:bg-blue-50/50 transition-colors">
                         <td className="p-5">
-                        <div className="font-bold text-slate-900 mb-1 flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                        <div className="font-bold text-slate-900 mb-1 flex items-center gap-2">
                             {villa.villa_name || 'Luxury Villa'}
                             {isHighRoi && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-bold border border-amber-200">HOT DEAL</span>}
                         </div>
@@ -305,7 +211,7 @@ export default function BaliVillaTruth() {
                             <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 ${isHighRoi ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
                                 {villa.projected_roi?.toFixed(1)}% <Info size={10} className="opacity-50" />
                             </span>
-                            {hoveredRoi === villa.id && (
+                            {hoveredRoi === villa.id && (rateFactors.length > 0 || villa.est_nightly_rate > 0) && (
                                 <div className="absolute z-40 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
                                 <div className="font-bold mb-2 text-slate-300">Analysis Data</div>
                                 <div className="mb-2 pb-2 border-b border-slate-700">
@@ -340,9 +246,10 @@ export default function BaliVillaTruth() {
                                     const f = villa.features || "";
                                     if (f.includes("Freehold") || f.includes("Hak Milik")) return <span className="font-bold text-green-600">Freehold (Hak Milik)</span>;
                                     if (f.includes("Leasehold") || f.includes("Hak Sewa")) return <span className="text-slate-700">Leasehold (Hak Sewa)</span>;
+                                    // Fallback to numeric years if no text
                                     if (villa.lease_years > 0 && villa.lease_years < 999) return <span className="text-slate-700">{villa.lease_years} Year Lease</span>;
                                     if (villa.lease_years === 999) return <span className="font-bold text-green-600">Freehold</span>;
-                                    return <span className="text-slate-400">Unverified Status</span>;
+                                    return <span className="text-slate-400">Unknown Title</span>;
                                 })()}
                             </div>
 
@@ -352,7 +259,7 @@ export default function BaliVillaTruth() {
                                 <span>Land: <span className="font-medium">{villa.land_size || '?'}</span> m²</span>
                             </div>
 
-                            {/* Building Size */}
+                            {/* Building Size - NEW */}
                             {villa.building_size > 0 && (
                                 <div className="flex items-center gap-2">
                                     <Layers size={12} className="text-slate-400"/> 
@@ -394,7 +301,7 @@ export default function BaliVillaTruth() {
       )}
 
       {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200">
+      <footer className="max-w-6xl mx-auto mt-12 pt-8 border-t border-slate-200">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
           <div className="flex items-center gap-4"><a href="#" className="hover:text-blue-600 transition-colors">Contact</a><span className="text-slate-300">|</span><a href="#" className="hover:text-blue-600 transition-colors">Privacy Policy</a></div>
