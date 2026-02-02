@@ -356,13 +356,14 @@ export default function BaliVillaTruth() {
                                 <div className="font-bold mb-2 text-slate-300">Analysis Data</div>
                                 <div className="mb-2 pb-2 border-b border-slate-700">
                                     <div className="flex justify-between"><span>Est. Nightly:</span> <span className="text-emerald-400 font-mono">${villa.est_nightly_rate || '?'}</span></div>
-                                    <div className="flex justify-between"><span>Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round((villa.est_occupancy || 0.65)*100)}%</span></div>
+                                    <div className="flex justify-between"><span>Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round((villa.est_occupancy ?? 0.58) * 100)}%</span></div>
                                 </div>
                                 <ul className="space-y-1">
                                     {rateFactors.map((factor, idx) => (
                                     <li key={idx} className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span><span>{factor}</span></li>
                                     ))}
                                 </ul>
+                                <p className="mt-2 pt-2 border-t border-slate-700 text-slate-400">Industry benchmarks: leasehold 10–15%, freehold 5–8%. Estimate only.</p>
                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
                                 </div>
                             )}

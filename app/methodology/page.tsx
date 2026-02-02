@@ -60,7 +60,7 @@ export default function Methodology() {
             </div>
           </div>
           <p className="text-sm text-slate-600">
-            Simple math, but the inputs matter. Here is how we determine each variable:
+            Simple math, but the inputs matter. Industry benchmarks for Bali: <strong>leasehold 10–15%</strong>, <strong>freehold 5–8%</strong>. We use conservative occupancy (55–60%) and nightly estimates so our projections align with these ranges. Here is how we determine each variable:
           </p>
         </section>
 
