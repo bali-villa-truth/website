@@ -102,11 +102,15 @@ export default function BaliVillaTruth() {
 
       {/* HOW IT WORKS */}
       <section className="max-w-6xl mx-auto mb-8">
-        <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-2xl border border-blue-100 p-6">
-          <h2 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <ShieldCheck size={16} className="text-blue-600" />
             How We Calculate ROI
           </h2>
+          <a href="/methodology" className="text-xs text-blue-600 hover:underline">
+          Full Methodology →
+          </a>
+        </div>
           <div className="grid md:grid-cols-3 gap-4 text-xs text-slate-600">
             <div className="bg-white rounded-xl p-4 border border-slate-100">
               <div className="font-bold text-slate-900 mb-1">1. We Crawl</div>
