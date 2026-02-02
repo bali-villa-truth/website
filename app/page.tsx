@@ -28,6 +28,7 @@ export default function BaliVillaTruth() {
   const [filterBeds, setFilterBeds] = useState(0);
   const [filterBaths, setFilterBaths] = useState(0);
   const [filterLeaseType, setFilterLeaseType] = useState('All');
+  const [filterCurrency, setFilterCurrency] = useState<string>('All');
   const [sortOption, setSortOption] = useState('roi-desc');
 
   useEffect(() => {
@@ -63,6 +64,20 @@ export default function BaliVillaTruth() {
     return parseInt(parts[1]) || 0;
   };
 
+  // --- HELPER: Infer listing currency from price_description or last_price ---
+  const getListingCurrency = (villa: any): string => {
+    const desc = (villa.price_description || '').toUpperCase().trim();
+    if (desc.startsWith('IDR')) return 'IDR';
+    if (desc.startsWith('USD')) return 'USD';
+    if (desc.startsWith('AUD')) return 'AUD';
+    if (desc.startsWith('EUR')) return 'EUR';
+    if (desc.startsWith('SGD')) return 'SGD';
+    // Fallback: very large numbers are typically IDR
+    const p = Number(villa.last_price) || 0;
+    if (p >= 1e6) return 'IDR';
+    return 'USD'; // default for display
+  };
+
   // --- FILTER & SORT LOGIC ---
   const processedListings = useMemo(() => {
     // 1. Filter
@@ -80,6 +95,9 @@ export default function BaliVillaTruth() {
       const matchBeds = (villa.bedrooms || 0) >= filterBeds;
       const matchBaths = getBathCount(villa) >= filterBaths;
 
+      // Currency Filter
+      const matchCurrency = filterCurrency === 'All' || getListingCurrency(villa) === filterCurrency;
+
       // Lease Type Filter
       let matchLease = true;
       if (filterLeaseType !== 'All') {
@@ -93,7 +111,7 @@ export default function BaliVillaTruth() {
         }
       }
 
-      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
+      return matchLocation && matchPrice && matchRoi && matchCurrency && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
     });
 
     // 2. Sort
@@ -112,7 +130,7 @@ export default function BaliVillaTruth() {
             default: return 0;
         }
     });
-  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption]);
+  }, [listings, filterLocation, filterPrice, filterRoi, filterCurrency, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption]);
 
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,7 +174,7 @@ export default function BaliVillaTruth() {
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
             
             {/* ROW 1: Core Filters */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                 <div className="relative">
                     <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
@@ -198,8 +216,19 @@ export default function BaliVillaTruth() {
                         <option value="Leasehold">Leasehold (Hak Sewa)</option>
                     </select>
                 </div>
+                <div className="relative">
+                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <select value={filterCurrency} onChange={(e) => setFilterCurrency(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                        <option value="All">All Currencies</option>
+                        <option value="IDR">IDR</option>
+                        <option value="USD">USD</option>
+                        <option value="AUD">AUD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="SGD">SGD</option>
+                    </select>
+                </div>
                 {/* SORTING - Prominent */}
-                <div className="relative col-span-2 md:col-span-4 lg:col-span-1">
+                <div className="relative col-span-2 md:col-span-3 lg:col-span-1">
                     <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
                     <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-blue-50 border border-blue-200 text-blue-700 font-medium rounded-lg text-sm outline-none cursor-pointer hover:bg-blue-100 transition-colors">
                         <option value="roi-desc">ROI: High → Low</option>
@@ -245,7 +274,7 @@ export default function BaliVillaTruth() {
                 </div>
 
                 <button 
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
+                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterCurrency('All'); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
                     className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
                 >
                     Reset All
