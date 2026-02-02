@@ -38,7 +38,12 @@ export default function BaliVillaTruth() {
         .eq('status', 'audited'); // Fetch all, handle sort client-side
       
       if (error) console.error(error);
-      else setListings(data || []);
+      else {
+        // Only show real listings: exclude zero-price / placeholder category pages
+        const raw = data || [];
+        const real = raw.filter((v: any) => (v.last_price || 0) > 0 && (v.villa_name || '').length > 2);
+        setListings(real);
+      }
       
       const { count } = await supabase
         .from('leads')
@@ -333,15 +338,22 @@ export default function BaliVillaTruth() {
                                 </span>
                             </div>
                             
-                            {/* Lease Type / Years - SMART DISPLAY */}
+                            {/* Lease Type / Years - SMART DISPLAY: use features first, then lease_years, show years remaining for leasehold */}
                             <div className="flex items-center gap-2">
                                 <Calendar size={12} className="text-slate-400"/>
                                 {(() => {
-                                    const f = villa.features || "";
-                                    if (f.includes("Freehold") || f.includes("Hak Milik")) return <span className="font-bold text-green-600">Freehold (Hak Milik)</span>;
-                                    if (f.includes("Leasehold") || f.includes("Hak Sewa")) return <span className="text-slate-700">Leasehold (Hak Sewa)</span>;
-                                    if (villa.lease_years > 0 && villa.lease_years < 999) return <span className="text-slate-700">{villa.lease_years} Year Lease</span>;
-                                    if (villa.lease_years === 999) return <span className="font-bold text-green-600">Freehold</span>;
+                                    const f = (villa.features || "").trim();
+                                    const years = Number(villa.lease_years) || 0;
+                                    const isFreehold = f.includes("Freehold") || f.includes("Hak Milik") || years === 999;
+                                    const isLeasehold = f.includes("Leasehold") || f.includes("Hak Sewa") || (years > 0 && years < 999);
+                                    if (isFreehold) return <span className="font-bold text-green-600">Freehold (Hak Milik)</span>;
+                                    if (isLeasehold) {
+                                        const label = f ? "Leasehold (Hak Sewa)" : "Leasehold";
+                                        const yearsLabel = years > 0 && years < 999 ? ` – ${years} years remaining` : " – years not stated";
+                                        return <span className="text-slate-700">{label}{yearsLabel}</span>;
+                                    }
+                                    if (years > 0 && years < 999) return <span className="text-slate-700">{years} years remaining</span>;
+                                    if (years === 999) return <span className="font-bold text-green-600">Freehold</span>;
                                     return <span className="text-slate-400">Unverified Status</span>;
                                 })()}
                             </div>
@@ -352,13 +364,11 @@ export default function BaliVillaTruth() {
                                 <span>Land: <span className="font-medium">{villa.land_size || '?'}</span> m²</span>
                             </div>
 
-                            {/* Building Size */}
-                            {villa.building_size > 0 && (
-                                <div className="flex items-center gap-2">
-                                    <Layers size={12} className="text-slate-400"/> 
-                                    <span>Build: <span className="font-medium">{villa.building_size}</span> m²</span>
-                                </div>
-                            )}
+                            {/* Building Size - always show row; use — when missing */}
+                            <div className="flex items-center gap-2">
+                                <Layers size={12} className="text-slate-400"/> 
+                                <span>Build: <span className="font-medium">{villa.building_size > 0 ? `${villa.building_size} m²` : '—'}</span></span>
+                            </div>
                         </td>
                         <td className="p-5 text-right">
                         <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all">
