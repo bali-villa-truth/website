@@ -1,13 +1,14 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers } from 'lucide-react';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Exchange rate for normalization (matches your python script)
 const IDR_RATE = 16782; 
 
 export default function BaliVillaTruth() {
@@ -21,20 +22,22 @@ export default function BaliVillaTruth() {
 
   // --- FILTER STATES ---
   const [filterLocation, setFilterLocation] = useState('All');
-  const [filterPrice, setFilterPrice] = useState(10000000); 
+  const [filterPrice, setFilterPrice] = useState(10000000); // Default Max (10M USD)
   const [filterRoi, setFilterRoi] = useState(0);
   const [filterSize, setFilterSize] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
+      // Fetch listings
       const { data, error } = await supabase
         .from('listings_tracker')
         .select('*')
-        .eq('status', 'audited')
+        .eq('status', 'audited') // Only show audited deals
         .order('projected_roi', { ascending: false });
       if (error) console.error(error);
       else setListings(data || []);
       
+      // Fetch lead count
       const { count } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true });
@@ -45,33 +48,52 @@ export default function BaliVillaTruth() {
     fetchData();
   }, []);
 
+  // --- FILTER LOGIC ---
   const filteredListings = useMemo(() => {
     return listings.filter(villa => {
+      // 1. Normalize Price to USD for comparison
       let priceUSD = villa.last_price || 0;
-      if (priceUSD > 100000000) priceUSD = priceUSD / IDR_RATE;
+      if (priceUSD > 100000000) { // If > 100M, it's definitely IDR
+        priceUSD = priceUSD / IDR_RATE;
+      }
 
+      // 2. Location Filter
       const matchLocation = filterLocation === 'All' || (villa.location && villa.location.includes(filterLocation));
+
+      // 3. Price Filter (Show items UNDER the max)
       const matchPrice = priceUSD <= filterPrice;
+
+      // 4. ROI Filter (Show items OVER the min)
       const matchRoi = (villa.projected_roi || 0) >= filterRoi;
+
+      // 5. Size Filter (Show items OVER the min)
       const matchSize = (villa.land_size || 0) >= filterSize;
 
       return matchLocation && matchPrice && matchRoi && matchSize;
     });
   }, [listings, filterLocation, filterPrice, filterRoi, filterSize]);
 
+
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    
     const { error } = await supabase.from('leads').insert([
-      { email, villa_id: selectedVilla.id, villa_name: selectedVilla.villa_name, lead_type: 'Unlock Audit' }
+      { 
+        email, 
+        villa_id: selectedVilla.id, 
+        villa_name: selectedVilla.villa_name,
+        lead_type: 'Unlock Audit'
+      }
     ]);
+
     if (!error) {
       window.open(selectedVilla.url, '_blank');
       setSelectedVilla(null);
       setEmail('');
       setLeadCount(prev => prev + 1);
     } else {
-      alert("Error joining. Please try again.");
+      alert("Error joining the audit list. Please try again.");
     }
     setIsSubmitting(false);
   };
@@ -95,6 +117,7 @@ export default function BaliVillaTruth() {
           Independent ROI auditing for serious investors. We verify the data agents hide.
         </p>
         
+        {/* TRUST BADGES */}
         <div className="flex flex-wrap justify-center gap-4 text-xs font-semibold text-slate-600 mb-8">
           <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
             <Search size={14} className="text-blue-500" />
@@ -110,15 +133,21 @@ export default function BaliVillaTruth() {
           </div>
         </div>
 
-        {/* FILTER BAR */}
+        {/* --- FILTER BAR --- */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mx-auto max-w-4xl flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-bold text-slate-700 w-full md:w-auto">
             <Filter size={16} className="text-blue-600" /> Filters:
           </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+            {/* Location Select */}
             <div className="relative">
                 <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                <select 
+                    value={filterLocation} 
+                    onChange={(e) => setFilterLocation(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer hover:bg-slate-100 transition-colors"
+                >
                     <option value="All">All Locations</option>
                     <option value="Canggu">Canggu</option>
                     <option value="Pererenan">Pererenan</option>
@@ -129,9 +158,15 @@ export default function BaliVillaTruth() {
                     <option value="Seseh">Seseh</option>
                 </select>
             </div>
+
+            {/* Price Select */}
             <div className="relative">
                 <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <select value={filterPrice} onChange={(e) => setFilterPrice(Number(e.target.value))} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                <select 
+                    value={filterPrice} 
+                    onChange={(e) => setFilterPrice(Number(e.target.value))}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer hover:bg-slate-100 transition-colors"
+                >
                     <option value={10000000}>Max Price</option>
                     <option value={200000}>&lt; $200k USD</option>
                     <option value={350000}>&lt; $350k USD</option>
@@ -139,9 +174,15 @@ export default function BaliVillaTruth() {
                     <option value={1000000}>&lt; $1M USD</option>
                 </select>
             </div>
+
+            {/* ROI Select */}
             <div className="relative">
                 <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
+                <select 
+                    value={filterRoi} 
+                    onChange={(e) => setFilterRoi(Number(e.target.value))}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer hover:bg-slate-100 transition-colors"
+                >
                     <option value={0}>Min ROI</option>
                     <option value={10}>10%+</option>
                     <option value={15}>15%+</option>
@@ -149,9 +190,17 @@ export default function BaliVillaTruth() {
                     <option value={25}>25%+</option>
                 </select>
             </div>
+
+             {/* Size Input */}
              <div className="relative">
                 <Ruler size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="number" placeholder="Min m²" value={filterSize === 0 ? '' : filterSize} onChange={(e) => setFilterSize(Number(e.target.value))} className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none transition-colors" />
+                <input 
+                    type="number" 
+                    placeholder="Min m²"
+                    value={filterSize === 0 ? '' : filterSize}
+                    onChange={(e) => setFilterSize(Number(e.target.value))}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                />
             </div>
           </div>
         </div>
@@ -159,9 +208,16 @@ export default function BaliVillaTruth() {
 
       {/* RESULTS COUNT */}
       <div className="max-w-6xl mx-auto mb-4 flex justify-between items-end">
-         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Showing {filteredListings.length} Properties</p>
+         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+             Showing {filteredListings.length} Properties
+         </p>
          {filteredListings.length === 0 && (
-             <button onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterSize(0)}} className="text-xs text-blue-600 hover:underline">Reset Filters</button>
+             <button 
+                onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterSize(0)}}
+                className="text-xs text-blue-600 hover:underline"
+             >
+                 Reset Filters
+             </button>
          )}
       </div>
 
@@ -183,7 +239,7 @@ export default function BaliVillaTruth() {
                   <tr>
                       <td colSpan={5} className="p-10 text-center text-slate-400">
                           <Filter size={48} className="mx-auto mb-4 opacity-20" />
-                          No properties match your filters.
+                          No properties match your filters. Try adjusting the criteria.
                       </td>
                   </tr>
               ) : (
@@ -196,7 +252,11 @@ export default function BaliVillaTruth() {
                         <td className="p-5">
                         <div className="font-bold text-slate-900 mb-1 flex items-center gap-2">
                             {villa.villa_name || 'Luxury Villa'}
-                            {isHighRoi && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-bold border border-amber-200">HOT DEAL</span>}
+                            {isHighRoi && (
+                            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-bold border border-amber-200">
+                                HOT DEAL
+                            </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
                             <MapPin size={12} className="text-blue-500" /> {villa.location || "Bali"}
@@ -207,68 +267,67 @@ export default function BaliVillaTruth() {
                         </td>
                         <td className="p-5">
                         <div className="flex flex-col items-center relative">
-                            <div className="relative cursor-help" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
-                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 ${isHighRoi ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
-                                {villa.projected_roi?.toFixed(1)}% <Info size={10} className="opacity-50" />
+                            {/* ROI Badge with Tooltip Trigger */}
+                            <div 
+                            className="relative cursor-help"
+                            onMouseEnter={() => setHoveredRoi(villa.id)}
+                            onMouseLeave={() => setHoveredRoi(null)}
+                            >
+                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 ${
+                                isHighRoi 
+                                ? 'bg-green-100 text-green-700 border-green-200' 
+                                : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}>
+                                {villa.projected_roi?.toFixed(1)}%
+                                <Info size={10} className="opacity-50" />
                             </span>
-                            {hoveredRoi === villa.id && (rateFactors.length > 0 || villa.est_nightly_rate > 0) && (
+                            
+                            {/* RATE FACTORS TOOLTIP */}
+                            {hoveredRoi === villa.id && rateFactors.length > 0 && (
                                 <div className="absolute z-40 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
-                                <div className="font-bold mb-2 text-slate-300">Analysis Data</div>
-                                <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="flex justify-between"><span>Est. Nightly:</span> <span className="text-emerald-400 font-mono">${villa.est_nightly_rate || '?'}</span></div>
-                                    <div className="flex justify-between"><span>Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round((villa.est_occupancy || 0.65)*100)}%</span></div>
-                                </div>
+                                <div className="font-bold mb-2 text-slate-300">Rate Calculation</div>
                                 <ul className="space-y-1">
                                     {rateFactors.map((factor, idx) => (
-                                    <li key={idx} className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span><span>{factor}</span></li>
+                                    <li key={idx} className="flex items-start gap-1.5">
+                                        <span className="text-blue-400 mt-0.5">•</span>
+                                        <span>{factor}</span>
+                                    </li>
                                     ))}
                                 </ul>
+                                {/* Tooltip Arrow */}
                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
                                 </div>
                             )}
                             </div>
+                            
+                            <span className="text-[10px] text-slate-400 mt-1 font-mono">
+                            ${villa.est_nightly_rate}/nt • {Math.round((villa.est_occupancy || 0.65) * 100)}% occ
+                            </span>
                         </div>
                         </td>
-                        <td className="p-5 text-xs text-slate-600 space-y-1.5">
-                            {/* Beds */}
-                            <div className="flex items-center gap-2">
-                                <Home size={12} className="text-slate-400"/>
-                                <span className="font-medium text-slate-900">
-                                    {villa.bedrooms ? `${villa.bedrooms} Bed` : '? Bed'}
-                                    {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1]?.trim().split(' ')[0] || '?'} Bath`}
-                                </span>
-                            </div>
-                            
-                            {/* Lease Type / Years - SMART DISPLAY */}
-                            <div className="flex items-center gap-2">
-                                <Calendar size={12} className="text-slate-400"/>
-                                {(() => {
-                                    const f = villa.features || "";
-                                    if (f.includes("Freehold") || f.includes("Hak Milik")) return <span className="font-bold text-green-600">Freehold (Hak Milik)</span>;
-                                    if (f.includes("Leasehold") || f.includes("Hak Sewa")) return <span className="text-slate-700">Leasehold (Hak Sewa)</span>;
-                                    // Fallback to numeric years if no text
-                                    if (villa.lease_years > 0 && villa.lease_years < 999) return <span className="text-slate-700">{villa.lease_years} Year Lease</span>;
-                                    if (villa.lease_years === 999) return <span className="font-bold text-green-600">Freehold</span>;
-                                    return <span className="text-slate-400">Unknown Title</span>;
-                                })()}
-                            </div>
-
-                            {/* Land Size */}
-                            <div className="flex items-center gap-2">
-                                <Ruler size={12} className="text-slate-400"/> 
-                                <span>Land: <span className="font-medium">{villa.land_size || '?'}</span> m²</span>
-                            </div>
-
-                            {/* Building Size - NEW */}
-                            {villa.building_size > 0 && (
-                                <div className="flex items-center gap-2">
-                                    <Layers size={12} className="text-slate-400"/> 
-                                    <span>Build: <span className="font-medium">{villa.building_size}</span> m²</span>
-                                </div>
-                            )}
+                        <td className="p-5 text-xs text-slate-600 space-y-1">
+                        <div className="flex items-center gap-2">
+                            <Home size={12} className="text-slate-400"/>
+                            {villa.bedrooms ? `${villa.bedrooms} Bed` : '? Bed'} 
+                            {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1] || '?'} Bath`}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Calendar size={12} className="text-slate-400"/>
+                            {villa.lease_years === 999 
+                            ? <span className="font-bold text-green-600">Freehold</span> 
+                            : <span>{villa.lease_years} Yrs Lease</span>
+                            }
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Ruler size={12} className="text-slate-400"/> 
+                            Land: {villa.land_size || '?'} m²
+                        </div>
                         </td>
                         <td className="p-5 text-right">
-                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all">
+                        <button 
+                            onClick={() => setSelectedVilla(villa)}
+                            className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all"
+                        >
                             <Lock size={12}/> UNLOCK SOURCE
                         </button>
                         </td>
@@ -281,18 +340,37 @@ export default function BaliVillaTruth() {
         </div>
       </main>
 
-      {/* MODAL */}
+      {/* MODAL / POPUP */}
       {selectedVilla && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={20}/></button>
+            <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+              <X size={20}/>
+            </button>
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600" size={32} /></div>
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldCheck className="text-blue-600" size={32} />
+              </div>
               <h2 className="text-2xl font-bold mb-2">Unlock Full Audit</h2>
-              <p className="text-slate-500 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800">{selectedVilla.villa_name}</span>.</p>
+              <p className="text-slate-500 text-sm mb-6">
+                Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800">{selectedVilla.villa_name}</span>.
+              </p>
               <form onSubmit={handleLeadCapture} className="space-y-4">
-                <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 disabled:opacity-50">{isSubmitting ? 'Verifying...' : 'Unlock Now'}</button>
+                <input 
+                  type="email" 
+                  required 
+                  placeholder="name@company.com"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Verifying...' : 'Unlock Now'}
+                </button>
                 <p className="text-[10px] text-slate-400">By clicking, you agree to our Investor Privacy Terms.</p>
               </form>
             </div>
@@ -303,10 +381,24 @@ export default function BaliVillaTruth() {
       {/* FOOTER */}
       <footer className="max-w-6xl mx-auto mt-12 pt-8 border-t border-slate-200">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
-          <div className="flex items-center gap-4"><a href="#" className="hover:text-blue-600 transition-colors">Contact</a><span className="text-slate-300">|</span><a href="#" className="hover:text-blue-600 transition-colors">Privacy Policy</a></div>
+          <div>
+            <span className="font-bold text-slate-700">Bali Villa Truth</span>
+            <span className="mx-2">•</span>
+            <span>Independent villa investment analysis</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <a href="mailto:tips@balivillatruth.com" className="hover:text-blue-600 transition-colors">
+              Contact
+            </a>
+            <span className="text-slate-300">|</span>
+            <a href="#" className="hover:text-blue-600 transition-colors">
+              Privacy Policy
+            </a>
+          </div>
         </div>
-        <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
+        <p className="text-center text-[10px] text-slate-400 mt-4">
+          © 2026 Bali Villa Truth. This site provides informational analysis only and does not constitute financial or legal advice.
+        </p>
       </footer>
     </div>
   );
