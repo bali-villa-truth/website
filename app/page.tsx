@@ -109,6 +109,12 @@ export default function BaliVillaTruth() {
     return `${displayCurrency} ${value.toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}`;
   };
 
+  // --- Display nightly & occupancy for analysis (use DB value or conservative default so every property shows analysis) ---
+  const getDisplayNightly = (villa: any): number =>
+    villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
+  const getDisplayOccupancy = (villa: any): number =>
+    (villa.est_occupancy ?? 0.58) * 100;
+
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
   const processedListings = useMemo(() => {
     const filtered = listings.filter(villa => {
@@ -347,22 +353,27 @@ export default function BaliVillaTruth() {
                         </td>
                         <td className="p-5">
                         <div className="flex flex-col items-center relative">
-                            <div className="relative cursor-help" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
-                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 ${isHighRoi ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                            <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
+                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 justify-center w-fit mx-auto ${isHighRoi ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
                                 {villa.projected_roi?.toFixed(1)}% <Info size={10} className="opacity-50" />
                             </span>
+                            <p className="text-[10px] text-slate-500 mt-1 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
                             {hoveredRoi === villa.id && (
-                                <div className="absolute z-40 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
+                                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
                                 <div className="font-bold mb-2 text-slate-300">Analysis Data</div>
                                 <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="flex justify-between"><span>Est. Nightly:</span> <span className="text-emerald-400 font-mono">${villa.est_nightly_rate || '?'}</span></div>
-                                    <div className="flex justify-between"><span>Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round((villa.est_occupancy ?? 0.58) * 100)}%</span></div>
+                                    <div className="flex justify-between"><span>Est. Nightly:</span> <span className="text-emerald-400 font-mono">${getDisplayNightly(villa)}</span></div>
+                                    <div className="flex justify-between"><span>Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round(getDisplayOccupancy(villa))}%</span></div>
                                 </div>
+                                {rateFactors.length > 0 ? (
                                 <ul className="space-y-1">
                                     {rateFactors.map((factor, idx) => (
                                     <li key={idx} className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span><span>{factor}</span></li>
                                     ))}
                                 </ul>
+                                ) : (
+                                <p className="text-slate-400 italic">Based on bedroom count and conservative occupancy.</p>
+                                )}
                                 <p className="mt-2 pt-2 border-t border-slate-700 text-slate-400">Industry benchmarks: leasehold 10–15%, freehold 5–8%. Estimate only.</p>
                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
                                 </div>
