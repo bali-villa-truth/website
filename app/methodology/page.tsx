@@ -35,7 +35,7 @@ export default function Methodology() {
           </div>
           <div className="text-sm text-slate-600 leading-relaxed space-y-3">
             <p>
-              Most Bali villa listings show ROI projections of 15-20%. These numbers are often inflated — based on 85% occupancy rates that don't reflect reality, or lease terms that aren't disclosed upfront.
+              Most Bali villa listings show ROI projections of 15-20%. These numbers are often inflated - based on 85% occupancy rates that do not reflect reality, or lease terms that are not disclosed upfront.
             </p>
             <p>
               We built Bali Villa Truth to give investors the real numbers. Independent analysis, no agent relationships, no incentive to inflate.
@@ -53,14 +53,14 @@ export default function Methodology() {
           </div>
           <div className="bg-slate-900 text-slate-100 rounded-xl p-5 font-mono text-sm mb-4">
             <div className="mb-2">
-              <span className="text-slate-400">Annual Revenue</span> = Nightly Rate × 365 × Occupancy Rate
+              <span className="text-slate-400">Annual Revenue</span> = Nightly Rate x 365 x Occupancy Rate
             </div>
             <div>
-              <span className="text-slate-400">ROI</span> = Annual Revenue ÷ Purchase Price × 100
+              <span className="text-slate-400">ROI</span> = Annual Revenue / Purchase Price x 100
             </div>
           </div>
           <p className="text-sm text-slate-600">
-            Simple math, but the inputs matter. Here's how we determine each variable:
+            Simple math, but the inputs matter. Here is how we determine each variable:
           </p>
         </section>
 
@@ -69,24 +69,24 @@ export default function Methodology() {
           <h2 className="text-lg font-bold mb-4">Estimated Nightly Rate</h2>
           <div className="text-sm text-slate-600 leading-relaxed space-y-3">
             <p>
-              We don't use the agent's projected rental income. Instead, we estimate rates based on:
+              We do not use the agent projected rental income. Instead, we estimate rates based on:
             </p>
             <ul className="space-y-2 ml-4">
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                <span><strong>Bedroom count</strong> — baseline comparable rate for the area</span>
+                <span><strong>Bedroom count</strong> - baseline comparable rate for the area</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                <span><strong>Location premium</strong> — beachfront and ocean views command higher rates</span>
+                <span><strong>Location premium</strong> - beachfront and ocean views command higher rates</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                <span><strong>Property condition</strong> — brand new builds outperform older renovations</span>
+                <span><strong>Property condition</strong> - brand new builds outperform older renovations</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                <span><strong>Walkability</strong> — distance to beach, cafes, and amenities</span>
+                <span><strong>Walkability</strong> - distance to beach, cafes, and amenities</span>
               </li>
             </ul>
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mt-4">
@@ -102,22 +102,22 @@ export default function Methodology() {
           <h2 className="text-lg font-bold mb-4">Occupancy Rate</h2>
           <div className="text-sm text-slate-600 leading-relaxed space-y-3">
             <p>
-              <strong>Agents assume 85% occupancy. We don't.</strong>
+              <strong>Agents assume 85% occupancy. We do not.</strong>
             </p>
             <p>
               Our estimates range from <strong>55% to 75%</strong> based on:
             </p>
             <ul className="space-y-2 ml-4">
               <li className="flex items-start gap-2">
-                <span className="text-blue-500">•</span>
+                <span className="text-blue-500">*</span>
                 <span>Location desirability (Seminyak vs. Tabanan)</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-500">•</span>
+                <span className="text-blue-500">*</span>
                 <span>Property quality signals (new vs. dated)</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-500">•</span>
+                <span className="text-blue-500">*</span>
                 <span>Seasonal demand patterns</span>
               </li>
             </ul>
@@ -144,30 +144,30 @@ export default function Methodology() {
             <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center">
               <AlertTriangle className="text-amber-600" size={20} />
             </div>
-            <h2 className="text-xl font-bold">What We Don't Factor In</h2>
+            <h2 className="text-xl font-bold">What We Do Not Factor In</h2>
           </div>
           <div className="text-sm text-slate-600 leading-relaxed">
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-slate-400 mt-0.5 shrink-0" />
-                <span><strong>Management fees</strong> — typically 15-25% of revenue, but varies by operator</span>
+                <span><strong>Management fees</strong> - typically 15-25% of revenue, but varies by operator</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-slate-400 mt-0.5 shrink-0" />
-                <span><strong>Taxes</strong> — Indonesian tax obligations depend on your structure</span>
+                <span><strong>Taxes</strong> - Indonesian tax obligations depend on your structure</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-slate-400 mt-0.5 shrink-0" />
-                <span><strong>Maintenance</strong> — pool, garden, AC servicing, repairs</span>
+                <span><strong>Maintenance</strong> - pool, garden, AC servicing, repairs</span>
               </li>
               <li className="flex items-start gap-3">
                 <XCircle size={16} className="text-slate-400 mt-0.5 shrink-0" />
-                <span><strong>Furnishing costs</strong> — if the property isn't turnkey</span>
+                <span><strong>Furnishing costs</strong> - if the property is not turnkey</span>
               </li>
             </ul>
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mt-4">
               <p className="text-xs text-amber-800">
-                <strong>Why?</strong> These costs vary dramatically by owner situation. Our ROI is a <em>gross estimate</em> for comparison purposes — not a guaranteed net return.
+                <strong>Why?</strong> These costs vary dramatically by owner situation. Our ROI is a gross estimate for comparison purposes - not a guaranteed net return.
               </p>
             </div>
           </div>
@@ -175,34 +175,34 @@ export default function Methodology() {
 
         {/* WHAT FLAGGED MEANS */}
         <section className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8">
-          <h2 className="text-lg font-bold mb-4">What "High ROI" Means</h2>
+          <h2 className="text-lg font-bold mb-4">What High ROI Means</h2>
           <div className="text-sm text-slate-600 leading-relaxed space-y-3">
             <p>
-              When we flag a villa with "HIGH ROI" (above 50%), it means the numbers look exceptional — and should be verified carefully.
+              When we flag a villa with HIGH ROI (above 50%), it means the numbers look exceptional - and should be verified carefully.
             </p>
             <p>
               A high ROI could indicate:
             </p>
             <ul className="space-y-2 ml-4">
               <li className="flex items-start gap-2">
-                <span className="text-green-500">✓</span>
+                <span className="text-green-500">+</span>
                 <span>A genuinely underpriced opportunity</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-amber-500">⚠</span>
+                <span className="text-amber-500">!</span>
                 <span>Optimistic pricing from the seller</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-amber-500">⚠</span>
+                <span className="text-amber-500">!</span>
                 <span>Hidden issues not reflected in the listing</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-red-500">✗</span>
+                <span className="text-red-500">-</span>
                 <span>Incorrect data from the source listing</span>
               </li>
             </ul>
             <p className="mt-3">
-              <strong>A flag doesn't mean "don't buy"</strong> — it means "verify before you commit."
+              <strong>A flag does not mean do not buy</strong> - it means verify before you commit.
             </p>
           </div>
         </section>
@@ -212,7 +212,7 @@ export default function Methodology() {
           <h2 className="text-lg font-bold mb-4">Our Data Sources</h2>
           <div className="text-sm text-slate-600 leading-relaxed space-y-3">
             <p>
-              We crawl listings from Bali's major villa sales platforms weekly. Our data is extracted automatically and audited by our algorithm.
+              We crawl listings from Bali major villa sales platforms weekly. Our data is extracted automatically and audited by our algorithm.
             </p>
             <p>
               <strong>We do not have commercial relationships with any agents or developers.</strong> Our only incentive is providing accurate information to investors.
@@ -239,7 +239,7 @@ export default function Methodology() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <div>
             <span className="font-bold text-slate-700">Bali Villa Truth</span>
-            <span className="mx-2">•</span>
+            <span className="mx-2">|</span>
             <span>Independent villa investment analysis</span>
           </div>
           <div className="flex items-center gap-4">
@@ -257,7 +257,7 @@ export default function Methodology() {
           </div>
         </div>
         <p className="text-center text-[10px] text-slate-400 mt-4">
-          © 2026 Bali Villa Truth. This site provides informational analysis only and does not constitute financial or legal advice.
+          2026 Bali Villa Truth. This site provides informational analysis only and does not constitute financial or legal advice.
         </p>
       </footer>
     </div>
