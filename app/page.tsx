@@ -31,7 +31,8 @@ export default function BaliVillaTruth() {
   const [filterLeaseType, setFilterLeaseType] = useState('All');
   const [displayCurrency, setDisplayCurrency] = useState<string>('USD'); // Show all prices in this currency
   const [sortOption, setSortOption] = useState('roi-desc');
-  const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
+  const [showMap, setShowMap] = useState(false);
+  const [hoveredListingUrl, setHoveredListingUrl] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -224,7 +225,7 @@ export default function BaliVillaTruth() {
         </div>
         
         {/* FILTER DASHBOARD */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
+        <div className="bg-white p5 rounded-xl shadow-sm border border-slate-200 mb-6">
             
             {/* ROW 1: Core Filters */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
@@ -241,7 +242,7 @@ export default function BaliVillaTruth() {
                         <option value="Seseh">Seseh</option>
                     </select>
                 </div>
-                <div className="relative">
+                 <div className="relative">
                     <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <select value={filterPrice} onChange={(e) => setFilterPrice(Number(e.target.value))} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
                         <option value={10000000}>Max Price</option>
@@ -338,33 +339,22 @@ export default function BaliVillaTruth() {
       </header>
 
       {/* RESULTS BAR */}
-      <div className="max-w-7xl mx-auto mb-4 flex justify-between items-center px-2">
+      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex justify-between items-center px-2 transition-all`}>
          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Showing {processedListings.length} Properties</p>
          <div className="flex gap-4 items-center">
             <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-white px-2 py-1 rounded border border-slate-200">
                 <AlertTriangle size={10} className="text-amber-500"/> {flaggedCount} High-ROI
             </div>
-            <div className="flex bg-white rounded-lg border border-slate-200 overflow-hidden">
-              <button onClick={() => setViewMode('table')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'table' ? 'bg-blue-50 text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}>
-                <LayoutList size={12} /> Table
-              </button>
-              <button onClick={() => setViewMode('map')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'map' ? 'bg-blue-50 text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}>
-                <Map size={12} /> Map
-              </button>
-            </div>
+            <button onClick={() => setShowMap(!showMap)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showMap ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600'}`}>
+              <Map size={12} /> {showMap ? 'Hide Map' : 'Show Map'}
+            </button>
          </div>
       </div>
 
-      {/* MAP VIEW */}
-      {viewMode === 'map' && (
-        <div className="max-w-7xl mx-auto mb-8">
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} />
-        </div>
-      )}
-
+      {/* SPLIT LAYOUT: TABLE + MAP */}
+      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto flex gap-4 transition-all`}>
       {/* TABLE */}
-      {viewMode === 'table' && (
-      <main className="max-w-7xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <main className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -391,7 +381,7 @@ export default function BaliVillaTruth() {
                     const isHighRoi = villa.projected_roi > 20;
                     
                     return (
-                    <tr key={villa.id} className="hover:bg-blue-50/50 transition-colors group">
+                    <tr key={villa.id} className={`hover:bg-blue-50/50 transition-colors group ${hoveredListingUrl === villa.url ? 'bg-blue-50/70' : ''}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
                         <td className="p-5">
                         <div className="flex items-center gap-3">
                           {villa.thumbnail_url ? (
@@ -518,7 +508,14 @@ export default function BaliVillaTruth() {
           </table>
         </div>
       </main>
+
+      {/* MAP PANEL (sticky alongside table) */}
+      {showMap && (
+        <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} />
+        </div>
       )}
+      </div>{/* end split layout flex */}
 
       {/* MODAL */}
       {selectedVilla && (
@@ -576,153 +573,158 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Nusa Penida': [-8.7300, 115.5400],
 };
 
-function BaliMapView({ listings, displayCurrency, rates }: { listings: any[]; displayCurrency: string; rates: Record<string, number> }) {
+function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null }) {
   const [mapLoaded, setMapLoaded] = useState(false);
-
-  // Group listings by location
-  const areaGroups = useMemo(() => {
-    const groups: Record<string, { count: number; avgRoi: number; avgPriceUSD: number; listings: any[] }> = {};
-    listings.forEach(v => {
-      const loc = v.location || 'Other';
-      if (!groups[loc]) groups[loc] = { count: 0, avgRoi: 0, avgPriceUSD: 0, listings: [] };
-      groups[loc].count++;
-      groups[loc].listings.push(v);
-    });
-    // Calculate averages
-    Object.keys(groups).forEach(loc => {
-      const g = groups[loc];
-      const totalRoi = g.listings.reduce((sum: number, v: any) => sum + (v.projected_roi || 0), 0);
-      const totalPrice = g.listings.reduce((sum: number, v: any) => {
-        const desc = (v.price_description || '').trim();
-        const match = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
-        let priceUSD = 0;
-        if (match) {
-          const amount = parseFloat(match[2].replace(/\s|,/g, '')) || 0;
-          const cur = match[1].toUpperCase();
-          const r = rates[cur];
-          priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
-        } else {
-          const p = Number(v.last_price) || 0;
-          priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
-        }
-        return sum + priceUSD;
-      }, 0);
-      g.avgRoi = g.count > 0 ? totalRoi / g.count : 0;
-      g.avgPriceUSD = g.count > 0 ? totalPrice / g.count : 0;
-    });
-    return groups;
-  }, [listings, rates]);
+  const [mapRef, setMapRef] = useState<any>(null);
+  const [markersRef, setMarkersRef] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    // Dynamically load Leaflet CSS
     if (!document.querySelector('link[href*="leaflet"]')) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
     }
-
-    // Dynamically load Leaflet JS
-    const loadLeaflet = () => {
-      return new Promise<void>((resolve) => {
-        if ((window as any).L) { resolve(); return; }
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.onload = () => resolve();
-        document.head.appendChild(script);
-      });
-    };
-
-    loadLeaflet().then(() => {
-      setMapLoaded(true);
+    const loadLeaflet = () => new Promise<void>((resolve) => {
+      if ((window as any).L) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => resolve();
+      document.head.appendChild(script);
     });
+    loadLeaflet().then(() => setMapLoaded(true));
   }, []);
 
+  // Initialize map once
   useEffect(() => {
     if (!mapLoaded) return;
     const L = (window as any).L;
     const container = document.getElementById('bali-map');
     if (!container || !L) return;
 
-    // Clean up any previous map instance properly
     if ((container as any)._leafletMap) {
       (container as any)._leafletMap.remove();
       (container as any)._leafletMap = null;
     }
 
-    const map = L.map('bali-map', { zoomControl: true }).setView([-8.65, 115.15], 10);
+    const map = L.map('bali-map', { zoomControl: true }).setView([-8.65, 115.15], 11);
     (container as any)._leafletMap = map;
+    setMapRef(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+      attribution: '© OSM',
       maxZoom: 18,
     }).addTo(map);
 
-    // Force Leaflet to recalculate container size after render
     setTimeout(() => { map.invalidateSize(); }, 100);
-
-    // Add area markers
-    Object.entries(areaGroups).forEach(([loc, data]) => {
-      const coords = AREA_COORDS[loc];
-      if (!coords) return;
-
-      const radius = Math.max(12, Math.min(30, 8 + data.count * 0.5));
-      const roiColor = data.avgRoi >= 15 ? '#16a34a' : data.avgRoi >= 10 ? '#2563eb' : '#64748b';
-
-      const circle = L.circleMarker(coords, {
-        radius,
-        fillColor: roiColor,
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8,
-      }).addTo(map);
-
-      // Format average price for popup
-      const avgPriceFormatted = displayCurrency === 'IDR'
-        ? `IDR ${Math.round(data.avgPriceUSD * (rates['IDR'] || 16782)).toLocaleString()}`
-        : `${displayCurrency} ${Math.round(displayCurrency === 'USD' ? data.avgPriceUSD : data.avgPriceUSD * (rates[displayCurrency] || 1)).toLocaleString()}`;
-
-      circle.bindPopup(`
-        <div style="font-family: system-ui; min-width: 160px;">
-          <div style="font-weight: 700; font-size: 14px; margin-bottom: 6px; color: #1e293b;">${loc}</div>
-          <div style="font-size: 12px; color: #64748b; line-height: 1.8;">
-            <div><strong>${data.count}</strong> listings</div>
-            <div>Avg ROI: <strong style="color: ${roiColor}">${data.avgRoi.toFixed(1)}%</strong></div>
-            <div>Avg Price: <strong>${avgPriceFormatted}</strong></div>
-          </div>
-        </div>
-      `);
-
-      // Add label
-      const label = L.divIcon({
-        className: 'area-label',
-        html: `<div style="background: ${roiColor}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: system-ui; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">${loc} (${data.count})</div>`,
-        iconSize: [0, 0],
-        iconAnchor: [-radius - 4, radius / 2],
-      });
-      L.marker(coords, { icon: label, interactive: false }).addTo(map);
-    });
 
     return () => {
       map.remove();
       if (container) (container as any)._leafletMap = null;
     };
-  }, [mapLoaded, areaGroups, displayCurrency, rates]);
+  }, [mapLoaded]);
+
+  // Add/update property markers when listings change
+  useEffect(() => {
+    if (!mapRef || !mapLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    // Clear existing markers
+    Object.values(markersRef).forEach((m: any) => { try { mapRef.removeLayer(m); } catch {} });
+
+    const newMarkers: Record<string, any> = {};
+    const markerCluster: any[] = [];
+
+    listings.forEach(villa => {
+      const lat = parseFloat(villa.latitude);
+      const lng = parseFloat(villa.longitude);
+      if (!lat || !lng || lat === 0 || lng === 0) return;
+
+      const roi = villa.projected_roi || 0;
+      const roiColor = roi >= 15 ? '#16a34a' : roi >= 10 ? '#2563eb' : '#64748b';
+
+      const marker = L.circleMarker([lat, lng], {
+        radius: 5,
+        fillColor: roiColor,
+        color: '#fff',
+        weight: 1,
+        opacity: 0.9,
+        fillOpacity: 0.7,
+      }).addTo(mapRef);
+
+      // Price formatting for popup
+      const desc = (villa.price_description || '').trim();
+      const priceMatch = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
+      let priceStr = '';
+      if (priceMatch) {
+        const amount = parseFloat(priceMatch[2].replace(/\s|,/g, '')) || 0;
+        const cur = priceMatch[1].toUpperCase();
+        const r = rates[cur];
+        const priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
+        const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
+        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
+      } else {
+        const p = Number(villa.last_price) || 0;
+        const priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
+        const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
+        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
+      }
+
+      marker.bindPopup(`
+        <div style="font-family: system-ui; min-width: 180px;">
+          <div style="font-weight: 700; font-size: 12px; margin-bottom: 4px; color: #1e293b;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
+          <div style="font-size: 11px; color: #64748b; line-height: 1.7;">
+            <div>${villa.location || 'Bali'} • ${villa.bedrooms || '?'} bed</div>
+            <div><strong>${priceStr}</strong></div>
+            <div>ROI: <strong style="color: ${roiColor}">${roi.toFixed(1)}%</strong></div>
+          </div>
+        </div>
+      `);
+
+      if (villa.url) newMarkers[villa.url] = marker;
+      markerCluster.push(marker);
+    });
+
+    setMarkersRef(newMarkers);
+  }, [mapRef, mapLoaded, listings, displayCurrency, rates]);
+
+  // Highlight marker on hover
+  useEffect(() => {
+    if (!mapRef || !mapLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
+
+    Object.entries(markersRef).forEach(([url, marker]) => {
+      if (url === hoveredListingUrl) {
+        marker.setStyle({ radius: 10, weight: 3, fillOpacity: 1 });
+        marker.openPopup();
+      } else {
+        marker.setStyle({ radius: 5, weight: 1, fillOpacity: 0.7 });
+      }
+    });
+  }, [hoveredListingUrl, markersRef, mapRef, mapLoaded]);
+
+  // Resize map when panel becomes visible
+  useEffect(() => {
+    if (mapRef) {
+      setTimeout(() => { mapRef.invalidateSize(); }, 200);
+    }
+  }, [mapRef]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <Map size={16} className="text-blue-500" /> Area Overview
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
+      <div className="p-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+          <Map size={14} className="text-blue-500" /> Property Map
         </div>
-        <div className="flex gap-3 text-[10px] text-slate-400">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span> ROI ≥ 15%</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span> ROI 10-15%</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> ROI &lt; 10%</span>
+        <div className="flex gap-2 text-[9px] text-slate-400">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600 inline-block"></span> ≥15%</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span> 10-15%</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> &lt;10%</span>
         </div>
       </div>
-      <div id="bali-map" style={{ height: '500px', width: '100%' }}></div>
+      <div id="bali-map" className="flex-1" style={{ minHeight: '500px', width: '100%' }}></div>
     </div>
   );
 }
