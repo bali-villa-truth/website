@@ -3,10 +3,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye } from 'lucide-react';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://imocmonichptidmgwxdh.supabase.co';
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imltb2Ntb25pY2hwdGlkbWd3eGRoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTQ4OTMzNSwiZXhwIjoyMDg1MDY1MzM1fQ.DhoZgUAU1b-15NvfDnCoeay_0joG-tI27ETty5HIATs';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const FALLBACK_RATES: Record<string, number> = { USD: 1, IDR: 16782, AUD: 1.53, EUR: 0.92, SGD: 1.34 };
 
