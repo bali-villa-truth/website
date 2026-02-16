@@ -22,7 +22,7 @@ export default function BaliVillaTruth() {
 
   // --- FILTER STATES ---
   const [filterLocation, setFilterLocation] = useState('All');
-  const [filterPrice, setFilterPrice] = useState(10000000); 
+  const [filterPrice, setFilterPrice] = useState(10000000);
   const [filterRoi, setFilterRoi] = useState(0);
   const [filterLandSize, setFilterLandSize] = useState(0);
   const [filterBuildSize, setFilterBuildSize] = useState(0);
@@ -42,19 +42,19 @@ export default function BaliVillaTruth() {
         .eq('status', 'audited')
         .gt('last_price', 0)
         .limit(5000); // Default is 1000, we need all listings
-      
+
       if (error) console.error(error);
       else {
         const raw = data || [];
         const real = raw.filter((v: any) => (v.last_price || 0) > 0 && (v.villa_name || '').length > 2);
         setListings(real);
       }
-      
+
       const { count } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true });
       setLeadCount(count || 0);
-      
+
       setLoading(false);
     }
     fetchData();
@@ -282,7 +282,7 @@ export default function BaliVillaTruth() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-8">
-      
+
       {/* HEADER */}
       <header className="max-w-7xl mx-auto mb-6">
         <div className="text-center mb-8">
@@ -293,10 +293,10 @@ export default function BaliVillaTruth() {
             Independent ROI auditing for serious investors. We verify the data agents hide.
             </p>
         </div>
-        
+
         {/* FILTER DASHBOARD */}
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
-            
+
             {/* ROW 1: Core Filters */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                 <div className="relative">
@@ -377,7 +377,7 @@ export default function BaliVillaTruth() {
                         <option value={5}>5+ Beds</option>
                     </select>
                 </div>
-                
+
                 <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
                     <Bath size={14} className="text-slate-400" />
                     <select value={filterBaths} onChange={(e) => setFilterBaths(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto">
@@ -398,7 +398,7 @@ export default function BaliVillaTruth() {
                     <input type="number" placeholder="Min Build mÂ²" value={filterBuildSize === 0 ? '' : filterBuildSize} onChange={(e) => setFilterBuildSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500" />
                 </div>
 
-                <button 
+                <button
                     onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
                     className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
                 >
@@ -458,12 +458,11 @@ export default function BaliVillaTruth() {
                         <td className="p-5">
                         <div className="flex items-center gap-3">
                           {villa.thumbnail_url ? (
-                            <img src={villa.thumbnail_url} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0 bg-slate-100" loading="lazy" />
-                          ) : (
-                            <div className="w-16 h-12 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-                              <Home size={16} className="text-slate-300" />
-                            </div>
-                          )}
+                            <img src={villa.thumbnail_url} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0 bg-slate-100" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
+                          ) : null}
+                          <div className={`w-16 h-12 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center ${villa.thumbnail_url ? 'hidden' : ''}`}>
+                            <Home size={16} className="text-slate-300" />
+                          </div>
                           <div>
                             <div className="font-bold text-slate-900 mb-1 flex items-center gap-2 group-hover:text-blue-600 transition-colors">
                                 {villa.villa_name || 'Luxury Villa'}
@@ -499,191 +498,292 @@ export default function BaliVillaTruth() {
                         </td>
                         <td className="p-5">
                         <div className="flex flex-col items-center relative">
-                            <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(n][
-_O‚ˆËÊˆ••Y\İY“ÒHHH™X[[X™\ˆ
-‹ßBˆÜ[ˆÛ\ÜÓ˜[YO^ØLÈKLH›İ[™YY[^\ÛH›ÛX›Û›Ü™\ˆ›^][\ËXÙ[\ˆØ\LH\İYKXÙ[\ˆËYš]^X]]È	Âˆ™]›ÚHHLˆÈ	Ø™ËYÜ™Y[‹LL^YÜ™Y[‹MÌ›Ü™\‹YÜ™Y[‹LŒ	È‚ˆ™]›ÚHHÈÈ	Ø™ËX›YKLL^X›YKMÌ›Ü™\‹X›YKLŒ	È‚ˆ™]›ÚHHÈ	Ø™Ë\Û]KLL^\Û]KMÌ›Ü™\‹\Û]KLŒ	È‚ˆ	Ø™Ë\™YLL^\™YMŒ›Ü™\‹\™YLŒ	ÂˆXO‚ˆÛ™]›ÚKÑš^Y
-J_IH^YHÚ^™O^ÌLHÛ\ÜÓ˜[YOH›ÜXÚ]KMLˆÏ‚ˆÜÜ[‚ˆÛ\ÜÓ˜[YOH^VÌLH^\Û]KM]LH[™K]›İYÚÜXÚ]KMŒ›Û[[Û›ÈYÙ[ˆİš[Kœ›Ú™XİYÜ›ÚOËÑš^Y
-J_IOÜ‚ˆÛ\ÜÓ˜[YOH^VÎ\H^\Û]KML›Û[[Û›È‰ÙÙ]\Ü^SšYÚJš[J_KÛ8 (ˆÓX]œ›İ[™
-Ù]\Ü^SØØİ\[˜ŞJš[JJ_IHØØÏÜ‚‚ˆËÊˆ™Y›YÈ˜YÙ\È[™\ˆ“ÒH
-‹ßBˆÜ™Y›YÜË›[™İˆ	‰ˆ
-ˆ]ˆÛ\ÜÓ˜[YOH™›^›^]Ü˜\\İYKXÙ[\ˆØ\LH]LKH‚ˆÜ™Y›YÜË›X\
+                            <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
+                            {/* Agent's gross ROI */}
+                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 justify-center w-fit mx-auto ${hasDanger ? 'bg-red-50 text-red-700 border-red-200' : hasWarning ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'}`}>
+                                {villa.projected_roi?.toFixed(1)}% <Info size={10} className="opacity-50" />
+                            </span>
+                            {/* BVT Net ROI */}
+                            <p className={`text-[10px] mt-1 font-bold ${netRoi < 0 ? 'text-red-600' : netRoi < 5 ? 'text-amber-600' : 'text-green-600'}`}>
+                                Net: {netRoi.toFixed(1)}%
+                            </p>
+                            <p className="text-[10px] text-slate-500 font-mono">~${getDisplayNightly(villa)}/nt â€¢ {Math.round(getDisplayOccupancy(villa))}% occ</p>
+                            {hoveredRoi === villa.id && (
+                                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
+                                <div className="font-bold mb-2 text-slate-300">ROI Transparency Breakdown</div>
+                                <div className="mb-2 pb-2 border-b border-slate-700">
+                                    <div className="flex justify-between"><span>Agent&apos;s Gross ROI:</span> <span className="text-emerald-400 font-mono font-bold">{villa.projected_roi?.toFixed(1)}%</span></div>
+                                    <div className="flex justify-between"><span>Est. Nightly:</span> <span className="text-emerald-400 font-mono">${getDisplayNightly(villa)}</span></div>
+                                    <div className="flex justify-between"><span>Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round(getDisplayOccupancy(villa))}%</span></div>
+                                </div>
+                                {/* Cost breakdown */}
+                                <div className="mb-2 pb-2 border-b border-slate-700">
+                                    <div className="font-bold mb-1 text-red-400">Hidden Costs (agents don&apos;t mention):</div>
+                                    {Object.values(COST_BREAKDOWN).map((cost, idx) => (
+                                        <div key={idx} className="flex justify-between">
+                                            <span>{cost.label}:</span>
+                                            <span className="text-red-400 font-mono">-{(cost.rate * 100).toFixed(0)}%</span>
+                                        </div>
+                                    ))}
+                                    {leaseDepreciation > 0 && (
+                                        <div className="flex justify-between mt-1 pt-1 border-t border-slate-700">
+                                            <span>Lease Depreciation:</span>
+                                            <span className="text-red-400 font-mono">-{leaseDepreciation.toFixed(1)}%/yr</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-between font-bold text-sm">
+                                    <span>BVT Net ROI:</span>
+                                    <span className={netRoi < 0 ? 'text-red-400' : netRoi < 5 ? 'text-amber-400' : 'text-emerald-400'}>{netRoi.toFixed(1)}%</span>
+                                </div>
+                                {/* Red flags */}
+                                {redFlags.length > 0 && (
+                                    <div className="mt-2 pt-2 border-t border-slate-700">
+                                        {redFlags.map((flag, idx) => (
+                                            <div key={idx} className={`text-[9px] mt-1 ${flag.level === 'danger' ? 'text-red-400' : 'text-amber-400'}`}>
+                                                {flag.level === 'danger' ? 'ğŸš©' : 'âš ï¸'} {flag.detail}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {rateFactors.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-slate-700">
+                                    <div className="font-bold mb-1 text-slate-400">Rate Factors:</div>
+                                    <ul className="space-y-1">
+                                        {rateFactors.map((factor, idx) => (
+                                        <li key={idx} className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">â€¢</span><span>{factor}</span></li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                )}
+                                <p className="mt-2 pt-2 border-t border-slate-700 text-slate-400">Industry benchmarks: leasehold 10â€“15%, freehold 5â€“8%. Estimate only.</p>
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
+                                </div>
+                            )}
+                            </div>
+                        </div>
+                        </td>
+                        <td className="p-5 text-xs text-slate-600 space-y-1.5">
+                            {/* Beds */}
+                            <div className="flex items-center gap-2">
+                                <Home size={12} className="text-slate-400"/>
+                                <span className="font-medium text-slate-900">
+                                    {villa.bedrooms ? `${villa.bedrooms} Bed` : '? Bed'}
+                                    {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1]?.trim().split(' ')[0] || '?'} Bath`}
+                                </span>
+                            </div>
 
-›YËY
-HOˆ
-ˆÜ[ˆÙ^O^ÚYHÛ\ÜÓ˜[YO^ØLKHKLH›İ[™Y^VÎH›ÛX›Û	Ù›YË›]™[OOH	Ù[™Ù\‰ÈÈ	Ø™Ë\™YML^\™YMŒ›Ü™\ˆ›Ü™\‹\™YLŒ	Èˆ	Ø™ËX[X™\‹ML^X[X™\‹MŒ›Ü™\ˆ›Ü™\‹X[X™\‹LŒ	ßXO‚ˆÙ›YË›X™[BˆÜÜ[‚ˆ
-J_BˆÙ]‚ˆ
-_B‚ˆËÊˆ[š[˜ÙYÛÛ\Ú][ÛÜİœ™XZÙİÛˆ
-‹ßBˆÚİ™\™Y›ÚHOOHš[KšY	‰ˆ
-ˆ]ˆÛ\ÜÓ˜[YOH˜XœÛÛ]H‹ML›İÛKY[YLKÌˆ]˜[œÛ]K^LKÌˆX‹LˆËN™Ë\Û]KNL^]Ú]H^VÌLH›İ[™Y[ÈLÈÚYİË^Ú[\‹Y]™[Ë[›Û™H‚ˆ]ˆÛ\ÜÓ˜[YOH™›ÛX›ÛX‹Lˆ^X›YKM›^][\ËXÙ[\ˆØ\LH^YHÚ^™O^ÌL_KÏˆ••™X[]HÚXÚÏÙ]‚‚ˆËÊˆYÙ[œÈ••ÛÛ\\š\ÛÛˆ
-‹ßBˆ]ˆÛ\ÜÓ˜[YOH›X‹Lˆ‹Lˆ›Ü™\‹Xˆ›Ü™\‹\Û]KMÌ›^Ø\M‚ˆ]ˆÛ\ÜÓ˜[YOH™›^LH^XÙ[\ˆ‚ˆ]ˆÛ\ÜÓ˜[YOH^\Û]KML^VÎ\HX‹LHYÙ[ÛZ[\ÏÙ]‚ˆ]ˆÛ\ÜÓ˜[YOH^[È›ÛX›Û^\Û]KM[™K]›İYÚİš[Kœ›Ú™XİYÜ›ÚOËÑš^Y
-J_IOÙ]‚ˆÙ]‚ˆ]ˆÛ\ÜÓ˜[YOH™›^LH^XÙ[\ˆ‚ˆ]ˆÛ\ÜÓ˜[YOH^X›YKM^VÎ\HX‹LH›ÛX›Û••Y\İYÙ]‚ˆ]ˆÛ\ÜÓ˜[YO^Ø^[È›ÛX›Û	Û™]›ÚHHÈÈ	İ^Y[Y\˜[M	Èˆ™]›ÚHHÈ	İ^X[X™\‹M	Èˆ	İ^\™YM	ßXOÛ™]›ÚKÑš^Y
-J_IOÙ]‚ˆÙ]‚ˆÙ]‚‚ˆËÊˆ™]™[YH]H
-‹ßBˆ]ˆÛ\ÜÓ˜[YOH›X‹Lˆ‹Lˆ›Ü™\‹Xˆ›Ü™\‹\Û]KMÌ‚ˆ]ˆÛ\ÜÓ˜[YOH™›^\İYKX™]ÙY[ˆÜ[‘\İˆšYÚH˜]NÜÜ[ˆÜ[ˆÛ\ÜÓ˜[YOH^Y[Y\˜[M›Û[[Û›È‰ÙÙ]\Ü^SšYÚJš[J_OÜÜ[Ù]‚ˆ]ˆÛ\ÜÓ˜[YOH™›^\İYKX™]ÙY[ˆÜ[‘\İˆØØİ\[˜ŞNÜÜ[ˆÜ[ˆÛ\ÜÓ˜[YOH^X›YKM›Û[[Û›ÈÓX]œ›İ[™
-Ù]\Ü^SØØİ\[˜ŞJš[JJ_IOÜÜ[Ù]‚ˆÙ]‚‚ˆËÊˆÛÜİœ™XZÙİÛˆ
-‹ßBˆ]ˆÛ\ÜÓ˜[YOH›X‹Lˆ‹Lˆ›Ü™\‹Xˆ›Ü™\‹\Û]KMÌ‚ˆ]ˆÛ\ÜÓ˜[YOH^\Û]KML›ÛX›ÛX‹LHÛÜİÈYÙ[ÈÛ‰˜\ÜÎİY[[ÛÙ]‚ˆÓØš™Xİ™[šY\ÊÓÔÕĞ”‘PRÑÕÓŠK›X\
+                            {/* Lease Type / Years - SMART DISPLAY: use features first, then lease_years, show years remaining for leasehold */}
+                            <div className="flex items-center gap-2">
+                                <Calendar size={12} className="text-slate-400"/>
+                                {(() => {
+                                    const f = (villa.features || "").trim();
+                                    const years = Number(villa.lease_years) || 0;
+                                    const isFreehold = f.includes("Freehold") || f.includes("Hak Milik") || years === 999;
+                                    const isLeasehold = f.includes("Leasehold") || f.includes("Hak Sewa") || (years > 0 && years < 999);
+                                    if (isFreehold) return <span className="font-bold text-green-600">Freehold (Hak Milik)</span>;
+                                    if (isLeasehold) {
+                                        const label = f ? "Leasehold (Hak Sewa)" : "Leasehold";
+                                        const yearsLabel = years > 0 && years < 999 ? ` â€“ ${years} years remaining` : " â€“ years not stated";
+                                        return <span className="text-slate-700">{label}{yearsLabel}</span>;
+                                    }
+                                    if (years > 0 && years < 999) return <span className="text-slate-700">{years} years remaining</span>;
+                                    if (years === 999) return <span className="font-bold text-green-600">Freehold</span>;
+                                    return <span className="text-slate-400">Unverified Status</span>;
+                                })()}
+                            </div>
 
-ÚÙ^KÛÜİJHOˆ
-ˆ]ˆÙ^O^ÚÙ^_HÛ\ÜÓ˜[YOH™›^\İYKX™]ÙY[ˆ‚ˆÜ[ˆÛ\ÜÓ˜[YOH^\Û]KMØÛÜİ›X™[OÜÜ[‚ˆÜ[ˆÛ\ÜÓ˜[YOH^\™YM›Û[[Û›È‹^ÊÛÜİœ˜]H
-ˆL
-KÑš^Y
-
-_IOÜÜ[‚ˆÙ]‚ˆ
-J_BˆÛX\ÙQ\™XÚX][Ûˆˆ	‰ˆ
-ˆ]ˆÛ\ÜÓ˜[YOH™›^\İYKX™]ÙY[ˆ]LHLH›Ü™\‹]›Ü™\‹\Û]KN‚ˆÜ[ˆÛ\ÜÓ˜[YOH^[Ü˜[™ÙKM“X\ÙH\™XÚX][ÛÜÜ[‚ˆÜ[ˆÛ\ÜÓ˜[YOH^\™YM›Û[[Û›È‹^ÛX\ÙQ\™XÚX][Û‹Ñš^Y
-J_IOÜÜ[‚ˆÙ]‚ˆ
-_Bˆ]ˆÛ\ÜÓ˜[YOH™›^\İYKX™]ÙY[ˆ]LHLH›Ü™\‹]›Ü™\‹\Û]KMÌ›ÛX›Û‚ˆÜ[•İ[™]™[YHÜİÜÜ[‚ˆÜ[ˆÛ\ÜÓ˜[YOH^\™YM›Û[[Û›ÈÊ
-ÕSĞÓÔÕÔUSÊH
-ˆL
-KÑš^Y
-
-_I^ÛX\ÙQ\™XÚX][ÛˆˆÈ
-È	ÛX\ÙQ\™XÚX][Û‹Ñš^Y
-J_IXˆ	ÉßOÜÜ[‚ˆÙ]‚ˆÙ]‚‚ˆËÊˆ™Y›YÜÈ[ˆÛÛ\
-‹ßBˆÜ™Y›YÜË›[™İˆ	‰ˆ
-ˆ]ˆÛ\ÜÓ˜[YOH›X‹Lˆ‹Lˆ›Ü™\‹Xˆ›Ü™\‹\Û]KMÌ‚ˆÜ™Y›YÜË›X\
+                            {/* Land Size */}
+                            <div className="flex items-center gap-2">
+                                <Ruler size={12} className="text-slate-400"/>
+                                <span>Land: <span className="font-medium">{villa.land_size || '?'}</span> mÂ²</span>
+                            </div>
 
-›YËY
-HOˆ
-ˆ]ˆÙ^O^ÚYHÛ\ÜÓ˜[YO^Ø›^][\Ë\İ\Ø\LKHX‹LH	Ù›YË›]™[OOH	Ù[™Ù\‰ÈÈ	İ^\™YM	Èˆ	İ^X[X™\‹M	ßXO‚ˆ[\šX[™ÛHÚ^™O^ÌLHÛ\ÜÓ˜[YOH›]LH›^\Úš[šËLˆÏ‚ˆÜ[Ù›YË™]Z[OÜÜ[‚ˆÙ]‚ˆ
-J_BˆÙ]‚ˆ
-_B‚ˆËÊˆ˜]H˜XİÜœÈœ›ÛHØÜ˜\\ˆ
-‹ßBˆÜ˜]Q˜XİÜœË›[™İˆ	‰ˆ
-ˆ]ˆÛ\ÜÓ˜[YOH›X‹Lˆ‹Lˆ›Ü™\‹Xˆ›Ü™\‹\Û]KMÌ‚ˆ]ˆÛ\ÜÓ˜[YOH^\Û]KML›ÛX›ÛX‹LH”˜]H˜XİÜœÎÙ]‚ˆÜ˜]Q˜XİÜœË›X\
+                            {/* Building Size - always show row; use â€” when missing */}
+                            <div className="flex items-center gap-2">
+                                <Layers size={12} className="text-slate-400"/>
+                                <span>Build: <span className="font-medium">{villa.building_size > 0 ? `${villa.building_size} mÂ²` : 'â€”'}</span></span>
+                            </div>
+                        </td>
+                        <td className="p-5 text-right">
+                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all">
+                            <Lock size={12}/> UNLOCK SOURCE
+                        </button>
+                        </td>
+                    </tr>
+                    );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </main>
 
-˜XİÜ‹Y
-HOˆ
-ˆ]ˆÙ^O^ÚYHÛ\ÜÓ˜[YOH™›^][\Ë\İ\Ø\LKHÜ[ˆÛ\ÜÓ˜[YOH^X›YKM]LH¸ (ÜÜ[Ü[ˆÛ\ÜÓ˜[YOH^\Û]KLÌÙ˜XİÜŸOÜÜ[Ù]‚ˆ
-J_BˆÙ]‚ˆ
-_B‚ˆÛ\ÜÓ˜[YOH^\Û]KML][XÈ™[˜ÚX\šÜÎˆX\ÙZÛ8 $ÌL‰H™]œ™YZÛ8 $ÍÉH™]ˆ••YXİÈ™X[Ü\˜][™ÈÛÜİÈœ›ÛHYÙ[šYİ\™\ËÜ‚ˆ]ˆÛ\ÜÓ˜[YOH˜XœÛÛ]HÜY[YLKÌˆ]˜[œÛ]K^LKÌˆ›Ü™\‹N›Ü™\‹]˜[œÜ\™[›Ü™\‹]\Û]KNLÙ]‚ˆÙ]‚ˆ
-_BˆÙ]‚ˆÙ]‚ˆİ‚ˆÛ\ÜÓ˜[YOHœMH^^È^\Û]KMŒÜXÙK^KLKH‚ˆËÊˆ™YÈ
-‹ßBˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\Lˆ‚ˆÛYHÚ^™O^ÌLŸHÛ\ÜÓ˜[YOH^\Û]KM‹Ï‚ˆÜ[ˆÛ\ÜÓ˜[YOH™›Û[YY][H^\Û]KNL‚ˆİš[K˜™Y›ÛÛ\ÈÈ	İš[K˜™Y›ÛÛ\ßH™Yˆ	ÏÈ™Y	ßBˆİš[K˜™Y×Ø˜]È	‰ˆÈ	İš[K˜™Y×Ø˜]ËœÜ]
-	ËÉÊVÌWOËš[J
-KœÜ]
-	È	ÊVÌH	ÏÉßH˜]BˆÜÜ[‚ˆÙ]‚ˆˆËÊˆX\ÙH\HÈYX\œÈHÓPT•TÔVNˆ\ÙH™X]\™\Èš\œİ[ˆX\ÙWŞYX\œËÚİÈYX\œÈ™[XZ[š[™È›ÜˆX\ÙZÛ
-‹ßBˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\Lˆ‚ˆØ[[™\ˆÚ^™O^ÌLŸHÛ\ÜÓ˜[YOH^\Û]KM‹Ï‚ˆÊ
+      {/* MAP PANEL (sticky alongside table) */}
+      {showMap && (
+        <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} />
+        </div>
+      )}
+      </div>{/* end split layout flex */}
 
-HOˆÂˆÛÛœİˆH
-š[K™™X]\™\ÈˆŠKš[J
-NÂˆÛÛœİYX\œÈH[X™\Šš[K›X\ÙWŞYX\œÊHÂˆÛÛœİ\Ñœ™YZÛH‹š[˜ÛY\Ê‘œ™YZÛŠH‹š[˜ÛY\Ê’ZÈZ[ZÈŠHYX\œÈOOHNNNÂˆÛÛœİ\ÓX\ÙZÛH‹š[˜ÛY\Ê“X\ÙZÛŠH‹š[˜ÛY\Ê’ZÈÙ]ØHŠH
-YX\œÈˆ	‰ˆYX\œÈNNJNÂˆYˆ
-\Ñœ™YZÛ
-H™]\›ˆÜ[ˆÛ\ÜÓ˜[YOH™›ÛX›Û^YÜ™Y[‹MŒ‘œ™YZÛ
-ZÈZ[ZÊOÜÜ[ÂˆYˆ
-\ÓX\ÙZÛ
-HÂˆÛÛœİX™[HˆÈ“X\ÙZÛ
-ZÈÙ]ØJHˆˆ“X\ÙZÛÂˆÛÛœİYX\œÓX™[HYX\œÈˆ	‰ˆYX\œÈNNHÈ8 $È	ŞYX\œßHYX\œÈ™[XZ[š[™Øˆˆ8 $ÈYX\œÈ›İİ]YÂˆ™]\›ˆÜ[ˆÛ\ÜÓ˜[YOH^\Û]KMÌÛX™[^ŞYX\œÓX™[OÜÜ[ÂˆBˆYˆ
-YX\œÈˆ	‰ˆYX\œÈNNJH™]\›ˆÜ[ˆÛ\ÜÓ˜[YOH^\Û]KMÌŞYX\œßHYX\œÈ™[XZ[š[™ÏÜÜ[ÂˆYˆ
-YX\œÈOOHNNJH™]\›ˆÜ[ˆÛ\ÜÓ˜[YOH™›ÛX›Û^YÜ™Y[‹MŒ‘œ™YZÛÜÜ[Âˆ™]\›ˆÜ[ˆÛ\ÜÓ˜[YOH^\Û]KM•[™\šYšYYİ]\ÏÜÜ[ÂˆJJ
-_BˆÙ]‚‚ˆËÊˆ[™Ú^™H
-‹ßBˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\Lˆ‚ˆ[\ˆÚ^™O^ÌLŸHÛ\ÜÓ˜[YOH^\Û]KM‹ÏˆˆÜ[“[™ˆÜ[ˆÛ\ÜÓ˜[YOH™›Û[YY][Hİš[K›[™ÜÚ^™H	ÏÉßOÜÜ[ˆp¬ÜÜ[‚ˆÙ]‚‚ˆËÊˆZ[[™ÈÚ^™HH[Ø^\ÈÚİÈ›İÎÈ\ÙH8 %Ú[ˆZ\ÜÚ[™È
-‹ßBˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\Lˆ‚ˆ^Y\œÈÚ^™O^ÌLŸHÛ\ÜÓ˜[YOH^\Û]KM‹ÏˆˆÜ[Z[ˆÜ[ˆÛ\ÜÓ˜[YOH™›Û[YY][Hİš[K˜Z[[™×ÜÚ^™HˆÈ	İš[K˜Z[[™×ÜÚ^™_Hp¬˜ˆ	ø %	ßOÜÜ[ÜÜ[‚ˆÙ]‚ˆİ‚ˆÛ\ÜÓ˜[YOHœMH^\šYÚ‚ˆ]ÛˆÛÛXÚÏ^Ê
-HOˆÙ]Ù[XİYš[Jš[J_HÛ\ÜÓ˜[YOHš[›[™KY›^][\ËXÙ[\ˆØ\Lˆ™Ë\Û]KNLİ™\˜™ËX›YKMŒ^]Ú]H^VÌLH›ÛX›ÛMKLˆ›İ[™Y[È˜[œÚ][Û‹X[‚ˆØÚÈÚ^™O^ÌLŸKÏˆS“ĞÒÈÓÕTÑBˆØ]Û‚ˆİ‚ˆİ‚ˆ
-NÂˆJBˆ
-_Bˆİ›ÙO‚ˆİX›O‚ˆÙ]‚ˆÛXZ[‚‚ˆËÊˆPTS‘S
-İXÚŞH[Û™ÜÚYHX›JH
-‹ßBˆÜÚİÓX\	‰ˆ
-ˆ]ˆÛ\ÜÓ˜[YOHËVÍ	WH›^\Úš[šËLİXÚŞHÜMÙ[‹\İ\ˆİ[O^ŞÈX^ZYÚˆ	ØØ[ÊLšHœ™[JIÈ_O‚ˆ˜[SX\šY]È\İ[™ÜÏ^Ü›ØÙ\ÜÙY\İ[™ÜßH\Ü^Pİ\œ™[˜ŞO^Ù\Ü^Pİ\œ™[˜Ş_H˜]\Ï^Ü˜]\ßHİ™\™Y\İ[™Õ\›^Úİ™\™Y\İ[™Õ\›HÏ‚ˆÙ]‚ˆ
-_BˆÙ]ËÊˆ[™Ü]^[İ]›^
-‹ßB‚ˆËÊˆSÑS
-‹ßBˆÜÙ[XİYš[H	‰ˆ
-ˆ]ˆÛ\ÜÓ˜[YOH™š^Y[œÙ]L™Ë\Û]KNLÍŒ˜XÚÙ›ÜX›\‹\ÛH‹ML›^][\ËXÙ[\ˆ\İYKXÙ[\ˆM‚ˆ]ˆÛ\ÜÓ˜[YOH˜™Ë]Ú]H›İ[™YLÚYİËLX^]Ë[YËY[N™[]]™H[š[X]KZ[ˆ˜YKZ[ˆ›ÛÛKZ[ˆ\˜][Û‹LŒ‚ˆ]ÛˆÛÛXÚÏ^Ê
-HOˆÙ]Ù[XİYš[J[
-_HÛ\ÜÓ˜[YOH˜XœÛÛ]HÜMšYÚM^\Û]KMİ™\^\Û]KMŒÚ^™O^ÌŒKÏØ]Û‚ˆ]ˆÛ\ÜÓ˜[YOH^XÙ[\ˆ‚ˆ]ˆÛ\ÜÓ˜[YOHËLMˆLMˆ™ËX›YKML›İ[™YY[›^][\ËXÙ[\ˆ\İYKXÙ[\ˆ^X]]ÈX‹MÚY[ÚXÚÈÛ\ÜÓ˜[YOH^X›YKMŒˆÚ^™O^ÌÌŸHÏÙ]‚ˆˆÛ\ÜÓ˜[YOH^L›ÛX›ÛX‹Lˆ•[›ØÚÈ[]Y]Ú‚ˆÛ\ÜÓ˜[YOH^\Û]KML^\ÛHX‹Mˆ‘[\ˆ[İ\ˆ›Ù™\ÜÚ[Û˜[[XZ[È[›ØÚÈHÜšYÚ[˜[Ûİ\˜ÙH[šÈ[™İ\ˆK^YX\ˆ“ÒH›Ú™Xİ[Ûˆ›ÜˆÜ[ˆÛ\ÜÓ˜[YOH™›Û\Ù[ZX›Û^\Û]KNÜÙ[XİYš[Kš[WÛ˜[Y_OÜÜ[‹Ü‚ˆ›Ü›HÛ”İX›Z]^Ú[™SXYØ\\™_HÛ\ÜÓ˜[YOHœÜXÙK^KM‚ˆ[œ]\OH™[XZ[ˆ™\]Z\™YXÙZÛ\H›˜[YPÛÛ\[K˜ÛÛHˆÛ\ÜÓ˜[YOHËY[MKLÈ›İ[™Y[È›Ü™\ˆ›Ü™\‹\Û]KLŒ›Øİ\Îœš[™ËLˆ›Øİ\Îœš[™ËX›YKMLİ][™K[›Û™H˜[œÚ][Û‹X[ˆ˜[YO^Ù[XZ[HÛÚ[™ÙO^ÊJHOˆÙ][XZ[
-K\™Ù]˜[YJ_HÏ‚ˆ]Ûˆ\OHœİX›Z]ˆ\ØX›Y^Ú\ÔİX›Z][™ßHÛ\ÜÓ˜[YOHËY[™ËX›YKMŒİ™\˜™ËX›YKMÌ^]Ú]H›ÛX›ÛKLÈ›İ[™Y[È˜[œÚ][Û‹X[ÚYİË[ÈÚYİËX›YKLŒ\ØX›Y›ÜXÚ]KMLÚ\ÔİX›Z][™ÈÈ	Õ™\šYZ[™Ë‹‹‰Èˆ	Õ[›ØÚÈ›İÉßOØ]Û‚ˆÛ\ÜÓ˜[YOH^VÌLH^\Û]KMHÛXÚÚ[™Ë[İHYÜ™YHÈİ\ˆ[™\İÜˆš]˜XŞH\›\ËÜ‚ˆÙ›Ü›O‚ˆÙ]‚ˆÙ]‚ˆÙ]‚ˆ
-_B‚ˆËÊˆ“ÓÕTˆ
-‹ßBˆ›Ûİ\ˆÛ\ÜÓ˜[YOH›X^]ËMŞ^X]]È]LLˆN›Ü™\‹]›Ü™\‹\Û]KLŒ‚ˆ]ˆÛ\ÜÓ˜[YOH™›^›^XÛÛY™›^\›İÈ\İYKX™]ÙY[ˆ][\ËXÙ[\ˆØ\M^^È^\Û]KML‚ˆ]Ü[ˆÛ\ÜÓ˜[YOH™›ÛX›Û^\Û]KMÌ˜[Hš[H]ÜÜ[Ü[ˆÛ\ÜÓ˜[YOH›^Lˆ¸ (ÜÜ[Ü[’[™\[™[š[H[™\İY[[˜[\Ú\ÏÜÜ[Ù]‚ˆ]ˆÛ\ÜÓ˜[YOH™›^][\ËXÙ[\ˆØ\MH™YHˆÈˆÛ\ÜÓ˜[YOHšİ™\^X›YKMŒ˜[œÚ][Û‹XÛÛÜœÈÛÛXİØOÜ[ˆÛ\ÜÓ˜[YOH^\Û]KLÌŸÜÜ[H™YHˆÈˆÛ\ÜÓ˜[YOHšİ™\^X›YKMŒ˜[œÚ][Û‹XÛÛÜœÈ”š]˜XŞHÛXŞOØOÙ]‚ˆÙ]‚ˆÛ\ÜÓ˜[YOH^XÙ[\ˆ^VÌLH^\Û]KM]M°ªHŒˆ˜[Hš[H]ˆ\ÈÚ]H›İšY\È[™›Ü›X][Û˜[[˜[\Ú\ÈÛ›KÜ‚ˆÙ›Ûİ\‚ˆÙ]‚ˆ
-NÂŸB‚‹ËÈKKHT‘PHÓÓÔ‘SUTÈ›Üˆ˜[HX\KKB˜ÛÛœİT‘PWĞÓÓÔ‘Îˆ™XÛÜ™İš[™ËÛ[X™\‹[X™\—OˆHÂˆ	ĞØ[™ÙİIÎˆËNÎLMKŒLÎWKˆ	Ô\™\™[˜[‰ÎˆËNŒÍLLMKŒLLKˆ	Ğ™\˜]ØIÎˆËNNLMKŒMÌKˆ	ÔÙ[Z[XZÉÎˆËNLMKŒMŒKˆ	ÒÙ\›Ø›ÚØ[‰ÎˆËNÌLMKŒMMLKˆ	Õ[]Ø]IÎˆËNLKLMKŒWKˆ	Ğš[™Ú[‰ÎˆËNLLMKŒLKˆ	Õ[™Ø\Ø[‰ÎˆËNLLMKŒMÌKˆ	Ó\ØHXIÎˆËNLMKŒŒÌKˆ	Òš[X˜\˜[‰ÎˆËNÍÌLMKŒMLKˆ	ÕXY	ÎˆËNLKLMKŒŒWKˆ	ÔØ[\‰ÎˆËNLLMKŒŒKˆ	ÕX˜[˜[‰ÎˆËNMLMKŒKˆ	ÔÙ\ÙZ	ÎˆËNŒŒLMKŒLKˆ	ĞÙ[XYÚIÎˆËNŒLLMKŒKˆ	ÒÙY[™İIÎˆËNNLLMKŒLKˆ	Ğ[YY	ÎˆËNŒÍLLMKŒKˆ	Óİš[˜IÎˆËNŒMLLMKŒŒKˆ	Ó›Ü˜[IÎˆËNŒŒLMKŒLKˆ	ÓÛX›ÚÉÎˆËNNLM‹ŒLKˆ	Ó\ØH[šYIÎˆËNÌÌLMKMKŸNÂ‚™[˜İ[Ûˆ˜[SX\šY]ÊÈ\İ[™ÜË\Ü^Pİ\œ™[˜ŞK˜]\Ëİ™\™Y\İ[™Õ\›NˆÈ\İ[™ÜÎˆ[V×NÈ\Ü^Pİ\œ™[˜ŞNˆİš[™ÎÈ˜]\Îˆ™XÛÜ™İš[™Ë[X™\Èİ™\™Y\İ[™Õ\›Îˆİš[™È[JHÂˆÛÛœİÛX\ØYYÙ]X\ØYYHH\ÙTİ]J˜[ÙJNÂˆÛÛœİÛX\™Y‹Ù]X\™Y—HH\ÙTİ]O[OŠ[
-NÂˆÛÛœİÛX\šÙ\œÔ™Y‹Ù]X\šÙ\œÔ™Y—HH\ÙTİ]O™XÛÜ™İš[™Ë[OŠßJNÂ‚ˆ\ÙQY™™Xİ
+      {/* MODAL */}
+      {selectedVilla && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
+            <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={20}/></button>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600" size={32} /></div>
+              <h2 className="text-2xl font-bold mb-2">Unlock Full Audit</h2>
+              <p className="text-slate-500 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800">{selectedVilla.villa_name}</span>.</p>
+              <form onSubmit={handleLeadCapture} className="space-y-4">
+                <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 disabled:opacity-50">{isSubmitting ? 'Verifying...' : 'Unlock Now'}</button>
+                <p className="text-[10px] text-slate-400">By clicking, you agree to our Investor Privacy Terms.</p>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* FOOTER */}
+      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+          <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">â€¢</span><span>Independent villa investment analysis</span></div>
+          <div className="flex items-center gap-4"><a href="#" className="hover:text-blue-600 transition-colors">Contact</a><span className="text-slate-300">|</span><a href="#" className="hover:text-blue-600 transition-colors">Privacy Policy</a></div>
+        </div>
+        <p className="text-center text-[10px] text-slate-400 mt-4">Â© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
+      </footer>
+    </div>
+  );
+}
 
-HOˆÂˆYˆ
-YØİ[Y[œ]Y\TÙ[XİÜŠ	Û[šÖÚ™YŠH›XY›]—IÊJHÂˆÛÛœİ[šÈHØİ[Y[˜Ü™X]Q[[Y[
-	Û[šÉÊNÂˆ[šËœ™[H	Üİ[\ÚY]	ÎÂˆ[šËš™YˆH	ÚÎ‹Ëİ[œÙË˜ÛÛKÛXY›]KKÙ\İÛXY›]˜ÜÜÉÎÂˆØİ[Y[šXY˜\[™Ú[
-[šÊNÂˆBˆÛÛœİØYXY›]H
+// --- AREA COORDINATES for Bali Map ---
+const AREA_COORDS: Record<string, [number, number]> = {
+  'Canggu': [-8.6478, 115.1385],
+  'Pererenan': [-8.6350, 115.1050],
+  'Berawa': [-8.6580, 115.1470],
+  'Seminyak': [-8.6880, 115.1600],
+  'Kerobokan': [-8.6700, 115.1550],
+  'Uluwatu': [-8.8291, 115.0849],
+  'Bingin': [-8.8050, 115.1000],
+  'Ungasan': [-8.8100, 115.1700],
+  'Nusa Dua': [-8.8000, 115.2300],
+  'Jimbaran': [-8.7700, 115.1650],
+  'Ubud': [-8.5069, 115.2625],
+  'Sanur': [-8.6900, 115.2600],
+  'Tabanan': [-8.5400, 115.0000],
+  'Seseh': [-8.6200, 115.0900],
+  'Cemagi': [-8.6250, 115.0800],
+  'Kedungu': [-8.5900, 115.0500],
+  'Amed': [-8.3500, 115.6600],
+  'Lovina': [-8.1500, 115.0200],
+  'North Bali': [-8.2000, 115.1000],
+  'Lombok': [-8.5800, 116.1000],
+  'Nusa Penida': [-8.7300, 115.5400],
+};
 
-HOˆ™]È›ÛZ\ÙO›ÚYŠ
-™\ÛÛ™JHOˆÂˆYˆ
+function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null }) {
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapRef, setMapRef] = useState<any>(null);
+  const [markersRef, setMarkersRef] = useState<Record<string, any>>({});
 
-Ú[™İÈ\È[JK“
-HÈ™\ÛÛ™J
-NÈ™]\›ÈBˆÛÛœİØÜš\HØİ[Y[˜Ü™X]Q[[Y[
-	ÜØÜš\	ÊNÂˆØÜš\œÜ˜ÈH	ÚÎ‹Ëİ[œÙË˜ÛÛKÛXY›]KKÙ\İÛXY›]šœÉÎÂˆØÜš\›Û›ØYH
+  useEffect(() => {
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+    const loadLeaflet = () => new Promise<void>((resolve) => {
+      if ((window as any).L) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => resolve();
+      document.head.appendChild(script);
+    });
+    loadLeaflet().then(() => setMapLoaded(true));
+  }, []);
 
-HOˆ™\ÛÛ™J
-NÂˆØİ[Y[šXY˜\[™Ú[
-ØÜš\
-NÂˆJNÂˆØYXY›]
+  // Initialize map once
+  useEffect(() => {
+    if (!mapLoaded) return;
+    const L = (window as any).L;
+    const container = document.getElementById('bali-map');
+    if (!container || !L) return;
 
-K[Š
+    if ((container as any)._leafletMap) {
+      (container as any)._leafletMap.remove();
+      (container as any)._leafletMap = null;
+    }
 
-HOˆÙ]X\ØYY
-YJJNÂˆK×JNÂ‚ˆËÈ[š]X[^™HX\Û˜ÙBˆ\ÙQY™™Xİ
+    const map = L.map('bali-map', { zoomControl: true }).setView([-8.65, 115.15], 11);
+    (container as any)._leafletMap = map;
+    setMapRef(map);
 
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Â© OSM',
+      maxZoom: 18,
+    }).addTo(map);
 
-HOˆÂˆYˆ
-[X\ØYY
-H™]\›ÂˆÛÛœİH
-Ú[™İÈ\È[JK“ÂˆÛÛœİÛÛZ[™\ˆHØİ[Y[™Ù][[Y[RY
-	Ø˜[K[X\	ÊNÂˆYˆ
-XÛÛZ[™\ˆS
-H™]\›Â‚ˆYˆ
+    setTimeout(() => { map.invalidateSize(); }, 100);
 
-ÛÛZ[™\ˆ\È[JK—ÛXY›]X\
-HÂˆ
-ÛÛZ[™\ˆ\È[JK—ÛXY›]X\œ™[[İ™J
-NÂˆ
-ÛÛZ[™\ˆ\È[JK—ÛXY›]X\H[ÂˆB‚ˆÛÛœİX\H›X\
-	Ø˜[K[X\	ËÈ›ÛÛPÛÛ›ÛˆYHJKœÙ]šY]ÊËNKLMKŒMWKLJNÂˆ
-ÛÛZ[™\ˆ\È[JK—ÛXY›]X\HX\ÂˆÙ]X\™YŠX\
-NÂ‚ˆ[S^Y\Š	ÚÎ‹ËŞÜßK[K›Ü[œİ™Y]X\›Ü™ËŞŞŸKŞŞKŞŞ_Kœ™ÉËÂˆ]šX][Ûˆ	ğªHÔÓIËˆX^›ÛÛNˆNˆJK˜YÊX\
-NÂ‚ˆÙ][Y[İ]
+    return () => {
+      map.remove();
+      if (container) (container as any)._leafletMap = null;
+    };
+  }, [mapLoaded]);
 
+  // Add/update property markers when listings change
+  useEffect(() => {
+    if (!mapRef || !mapLoaded) return;
+    const L = (window as any).L;
+    if (!L) return;
 
-HOˆÈX\š[˜[Y]TÚ^™J
-NÈKL
-NÂ‚ˆ™]\›ˆ
+    // Clear existing markers
+    Object.values(markersRef).forEach((m: any) => { try { mapRef.removeLayer(m); } catch {} });
 
-HOˆÂˆX\œ™[[İ™J
-NÂˆYˆ
-ÛÛZ[™\ŠH
-ÛÛZ[™\ˆ\È[JK—ÛXY›]X\H[ÂˆNÂˆKÛX\ØYYJNÂ‚ˆËÈYİ\]H›Ü\HX\šÙ\œÈÚ[ˆ\İ[™ÜÈÚ[™ÙBˆ\ÙQY™™Xİ
+    const newMarkers: Record<string, any> = {};
+    const markerCluster: any[] = [];
 
+    listings.forEach(villa => {
+      const lat = parseFloat(villa.latitude);
+      const lng = parseFloat(villa.longitude);
+      if (!lat || !lng || lat === 0 || lng === 0) return;
 
-HOˆÂˆYˆ
-[X\™Yˆ[X\ØYY
-H™]\›ÂˆÛÛœİH
-Ú[™İÈ\È[JK“ÂˆYˆ
-S
-H™]\›Â‚ˆËÈÛX\ˆ^\İ[™ÈX\šÙ\œÂˆØš™Xİ˜[Y\ÊX\šÙ\œÔ™YŠK™›Ü‘XXÚ
+      const roi = villa.projected_roi || 0;
+      const roiColor = roi >= 15 ? '#16a34a' : roi >= 10 ? '#2563eb' : '#64748b';
 
-Nˆ[JHOˆÈHÈX\™Y‹œ™[[İ™S^Y\ŠJNÈHØ]ÚßHJNÂ‚ˆÛÛœİ™]ÓX\šÙ\œÎˆ™XÛÜ™İš[™Ë[OˆHßNÂˆÛÛœİX\šÙ\Û\İ\ˆ[V×HH×NÂ‚ˆ\İ[™ÜË™›Ü‘XXÚ
-š[HOˆÂˆÛÛœİ]H\œÙQ›Ø]
-š[K›]]YJNÂˆÛÛœİ™ÈH\œÙQ›Ø]
-š[K›Û™Ú]YJNÂˆYˆ
-[][™È]OOH™ÈOOH
-H™]\›Â‚ˆÛÛœİ›ÚHHš[Kœ›Ú™XİYÜ›ÚHÂˆÛÛœİ›ÚPÛÛÜˆH›ÚHHMHÈ	ÈÌM˜LÍIÈˆ›ÚHHLÈ	ÈÌMŒÙX‰Èˆ	ÈÍÍ‰ÎÂ‚ˆÛÛœİX\šÙ\ˆH˜Ú\˜ÛSX\šÙ\ŠÛ]™×KÂˆ˜Y]\ÎˆKˆš[ÛÛÜˆ›ÚPÛÛÜ‹ˆÛÛÜˆ	ÈÙ™™‰ËˆÙZYÚˆKˆÜXÚ]NˆKˆš[ÜXÚ]NˆËˆJK˜YÊX\™YŠNÂ‚ˆËÈšXÙH›Ü›X][™È›ÜˆÜ\ˆÛÛœİ\ØÈH
-š[KœšXÙWÙ\ØÜš\[Ûˆ	ÉÊKš[J
-NÂˆÛÛœİšXÙSX]ÚH\ØË›X]Ú
-×ŠQŸTÑUQUTŸÑÑ
-WÊŠ×—×JÊKÚJNÂˆ]šXÙTİˆH	ÉÎÂˆYˆ
-šXÙSX]Ú
-HÂˆÛÛœİ[[İ[H\œÙQ›Ø]
-šXÙSX]ÚÌ—Kœ™\XÙJ×ßÙË	ÉÊJHÂˆÛÛœİİ\ˆHšXÙSX]ÚÌWKÕ\\Ø\ÙJ
-NÂˆÛÛœİˆH˜]\ÖØİ\—NÂˆÛÛœİšXÙUTÑHİ\ˆOOH	ÕTÑ	ÈÈ[[İ[ˆ
-ˆ	‰ˆˆˆÈ[[İ[Èˆˆ[[İ[
-NÂˆÛÛœİ\Ü^U˜[H\Ü^Pİ\œ™[˜ŞHOOH	ÕTÑ	ÈÈšXÙUTÑˆšXÙUTÑ
-ˆ
-˜]\ÖÙ\Ü^Pİ\œ™[˜ŞWHJNÂˆšXÙTİˆH	Ù\Ü^Pİ\œ™[˜Ş_H	ÓX]œ›İ[™
-\Ü^U˜[
-KÓØØ[Tİš[™Ê
-_XÂˆH[ÙHÂˆÛÛœİH[X™\Šš[K›\İÜšXÙJHÂˆÛÛœİšXÙUTÑHHYMˆÈÈ
-˜]\ÖÉÒQ‰×HMÎŠHˆÂˆÛÛœİ\Ü^U˜[H\Ü^Pİ\œ™[˜ŞHOOH	ÕTÑ	ÈÈšXÙUTÑˆšXÙUTÑ
-ˆ
-˜]\ÖÙ\Ü^Pİ\œ™[˜ŞWHJNÂˆšXÙTİˆH	Ù\Ü^Pİ\œ™[˜Ş_H	ÓX]œ›İ[™
-\Ü^U˜[
-KÓØØ[Tİš[™Ê
-_XÂˆB‚ˆX\šÙ\‹˜š[™Ü\
-ˆ]ˆİ[OH™›ÛY˜[Z[NˆŞ\İ[K]ZNÈZ[‹]ÚYˆNÈ‚ˆ"font-weight: 700; font-size: 12px; margin-bottom: 4px; color: #1e293b;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
+      const marker = L.circleMarker([lat, lng], {
+        radius: 5,
+        fillColor: roiColor,
+        color: '#fff',
+        weight: 1,
+        opacity: 0.9,
+        fillOpacity: 0.7,
+      }).addTo(mapRef);
+
+      // Price formatting for popup
+      const desc = (villa.price_description || '').trim();
+      const priceMatch = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
+      let priceStr = '';
+      if (priceMatch) {
+        const amount = parseFloat(priceMatch[2].replace(/\s|,/g, '')) || 0;
+        const cur = priceMatch[1].toUpperCase();
+        const r = rates[cur];
+        const priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
+        const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
+        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
+      } else {
+        const p = Number(villa.last_price) || 0;
+        const priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
+        const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
+        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
+      }
+
+      marker.bindPopup(`
+        <div style="font-family: system-ui; min-width: 180px;">
+          <div style="font-weight: 700; font-size: 12px; margin-bottom: 4px; color: #1e293b;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
           <div style="font-size: 11px; color: #64748b; line-height: 1.7;">
             <div>${villa.location || 'Bali'} â€¢ ${villa.bedrooms || '?'} bed</div>
             <div><strong>${priceStr}</strong></div>
