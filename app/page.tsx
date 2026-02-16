@@ -644,17 +644,22 @@ function BaliMapView({ listings, displayCurrency, rates }: { listings: any[]; di
     const container = document.getElementById('bali-map');
     if (!container || !L) return;
 
-    // Clean up previous map instance
-    if ((container as any)._leaflet_id) {
-      (container as any)._leaflet_id = null;
-      container.innerHTML = '';
+    // Clean up any previous map instance properly
+    if ((container as any)._leafletMap) {
+      (container as any)._leafletMap.remove();
+      (container as any)._leafletMap = null;
     }
 
-    const map = L.map('bali-map').setView([-8.65, 115.15], 10);
+    const map = L.map('bali-map', { zoomControl: true }).setView([-8.65, 115.15], 10);
+    (container as any)._leafletMap = map;
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 18,
     }).addTo(map);
+
+    // Force Leaflet to recalculate container size after render
+    setTimeout(() => { map.invalidateSize(); }, 100);
 
     // Add area markers
     Object.entries(areaGroups).forEach(([loc, data]) => {
@@ -701,6 +706,7 @@ function BaliMapView({ listings, displayCurrency, rates }: { listings: any[]; di
 
     return () => {
       map.remove();
+      if (container) (container as any)._leafletMap = null;
     };
   }, [mapLoaded, areaGroups, displayCurrency, rates]);
 
