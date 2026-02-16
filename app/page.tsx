@@ -37,7 +37,7 @@ export default function BaliVillaTruth() {
       const { data, error } = await supabase
         .from('listings_tracker')
         .select('*')
-        .eq('status', 'audited'); // Fetch all, handle sort client-side
+        .eq('status', 'audited').gt('last_price', 1000).limit(5000); // Fetch all, handle sort client-side
       
       if (error) console.error(error);
       else {
