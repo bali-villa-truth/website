@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath } from 'lucide-react';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,6 +31,7 @@ export default function BaliVillaTruth() {
   const [filterLeaseType, setFilterLeaseType] = useState('All');
   const [displayCurrency, setDisplayCurrency] = useState<string>('USD'); // Show all prices in this currency
   const [sortOption, setSortOption] = useState('roi-desc');
+  const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
 
   useEffect(() => {
     async function fetchData() {
@@ -339,14 +340,30 @@ export default function BaliVillaTruth() {
       {/* RESULTS BAR */}
       <div className="max-w-7xl mx-auto mb-4 flex justify-between items-center px-2">
          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Showing {processedListings.length} Properties</p>
-         <div className="flex gap-4">
+         <div className="flex gap-4 items-center">
             <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-white px-2 py-1 rounded border border-slate-200">
                 <AlertTriangle size={10} className="text-amber-500"/> {flaggedCount} High-ROI
+            </div>
+            <div className="flex bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <button onClick={() => setViewMode('table')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'table' ? 'bg-blue-50 text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}>
+                <LayoutList size={12} /> Table
+              </button>
+              <button onClick={() => setViewMode('map')} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'map' ? 'bg-blue-50 text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}>
+                <Map size={12} /> Map
+              </button>
             </div>
          </div>
       </div>
 
+      {/* MAP VIEW */}
+      {viewMode === 'map' && (
+        <div className="max-w-7xl mx-auto mb-8">
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} />
+        </div>
+      )}
+
       {/* TABLE */}
+      {viewMode === 'table' && (
       <main className="max-w-7xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -376,12 +393,23 @@ export default function BaliVillaTruth() {
                     return (
                     <tr key={villa.id} className="hover:bg-blue-50/50 transition-colors group">
                         <td className="p-5">
-                        <div className="font-bold text-slate-900 mb-1 flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                            {villa.villa_name || 'Luxury Villa'}
-                            {isHighRoi && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-bold border border-amber-200">HOT DEAL</span>}
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
-                            <MapPin size={12} className="text-blue-500" /> {villa.location || "Bali"}
+                        <div className="flex items-center gap-3">
+                          {villa.thumbnail_url ? (
+                            <img src={villa.thumbnail_url} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0 bg-slate-100" loading="lazy" />
+                          ) : (
+                            <div className="w-16 h-12 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center">
+                              <Home size={16} className="text-slate-300" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-bold text-slate-900 mb-1 flex items-center gap-2 group-hover:text-blue-600 transition-colors">
+                                {villa.villa_name || 'Luxury Villa'}
+                                {isHighRoi && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-bold border border-amber-200">HOT DEAL</span>}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
+                                <MapPin size={12} className="text-blue-500" /> {villa.location || "Bali"}
+                            </div>
+                          </div>
                         </div>
                         </td>
                         <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
@@ -490,6 +518,7 @@ export default function BaliVillaTruth() {
           </table>
         </div>
       </main>
+      )}
 
       {/* MODAL */}
       {selectedVilla && (
@@ -518,6 +547,176 @@ export default function BaliVillaTruth() {
         </div>
         <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
       </footer>
+    </div>
+  );
+}
+
+// --- AREA COORDINATES for Bali Map ---
+const AREA_COORDS: Record<string, [number, number]> = {
+  'Canggu': [-8.6478, 115.1385],
+  'Pererenan': [-8.6350, 115.1050],
+  'Berawa': [-8.6580, 115.1470],
+  'Seminyak': [-8.6880, 115.1600],
+  'Kerobokan': [-8.6700, 115.1550],
+  'Uluwatu': [-8.8291, 115.0849],
+  'Bingin': [-8.8050, 115.1000],
+  'Ungasan': [-8.8100, 115.1700],
+  'Nusa Dua': [-8.8000, 115.2300],
+  'Jimbaran': [-8.7700, 115.1650],
+  'Ubud': [-8.5069, 115.2625],
+  'Sanur': [-8.6900, 115.2600],
+  'Tabanan': [-8.5400, 115.0000],
+  'Seseh': [-8.6200, 115.0900],
+  'Cemagi': [-8.6250, 115.0800],
+  'Kedungu': [-8.5900, 115.0500],
+  'Amed': [-8.3500, 115.6600],
+  'Lovina': [-8.1500, 115.0200],
+  'North Bali': [-8.2000, 115.1000],
+  'Lombok': [-8.5800, 116.1000],
+  'Nusa Penida': [-8.7300, 115.5400],
+};
+
+function BaliMapView({ listings, displayCurrency, rates }: { listings: any[]; displayCurrency: string; rates: Record<string, number> }) {
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  // Group listings by location
+  const areaGroups = useMemo(() => {
+    const groups: Record<string, { count: number; avgRoi: number; avgPriceUSD: number; listings: any[] }> = {};
+    listings.forEach(v => {
+      const loc = v.location || 'Other';
+      if (!groups[loc]) groups[loc] = { count: 0, avgRoi: 0, avgPriceUSD: 0, listings: [] };
+      groups[loc].count++;
+      groups[loc].listings.push(v);
+    });
+    // Calculate averages
+    Object.keys(groups).forEach(loc => {
+      const g = groups[loc];
+      const totalRoi = g.listings.reduce((sum: number, v: any) => sum + (v.projected_roi || 0), 0);
+      const totalPrice = g.listings.reduce((sum: number, v: any) => {
+        const desc = (v.price_description || '').trim();
+        const match = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
+        let priceUSD = 0;
+        if (match) {
+          const amount = parseFloat(match[2].replace(/\s|,/g, '')) || 0;
+          const cur = match[1].toUpperCase();
+          const r = rates[cur];
+          priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
+        } else {
+          const p = Number(v.last_price) || 0;
+          priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
+        }
+        return sum + priceUSD;
+      }, 0);
+      g.avgRoi = g.count > 0 ? totalRoi / g.count : 0;
+      g.avgPriceUSD = g.count > 0 ? totalPrice / g.count : 0;
+    });
+    return groups;
+  }, [listings, rates]);
+
+  useEffect(() => {
+    // Dynamically load Leaflet CSS
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    // Dynamically load Leaflet JS
+    const loadLeaflet = () => {
+      return new Promise<void>((resolve) => {
+        if ((window as any).L) { resolve(); return; }
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => resolve();
+        document.head.appendChild(script);
+      });
+    };
+
+    loadLeaflet().then(() => {
+      setMapLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!mapLoaded) return;
+    const L = (window as any).L;
+    const container = document.getElementById('bali-map');
+    if (!container || !L) return;
+
+    // Clean up previous map instance
+    if ((container as any)._leaflet_id) {
+      (container as any)._leaflet_id = null;
+      container.innerHTML = '';
+    }
+
+    const map = L.map('bali-map').setView([-8.65, 115.15], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    // Add area markers
+    Object.entries(areaGroups).forEach(([loc, data]) => {
+      const coords = AREA_COORDS[loc];
+      if (!coords) return;
+
+      const radius = Math.max(12, Math.min(30, 8 + data.count * 0.5));
+      const roiColor = data.avgRoi >= 15 ? '#16a34a' : data.avgRoi >= 10 ? '#2563eb' : '#64748b';
+
+      const circle = L.circleMarker(coords, {
+        radius,
+        fillColor: roiColor,
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8,
+      }).addTo(map);
+
+      // Format average price for popup
+      const avgPriceFormatted = displayCurrency === 'IDR'
+        ? `IDR ${Math.round(data.avgPriceUSD * (rates['IDR'] || 16782)).toLocaleString()}`
+        : `${displayCurrency} ${Math.round(displayCurrency === 'USD' ? data.avgPriceUSD : data.avgPriceUSD * (rates[displayCurrency] || 1)).toLocaleString()}`;
+
+      circle.bindPopup(`
+        <div style="font-family: system-ui; min-width: 160px;">
+          <div style="font-weight: 700; font-size: 14px; margin-bottom: 6px; color: #1e293b;">${loc}</div>
+          <div style="font-size: 12px; color: #64748b; line-height: 1.8;">
+            <div><strong>${data.count}</strong> listings</div>
+            <div>Avg ROI: <strong style="color: ${roiColor}">${data.avgRoi.toFixed(1)}%</strong></div>
+            <div>Avg Price: <strong>${avgPriceFormatted}</strong></div>
+          </div>
+        </div>
+      `);
+
+      // Add label
+      const label = L.divIcon({
+        className: 'area-label',
+        html: `<div style="background: ${roiColor}; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; font-family: system-ui; white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">${loc} (${data.count})</div>`,
+        iconSize: [0, 0],
+        iconAnchor: [-radius - 4, radius / 2],
+      });
+      L.marker(coords, { icon: label, interactive: false }).addTo(map);
+    });
+
+    return () => {
+      map.remove();
+    };
+  }, [mapLoaded, areaGroups, displayCurrency, rates]);
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <Map size={16} className="text-blue-500" /> Area Overview
+        </div>
+        <div className="flex gap-3 text-[10px] text-slate-400">
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-600 inline-block"></span> ROI ≥ 15%</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span> ROI 10-15%</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-slate-500 inline-block"></span> ROI &lt; 10%</span>
+        </div>
+      </div>
+      <div id="bali-map" style={{ height: '500px', width: '100%' }}></div>
     </div>
   );
 }
