@@ -124,6 +124,18 @@ export default function BaliVillaTruth() {
     return `${displayCurrency} ${Math.round(value).toLocaleString()}`;
   };
 
+  // --- Price change badge: show ↓12% or ↑5% when previous_price exists ---
+  const getPriceChangeBadge = (villa: any): { text: string; direction: 'down' | 'up' | null } => {
+    const prev = Number(villa.previous_price) || 0;
+    const curr = Number(villa.last_price) || 0;
+    if (!prev || !curr || prev === curr) return { text: '', direction: null };
+    const pctChange = ((curr - prev) / prev) * 100;
+    if (Math.abs(pctChange) < 1) return { text: '', direction: null }; // Ignore tiny changes
+    const direction = pctChange < 0 ? 'down' : 'up';
+    const symbol = direction === 'down' ? '↓' : '↑';
+    return { text: `${symbol} ${Math.abs(pctChange).toFixed(0)}%`, direction };
+  };
+
   // --- Display nightly & occupancy for analysis (use DB value or conservative default so every property shows analysis) ---
   const getDisplayNightly = (villa: any): number =>
     villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
@@ -373,7 +385,22 @@ export default function BaliVillaTruth() {
                         </div>
                         </td>
                         <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
-                         {formatPriceInCurrency(villa)}
+                         <div className="flex items-center gap-2">
+                           {formatPriceInCurrency(villa)}
+                           {(() => {
+                             const badge = getPriceChangeBadge(villa);
+                             if (!badge.direction) return null;
+                             return (
+                               <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                 badge.direction === 'down'
+                                   ? 'bg-green-100 text-green-700 border border-green-200'
+                                   : 'bg-red-100 text-red-600 border border-red-200'
+                               }`}>
+                                 {badge.text}
+                               </span>
+                             );
+                           })()}
+                         </div>
                         </td>
                         <td className="p-5 font-mono text-slate-500 text-xs">
                          {getPricePerSqm(villa)}
