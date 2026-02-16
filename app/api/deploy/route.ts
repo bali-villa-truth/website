@@ -6,26 +6,26 @@ const REPO = 'bali-villa-truth/website';
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const deployKey = process.env.DEPLOY_KEY;
-  
-  if (\!deployKey || authHeader \!== `Bearer ${deployKey}`) {
+
+  if (!deployKey || authHeader !== 'Bearer ' + deployKey) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (\!GITHUB_TOKEN) {
+  if (!GITHUB_TOKEN) {
     return NextResponse.json({ error: 'GITHUB_TOKEN not configured' }, { status: 500 });
   }
 
   const body = await req.json();
   const { path, content, message, branch = 'main' } = body;
 
-  if (\!path || \!content || \!message) {
+  if (!path || !content || !message) {
     return NextResponse.json({ error: 'Missing path, content, or message' }, { status: 400 });
   }
 
   // Get current file SHA
-  const getRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?ref=${branch}`, {
+  const getRes = await fetch('https://api.github.com/repos/' + REPO + '/contents/' + path + '?ref=' + branch, {
     headers: {
-      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Authorization': 'Bearer ' + GITHUB_TOKEN,
       'Accept': 'application/vnd.github+json',
     },
   });
@@ -37,24 +37,26 @@ export async function POST(req: NextRequest) {
   }
 
   // Push file
-  const putRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+  const putBody: Record<string, unknown> = {
+    message,
+    content,
+    branch,
+  };
+  if (sha) putBody.sha = sha;
+
+  const putRes = await fetch('https://api.github.com/repos/' + REPO + '/contents/' + path, {
     method: 'PUT',
     headers: {
-      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Authorization': 'Bearer ' + GITHUB_TOKEN,
       'Accept': 'application/vnd.github+json',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      message,
-      content,
-      ...(sha ? { sha } : {}),
-      branch,
-    }),
+    body: JSON.stringify(putBody),
   });
 
   const result = await putRes.json();
 
-  if (\!putRes.ok) {
+  if (!putRes.ok) {
     return NextResponse.json({ error: result.message || 'GitHub push failed' }, { status: putRes.status });
   }
 
