@@ -37,7 +37,9 @@ export default function BaliVillaTruth() {
       const { data, error } = await supabase
         .from('listings_tracker')
         .select('*')
-        .eq('status', 'audited').gt('last_price', 0).limit(5000); // Fetch all, handle sort client-side
+        .eq('status', 'audited')
+        .gt('last_price', 0)
+        .limit(5000); // Default is 1000, we need all listings
       
       if (error) console.error(error);
       else {
@@ -109,6 +111,19 @@ export default function BaliVillaTruth() {
     return `${displayCurrency} ${value.toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}`;
   };
 
+  // --- Price per sqm in display currency ---
+  const getPricePerSqm = (villa: any): string => {
+    const priceUSD = getPriceUSD(villa);
+    const landSize = parseInt(villa.land_size) || 0;
+    if (!priceUSD || !landSize) return '—';
+    const perSqmUSD = priceUSD / landSize;
+    const r = rates[displayCurrency];
+    if (!r) return `${displayCurrency} ${Math.round(perSqmUSD).toLocaleString()}`;
+    const value = displayCurrency === 'USD' ? perSqmUSD : perSqmUSD * r;
+    if (displayCurrency === 'IDR') return `IDR ${Math.round(value).toLocaleString()}`;
+    return `${displayCurrency} ${Math.round(value).toLocaleString()}`;
+  };
+
   // --- Display nightly & occupancy for analysis (use DB value or conservative default so every property shows analysis) ---
   const getDisplayNightly = (villa: any): number =>
     villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
@@ -141,11 +156,17 @@ export default function BaliVillaTruth() {
       const priceB = getPriceUSD(b);
       const roiA = a.projected_roi || 0;
       const roiB = b.projected_roi || 0;
+      const landA = parseInt(a.land_size) || 0;
+      const landB = parseInt(b.land_size) || 0;
+      const psmA = landA > 0 ? priceA / landA : 0;
+      const psmB = landB > 0 ? priceB / landB : 0;
       switch (sortOption) {
         case 'price-asc': return priceA - priceB;
         case 'price-desc': return priceB - priceA;
         case 'roi-asc': return roiA - roiB;
         case 'roi-desc': return roiB - roiA;
+        case 'psm-asc': return psmA - psmB;
+        case 'psm-desc': return psmB - psmA;
         default: return 0;
       }
     });
@@ -253,6 +274,8 @@ export default function BaliVillaTruth() {
                         <option value="roi-asc">ROI: Low → High</option>
                         <option value="price-asc">Price: Low → High</option>
                         <option value="price-desc">Price: High → Low</option>
+                        <option value="psm-asc">Price/m²: Low → High</option>
+                        <option value="psm-desc">Price/m²: High → Low</option>
                     </select>
                 </div>
             </div>
@@ -319,6 +342,7 @@ export default function BaliVillaTruth() {
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold text-slate-400">
                 <th className="p-5">Asset & Location</th>
                 <th className="p-5">Price ({displayCurrency})</th>
+                <th className="p-5">Price/m²</th>
                 <th className="p-5 text-center">Verified ROI</th>
                 <th className="p-5">Specs</th>
                 <th className="p-5 text-right">Action</th>
@@ -327,7 +351,7 @@ export default function BaliVillaTruth() {
             <tbody className="divide-y divide-slate-100">
               {processedListings.length === 0 ? (
                   <tr>
-                      <td colSpan={5} className="p-10 text-center text-slate-400">
+                      <td colSpan={6} className="p-10 text-center text-slate-400">
                           <Filter size={48} className="mx-auto mb-4 opacity-20" />
                           No properties match your filters.
                       </td>
@@ -350,6 +374,9 @@ export default function BaliVillaTruth() {
                         </td>
                         <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
                          {formatPriceInCurrency(villa)}
+                        </td>
+                        <td className="p-5 font-mono text-slate-500 text-xs">
+                         {getPricePerSqm(villa)}
                         </td>
                         <td className="p-5">
                         <div className="flex flex-col items-center relative">
