@@ -245,14 +245,13 @@ export default function BaliVillaTruth() {
   const getRedFlags = (villa: any): RedFlag[] => {
     const flags: RedFlag[] = [];
     const roi = villa.projected_roi || 0;
-    const features = (villa.features || '').toLowerCase();
     const years = Number(villa.lease_years) || 0;
-    const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
     const priceUSD = getPriceUSD(villa);
     const nightly = getDisplayNightly(villa);
     const { netRoi } = calculateNetROI(villa);
 
-    // --- Pre-computed flags from pipeline (auditor_remote.py --enrich) ---
+    // --- ALL flags read from pipeline (auditor_remote.py --enrich) ---
+    // No client-side flag computation — everything is pre-computed server-side.
     const pipelineFlags = (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
 
     if (pipelineFlags.includes('BUDGET_VILLA')) {
@@ -265,27 +264,20 @@ export default function BaliVillaTruth() {
       flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.` });
     }
 
-    // --- Client-side checks (ROI-based, depend on live calculations) ---
-
-    // Agent claims > 25% ROI — almost always inflated
-    if (roi > 25) {
+    if (pipelineFlags.includes('INFLATED_ROI')) {
       flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Agent claims ${roi.toFixed(0)}% ROI. After real costs, BVT estimates ~${netRoi.toFixed(1)}%. Be very skeptical.` });
-    } else if (roi > 18) {
+    }
+
+    if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
       flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `${roi.toFixed(0)}% is above Bali averages. After costs, closer to ${netRoi.toFixed(1)}%.` });
     }
 
-    // Lease decay warning (only if NOT already flagged as SHORT_LEASE by pipeline)
-    if (!pipelineFlags.includes('SHORT_LEASE') && !isFreehold && years > 15 && years <= 25) {
+    if (pipelineFlags.includes('LEASE_DECAY')) {
       flags.push({ level: 'warning', label: 'Lease Decay', detail: `${years}yr lease means ${(100/years).toFixed(1)}%/yr depreciation. Factor this into real returns.` });
     }
 
-    // Price-to-nightly rate mismatch (cheap property claiming high nightly rate)
-    if (priceUSD > 0 && nightly > 0) {
-      const impliedAnnualGross = nightly * 365 * 0.65; // 65% occupancy
-      const impliedRoi = (impliedAnnualGross / priceUSD) * 100;
-      if (impliedRoi > 30 && priceUSD < 200000) {
-        flags.push({ level: 'warning', label: 'Rate vs Price Gap', detail: `$${nightly}/night on a $${Math.round(priceUSD/1000)}k property implies unrealistic occupancy or rates.` });
-      }
+    if (pipelineFlags.includes('RATE_PRICE_GAP')) {
+      flags.push({ level: 'warning', label: 'Rate vs Price Gap', detail: `$${nightly}/night on a $${Math.round(priceUSD/1000)}k property implies unrealistic occupancy or rates.` });
     }
 
     return flags;
