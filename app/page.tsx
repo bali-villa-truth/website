@@ -3,9 +3,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye } from 'lucide-react';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://imocmonichptidmgwxdh.supabase.co';
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imltb2Ntb25pY2hwdGlkbWd3eGRoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTQ4OTMzNSwiZXhwIjoyMDg1MDY1MzM1fQ.DhoZgUAU1b-15NvfDnCoeay_0joG-tI27ETty5HIATs';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const FALLBACK_RATES: Record<string, number> = { USD: 1, IDR: 16782, AUD: 1.53, EUR: 0.92, SGD: 1.34 };
 
@@ -21,7 +22,7 @@ export default function BaliVillaTruth() {
 
   // --- FILTER STATES ---
   const [filterLocation, setFilterLocation] = useState('All');
-  const [filterPrice, setFilterPrice] = useState(10000000);
+  const [filterPrice, setFilterPrice] = useState(10000000); 
   const [filterRoi, setFilterRoi] = useState(0);
   const [filterLandSize, setFilterLandSize] = useState(0);
   const [filterBuildSize, setFilterBuildSize] = useState(0);
@@ -41,19 +42,19 @@ export default function BaliVillaTruth() {
         .eq('status', 'audited')
         .gt('last_price', 0)
         .limit(5000); // Default is 1000, we need all listings
-
+      
       if (error) console.error(error);
       else {
         const raw = data || [];
         const real = raw.filter((v: any) => (v.last_price || 0) > 0 && (v.villa_name || '').length > 2);
         setListings(real);
       }
-
+      
       const { count } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true });
       setLeadCount(count || 0);
-
+      
       setLoading(false);
     }
     fetchData();
@@ -238,7 +239,7 @@ export default function BaliVillaTruth() {
     };
   };
 
-  // --- RED FLAGS: Detect suspicious/misleading listings ---
+  // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
   type RedFlag = { level: 'warning' | 'danger'; label: string; detail: string };
 
   const getRedFlags = (villa: any): RedFlag[] => {
@@ -251,6 +252,21 @@ export default function BaliVillaTruth() {
     const nightly = getDisplayNightly(villa);
     const { netRoi } = calculateNetROI(villa);
 
+    // --- Pre-computed flags from pipeline (auditor_remote.py --enrich) ---
+    const pipelineFlags = (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
+
+    if (pipelineFlags.includes('BUDGET_VILLA')) {
+      const beds = Number(villa.bedrooms) || 1;
+      const ppr = Math.round(priceUSD / beds);
+      flags.push({ level: 'warning', label: 'Budget Villa', detail: `$${ppr.toLocaleString()}/room is below threshold. Nightly rate corrected down 25%.` });
+    }
+
+    if (pipelineFlags.includes('SHORT_LEASE')) {
+      flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.` });
+    }
+
+    // --- Client-side checks (ROI-based, depend on live calculations) ---
+
     // Agent claims > 25% ROI — almost always inflated
     if (roi > 25) {
       flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Agent claims ${roi.toFixed(0)}% ROI. After real costs, BVT estimates ~${netRoi.toFixed(1)}%. Be very skeptical.` });
@@ -258,10 +274,8 @@ export default function BaliVillaTruth() {
       flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `${roi.toFixed(0)}% is above Bali averages. After costs, closer to ${netRoi.toFixed(1)}%.` });
     }
 
-    // Short lease with no depreciation awareness
-    if (!isFreehold && years > 0 && years <= 15) {
-      flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${(100/years).toFixed(1)}% per year toward $0.` });
-    } else if (!isFreehold && years > 15 && years <= 25) {
+    // Lease decay warning (only if NOT already flagged as SHORT_LEASE by pipeline)
+    if (!pipelineFlags.includes('SHORT_LEASE') && !isFreehold && years > 15 && years <= 25) {
       flags.push({ level: 'warning', label: 'Lease Decay', detail: `${years}yr lease means ${(100/years).toFixed(1)}%/yr depreciation. Factor this into real returns.` });
     }
 
@@ -281,7 +295,7 @@ export default function BaliVillaTruth() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-8">
-
+      
       {/* HEADER */}
       <header className="max-w-7xl mx-auto mb-6">
         <div className="text-center mb-8">
@@ -292,10 +306,10 @@ export default function BaliVillaTruth() {
             Independent ROI auditing for serious investors. We verify the data agents hide.
             </p>
         </div>
-
+        
         {/* FILTER DASHBOARD */}
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
-
+            
             {/* ROW 1: Core Filters */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                 <div className="relative">
@@ -376,7 +390,7 @@ export default function BaliVillaTruth() {
                         <option value={5}>5+ Beds</option>
                     </select>
                 </div>
-
+                
                 <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
                     <Bath size={14} className="text-slate-400" />
                     <select value={filterBaths} onChange={(e) => setFilterBaths(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto">
@@ -397,7 +411,7 @@ export default function BaliVillaTruth() {
                     <input type="number" placeholder="Min Build m²" value={filterBuildSize === 0 ? '' : filterBuildSize} onChange={(e) => setFilterBuildSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500" />
                 </div>
 
-                <button
+                <button 
                     onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
                     className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
                 >
@@ -457,11 +471,12 @@ export default function BaliVillaTruth() {
                         <td className="p-5">
                         <div className="flex items-center gap-3">
                           {villa.thumbnail_url ? (
-                            <img src={villa.thumbnail_url} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0 bg-slate-100" loading="lazy" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
-                          ) : null}
-                          <div className={`w-16 h-12 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center ${villa.thumbnail_url ? 'hidden' : ''}`}>
-                            <Home size={16} className="text-slate-300" />
-                          </div>
+                            <img src={villa.thumbnail_url} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0 bg-slate-100" loading="lazy" />
+                          ) : (
+                            <div className="w-16 h-12 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center">
+                              <Home size={16} className="text-slate-300" />
+                            </div>
+                          )}
                           <div>
                             <div className="font-bold text-slate-900 mb-1 flex items-center gap-2 group-hover:text-blue-600 transition-colors">
                                 {villa.villa_name || 'Luxury Villa'}
@@ -493,69 +508,101 @@ export default function BaliVillaTruth() {
                          </div>
                         </td>
                         <td className="p-5 font-mono text-slate-500 text-xs">
-                        {getPricePerSqm(villa)}
+                         {getPricePerSqm(villa)}
                         </td>
                         <td className="p-5">
                         <div className="flex flex-col items-center relative">
                             <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
-                            {/* Agent's gross ROI */}
-                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 justify-center w-fit mx-auto ${hasDanger ? 'bg-red-50 text-red-700 border-red-200' : hasWarning ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-green-100 text-green-700 border-green-200'}`}>
-                                {villa.projected_roi?.toFixed(1)}% <Info size={10} className="opacity-50" />
+                            {/* BVT Adjusted ROI - the real number */}
+                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 justify-center w-fit mx-auto ${
+                              netRoi >= 12 ? 'bg-green-100 text-green-700 border-green-200' :
+                              netRoi >= 7 ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                              netRoi >= 0 ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                              'bg-red-100 text-red-600 border-red-200'
+                            }`}>
+                                {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
                             </span>
-                            {/* BVT Net ROI */}
-                            <p className={`text-[10px] mt-1 font-bold ${netRoi < 0 ? 'text-red-600' : netRoi < 5 ? 'text-amber-600' : 'text-green-600'}`}>
-                                Net: {netRoi.toFixed(1)}%
-                            </p>
-                            <p className="text-[10px] text-slate-500 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
+                            <p className="text-[10px] text-slate-400 mt-1 line-through opacity-60 font-mono">Agent: {villa.projected_roi?.toFixed(1)}%</p>
+                            <p className="text-[9px] text-slate-500 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
+
+                            {/* Red flag badges under ROI */}
+                            {redFlags.length > 0 && (
+                              <div className="flex flex-wrap justify-center gap-1 mt-1.5">
+                                {redFlags.map((flag, idx) => (
+                                  <span key={idx} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flag.level === 'danger' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
+                                    {flag.label}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Enhanced tooltip with full cost breakdown */}
                             {hoveredRoi === villa.id && (
-                                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
-                                <div className="font-bold mb-2 text-slate-300">ROI Transparency Breakdown</div>
-                                <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="flex justify-between"><span>Agent&apos;s Gross ROI:</span> <span className="text-emerald-400 font-mono font-bold">{villa.projected_roi?.toFixed(1)}%</span></div>
-                                    <div className="flex justify-between"><span>Est. Nightly:</span> <span className="text-emerald-400 font-mono">${getDisplayNightly(villa)}</span></div>
-                                    <div className="flex justify-between"><span>Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round(getDisplayOccupancy(villa))}%</span></div>
+                                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
+                                <div className="font-bold mb-2 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Reality Check</div>
+
+                                {/* Agent vs BVT comparison */}
+                                <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
+                                  <div className="flex-1 text-center">
+                                    <div className="text-slate-500 text-[9px] mb-0.5">Agent Claims</div>
+                                    <div className="text-lg font-bold text-slate-400 line-through">{villa.projected_roi?.toFixed(1)}%</div>
+                                  </div>
+                                  <div className="flex-1 text-center">
+                                    <div className="text-blue-400 text-[9px] mb-0.5 font-bold">BVT Adjusted</div>
+                                    <div className={`text-lg font-bold ${netRoi >= 7 ? 'text-emerald-400' : netRoi >= 0 ? 'text-amber-400' : 'text-red-400'}`}>{netRoi.toFixed(1)}%</div>
+                                  </div>
                                 </div>
+
+                                {/* Revenue data */}
+                                <div className="mb-2 pb-2 border-b border-slate-700">
+                                    <div className="flex justify-between"><span>Est. Nightly Rate:</span> <span className="text-emerald-400 font-mono">${getDisplayNightly(villa)}</span></div>
+                                    <div className="flex justify-between"><span>Est. Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round(getDisplayOccupancy(villa))}%</span></div>
+                                </div>
+
                                 {/* Cost breakdown */}
                                 <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="font-bold mb-1 text-red-400">Hidden Costs (agents don&apos;t mention):</div>
-                                    {Object.values(COST_BREAKDOWN).map((cost, idx) => (
-                                        <div key={idx} className="flex justify-between">
-                                            <span>{cost.label}:</span>
-                                            <span className="text-red-400 font-mono">-{(cost.rate * 100).toFixed(0)}%</span>
-                                        </div>
+                                    <div className="text-slate-500 font-bold mb-1">Costs Agents Don&apos;t Mention:</div>
+                                    {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
+                                      <div key={key} className="flex justify-between">
+                                        <span className="text-slate-400">{cost.label}</span>
+                                        <span className="text-red-400 font-mono">-{(cost.rate * 100).toFixed(0)}%</span>
+                                      </div>
                                     ))}
                                     {leaseDepreciation > 0 && (
-                                        <div className="flex justify-between mt-1 pt-1 border-t border-slate-700">
-                                            <span>Lease Depreciation:</span>
-                                            <span className="text-red-400 font-mono">-{leaseDepreciation.toFixed(1)}%/yr</span>
-                                        </div>
+                                      <div className="flex justify-between mt-1 pt-1 border-t border-slate-800">
+                                        <span className="text-orange-400">Lease Depreciation</span>
+                                        <span className="text-red-400 font-mono">-{leaseDepreciation.toFixed(1)}%</span>
+                                      </div>
                                     )}
-                                </div>
-                                <div className="flex justify-between font-bold text-sm">
-                                    <span>BVT Net ROI:</span>
-                                    <span className={netRoi < 0 ? 'text-red-400' : netRoi < 5 ? 'text-amber-400' : 'text-emerald-400'}>{netRoi.toFixed(1)}%</span>
-                                </div>
-                                {/* Red flags */}
-                                {redFlags.length > 0 && (
-                                    <div className="mt-2 pt-2 border-t border-slate-700">
-                                        {redFlags.map((flag, idx) => (
-                                            <div key={idx} className={`text-[9px] mt-1 ${flag.level === 'danger' ? 'text-red-400' : 'text-amber-400'}`}>
-                                                {flag.level === 'danger' ? '🚩' : '⚠️'} {flag.detail}
-                                            </div>
-                                        ))}
+                                    <div className="flex justify-between mt-1 pt-1 border-t border-slate-700 font-bold">
+                                      <span>Total Revenue Lost:</span>
+                                      <span className="text-red-400 font-mono">~{((TOTAL_COST_RATIO) * 100).toFixed(0)}%{leaseDepreciation > 0 ? ` + ${leaseDepreciation.toFixed(1)}%` : ''}</span>
                                     </div>
+                                </div>
+
+                                {/* Red flags in tooltip */}
+                                {redFlags.length > 0 && (
+                                  <div className="mb-2 pb-2 border-b border-slate-700">
+                                    {redFlags.map((flag, idx) => (
+                                      <div key={idx} className={`flex items-start gap-1.5 mb-1 ${flag.level === 'danger' ? 'text-red-400' : 'text-amber-400'}`}>
+                                        <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" />
+                                        <span>{flag.detail}</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
+
+                                {/* Rate factors from scraper */}
                                 {rateFactors.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-slate-700">
-                                    <div className="font-bold mb-1 text-slate-400">Rate Factors:</div>
-                                    <ul className="space-y-1">
-                                        {rateFactors.map((factor, idx) => (
-                                        <li key={idx} className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span><span>{factor}</span></li>
-                                        ))}
-                                    </ul>
+                                <div className="mb-2 pb-2 border-b border-slate-700">
+                                  <div className="text-slate-500 font-bold mb-1">Rate Factors:</div>
+                                  {rateFactors.map((factor, idx) => (
+                                    <div key={idx} className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span><span className="text-slate-300">{factor}</span></div>
+                                  ))}
                                 </div>
                                 )}
-                                <p className="mt-2 pt-2 border-t border-slate-700 text-slate-400">Industry benchmarks: leasehold 10–15%, freehold 5–8%. Estimate only.</p>
+
+                                <p className="text-slate-500 italic">Benchmarks: leasehold 8–12% net, freehold 4–7% net. BVT deducts real operating costs from agent figures.</p>
                                 <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
                                 </div>
                             )}
@@ -571,7 +618,7 @@ export default function BaliVillaTruth() {
                                     {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1]?.trim().split(' ')[0] || '?'} Bath`}
                                 </span>
                             </div>
-
+                            
                             {/* Lease Type / Years - SMART DISPLAY: use features first, then lease_years, show years remaining for leasehold */}
                             <div className="flex items-center gap-2">
                                 <Calendar size={12} className="text-slate-400"/>
@@ -594,13 +641,13 @@ export default function BaliVillaTruth() {
 
                             {/* Land Size */}
                             <div className="flex items-center gap-2">
-                                <Ruler size={12} className="text-slate-400"/>
+                                <Ruler size={12} className="text-slate-400"/> 
                                 <span>Land: <span className="font-medium">{villa.land_size || '?'}</span> m²</span>
                             </div>
 
                             {/* Building Size - always show row; use — when missing */}
                             <div className="flex items-center gap-2">
-                                <Layers size={12} className="text-slate-400"/>
+                                <Layers size={12} className="text-slate-400"/> 
                                 <span>Build: <span className="font-medium">{villa.building_size > 0 ? `${villa.building_size} m²` : '—'}</span></span>
                             </div>
                         </td>
