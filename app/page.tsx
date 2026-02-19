@@ -208,34 +208,39 @@ export default function BaliVillaTruth() {
     return factorsStr.split(' | ').filter(f => f.trim());
   };
 
-  // --- BVT NET ROI: Strip out real-world costs agents never mention ---
+  // --- BVT NET ROI: Cost breakdown shown in tooltip (matches pipeline's 40% expense load) ---
   const COST_BREAKDOWN = {
-    ota: { label: 'OTA / Booking Fees', rate: 0.18, note: 'Airbnb/Booking.com take 15–20%' },
-    mgmt: { label: 'Property Management', rate: 0.18, note: 'On-ground manager, cleaning, laundry' },
-    tax: { label: 'Indonesian Tax (PPh)', rate: 0.10, note: '10% tax on rental income' },
-    maint: { label: 'Maintenance & Repairs', rate: 0.05, note: 'Tropical wear, pool, AC, pest control' },
+    mgmt: { label: 'Property Management', rate: 0.15, note: 'On-ground manager, cleaning, laundry' },
+    ota: { label: 'OTA / Booking Fees', rate: 0.15, note: 'Airbnb/Booking.com commissions' },
+    maint: { label: 'Maintenance & Utilities', rate: 0.10, note: 'Pool, garden, AC, wifi, repairs' },
   };
-  const TOTAL_COST_RATIO = Object.values(COST_BREAKDOWN).reduce((sum, c) => sum + c.rate, 0); // ~0.51
+  const TOTAL_COST_RATIO = Object.values(COST_BREAKDOWN).reduce((sum, c) => sum + c.rate, 0); // 0.40
 
-  const calculateNetROI = (villa: any): { netRoi: number; leaseDepreciation: number; grossRevPct: number } => {
-    const agentRoi = villa.projected_roi || 0;
-    // Agent ROI = gross annual revenue / price × 100
-    // Net revenue after costs = gross × (1 - TOTAL_COST_RATIO)
-    const netRevPct = agentRoi * (1 - TOTAL_COST_RATIO);
+  const calculateNetROI = (villa: any): { netRoi: number; leaseDepreciation: number; grossRoi: number } => {
+    // projected_roi from pipeline = ALREADY net after 40% expenses + lease penalty
+    // This is the BVT stress-tested number — display it directly
+    const netRoi = villa.projected_roi || 0;
 
-    // Leasehold depreciation: your asset goes to $0 at lease end
+    // Back-calculate gross ROI for "Agent Claims" display
+    // gross = nightly_rate × 365 × occupancy / price × 100
+    const priceUSD = getPriceUSD(villa);
+    const nightly = villa.est_nightly_rate || getDisplayNightly(villa);
+    const occupancy = villa.est_occupancy || getDisplayOccupancy(villa) / 100;
+    const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
+
+    // Leasehold depreciation (for tooltip display — already factored into pipeline's netRoi for short leases)
     const features = (villa.features || '').toLowerCase();
     const years = Number(villa.lease_years) || 0;
     const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
     let leaseDepreciation = 0;
     if (!isFreehold && years > 0 && years < 999) {
-      leaseDepreciation = (1 / years) * 100; // annual depreciation as % of purchase price
+      leaseDepreciation = (1 / years) * 100;
     }
 
     return {
-      netRoi: Math.max(netRevPct - leaseDepreciation, -10),
+      netRoi: Math.max(netRoi, -10),
       leaseDepreciation,
-      grossRevPct: agentRoi,
+      grossRoi: Math.min(grossRoi, 50), // cap display at 50% to avoid absurd numbers
     };
   };
 
@@ -244,11 +249,10 @@ export default function BaliVillaTruth() {
 
   const getRedFlags = (villa: any): RedFlag[] => {
     const flags: RedFlag[] = [];
-    const roi = villa.projected_roi || 0;
     const years = Number(villa.lease_years) || 0;
     const priceUSD = getPriceUSD(villa);
     const nightly = getDisplayNightly(villa);
-    const { netRoi } = calculateNetROI(villa);
+    const { netRoi, grossRoi } = calculateNetROI(villa);
 
     // --- ALL flags read from pipeline (auditor_remote.py --enrich) ---
     // No client-side flag computation — everything is pre-computed server-side.
@@ -265,11 +269,11 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
-      flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Agent claims ${roi.toFixed(0)}% ROI. After real costs, BVT estimates ~${netRoi.toFixed(1)}%. Be very skeptical.` });
+      flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Gross ROI of ${grossRoi.toFixed(0)}% is almost certainly inflated. After real costs, BVT estimates ~${netRoi.toFixed(1)}%.` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
-      flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `${roi.toFixed(0)}% is above Bali averages. After costs, closer to ${netRoi.toFixed(1)}%.` });
+      flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `Gross ${grossRoi.toFixed(0)}% is above Bali averages. After 40% expenses, net yield is ~${netRoi.toFixed(1)}%.` });
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
@@ -450,7 +454,7 @@ export default function BaliVillaTruth() {
                 processedListings.map((villa) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
-                    const { netRoi, leaseDepreciation } = calculateNetROI(villa);
+                    const { netRoi, leaseDepreciation, grossRoi } = calculateNetROI(villa);
                     const hasDanger = redFlags.some(f => f.level === 'danger');
                     const hasWarning = redFlags.length > 0;
 
@@ -510,7 +514,7 @@ export default function BaliVillaTruth() {
                             }`}>
                                 {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
                             </span>
-                            <p className="text-[10px] text-slate-400 mt-1 line-through opacity-60 font-mono">Agent: {villa.projected_roi?.toFixed(1)}%</p>
+                            <p className="text-[10px] text-slate-400 mt-1 line-through opacity-60 font-mono">Gross: {grossRoi.toFixed(1)}%</p>
                             <p className="text-[9px] text-slate-500 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
 
                             {/* Red flag badges under ROI */}
@@ -529,14 +533,14 @@ export default function BaliVillaTruth() {
                                 <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
                                 <div className="font-bold mb-2 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Reality Check</div>
 
-                                {/* Agent vs BVT comparison */}
+                                {/* Gross vs Net comparison */}
                                 <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
                                   <div className="flex-1 text-center">
-                                    <div className="text-slate-500 text-[9px] mb-0.5">Agent Claims</div>
-                                    <div className="text-lg font-bold text-slate-400 line-through">{villa.projected_roi?.toFixed(1)}%</div>
+                                    <div className="text-slate-500 text-[9px] mb-0.5">Gross ROI</div>
+                                    <div className="text-lg font-bold text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
                                   </div>
                                   <div className="flex-1 text-center">
-                                    <div className="text-blue-400 text-[9px] mb-0.5 font-bold">BVT Adjusted</div>
+                                    <div className="text-blue-400 text-[9px] mb-0.5 font-bold">BVT Net Yield</div>
                                     <div className={`text-lg font-bold ${netRoi >= 7 ? 'text-emerald-400' : netRoi >= 0 ? 'text-amber-400' : 'text-red-400'}`}>{netRoi.toFixed(1)}%</div>
                                   </div>
                                 </div>
@@ -786,7 +790,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { 
       if (!lat || !lng || lat === 0 || lng === 0) return;
 
       const roi = villa.projected_roi || 0;
-      const roiColor = roi >= 15 ? '#16a34a' : roi >= 10 ? '#2563eb' : '#64748b';
+      const roiColor = roi >= 8 ? '#16a34a' : roi >= 5 ? '#2563eb' : '#64748b';
 
       const marker = L.circleMarker([lat, lng], {
         radius: 5,
