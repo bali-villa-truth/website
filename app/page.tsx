@@ -272,10 +272,6 @@ export default function BaliVillaTruth() {
       flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `${roi.toFixed(0)}% is above Bali averages. After costs, closer to ${netRoi.toFixed(1)}%.` });
     }
 
-    if (pipelineFlags.includes('LEASE_DECAY')) {
-      flags.push({ level: 'warning', label: 'Lease Decay', detail: `${years}yr lease means ${(100/years).toFixed(1)}%/yr depreciation. Factor this into real returns.` });
-    }
-
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
       flags.push({ level: 'warning', label: 'Rate vs Price Gap', detail: `$${nightly}/night on a $${Math.round(priceUSD/1000)}k property implies unrealistic occupancy or rates.` });
     }
