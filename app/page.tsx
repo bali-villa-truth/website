@@ -228,12 +228,13 @@ export default function BaliVillaTruth() {
     const occupancy = villa.est_occupancy || getDisplayOccupancy(villa) / 100;
     const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
 
-    // Leasehold depreciation (for tooltip display — already factored into pipeline's netRoi for short leases)
+    // Leasehold depreciation — ONLY show when pipeline actually deducts it (short leases < 15 years)
+    // For leases >= 15 years, depreciation is NOT deducted from projected_roi, so showing it would mislead users
     const features = (villa.features || '').toLowerCase();
     const years = Number(villa.lease_years) || 0;
     const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
     let leaseDepreciation = 0;
-    if (!isFreehold && years > 0 && years < 999) {
+    if (!isFreehold && years > 0 && years < 15) {
       leaseDepreciation = (1 / years) * 100;
     }
 
@@ -530,13 +531,14 @@ export default function BaliVillaTruth() {
 
                             {/* Enhanced tooltip with full cost breakdown */}
                             {hoveredRoi === villa.id && (
-                                <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
+                                <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-slate-900"></div>
                                 <div className="font-bold mb-2 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Reality Check</div>
 
-                                {/* Gross vs Net comparison */}
+                                {/* Gross vs Net comparison — the core value prop */}
                                 <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
                                   <div className="flex-1 text-center">
-                                    <div className="text-slate-500 text-[9px] mb-0.5">Gross ROI</div>
+                                    <div className="text-slate-500 text-[9px] mb-0.5">Before Costs</div>
                                     <div className="text-lg font-bold text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
                                   </div>
                                   <div className="flex-1 text-center">
@@ -545,15 +547,9 @@ export default function BaliVillaTruth() {
                                   </div>
                                 </div>
 
-                                {/* Revenue data */}
+                                {/* Cost breakdown — what BVT deducts */}
                                 <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="flex justify-between"><span>Est. Nightly Rate:</span> <span className="text-emerald-400 font-mono">${getDisplayNightly(villa)}</span></div>
-                                    <div className="flex justify-between"><span>Est. Occupancy:</span> <span className="text-blue-400 font-mono">{Math.round(getDisplayOccupancy(villa))}%</span></div>
-                                </div>
-
-                                {/* Cost breakdown */}
-                                <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-slate-500 font-bold mb-1">Costs Agents Don&apos;t Mention:</div>
+                                    <div className="text-slate-500 font-bold mb-1">Operating Cost Deductions:</div>
                                     {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
                                       <div key={key} className="flex justify-between">
                                         <span className="text-slate-400">{cost.label}</span>
@@ -567,8 +563,8 @@ export default function BaliVillaTruth() {
                                       </div>
                                     )}
                                     <div className="flex justify-between mt-1 pt-1 border-t border-slate-700 font-bold">
-                                      <span>Total Revenue Lost:</span>
-                                      <span className="text-red-400 font-mono">~{((TOTAL_COST_RATIO) * 100).toFixed(0)}%{leaseDepreciation > 0 ? ` + ${leaseDepreciation.toFixed(1)}%` : ''}</span>
+                                      <span>Total Deducted:</span>
+                                      <span className="text-red-400 font-mono">~{((TOTAL_COST_RATIO) * 100).toFixed(0)}%{leaseDepreciation > 0 ? ` + ${leaseDepreciation.toFixed(1)}%` : ''} of revenue</span>
                                     </div>
                                 </div>
 
@@ -584,18 +580,7 @@ export default function BaliVillaTruth() {
                                   </div>
                                 )}
 
-                                {/* Rate factors from scraper */}
-                                {rateFactors.length > 0 && (
-                                <div className="mb-2 pb-2 border-b border-slate-700">
-                                  <div className="text-slate-500 font-bold mb-1">Rate Factors:</div>
-                                  {rateFactors.map((factor, idx) => (
-                                    <div key={idx} className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span><span className="text-slate-300">{factor}</span></div>
-                                  ))}
-                                </div>
-                                )}
-
-                                <p className="text-slate-500 italic">Benchmarks: leasehold 8–12% net, freehold 4–7% net. BVT deducts real operating costs from agent figures.</p>
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900"></div>
+                                <p className="text-slate-500 italic text-[9px]">Benchmarks: leasehold 8–12% net, freehold 4–7% net.</p>
                                 </div>
                             )}
                             </div>
