@@ -33,6 +33,8 @@ export default function BaliVillaTruth() {
   const [sortOption, setSortOption] = useState('roi-desc');
   const [showMap, setShowMap] = useState(false);
   const [hoveredListingUrl, setHoveredListingUrl] = useState<string | null>(null);
+  const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
+  const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -55,6 +57,20 @@ export default function BaliVillaTruth() {
         .select('*', { count: 'exact', head: true });
       setLeadCount(count || 0);
       
+      // Fetch price history for listings with price changes
+      const { data: historyData } = await supabase
+        .from('price_history')
+        .select('listing_url, price_usd, recorded_at')
+        .order('recorded_at', { ascending: true });
+      if (historyData && historyData.length > 0) {
+        const grouped: Record<string, Array<{price_usd: number, recorded_at: string}>> = {};
+        for (const row of historyData) {
+          if (!grouped[row.listing_url]) grouped[row.listing_url] = [];
+          grouped[row.listing_url].push({ price_usd: row.price_usd, recorded_at: row.recorded_at });
+        }
+        setPriceHistory(grouped);
+      }
+
       setLoading(false);
     }
     fetchData();
@@ -136,6 +152,61 @@ export default function BaliVillaTruth() {
     const direction = pctChange < 0 ? 'down' : 'up';
     const symbol = direction === 'down' ? '↓' : '↑';
     return { text: `${symbol} ${Math.abs(pctChange).toFixed(0)}%`, direction };
+  };
+
+  // --- Mini sparkline SVG for price history ---
+  const PriceSparkline = ({ url, currentPriceUsd }: { url: string; currentPriceUsd: number }) => {
+    const history = priceHistory[url];
+    if (!history || history.length < 1) return null;
+
+    // Build data points: history entries + current price
+    const points = [...history.map(h => ({ price: h.price_usd, date: h.recorded_at.slice(0, 10) }))];
+    // Add current price as latest point if different from last history entry
+    const lastHistoryPrice = points[points.length - 1]?.price || 0;
+    if (currentPriceUsd > 0 && Math.abs(currentPriceUsd - lastHistoryPrice) > 100) {
+      points.push({ price: currentPriceUsd, date: new Date().toISOString().slice(0, 10) });
+    }
+
+    if (points.length < 2) return null;
+
+    const prices = points.map(p => p.price);
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    const range = maxP - minP || 1;
+
+    const w = 160, h = 50, pad = 4;
+    const stepX = (w - pad * 2) / (points.length - 1);
+
+    const pathPoints = points.map((p, i) => {
+      const x = pad + i * stepX;
+      const y = pad + (1 - (p.price - minP) / range) * (h - pad * 2);
+      return `${x},${y}`;
+    });
+    const linePath = `M ${pathPoints.join(' L ')}`;
+
+    const isDown = prices[prices.length - 1] < prices[0];
+    const color = isDown ? '#16a34a' : '#dc2626';
+
+    return (
+      <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-900 rounded-lg shadow-xl p-3 border border-slate-700" style={{ width: w + 24 }}>
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-slate-900" />
+        <p className="text-[9px] text-slate-400 mb-1 font-medium">Price History</p>
+        <svg width={w} height={h} className="block">
+          <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          {points.map((p, i) => (
+            <circle key={i} cx={pad + i * stepX} cy={pad + (1 - (p.price - minP) / range) * (h - pad * 2)} r={i === points.length - 1 ? 3.5 : 2} fill={i === points.length - 1 ? color : '#94a3b8'} stroke={i === points.length - 1 ? 'white' : 'none'} strokeWidth={1} />
+          ))}
+        </svg>
+        <div className="flex justify-between text-[8px] text-slate-500 mt-1">
+          <span>{points[0].date}</span>
+          <span>{points[points.length - 1].date}</span>
+        </div>
+        <div className="flex justify-between text-[9px] mt-0.5">
+          <span className="text-slate-400">${Math.round(prices[0]).toLocaleString()}</span>
+          <span style={{ color }}>${Math.round(prices[prices.length - 1]).toLocaleString()}</span>
+        </div>
+      </div>
+    );
   };
 
   // --- Display nightly & occupancy for analysis (use DB value or conservative default so every property shows analysis) ---
@@ -488,13 +559,19 @@ export default function BaliVillaTruth() {
                            {(() => {
                              const badge = getPriceChangeBadge(villa);
                              if (!badge.direction) return null;
+                             const hasHistory = priceHistory[villa.url] && priceHistory[villa.url].length >= 1;
                              return (
-                               <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                               <span className={`relative px-1.5 py-0.5 rounded text-[9px] font-bold cursor-help ${
                                  badge.direction === 'down'
                                    ? 'bg-green-100 text-green-700 border border-green-200'
                                    : 'bg-red-100 text-red-600 border border-red-200'
-                               }`}>
+                               }`}
+                               onMouseEnter={() => setHoveredPriceBadge(villa.id)}
+                               onMouseLeave={() => setHoveredPriceBadge(null)}>
                                  {badge.text}
+                                 {hasHistory && hoveredPriceBadge === villa.id && (
+                                   <PriceSparkline url={villa.url} currentPriceUsd={getPriceUSD(villa)} />
+                                 )}
                                </span>
                              );
                            })()}
