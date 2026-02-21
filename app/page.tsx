@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye } from 'lucide-react';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,6 +35,22 @@ export default function BaliVillaTruth() {
   const [hoveredListingUrl, setHoveredListingUrl] = useState<string | null>(null);
   const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
+
+  // --- COMPARE MODE STATES ---
+  const [compareSet, setCompareSet] = useState<Set<number>>(new Set());
+  const [showCompare, setShowCompare] = useState(false);
+  const [sliderNightly, setSliderNightly] = useState(1.0);   // multiplier: 0.5x–2.0x
+  const [sliderOccupancy, setSliderOccupancy] = useState(58); // percent: 20–95
+  const [sliderExpense, setSliderExpense] = useState(40);     // percent: 20–60
+
+  const toggleCompare = (villaId: number) => {
+    setCompareSet(prev => {
+      const next = new Set(prev);
+      if (next.has(villaId)) next.delete(villaId);
+      else if (next.size < 5) next.add(villaId);
+      return next;
+    });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -186,43 +202,7 @@ export default function BaliVillaTruth() {
 
     const isDown = prices[prices.length - 1] < prices[0];
     const color = isDown ? '#16a34a' : '#dc2626';
-
-    return (
-      <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-900 rounded-lg shadow-xl p-3 border border-slate-700" style={{ width: w + 24 }}>
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-slate-900" />
-        <p className="text-[9px] text-slate-400 mb-1 font-medium">Price History</p>
-        <svg width={w} height={h} className="block">
-          <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          {points.map((p, i) => (
-            <circle key={i} cx={pad + i * stepX} cy={pad + (1 - (p.price - minP) / range) * (h - pad * 2)} r={i === points.length - 1 ? 3.5 : 2} fill={i === points.length - 1 ? color : '#94a3b8'} stroke={i === points.length - 1 ? 'white' : 'none'} strokeWidth={1} />
-          ))}
-        </svg>
-        <div className="flex justify-between text-[8px] text-slate-500 mt-1">
-          <span>{points[0].date}</span>
-          <span>{points[points.length - 1].date}</span>
-        </div>
-        <div className="flex justify-between text-[9px] mt-0.5">
-          <span className="text-slate-400">${Math.round(prices[0]).toLocaleString()}</span>
-          <span style={{ color }}>${Math.round(prices[prices.length - 1]).toLocaleString()}</span>
-        </div>
-      </div>
-    );
-  };
-
-  // --- Display nightly & occupancy for analysis (use DB value or conservative default so every property shows analysis) ---
-  const getDisplayNightly = (villa: any): number =>
-    villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
-  const getDisplayOccupancy = (villa: any): number =>
-    (villa.est_occupancy ?? 0.58) * 100;
-
-  // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
-  const processedListings = useMemo(() => {
-    const filtered = listings.filter(villa => {
-      const priceUSD = getPriceUSD(villa);
-      const matchLocation = filterLocation === 'All' || (villa.location && villa.location.includes(filterLocation));
-      const matchPrice = priceUSD <= filterPrice;
-      const matchRoi = (villa.projected_roi || 0) >= filterRoi;
-      const matchLand = (villa.land_size || 0) >= filterLandSize;
+| 0) >= filterLandSize;
       const matchBuild = (villa.building_size || 0) >= filterBuildSize;
       const matchBeds = (villa.bedrooms || 0) >= filterBeds;
       const matchBaths = getBathCount(villa) >= filterBaths;
@@ -316,625 +296,33 @@ export default function BaliVillaTruth() {
     };
   };
 
-  // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
-  type RedFlag = { level: 'warning' | 'danger'; label: string; detail: string };
-
-  const getRedFlags = (villa: any): RedFlag[] => {
-    const flags: RedFlag[] = [];
-    const years = Number(villa.lease_years) || 0;
+  // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
+  const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
     const priceUSD = getPriceUSD(villa);
-    const nightly = getDisplayNightly(villa);
-    const { netRoi, grossRoi } = calculateNetROI(villa);
+    if (priceUSD <= 0) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0 };
 
-    // --- ALL flags read from pipeline (auditor_remote.py --enrich) ---
-    // No client-side flag computation — everything is pre-computed server-side.
-    const pipelineFlags = (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
+    const baseNightly = villa.est_nightly_rate || getDisplayNightly(villa);
+    const adjustedNightly = baseNightly * nightlyMultiplier;
+    const occupancy = occupancyPct / 100;
+    const annualRevenue = adjustedNightly * 365 * occupancy;
+    const annualExpenses = annualRevenue * (expensePct / 100);
+    const netRevenue = annualRevenue - anualExpenses;
+    const grossYield = (anualRevenue / priceUSD) * 100;
+    let netYield = (netRevenue / priceUSD) * 100;
 
-    if (pipelineFlags.includes('BUDGET_VILLA')) {
-      const beds = Number(villa.bedrooms) || 1;
-      const ppr = Math.round(priceUSD / beds);
-      flags.push({ level: 'warning', label: 'Budget Villa', detail: `$${ppr.toLocaleString()}/room is below threshold. Nightly rate corrected down 25%.` });
+    // Lease depreciation for short leases
+    const features = (villa.features || '').toLowerCase();
+    const years = Number(villa.lease_years) || 0;
+    const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
+    if (!isFreehold && years > 0 && years < 15) {
+      netYield -= (1 / years) * 100;
     }
 
-    if (pipelineFlags.includes('SHORT_LEASE')) {
-      flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.` });
-    }
-
-    if (pipelineFlags.includes('INFLATED_ROI')) {
-      flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Gross ROI of ${grossRoi.toFixed(0)}% is almost certainly inflated. After real costs, BVT estimates ~${netRoi.toFixed(1)}%.` });
-    }
-
-    if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
-      flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `Gross ${grossRoi.toFixed(0)}% is above Bali averages. After 40% expenses, net yield is ~${netRoi.toFixed(1)}%.` });
-    }
-
-    if (pipelineFlags.includes('RATE_PRICE_GAP')) {
-      flags.push({ level: 'warning', label: 'Rate vs Price Gap', detail: `$${nightly}/night on a $${Math.round(priceUSD/1000)}k property implies unrealistic occupancy or rates.` });
-    }
-
-    return flags;
-  };
-
-  const flaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-8">
-      
-      {/* HEADER */}
-      <header className="max-w-7xl mx-auto mb-6">
-        <div className="text-center mb-8">
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
-            Bali Villa <span className="text-blue-600">Truth</span>
-            </h1>
-            <p className="text-slate-500 max-w-xl mx-auto text-sm leading-relaxed">
-            Independent ROI auditing for serious investors. We verify the data agents hide.
-            </p>
-        </div>
-        
-        {/* FILTER DASHBOARD */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
-            
-            {/* ROW 1: Core Filters */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
-                <div className="relative">
-                    <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value="All">All Locations</option>
-                        <option value="Canggu">Canggu</option>
-                        <option value="Pererenan">Pererenan</option>
-                        <option value="Berawa">Berawa</option>
-                        <option value="Uluwatu">Uluwatu</option>
-                        <option value="Bingin">Bingin</option>
-                        <option value="Sanur">Sanur</option>
-                        <option value="Seseh">Seseh</option>
-                    </select>
-                </div>
-                <div className="relative">
-                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterPrice} onChange={(e) => setFilterPrice(Number(e.target.value))} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value={10000000}>Max Price</option>
-                        <option value={200000}>&lt; $200k USD</option>
-                        <option value={350000}>&lt; $350k USD</option>
-                        <option value={500000}>&lt; $500k USD</option>
-                        <option value={1000000}>&lt; $1M USD</option>
-                    </select>
-                </div>
-                <div className="relative">
-                    <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value={0}>Min ROI</option>
-                        <option value={10}>10%+</option>
-                        <option value={15}>15%+</option>
-                        <option value={20}>20%+</option>
-                        <option value={25}>25%+</option>
-                    </select>
-                </div>
-                <div className="relative">
-                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={filterLeaseType} onChange={(e) => setFilterLeaseType(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value="All">All Status</option>
-                        <option value="Freehold">Freehold (Hak Milik)</option>
-                        <option value="Leasehold">Leasehold (Hak Sewa)</option>
-                    </select>
-                </div>
-                <div className="relative">
-                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <select value={displayCurrency} onChange={(e) => setDisplayCurrency(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors" title="Show all prices in this currency">
-                        <option value="IDR">Show prices in IDR</option>
-                        <option value="USD">Show prices in USD</option>
-                        <option value="AUD">Show prices in AUD</option>
-                        <option value="EUR">Show prices in EUR</option>
-                        <option value="SGD">Show prices in SGD</option>
-                    </select>
-                </div>
-                {/* SORTING - Prominent */}
-                <div className="relative col-span-2 md:col-span-3 lg:col-span-1">
-                    <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
-                    <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="w-full pl-9 pr-3 py-2.5 bg-blue-50 border border-blue-200 text-blue-700 font-medium rounded-lg text-sm outline-none cursor-pointer hover:bg-blue-100 transition-colors">
-                        <option value="roi-desc">ROI: High → Low</option>
-                        <option value="roi-asc">ROI: Low → High</option>
-                        <option value="price-asc">Price: Low → High</option>
-                        <option value="price-desc">Price: High → Low</option>
-                        <option value="psm-asc">Price/m²: Low → High</option>
-                        <option value="psm-desc">Price/m²: High → Low</option>
-                    </select>
-                </div>
-            </div>
-
-            {/* ROW 2: Detail Filters */}
-            <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-100">
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Bed size={14} className="text-slate-400" />
-                    <select value={filterBeds} onChange={(e) => setFilterBeds(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto">
-                        <option value={0}>Any Beds</option>
-                        <option value={1}>1+ Beds</option>
-                        <option value={2}>2+ Beds</option>
-                        <option value={3}>3+ Beds</option>
-                        <option value={4}>4+ Beds</option>
-                        <option value={5}>5+ Beds</option>
-                    </select>
-                </div>
-                
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Bath size={14} className="text-slate-400" />
-                    <select value={filterBaths} onChange={(e) => setFilterBaths(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto">
-                        <option value={0}>Any Baths</option>
-                        <option value={1}>1+ Baths</option>
-                        <option value={2}>2+ Baths</option>
-                        <option value={3}>3+ Baths</option>
-                    </select>
-                </div>
-
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Ruler size={14} className="text-slate-400" />
-                    <input type="number" placeholder="Min Land m²" value={filterLandSize === 0 ? '' : filterLandSize} onChange={(e) => setFilterLandSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500" />
-                </div>
-
-                <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 w-full sm:w-auto">
-                    <Layers size={14} className="text-slate-400" />
-                    <input type="number" placeholder="Min Build m²" value={filterBuildSize === 0 ? '' : filterBuildSize} onChange={(e) => setFilterBuildSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500" />
-                </div>
-
-                <button 
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
-                    className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
-                >
-                    Reset All
-                </button>
-            </div>
-        </div>
-      </header>
-
-      {/* RESULTS BAR */}
-      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex justify-between items-center px-2 transition-all`}>
-         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Showing {processedListings.length} Properties</p>
-         <div className="flex gap-4 items-center">
-            <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
-                <ShieldAlert size={10}/> {flaggedCount} Flagged
-            </div>
-            <button onClick={() => setShowMap(!showMap)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showMap ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600'}`}>
-              <Map size={12} /> {showMap ? 'Hide Map' : 'Show Map'}
-            </button>
-         </div>
-      </div>
-
-      {/* SPLIT LAYOUT: TABLE + MAP */}
-      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto flex gap-4 transition-all`}>
-      {/* TABLE */}
-      <main className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold text-slate-400">
-                <th className="p-5">Asset & Location</th>
-                <th className="p-5">Price ({displayCurrency})</th>
-                <th className="p-5">Price/m²</th>
-                <th className="p-5 text-center">ROI Analysis</th>
-                <th className="p-5">Specs</th>
-                <th className="p-5 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {processedListings.length === 0 ? (
-                  <tr>
-                      <td colSpan={6} className="p-10 text-center text-slate-400">
-                          <Filter size={48} className="mx-auto mb-4 opacity-20" />
-                          No properties match your filters.
-                      </td>
-                  </tr>
-              ) : (
-                processedListings.map((villa) => {
-                    const rateFactors = parseRateFactors(villa.rate_factors);
-                    const redFlags = getRedFlags(villa);
-                    const { netRoi, leaseDepreciation, grossRoi } = calculateNetROI(villa);
-                    const hasDanger = redFlags.some(f => f.level === 'danger');
-                    const hasWarning = redFlags.length > 0;
-
-                    return (
-                    <tr key={villa.id} className={`hover:bg-blue-50/50 transition-colors group ${hoveredListingUrl === villa.url ? 'bg-blue-50/70' : ''}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
-                        <td className="p-5">
-                        <div className="flex items-center gap-3">
-                          {villa.thumbnail_url ? (
-                            <img src={villa.thumbnail_url} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0 bg-slate-100" loading="lazy" />
-                          ) : (
-                            <div className="w-16 h-12 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-                              <Home size={16} className="text-slate-300" />
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-bold text-slate-900 mb-1 flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                                {villa.villa_name || 'Luxury Villa'}
-                                {hasDanger && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[9px] font-bold border border-red-200 flex items-center gap-0.5"><ShieldAlert size={9}/> VERIFY</span>}
-                                {!hasDanger && hasWarning && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[9px] font-bold border border-amber-200 flex items-center gap-0.5"><AlertTriangle size={9}/> CAUTION</span>}
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
-                                <MapPin size={12} className="text-blue-500" /> {villa.location || "Bali"}
-                            </div>
-                          </div>
-                        </div>
-                        </td>
-                        <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
-                         <div className="flex items-center gap-2">
-                           {formatPriceInCurrency(villa)}
-                           {(() => {
-                             const badge = getPriceChangeBadge(villa);
-                             if (!badge.direction) return null;
-                             const hasHistory = priceHistory[villa.url] && priceHistory[villa.url].length >= 1;
-                             return (
-                               <span className={`relative px-1.5 py-0.5 rounded text-[9px] font-bold cursor-help ${
-                                 badge.direction === 'down'
-                                   ? 'bg-green-100 text-green-700 border border-green-200'
-                                   : 'bg-red-100 text-red-600 border border-red-200'
-                               }`}
-                               onMouseEnter={() => setHoveredPriceBadge(villa.id)}
-                               onMouseLeave={() => setHoveredPriceBadge(null)}>
-                                 {badge.text}
-                                 {hasHistory && hoveredPriceBadge === villa.id && (
-                                   <PriceSparkline url={villa.url} currentPriceUsd={getPriceUSD(villa)} />
-                                 )}
-                               </span>
-                             );
-                           })()}
-                         </div>
-                        </td>
-                        <td className="p-5 font-mono text-slate-500 text-xs">
-                         {getPricePerSqm(villa)}
-                        </td>
-                        <td className="p-5">
-                        <div className="flex flex-col items-center relative">
-                            <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
-                            {/* BVT Adjusted ROI - the real number */}
-                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 justify-center w-fit mx-auto ${
-                              netRoi >= 12 ? 'bg-green-100 text-green-700 border-green-200' :
-                              netRoi >= 7 ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                              netRoi >= 0 ? 'bg-slate-100 text-slate-700 border-slate-200' :
-                              'bg-red-100 text-red-600 border-red-200'
-                            }`}>
-                                {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
-                            </span>
-                            <p className="text-[10px] text-slate-400 mt-1 line-through opacity-60 font-mono">Gross: {grossRoi.toFixed(1)}%</p>
-                            <p className="text-[9px] text-slate-500 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
-
-                            {/* Red flag badges under ROI */}
-                            {redFlags.length > 0 && (
-                              <div className="flex flex-wrap justify-center gap-1 mt-1.5">
-                                {redFlags.map((flag, idx) => (
-                                  <span key={idx} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flag.level === 'danger' ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
-                                    {flag.label}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Enhanced tooltip with full cost breakdown */}
-                            {hoveredRoi === villa.id && (
-                                <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-slate-900"></div>
-                                <div className="font-bold mb-2 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Reality Check</div>
-
-                                {/* Gross vs Net comparison — the core value prop */}
-                                <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
-                                  <div className="flex-1 text-center">
-                                    <div className="text-slate-500 text-[9px] mb-0.5">Before Costs</div>
-                                    <div className="text-lg font-bold text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
-                                  </div>
-                                  <div className="flex-1 text-center">
-                                    <div className="text-blue-400 text-[9px] mb-0.5 font-bold">BVT Net Yield</div>
-                                    <div className={`text-lg font-bold ${netRoi >= 7 ? 'text-emerald-400' : netRoi >= 0 ? 'text-amber-400' : 'text-red-400'}`}>{netRoi.toFixed(1)}%</div>
-                                  </div>
-                                </div>
-
-                                {/* Cost breakdown — what BVT deducts */}
-                                <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-slate-500 font-bold mb-1">Operating Cost Deductions:</div>
-                                    {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
-                                      <div key={key} className="flex justify-between">
-                                        <span className="text-slate-400">{cost.label}</span>
-                                        <span className="text-red-400 font-mono">-{(cost.rate * 100).toFixed(0)}%</span>
-                                      </div>
-                                    ))}
-                                    {leaseDepreciation > 0 && (
-                                      <div className="flex justify-between mt-1 pt-1 border-t border-slate-800">
-                                        <span className="text-orange-400">Lease Depreciation</span>
-                                        <span className="text-red-400 font-mono">-{leaseDepreciation.toFixed(1)}%</span>
-                                      </div>
-                                    )}
-                                    <div className="flex justify-between mt-1 pt-1 border-t border-slate-700 font-bold">
-                                      <span>Total Deducted:</span>
-                                      <span className="text-red-400 font-mono">~{((TOTAL_COST_RATIO) * 100).toFixed(0)}%{leaseDepreciation > 0 ? ` + ${leaseDepreciation.toFixed(1)}%` : ''} of revenue</span>
-                                    </div>
-                                </div>
-
-                                {/* Red flags in tooltip */}
-                                {redFlags.length > 0 && (
-                                  <div className="mb-2 pb-2 border-b border-slate-700">
-                                    {redFlags.map((flag, idx) => (
-                                      <div key={idx} className={`flex items-start gap-1.5 mb-1 ${flag.level === 'danger' ? 'text-red-400' : 'text-amber-400'}`}>
-                                        <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" />
-                                        <span>{flag.detail}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                <p className="text-slate-500 italic text-[9px]">Benchmarks: leasehold 8–12% net, freehold 4–7% net.</p>
-                                </div>
-                            )}
-                            </div>
-                        </div>
-                        </td>
-                        <td className="p-5 text-xs text-slate-600 space-y-1.5">
-                            {/* Beds */}
-                            <div className="flex items-center gap-2">
-                                <Home size={12} className="text-slate-400"/>
-                                <span className="font-medium text-slate-900">
-                                    {villa.bedrooms ? `${villa.bedrooms} Bed` : '? Bed'}
-                                    {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1]?.trim().split(' ')[0] || '?'} Bath`}
-                                </span>
-                            </div>
-                            
-                            {/* Lease Type / Years - SMART DISPLAY: use features first, then lease_years, show years remaining for leasehold */}
-                            <div className="flex items-center gap-2">
-                                <Calendar size={12} className="text-slate-400"/>
-                                {(() => {
-                                    const f = (villa.features || "").trim();
-                                    const years = Number(villa.lease_years) || 0;
-                                    const isFreehold = f.includes("Freehold") || f.includes("Hak Milik") || years === 999;
-                                    const isLeasehold = f.includes("Leasehold") || f.includes("Hak Sewa") || (years > 0 && years < 999);
-                                    if (isFreehold) return <span className="font-bold text-green-600">Freehold (Hak Milik)</span>;
-                                    if (isLeasehold) {
-                                        const label = f ? "Leasehold (Hak Sewa)" : "Leasehold";
-                                        const yearsLabel = years > 0 && years < 999 ? ` – ${years} years remaining` : " – years not stated";
-                                        return <span className="text-slate-700">{label}{yearsLabel}</span>;
-                                    }
-                                    if (years > 0 && years < 999) return <span className="text-slate-700">{years} years remaining</span>;
-                                    if (years === 999) return <span className="font-bold text-green-600">Freehold</span>;
-                                    return <span className="text-slate-400">Unverified Status</span>;
-                                })()}
-                            </div>
-
-                            {/* Land Size */}
-                            <div className="flex items-center gap-2">
-                                <Ruler size={12} className="text-slate-400"/> 
-                                <span>Land: <span className="font-medium">{villa.land_size || '?'}</span> m²</span>
-                            </div>
-
-                            {/* Building Size - always show row; use — when missing */}
-                            <div className="flex items-center gap-2">
-                                <Layers size={12} className="text-slate-400"/> 
-                                <span>Build: <span className="font-medium">{villa.building_size > 0 ? `${villa.building_size} m²` : '—'}</span></span>
-                            </div>
-                        </td>
-                        <td className="p-5 text-right">
-                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all">
-                            <Lock size={12}/> UNLOCK SOURCE
-                        </button>
-                        </td>
-                    </tr>
-                    );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </main>
-
-      {/* MAP PANEL (sticky alongside table) */}
-      {showMap && (
-        <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} />
-        </div>
-      )}
-      </div>{/* end split layout flex */}
-
-      {/* MODAL */}
-      {selectedVilla && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={20}/></button>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600" size={32} /></div>
-              <h2 className="text-2xl font-bold mb-2">Unlock Full Audit</h2>
-              <p className="text-slate-500 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800">{selectedVilla.villa_name}</span>.</p>
-              <form onSubmit={handleLeadCapture} className="space-y-4">
-                <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 disabled:opacity-50">{isSubmitting ? 'Verifying...' : 'Unlock Now'}</button>
-                <p className="text-[10px] text-slate-400">By clicking, you agree to our Investor Privacy Terms.</p>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
-          <div className="flex items-center gap-4"><a href="#" className="hover:text-blue-600 transition-colors">Contact</a><span className="text-slate-300">|</span><a href="#" className="hover:text-blue-600 transition-colors">Privacy Policy</a></div>
-        </div>
-        <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
-      </footer>
-    </div>
-  );
-}
-
-// --- AREA COORDINATES for Bali Map ---
-const AREA_COORDS: Record<string, [number, number]> = {
-  'Canggu': [-8.6478, 115.1385],
-  'Pererenan': [-8.6350, 115.1050],
-  'Berawa': [-8.6580, 115.1470],
-  'Seminyak': [-8.6880, 115.1600],
-  'Kerobokan': [-8.6700, 115.1550],
-  'Uluwatu': [-8.8291, 115.0849],
-  'Bingin': [-8.8050, 115.1000],
-  'Ungasan': [-8.8100, 115.1700],
-  'Nusa Dua': [-8.8000, 115.2300],
-  'Jimbaran': [-8.7700, 115.1650],
-  'Ubud': [-8.5069, 115.2625],
-  'Sanur': [-8.6900, 115.2600],
-  'Tabanan': [-8.5400, 115.0000],
-  'Seseh': [-8.6200, 115.0900],
-  'Cemagi': [-8.6250, 115.0800],
-  'Kedungu': [-8.5900, 115.0500],
-  'Amed': [-8.3500, 115.6600],
-  'Lovina': [-8.1500, 115.0200],
-  'North Bali': [-8.2000, 115.1000],
-  'Lombok': [-8.5800, 116.1000],
-  'Nusa Penida': [-8.7300, 115.5400],
-};
-
-function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null }) {
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapRef, setMapRef] = useState<any>(null);
-  const [markersRef, setMarkersRef] = useState<Record<string, any>>({});
-
-  useEffect(() => {
-    if (!document.querySelector('link[href*="leaflet"]')) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-    const loadLeaflet = () => new Promise<void>((resolve) => {
-      if ((window as any).L) { resolve(); return; }
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => resolve();
-      document.head.appendChild(script);
-    });
-    loadLeaflet().then(() => setMapLoaded(true));
-  }, []);
-
-  // Initialize map once
-  useEffect(() => {
-    if (!mapLoaded) return;
-    const L = (window as any).L;
-    const container = document.getElementById('bali-map');
-    if (!container || !L) return;
-
-    if ((container as any)._leafletMap) {
-      (container as any)._leafletMap.remove();
-      (container as any)._leafletMap = null;
-    }
-
-    const map = L.map('bali-map', { zoomControl: true }).setView([-8.65, 115.15], 11);
-    (container as any)._leafletMap = map;
-    setMapRef(map);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OSM',
-      maxZoom: 18,
-    }).addTo(map);
-
-    setTimeout(() => { map.invalidateSize(); }, 100);
-
-    return () => {
-      map.remove();
-      if (container) (container as any)._leafletMap = null;
+    return {
+      grossYield: Math.min(grossYield, 80),
+      netYield: Math.max(netYield, -20),
+      anvualRevenue: Math.round(anualRevenue),
+      anualExpenses: Math.round(anuualExpenses),
+      netRevenue: Math.round(netRevenue),
     };
-  }, [mapLoaded]);
-
-  // Add/update property markers when listings change
-  useEffect(() => {
-    if (!mapRef || !mapLoaded) return;
-    const L = (window as any).L;
-    if (!L) return;
-
-    // Clear existing markers
-    Object.values(markersRef).forEach((m: any) => { try { mapRef.removeLayer(m); } catch {} });
-
-    const newMarkers: Record<string, any> = {};
-    const markerCluster: any[] = [];
-
-    listings.forEach(villa => {
-      const lat = parseFloat(villa.latitude);
-      const lng = parseFloat(villa.longitude);
-      if (!lat || !lng || lat === 0 || lng === 0) return;
-
-      const roi = villa.projected_roi || 0;
-      const roiColor = roi >= 8 ? '#16a34a' : roi >= 5 ? '#2563eb' : '#64748b';
-
-      const marker = L.circleMarker([lat, lng], {
-        radius: 5,
-        fillColor: roiColor,
-        color: '#fff',
-        weight: 1,
-        opacity: 0.9,
-        fillOpacity: 0.7,
-      }).addTo(mapRef);
-
-      // Price formatting for popup
-      const desc = (villa.price_description || '').trim();
-      const priceMatch = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
-      let priceStr = '';
-      if (priceMatch) {
-        const amount = parseFloat(priceMatch[2].replace(/\s|,/g, '')) || 0;
-        const cur = priceMatch[1].toUpperCase();
-        const r = rates[cur];
-        const priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
-        const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
-        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
-      } else {
-        const p = Number(villa.last_price) || 0;
-        const priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
-        const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
-        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
-      }
-
-      marker.bindPopup(`
-        <div style="font-family: system-ui; min-width: 180px;">
-          <div style="font-weight: 700; font-size: 12px; margin-bottom: 4px; color: #1e293b;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
-          <div style="font-size: 11px; color: #64748b; line-height: 1.7;">
-            <div>${villa.location || 'Bali'} • ${villa.bedrooms || '?'} bed</div>
-            <div><strong>${priceStr}</strong></div>
-            <div>ROI: <strong style="color: ${roiColor}">${roi.toFixed(1)}%</strong></div>
-          </div>
-        </div>
-      `);
-
-      if (villa.url) newMarkers[villa.url] = marker;
-      markerCluster.push(marker);
-    });
-
-    setMarkersRef(newMarkers);
-  }, [mapRef, mapLoaded, listings, displayCurrency, rates]);
-
-  // Highlight marker on hover
-  useEffect(() => {
-    if (!mapRef || !mapLoaded) return;
-    const L = (window as any).L;
-    if (!L) return;
-
-    Object.entries(markersRef).forEach(([url, marker]) => {
-      if (url === hoveredListingUrl) {
-        marker.setStyle({ radius: 10, weight: 3, fillOpacity: 1 });
-        marker.openPopup();
-      } else {
-        marker.setStyle({ radius: 5, weight: 1, fillOpacity: 0.7 });
-      }
-    });
-  }, [hoveredListingUrl, markersRef, mapRef, mapLoaded]);
-
-  // Resize map when panel becomes visible
-  useEffect(() => {
-    if (mapRef) {
-      setTimeout(() => { mapRef.invalidateSize(); }, 200);
-    }
-  }, [mapRef]);
-
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
-      <div className="p-3 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-          <Map size={14} className="text-blue-500" /> Property Map
-        </div>
-        <div className="flex gap-2 text-[9px] text-slate-400">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600 inline-block"></span> ≥15%</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span> 10-15%</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> &lt;10%</span>
-        </div>
-      </div>
-      <div id="bali-map" className="flex-1" style={{ minHeight: '500px', width: '100%' }}></div>
-    </div>
-  );
-}
+  };
