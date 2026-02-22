@@ -553,7 +553,7 @@ export default function BaliVillaTruth() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold text-slate-400">
-                <th className="p-3 w-10 text-center"><BarChart3 size={14} className="mx-auto text-slate-400" title="Select to compare" /></th>
+                <th className="p-3 w-10 text-center"><BarChart3 size={14} className="mx-auto text-slate-400" /></th>
                 <th className="p-5">Asset & Location</th>
                 <th className="p-5">Price ({displayCurrency})</th>
                 <th className="p-5">Price/m²</th>
