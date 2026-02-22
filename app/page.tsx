@@ -304,38 +304,40 @@ export default function BaliVillaTruth() {
   const TOTAL_COST_RATIO = Object.values(COST_BREAKDOWN).reduce((sum, c) => sum + c.rate, 0); // 0.40
 
   const calculateNetROI = (villa: any): { netRoi: number; leaseDepreciation: number; grossRoi: number } => {
-    // projected_roi from pipeline = ALREADY net after 40% expenses + lease penalty
-    // This is the BVT stress-tested number — display it directly
-    const netRoi = villa.projected_roi || 0;
+    // projected_roi from pipeline = net after 40% expenses + lease penalty (only for <15yr leases)
+    let netRoi = villa.projected_roi || 0;
 
     // Back-calculate gross ROI for "Agent Claims" display
-    // gross = nightly_rate × 365 × occupancy / price × 100
     const priceUSD = getPriceUSD(villa);
     const nightly = villa.est_nightly_rate || getDisplayNightly(villa);
     const occupancy = villa.est_occupancy || getDisplayOccupancy(villa) / 100;
     const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
 
-    // Leasehold depreciation — ONLY show when pipeline actually deducts it (short leases < 15 years)
-    // For leases >= 15 years, depreciation is NOT deducted from projected_roi, so showing it would mislead users
+    // Leasehold depreciation for ALL leasehold villas
+    // Pipeline already deducts for <15yr leases; we add it for >=15yr leases too
     const features = (villa.features || '').toLowerCase();
     const years = Number(villa.lease_years) || 0;
     const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
     let leaseDepreciation = 0;
-    if (!isFreehold && years > 0 && years < 15) {
+    if (!isFreehold && years > 0) {
       leaseDepreciation = (1 / years) * 100;
+      // Pipeline already applied depreciation for short leases, only subtract for longer ones
+      if (years >= 15) {
+        netRoi -= leaseDepreciation;
+      }
     }
 
     return {
       netRoi: Math.max(netRoi, -10),
       leaseDepreciation,
-      grossRoi: Math.min(grossRoi, 50), // cap display at 50% to avoid absurd numbers
+      grossRoi: Math.min(grossRoi, 50),
     };
   };
 
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
   const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
     const priceUSD = getPriceUSD(villa);
-    if (priceUSD <= 0) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0 };
+    if (priceUSD <= 0) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0, leaseDepreciation: 0, depreciationYield: 0, isFreehold: true, leaseYears: 0 };
 
     const baseNightly = villa.est_nightly_rate || getDisplayNightly(villa);
     const adjustedNightly = baseNightly * nightlyMultiplier;
@@ -344,15 +346,15 @@ export default function BaliVillaTruth() {
     const annualExpenses = annualRevenue * (expensePct / 100);
     const netRevenue = annualRevenue - annualExpenses;
     const grossYield = (annualRevenue / priceUSD) * 100;
-    let netYield = (netRevenue / priceUSD) * 100;
 
-    // Lease depreciation for short leases
+    // Lease depreciation for ALL leasehold villas
     const features = (villa.features || '').toLowerCase();
     const years = Number(villa.lease_years) || 0;
     const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
-    if (!isFreehold && years > 0 && years < 15) {
-      netYield -= (1 / years) * 100;
-    }
+    const leaseDepreciation = (!isFreehold && years > 0) ? Math.round(priceUSD / years) : 0;
+    const depreciationYield = (!isFreehold && years > 0) ? (1 / years) * 100 : 0;
+    const netAfterDepreciation = netRevenue - leaseDepreciation;
+    let netYield = (netAfterDepreciation / priceUSD) * 100;
 
     return {
       grossYield: Math.min(grossYield, 80),
@@ -360,6 +362,10 @@ export default function BaliVillaTruth() {
       annualRevenue: Math.round(annualRevenue),
       annualExpenses: Math.round(annualExpenses),
       netRevenue: Math.round(netRevenue),
+      leaseDepreciation,
+      depreciationYield: Math.round(depreciationYield * 10) / 10,
+      isFreehold,
+      leaseYears: years,
     };
   };
 
@@ -1015,6 +1021,26 @@ export default function BaliVillaTruth() {
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900">${r.netRevenue.toLocaleString()}/yr</td>
                             ))}
                           </tr>
+                          <tr className="border-b border-slate-100 bg-amber-50/40">
+                            <td className="py-2.5 pr-4 text-amber-700 font-medium text-sm">
+                              Lease Depreciation
+                              <span className="block text-[9px] text-amber-500 font-normal">Asset value loss/yr</span>
+                            </td>
+                            {results.map(r => (
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono">
+                                {r.isFreehold ? (
+                                  <span className="text-green-600 text-xs font-medium">Freehold — N/A</span>
+                                ) : r.leaseDepreciation > 0 ? (
+                                  <div>
+                                    <span className="text-amber-600 font-bold">-${r.leaseDepreciation.toLocaleString()}/yr</span>
+                                    <span className="block text-[9px] text-amber-500">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400 text-xs">Unknown tenure</span>
+                                )}
+                              </td>
+                            ))}
+                          </tr>
                           <tr className="border-b border-slate-100">
                             <td className="py-2.5 pr-4 text-slate-500 font-medium">Gross Yield</td>
                             {results.map(r => (
@@ -1022,7 +1048,10 @@ export default function BaliVillaTruth() {
                             ))}
                           </tr>
                           <tr className="bg-blue-50/50">
-                            <td className="py-3 pr-4 text-blue-700 font-bold text-sm">Net Yield</td>
+                            <td className="py-3 pr-4 text-blue-700 font-bold text-sm">
+                              Net Yield
+                              <span className="block text-[9px] text-blue-400 font-normal">After depreciation</span>
+                            </td>
                             {results.map(r => (
                               <td key={r.id} className={`text-center py-3 px-3 font-mono font-bold text-lg ${
                                 r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
