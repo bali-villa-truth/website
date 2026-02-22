@@ -303,7 +303,7 @@ export default function BaliVillaTruth() {
   };
   const TOTAL_COST_RATIO = Object.values(COST_BREAKDOWN).reduce((sum, c) => sum + c.rate, 0); // 0.40
 
-  const calculateNetROI = (villa: any): { netRoi: number; leaseDepreciation: number; grossRoi: number } => {
+  const calculateNetROI = (villa: any): { netRoi: number; leaseDepreciation: number; grossRoi: number; isFreehold: boolean; preDepreciationNet: number; leaseYears: number } => {
     // projected_roi from pipeline = net after 40% expenses + lease penalty (only for <15yr leases)
     let netRoi = villa.projected_roi || 0;
 
@@ -319,11 +319,17 @@ export default function BaliVillaTruth() {
     const years = Number(villa.lease_years) || 0;
     const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
     let leaseDepreciation = 0;
+    // For pre-depreciation display: net yield before lease expiration cost
+    let preDepreciationNet = netRoi;
     if (!isFreehold && years > 0) {
       leaseDepreciation = (1 / years) * 100;
       // Pipeline already applied depreciation for short leases, only subtract for longer ones
       if (years >= 15) {
+        preDepreciationNet = netRoi; // capture before subtracting
         netRoi -= leaseDepreciation;
+      } else {
+        // Pipeline already subtracted, so add back to get pre-depreciation
+        preDepreciationNet = netRoi + leaseDepreciation;
       }
     }
 
@@ -331,6 +337,9 @@ export default function BaliVillaTruth() {
       netRoi: Math.max(netRoi, -10),
       leaseDepreciation,
       grossRoi: Math.min(grossRoi, 50),
+      isFreehold,
+      preDepreciationNet: Math.min(preDepreciationNet, 50),
+      leaseYears: years,
     };
   };
 
@@ -580,7 +589,7 @@ export default function BaliVillaTruth() {
                 processedListings.map((villa) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
-                    const { netRoi, leaseDepreciation, grossRoi } = calculateNetROI(villa);
+                    const { netRoi, leaseDepreciation, grossRoi, isFreehold, preDepreciationNet, leaseYears } = calculateNetROI(villa);
                     const hasDanger = redFlags.some(f => f.level === 'danger');
                     const hasWarning = redFlags.length > 0;
 
@@ -665,6 +674,11 @@ export default function BaliVillaTruth() {
                             <p className="text-[10px] text-slate-400 mt-1 line-through opacity-60 font-mono">Gross: {grossRoi.toFixed(1)}%</p>
                             <p className="text-[9px] text-slate-500 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
 
+                            {/* Pre-depreciation yield for leaseholds */}
+                            {!isFreehold && leaseDepreciation > 0 && (
+                              <p className="text-[9px] text-amber-500 font-mono mt-0.5">Before lease exp: {preDepreciationNet.toFixed(1)}%</p>
+                            )}
+
                             {/* Red flag badges under ROI */}
                             {redFlags.length > 0 && (
                               <div className="flex flex-wrap justify-center gap-1 mt-1.5">
@@ -727,6 +741,11 @@ export default function BaliVillaTruth() {
                                   </div>
                                 )}
 
+                                {!isFreehold && leaseDepreciation > 0 && (
+                                  <div className="mb-2 pb-2 border-b border-slate-700">
+                                    <p className="text-amber-400 text-[9px]">Leaseholds lose their purchase value over the lease term ({leaseYears}yr). &quot;Before lease exp.&quot; ({preDepreciationNet.toFixed(1)}%) shows your cash flow yield ignoring this capital loss — useful for income planning, but not your true return.</p>
+                                  </div>
+                                )}
                                 <p className="text-slate-500 italic text-[9px] mb-1.5">Benchmarks: leasehold 8–12% net, freehold 4–7% net.</p>
                                 <p className="text-blue-400 text-[9px] font-medium flex items-center gap-1"><SlidersHorizontal size={9}/> Select villas to compare with your own assumptions →</p>
                                 </div>
