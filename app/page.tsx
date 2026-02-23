@@ -71,7 +71,6 @@ export default function BaliVillaTruth() {
     try {
       const saved = localStorage.getItem('bvt-dark-mode');
       if (saved === 'true') setDarkMode(true);
-      else if (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches) setDarkMode(true);
     } catch {}
   }, []);
 
