@@ -739,7 +739,13 @@ export default function BaliVillaTruth() {
             </div>
           ) : (
             processedListings.map((villa) => {
-              const { netRoi, leaseDepreciation, grossRoi, isFreehold, preDepreciationNet, leaseYears } = calculateNetROI(villa);
+              const dynROI = calculateDynamicROI(villa, sliderNightly, sliderOccupancy, sliderExpense);
+              const grossRoi = dynROI.grossYield;
+              const netRoi = dynROI.netYield;
+              const isFreehold = dynROI.isFreehold;
+              const leaseYears = dynROI.leaseYears;
+              const leaseDepreciation = dynROI.depreciationYield;
+              const preDepreciationNet = dynROI.netRevenue > 0 && getPriceUSD(villa) > 0 ? (dynROI.netRevenue / getPriceUSD(villa)) * 100 : 0;
               const redFlags = getRedFlags(villa);
               const hasDanger = redFlags.some(f => f.level === 'danger');
               const hasWarning = redFlags.length > 0;
@@ -867,7 +873,13 @@ export default function BaliVillaTruth() {
                 processedListings.map((villa) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
-                    const { netRoi, leaseDepreciation, grossRoi, isFreehold, preDepreciationNet, leaseYears } = calculateNetROI(villa);
+                    const dynROI = calculateDynamicROI(villa, sliderNightly, sliderOccupancy, sliderExpense);
+                    const grossRoi = dynROI.grossYield;
+                    const netRoi = dynROI.netYield;
+                    const isFreehold = dynROI.isFreehold;
+                    const leaseYears = dynROI.leaseYears;
+                    const leaseDepreciation = dynROI.depreciationYield; // % of purchase price
+                    const preDepreciationNet = dynROI.netRevenue > 0 && getPriceUSD(villa) > 0 ? (dynROI.netRevenue / getPriceUSD(villa)) * 100 : 0; // cash flow yield %
                     const hasDanger = redFlags.some(f => f.level === 'danger');
                     const hasWarning = redFlags.length > 0;
 
@@ -981,16 +993,17 @@ export default function BaliVillaTruth() {
                             {hoveredRoi === villa.id && (
                                 <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-slate-900"></div>
-                                <div className="font-bold mb-2 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Conservative Estimate</div>
+                                <div className="font-bold mb-1 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Yield Breakdown</div>
+                                <div className="text-[8px] text-slate-500 mb-2 font-mono">{sliderOccupancy}% occ · {sliderExpense}% expenses · {sliderNightly !== 1.0 ? `${sliderNightly.toFixed(1)}x rate` : 'base rate'}{sliderOccupancy !== 58 || sliderExpense !== 40 || sliderNightly !== 1.0 ? ' (custom)' : ' (BVT defaults)'}</div>
 
                                 {/* Gross vs Net comparison — the core value prop */}
                                 <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
                                   <div className="flex-1 text-center">
-                                    <div className="text-slate-500 text-[9px] mb-0.5">Before Costs</div>
+                                    <div className="text-slate-500 text-[9px] mb-0.5">Gross Yield</div>
                                     <div className="text-lg font-bold text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
                                   </div>
                                   <div className="flex-1 text-center">
-                                    <div className="text-blue-400 text-[9px] mb-0.5 font-bold">BVT Net Yield</div>
+                                    <div className="text-blue-400 text-[9px] mb-0.5 font-bold">Net Yield</div>
                                     <div className={`text-lg font-bold ${netRoi >= 7 ? 'text-emerald-400' : netRoi >= 0 ? 'text-amber-400' : 'text-red-400'}`}>{netRoi.toFixed(1)}%</div>
                                   </div>
                                 </div>
