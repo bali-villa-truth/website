@@ -682,7 +682,7 @@ export default function BaliVillaTruth() {
       {/* MOBILE MAP VIEW */}
       {mobileView === 'map' && (
         <div className="md:hidden max-w-7xl mx-auto mb-4 px-1" style={{ height: 'calc(100vh - 12rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} />
         </div>
       )}
 
@@ -1066,7 +1066,7 @@ export default function BaliVillaTruth() {
       {/* MAP PANEL (sticky alongside table) */}
       {showMap && (
         <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} />
         </div>
       )}
       </div>{/* end split layout flex */}
@@ -1411,7 +1411,7 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Nusa Penida': [-8.7300, 115.5400],
 };
 
-function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null }) {
+function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favorites, compareSet, onToggleFavorite, onToggleCompare, onUnlockVilla }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; compareSet: Set<number>; onToggleFavorite: (id: number) => void; onToggleCompare: (id: number) => void; onUnlockVilla: (villa: any) => void }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapRef, setMapRef] = useState<any>(null);
   const [markersRef, setMarkersRef] = useState<Record<string, any>>({});
@@ -1422,6 +1422,12 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { 
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
+    }
+    if (!document.querySelector('style[data-bvt-popup]')) {
+      const style = document.createElement('style');
+      style.setAttribute('data-bvt-popup', '1');
+      style.textContent = '.bvt-leaflet-popup .leaflet-popup-content-wrapper { padding: 0; border-radius: 10px; overflow: hidden; } .bvt-leaflet-popup .leaflet-popup-content { margin: 0; min-width: 220px; } .bvt-leaflet-popup .leaflet-popup-tip { background: #f8fafc; }';
+      document.head.appendChild(style);
     }
     const loadLeaflet = () => new Promise<void>((resolve) => {
       if ((window as any).L) { resolve(); return; }
@@ -1509,23 +1515,34 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { 
         priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
       }
 
+      const isFav = favorites.has(villa.id);
+      const isCmp = compareSet.has(villa.id);
+      const cmpFull = compareSet.size >= 5 && !isCmp;
+
       marker.bindPopup(`
-        <div style="font-family: system-ui; min-width: 180px;">
-          <div style="font-weight: 700; font-size: 12px; margin-bottom: 4px; color: #1e293b;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
-          <div style="font-size: 11px; color: #64748b; line-height: 1.7;">
-            <div>${villa.location || 'Bali'} • ${villa.bedrooms || '?'} bed</div>
-            <div><strong>${priceStr}</strong></div>
-            <div>ROI: <strong style="color: ${roiColor}">${roi.toFixed(1)}%</strong></div>
+        <div class="bvt-map-popup" data-villa-id="${villa.id}" style="font-family: system-ui, -apple-system, sans-serif; min-width: 220px; max-width: 280px; margin: -14px -20px -14px -20px;">
+          <div style="padding: 10px 12px 8px; border-bottom: 1px solid #e2e8f0;">
+            <div style="font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.3; word-wrap: break-word;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
+            <div style="font-size: 11px; color: #475569; margin-top: 2px; font-weight: 500;">${villa.location || 'Bali'} · ${villa.bedrooms || '?'} bed${villa.bathrooms ? ' · ' + villa.bathrooms + ' bath' : ''}</div>
+          </div>
+          <div style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9;">
+            <div style="font-weight: 600; font-size: 13px; color: #1e293b;">${priceStr}</div>
+            <div style="font-size: 12px; font-weight: 700; color: ${roiColor}; background: ${roi >= 8 ? '#f0fdf4' : roi >= 5 ? '#eff6ff' : '#f8fafc'}; padding: 2px 8px; border-radius: 99px;">${roi.toFixed(1)}%</div>
+          </div>
+          <div style="display: flex; gap: 6px; padding: 10px 12px; background: #f8fafc;">
+            <button data-action="favorite" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isFav ? '#f43f5e' : '#cbd5e1'}; border-radius: 6px; background: ${isFav ? '#ffe4e6' : 'white'}; font-size: 10px; font-weight: 600; color: ${isFav ? '#e11d48' : '#64748b'}; cursor: pointer; text-align: center; line-height: 1.3;">${isFav ? '♥ Saved' : '♡ Save'}</button>
+            <button data-action="compare" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isCmp ? '#2563eb' : cmpFull ? '#e2e8f0' : '#cbd5e1'}; border-radius: 6px; background: ${isCmp ? '#dbeafe' : 'white'}; font-size: 10px; font-weight: 600; color: ${isCmp ? '#2563eb' : cmpFull ? '#94a3b8' : '#64748b'}; cursor: ${cmpFull ? 'default' : 'pointer'}; text-align: center; line-height: 1.3; ${cmpFull ? 'opacity: 0.5;' : ''}">${isCmp ? '✓ Selected' : 'Compare'}</button>
+            <button data-action="unlock" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; font-size: 10px; font-weight: 600; color: white; cursor: pointer; text-align: center; line-height: 1.3;">🔒 Unlock</button>
           </div>
         </div>
-      `);
+      `, { closeButton: true, className: 'bvt-leaflet-popup' });
 
       if (villa.url) newMarkers[villa.url] = marker;
       markerCluster.push(marker);
     });
 
     setMarkersRef(newMarkers);
-  }, [mapRef, mapLoaded, listings, displayCurrency, rates]);
+  }, [mapRef, mapLoaded, listings, displayCurrency, rates, favorites, compareSet]);
 
   // Highlight marker on hover
   useEffect(() => {
@@ -1542,6 +1559,70 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl }: { 
       }
     });
   }, [hoveredListingUrl, markersRef, mapRef, mapLoaded]);
+
+  // Event delegation for popup action buttons
+  useEffect(() => {
+    const container = document.getElementById('bali-map');
+    if (!container) return;
+
+    const handlePopupClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const button = target.closest('[data-action]') as HTMLElement | null;
+      if (!button) return;
+
+      e.stopPropagation();
+      const action = button.getAttribute('data-action');
+      const villaId = parseInt(button.getAttribute('data-villa-id') || '0');
+      if (!villaId) return;
+
+      if (action === 'favorite') {
+        onToggleFavorite(villaId);
+      } else if (action === 'compare') {
+        if (compareSet.size >= 5 && !compareSet.has(villaId)) return;
+        onToggleCompare(villaId);
+      } else if (action === 'unlock') {
+        const villa = listings.find((v: any) => v.id === villaId);
+        if (villa) {
+          if (mapRef) mapRef.closePopup();
+          onUnlockVilla(villa);
+        }
+      }
+    };
+
+    container.addEventListener('click', handlePopupClick);
+    return () => container.removeEventListener('click', handlePopupClick);
+  }, [onToggleFavorite, onToggleCompare, onUnlockVilla, listings, compareSet, mapRef]);
+
+  // Refresh open popup button states when favorites/compareSet change
+  useEffect(() => {
+    if (!mapRef) return;
+    const popupEl = document.querySelector('.bvt-map-popup');
+    if (!popupEl) return;
+
+    const villaId = parseInt(popupEl.getAttribute('data-villa-id') || '0');
+    if (!villaId) return;
+
+    const favBtn = popupEl.querySelector('[data-action="favorite"]') as HTMLElement | null;
+    const cmpBtn = popupEl.querySelector('[data-action="compare"]') as HTMLElement | null;
+
+    if (favBtn) {
+      const isFav = favorites.has(villaId);
+      favBtn.style.borderColor = isFav ? '#f43f5e' : '#cbd5e1';
+      favBtn.style.background = isFav ? '#ffe4e6' : 'white';
+      favBtn.style.color = isFav ? '#e11d48' : '#64748b';
+      favBtn.textContent = isFav ? '♥ Saved' : '♡ Save';
+    }
+
+    if (cmpBtn) {
+      const isCmp = compareSet.has(villaId);
+      const cmpFull = compareSet.size >= 5 && !isCmp;
+      cmpBtn.style.borderColor = isCmp ? '#2563eb' : cmpFull ? '#e2e8f0' : '#cbd5e1';
+      cmpBtn.style.background = isCmp ? '#dbeafe' : 'white';
+      cmpBtn.style.color = isCmp ? '#2563eb' : cmpFull ? '#94a3b8' : '#64748b';
+      cmpBtn.style.opacity = cmpFull ? '0.5' : '1';
+      cmpBtn.textContent = isCmp ? '✓ Selected' : 'Compare';
+    }
+  }, [favorites, compareSet, mapRef]);
 
   // Resize map when panel becomes visible
   useEffect(() => {
