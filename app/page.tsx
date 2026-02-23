@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check } from 'lucide-react';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,6 +37,50 @@ export default function BaliVillaTruth() {
   const [hoveredListingUrl, setHoveredListingUrl] = useState<string | null>(null);
   const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
+
+  // --- FAVORITES STATES ---
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+
+  const toggleFavorite = (villaId: number) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(villaId)) next.delete(villaId);
+      else next.add(villaId);
+      // Persist to localStorage
+      try { localStorage.setItem('bvt-favorites', JSON.stringify(Array.from(next))); } catch {}
+      return next;
+    });
+  };
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('bvt-favorites');
+      if (saved) {
+        const ids: number[] = JSON.parse(saved);
+        setFavorites(new Set(ids));
+      }
+      // If we have a stored email, load favorites from Supabase too
+      const storedEmail = localStorage.getItem('bvt-email');
+      if (storedEmail) {
+        setEmail(storedEmail);
+        (async () => {
+          const { data } = await supabase.from('user_favorites').select('villa_id').eq('email', storedEmail);
+          if (data && data.length > 0) {
+            setFavorites(prev => {
+              const merged = new Set(prev);
+              data.forEach((row: any) => merged.add(row.villa_id));
+              try { localStorage.setItem('bvt-favorites', JSON.stringify(Array.from(merged))); } catch {}
+              return merged;
+            });
+          }
+        })();
+      }
+    } catch {}
+    setFavoritesLoaded(true);
+  }, []);
 
   // --- COMPARE MODE STATES ---
   const [compareSet, setCompareSet] = useState<Set<number>>(new Set());
@@ -251,7 +295,8 @@ export default function BaliVillaTruth() {
         if (filterLeaseType === 'Freehold') matchLease = features.includes('freehold') || features.includes('hak milik') || years === 999;
         else if (filterLeaseType === 'Leasehold') matchLease = features.includes('leasehold') || features.includes('hak sewa') || (years > 0 && years < 999);
       }
-      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
+      const matchSaved = !showFavoritesOnly || favorites.has(villa.id);
+      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease && matchSaved;
     });
 
     return filtered.sort((a, b) => {
@@ -273,7 +318,7 @@ export default function BaliVillaTruth() {
         default: return 0;
       }
     });
-  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates]);
+  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates, showFavoritesOnly, favorites]);
 
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,8 +329,16 @@ export default function BaliVillaTruth() {
     if (!error) {
       window.open(selectedVilla.url, '_blank');
       setSelectedVilla(null);
-      setEmail('');
       setLeadCount(prev => prev + 1);
+      // Sync favorites to Supabase and persist email
+      try {
+        localStorage.setItem('bvt-email', email);
+        if (favorites.size > 0) {
+          const rows = Array.from(favorites).map(villa_id => ({ email, villa_id }));
+          await supabase.from('user_favorites').upsert(rows, { onConflict: 'email,villa_id' });
+        }
+      } catch {}
+      setEmail('');
     } else {
       alert("Error joining. Please try again.");
     }
@@ -566,7 +619,7 @@ export default function BaliVillaTruth() {
                 </div>
 
                 <button 
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
+                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc'); setShowFavoritesOnly(false);}}
                     className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
                 >
                     Reset All
@@ -577,9 +630,34 @@ export default function BaliVillaTruth() {
       </header>
 
       {/* RESULTS BAR */}
-      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex justify-between items-center px-2 transition-all`}>
-         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide hidden md:block">Showing {processedListings.length} Properties</p>
-         <div className="flex gap-4 items-center ml-auto">
+      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex flex-wrap justify-between items-center gap-2 px-2 transition-all`}>
+         <div className="flex items-center gap-2">
+           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide hidden md:block">Showing {processedListings.length} Properties</p>
+           <button
+             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+             className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+               showFavoritesOnly
+                 ? 'bg-red-50 text-red-600 border-red-200'
+                 : 'bg-white text-slate-500 border-slate-200 hover:border-red-200 hover:text-red-500'
+             }`}
+           >
+             <Heart size={10} className={showFavoritesOnly ? 'fill-red-500' : ''} /> Saved ({favorites.size})
+           </button>
+           {showFavoritesOnly && favorites.size > 0 && compareSet.size === 0 && !showCompare && (
+             <button
+               onClick={() => {
+                 const batch = Array.from(favorites).slice(0, 5);
+                 setCompareSet(new Set(batch));
+                 setShowCompare(true);
+                 setSliderNightly(1.0); setSliderOccupancy(58); setSliderExpense(40);
+               }}
+               className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors"
+             >
+               <SlidersHorizontal size={10} /> Compare Saved
+             </button>
+           )}
+         </div>
+         <div className="flex gap-2 md:gap-4 items-center">
             <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
                 <ShieldAlert size={10}/> {flaggedCount} Flagged
             </div>
@@ -615,8 +693,8 @@ export default function BaliVillaTruth() {
         <div className="space-y-3 px-1">
           {processedListings.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-              <Filter size={36} className="mx-auto mb-3 opacity-20" />
-              <p>No properties match your filters.</p>
+              {showFavoritesOnly ? <Heart size={36} className="mx-auto mb-3 opacity-20" /> : <Filter size={36} className="mx-auto mb-3 opacity-20" />}
+              <p>{showFavoritesOnly ? 'No saved properties yet. Tap the heart icon to save listings.' : 'No properties match your filters.'}</p>
             </div>
           ) : (
             processedListings.map((villa) => {
@@ -651,6 +729,9 @@ export default function BaliVillaTruth() {
                         </div>
                       )}
                     </div>
+                    <button onClick={() => toggleFavorite(villa.id)} className="flex-shrink-0 p-1">
+                      <Heart size={18} strokeWidth={2} className={`transition-all ${favorites.has(villa.id) ? 'text-red-500 fill-red-500' : 'text-slate-300'}`} />
+                    </button>
                   </div>
 
                   {/* Card Body: Key Metrics Grid */}
@@ -711,6 +792,7 @@ export default function BaliVillaTruth() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold text-slate-400">
                 <th className="p-3 w-10 text-center"><BarChart3 size={14} className="mx-auto text-slate-400" /></th>
+                <th className="p-3 w-10 text-center"><Heart size={14} className="mx-auto text-slate-300" /></th>
                 <th className="p-5">Asset & Location</th>
                 <th className="p-5">Price ({displayCurrency})</th>
                 <th className="p-5">Price/m²</th>
@@ -722,9 +804,9 @@ export default function BaliVillaTruth() {
             <tbody className="divide-y divide-slate-100">
               {processedListings.length === 0 ? (
                   <tr>
-                      <td colSpan={7} className="p-10 text-center text-slate-400">
-                          <Filter size={48} className="mx-auto mb-4 opacity-20" />
-                          No properties match your filters.
+                      <td colSpan={8} className="p-10 text-center text-slate-400">
+                          {showFavoritesOnly ? <Heart size={48} className="mx-auto mb-4 opacity-20" /> : <Filter size={48} className="mx-auto mb-4 opacity-20" />}
+                          {showFavoritesOnly ? 'No saved properties yet. Click the heart icon to save listings.' : 'No properties match your filters.'}
                       </td>
                   </tr>
               ) : (
@@ -751,6 +833,15 @@ export default function BaliVillaTruth() {
                             title={compareSet.has(villa.id) ? 'Remove from compare' : compareSet.size >= 5 ? 'Max 5 villas' : 'Add to compare'}
                           >
                             <Check size={12} strokeWidth={3} />
+                          </button>
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            onClick={() => toggleFavorite(villa.id)}
+                            className="transition-all hover:scale-110"
+                            title={favorites.has(villa.id) ? 'Remove from saved' : 'Save listing'}
+                          >
+                            <Heart size={16} strokeWidth={2} className={favorites.has(villa.id) ? 'text-red-500 fill-red-500' : 'text-slate-300 hover:text-red-400'} />
                           </button>
                         </td>
                         <td className="p-5">
