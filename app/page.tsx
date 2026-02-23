@@ -402,12 +402,6 @@ export default function BaliVillaTruth() {
     // projected_roi from pipeline = net after 40% expenses + lease penalty (only for <15yr leases)
     let netRoi = villa.projected_roi || 0;
 
-    // Back-calculate gross ROI for "Agent Claims" display
-    const priceUSD = getPriceUSD(villa);
-    const nightly = villa.est_nightly_rate || getDisplayNightly(villa);
-    const occupancy = villa.est_occupancy || getDisplayOccupancy(villa) / 100;
-    const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
-
     // Leasehold depreciation for ALL leasehold villas
     // Pipeline already deducts for <15yr leases; we add it for >=15yr leases too
     const features = (villa.features || '').toLowerCase();
@@ -427,6 +421,10 @@ export default function BaliVillaTruth() {
         preDepreciationNet = netRoi + leaseDepreciation;
       }
     }
+
+    // Derive grossRoi from the SAME base as netRoi so tooltip math is consistent.
+    // preDepreciationNet = grossRoi * (1 - TOTAL_COST_RATIO), therefore:
+    const grossRoi = TOTAL_COST_RATIO < 1 ? preDepreciationNet / (1 - TOTAL_COST_RATIO) : 0;
 
     return {
       netRoi: Math.max(netRoi, -10),
@@ -999,32 +997,40 @@ export default function BaliVillaTruth() {
 
                                 {/* Cost breakdown — what BVT deducts */}
                                 <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-slate-500 font-bold mb-1">Operating Cost Deductions:</div>
+                                    <div className="text-slate-500 font-bold mb-1">Operating Costs <span className="font-normal text-[8px]">(% of revenue)</span></div>
                                     {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
                                       <div key={key} className="flex justify-between">
                                         <span className="text-slate-400">{cost.label}</span>
                                         <span className="text-red-400 font-mono">-{(cost.rate * 100).toFixed(0)}%</span>
                                       </div>
                                     ))}
-                                    {leaseDepreciation > 0 && (() => {
+                                    <div className="flex justify-between mt-1 pt-1 border-t border-slate-700 font-bold">
+                                      <span>Total Expense Load</span>
+                                      <span className="text-red-400 font-mono">-{((TOTAL_COST_RATIO) * 100).toFixed(0)}% of revenue</span>
+                                    </div>
+                                    <div className="text-slate-500 text-[8px] mt-0.5">→ Cash Flow Yield: <span className="text-emerald-400 font-bold">{preDepreciationNet.toFixed(1)}%</span></div>
+                                </div>
+
+                                {/* Capital depreciation — separate section, different denominator */}
+                                {!isFreehold && leaseDepreciation > 0 && (
+                                <div className="mb-2 pb-2 border-b border-slate-700">
+                                    <div className="text-orange-400 font-bold mb-1">Capital Depreciation <span className="font-normal text-[8px]">(% of purchase price)</span></div>
+                                    {(() => {
                                       const depCostAnnual = leaseYears > 0 ? Math.round(getPriceUSD(villa) / leaseYears) : 0;
                                       return (
-                                        <div className="mt-1 pt-1 border-t border-slate-800">
+                                        <>
                                           <div className="flex justify-between">
-                                            <span className="text-orange-400">Lease Depreciation ({leaseYears}yr)</span>
-                                            <span className="text-red-400 font-mono">-{leaseDepreciation.toFixed(1)}%</span>
+                                            <span className="text-slate-400">Lease expiry ({leaseYears}yr)</span>
+                                            <span className="text-orange-400 font-mono">-{leaseDepreciation.toFixed(1)}%/yr</span>
                                           </div>
                                           {depCostAnnual > 0 && (
-                                            <div className="text-orange-300 text-[8px] mt-0.5">≈ ${depCostAnnual.toLocaleString()}/yr in capital loss</div>
+                                            <div className="text-orange-300 text-[8px] mt-0.5">≈ ${depCostAnnual.toLocaleString()}/yr in capital loss — your asset heads to $0</div>
                                           )}
-                                        </div>
+                                        </>
                                       );
                                     })()}
-                                    <div className="flex justify-between mt-1 pt-1 border-t border-slate-700 font-bold">
-                                      <span>Total Deducted:</span>
-                                      <span className="text-red-400 font-mono">~{((TOTAL_COST_RATIO) * 100).toFixed(0)}%{leaseDepreciation > 0 ? ` + ${leaseDepreciation.toFixed(1)}%` : ''} of revenue</span>
-                                    </div>
                                 </div>
+                                )}
 
                                 {/* Red flags in tooltip */}
                                 {redFlags.length > 0 && (
@@ -1040,7 +1046,7 @@ export default function BaliVillaTruth() {
 
                                 {!isFreehold && leaseDepreciation > 0 && (
                                   <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <p className="text-amber-400 text-[9px]">Leaseholds lose their purchase value over the lease term ({leaseYears}yr). &quot;Before lease exp.&quot; ({preDepreciationNet.toFixed(1)}%) shows your cash flow yield ignoring this capital loss — useful for income planning, but not your true return.</p>
+                                    <p className="text-slate-400 text-[9px]"><span className="text-emerald-400 font-bold">Cash Flow ({preDepreciationNet.toFixed(1)}%)</span> = money hitting your account each year. <span className="text-blue-400 font-bold">Net Yield ({netRoi.toFixed(1)}%)</span> = true return after accounting for your asset depreciating to $0.</p>
                                   </div>
                                 )}
                                 <p className="text-slate-500 italic text-[9px] mb-1.5">Benchmarks: leasehold 8–12% net, freehold 4–7% net.</p>
@@ -1218,7 +1224,18 @@ export default function BaliVillaTruth() {
                   {/* Expense Load */}
                   <div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Expense Load</label>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide relative group/expense inline-flex items-center gap-1">
+                        Expense Load
+                        <Info size={12} className="text-slate-400 group-hover/expense:text-blue-500 cursor-help" />
+                        <span className="invisible group-hover/expense:visible absolute top-full left-0 mt-2 w-56 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none font-normal normal-case tracking-normal">
+                          <span className="font-bold text-blue-300 block mb-1">What&apos;s included:</span>
+                          {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
+                            <span key={key} className="flex justify-between"><span className="text-slate-300">{cost.label}</span><span className="text-red-400 font-mono">{(cost.rate * 100).toFixed(0)}%</span></span>
+                          ))}
+                          <span className="block mt-1.5 pt-1.5 border-t border-slate-700 text-slate-500">Mgmt, OTA commissions, pool, garden, AC, wifi, repairs</span>
+                          <span className="absolute bottom-full left-4 border-4 border-transparent border-b-slate-900"></span>
+                        </span>
+                      </label>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderExpense}%</span>
                     </div>
                     <input
@@ -1331,11 +1348,26 @@ export default function BaliVillaTruth() {
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono text-red-500 dark:text-red-400">-${r.annualExpenses.toLocaleString()}/yr</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
                             <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-300 font-bold">Net Revenue</td>
                             {results.map(r => (
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100">${r.netRevenue.toLocaleString()}/yr</td>
                             ))}
+                          </tr>
+                          <tr className="border-b border-slate-200 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/20">
+                            <td className="py-2.5 pr-4 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                              Cash Flow Yield
+                              <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-normal">Cash-on-cash return</span>
+                            </td>
+                            {results.map(r => {
+                              const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
+                              const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
+                              return (
+                                <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base">
+                                  {cashFlowYield.toFixed(1)}%
+                                </td>
+                              );
+                            })}
                           </tr>
                           <tr className="border-b border-slate-100 dark:border-slate-700 bg-amber-50/40 dark:bg-amber-950/30">
                             <td className="py-2.5 pr-4 text-amber-700 dark:text-amber-400 font-medium text-sm">
