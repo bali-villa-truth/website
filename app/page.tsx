@@ -1426,7 +1426,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     if (!document.querySelector('style[data-bvt-popup]')) {
       const style = document.createElement('style');
       style.setAttribute('data-bvt-popup', '1');
-      style.textContent = '.bvt-leaflet-popup .leaflet-popup-content-wrapper { padding: 0; border-radius: 10px; overflow: hidden; } .bvt-leaflet-popup .leaflet-popup-content { margin: 0; min-width: 220px; } .bvt-leaflet-popup .leaflet-popup-tip { background: #f8fafc; }';
+      style.textContent = '.bvt-leaflet-popup .leaflet-popup-content-wrapper { padding: 0 !important; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); } .bvt-leaflet-popup .leaflet-popup-content { margin: 0 !important; width: 250px !important; } .bvt-leaflet-popup .leaflet-popup-tip { background: #f8fafc; } .bvt-leaflet-popup .leaflet-popup-close-button { z-index: 10; right: 6px !important; top: 6px !important; color: #94a3b8 !important; font-size: 18px !important; }';
       document.head.appendChild(style);
     }
     const loadLeaflet = () => new Promise<void>((resolve) => {
@@ -1520,7 +1520,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       const cmpFull = compareSet.size >= 5 && !isCmp;
 
       marker.bindPopup(`
-        <div class="bvt-map-popup" data-villa-id="${villa.id}" style="font-family: system-ui, -apple-system, sans-serif; min-width: 220px; max-width: 280px; margin: -14px -20px -14px -20px;">
+        <div class="bvt-map-popup" data-villa-id="${villa.id}" style="font-family: system-ui, -apple-system, sans-serif;">
           <div style="padding: 10px 12px 8px; border-bottom: 1px solid #e2e8f0;">
             <div style="font-weight: 700; font-size: 13px; color: #1e293b; line-height: 1.3; word-wrap: break-word;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
             <div style="font-size: 11px; color: #475569; margin-top: 2px; font-weight: 500;">${villa.location || 'Bali'} · ${villa.bedrooms || '?'} bed${villa.bathrooms ? ' · ' + villa.bathrooms + ' bath' : ''}</div>
