@@ -760,12 +760,25 @@ export default function BaliVillaTruth() {
                     </div>
                   </div>
 
-                  {/* Card Footer: Nightly rate + flags + action */}
-                  <div className="flex items-center justify-between px-3 py-2 border-t border-slate-100 bg-slate-50/50">
-                    <div className="text-[10px] text-slate-500 font-mono">
+                  {/* Card Footer: Compare + nightly rate + flags + action */}
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 bg-slate-50/50">
+                    <button
+                      onClick={() => toggleCompare(villa.id)}
+                      disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
+                      className={`flex items-center gap-1 text-[9px] font-bold px-2 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
+                        compareSet.has(villa.id)
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : compareSet.size >= 5
+                            ? 'border-slate-200 text-slate-300 cursor-not-allowed'
+                            : 'border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600'
+                      }`}
+                    >
+                      <BarChart3 size={10} /> {compareSet.has(villa.id) ? 'Selected' : 'Compare'}
+                    </button>
+                    <div className="text-[10px] text-slate-500 font-mono text-center flex-1 min-w-0">
                       ~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ
                       {redFlags.length > 0 && (
-                        <div className="flex gap-1 mt-0.5 flex-wrap">
+                        <div className="flex gap-1 mt-0.5 flex-wrap justify-center">
                           {redFlags.map((flag, idx) => (
                             <span key={idx} className={`px-1 py-0.5 rounded text-[7px] font-bold ${flag.level === 'danger' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
                               {flag.label}
@@ -774,7 +787,7 @@ export default function BaliVillaTruth() {
                         </div>
                       )}
                     </div>
-                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-900 hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all">
+                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-900 hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0">
                       <Lock size={10}/> UNLOCK
                     </button>
                   </div>
