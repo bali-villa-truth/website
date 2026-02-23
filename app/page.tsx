@@ -1339,7 +1339,7 @@ export default function BaliVillaTruth() {
                             ))}
                           </tr>
                           {/* Red Flags row */}
-                          <tr>
+                          <tr className="border-b border-slate-100">
                             <td className="py-2.5 pr-4 text-slate-500 font-medium">Flags</td>
                             {compareVillas.map(v => {
                               const flags = getRedFlags(v);
@@ -1357,6 +1357,20 @@ export default function BaliVillaTruth() {
                                 </td>
                               );
                             })}
+                          </tr>
+                          {/* Unlock row */}
+                          <tr className="bg-slate-50/50">
+                            <td className="py-3 pr-4 text-slate-500 font-medium">Full Audit</td>
+                            {compareVillas.map(v => (
+                              <td key={v.id} className="text-center py-3 px-3">
+                                <button
+                                  onClick={() => { setSelectedVilla(v); }}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                                >
+                                  <Lock size={12} /> Unlock
+                                </button>
+                              </td>
+                            ))}
                           </tr>
                         </>
                       );
