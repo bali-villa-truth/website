@@ -1319,6 +1319,12 @@ export default function BaliVillaTruth() {
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">${r.annualRevenue.toLocaleString()}/yr</td>
                             ))}
                           </tr>
+                          <tr className="border-b border-slate-100 dark:border-slate-700">
+                            <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium">Gross Yield</td>
+                            {results.map(r => (
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-400 dark:text-slate-500 line-through">{r.grossYield.toFixed(1)}%</td>
+                            ))}
+                          </tr>
                           <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
                             <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Expenses</td>
                             {results.map(r => (
@@ -1364,12 +1370,6 @@ export default function BaliVillaTruth() {
                                   <span className="text-slate-400 dark:text-slate-500 text-xs">Unknown tenure</span>
                                 )}
                               </td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Gross Yield</td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-400 dark:text-slate-500 line-through">{r.grossYield.toFixed(1)}%</td>
                             ))}
                           </tr>
                           <tr className="bg-blue-50/50 dark:bg-blue-950/30">
