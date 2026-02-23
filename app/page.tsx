@@ -23,7 +23,7 @@ export default function BaliVillaTruth() {
   // --- FILTER STATES ---
   const [filterLocation, setFilterLocation] = useState('All');
   const [filterPrice, setFilterPrice] = useState(10000000); 
-  const [filterRoi, setFilterRoi] = useState(0);
+  const [filterRoi, setFilterRoi] = useState(-99);
   const [filterLandSize, setFilterLandSize] = useState(0);
   const [filterBuildSize, setFilterBuildSize] = useState(0);
   const [filterBeds, setFilterBeds] = useState(0);
@@ -474,11 +474,12 @@ export default function BaliVillaTruth() {
                 <div className="relative">
                     <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 transition-colors">
-                        <option value={0}>Min ROI</option>
+                        <option value={-99}>All ROI</option>
+                        <option value={0}>0%+</option>
+                        <option value={5}>5%+</option>
                         <option value={10}>10%+</option>
                         <option value={15}>15%+</option>
                         <option value={20}>20%+</option>
-                        <option value={25}>25%+</option>
                     </select>
                 </div>
                 <div className="relative">
@@ -548,7 +549,7 @@ export default function BaliVillaTruth() {
                 </div>
 
                 <button 
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(0); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
+                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc');}}
                     className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-2"
                 >
                     Reset All
