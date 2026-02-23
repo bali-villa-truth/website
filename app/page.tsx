@@ -398,43 +398,7 @@ export default function BaliVillaTruth() {
   };
   const TOTAL_COST_RATIO = Object.values(COST_BREAKDOWN).reduce((sum, c) => sum + c.rate, 0); // 0.40
 
-  const calculateNetROI = (villa: any): { netRoi: number; leaseDepreciation: number; grossRoi: number; isFreehold: boolean; preDepreciationNet: number; leaseYears: number } => {
-    // projected_roi from pipeline = net after 40% expenses + lease penalty (only for <15yr leases)
-    let netRoi = villa.projected_roi || 0;
 
-    // Leasehold depreciation for ALL leasehold villas
-    // Pipeline already deducts for <15yr leases; we add it for >=15yr leases too
-    const features = (villa.features || '').toLowerCase();
-    const years = Number(villa.lease_years) || 0;
-    const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
-    let leaseDepreciation = 0;
-    // For pre-depreciation display: net yield before lease expiration cost
-    let preDepreciationNet = netRoi;
-    if (!isFreehold && years > 0) {
-      leaseDepreciation = (1 / years) * 100;
-      // Pipeline already applied depreciation for short leases, only subtract for longer ones
-      if (years >= 15) {
-        preDepreciationNet = netRoi; // capture before subtracting
-        netRoi -= leaseDepreciation;
-      } else {
-        // Pipeline already subtracted, so add back to get pre-depreciation
-        preDepreciationNet = netRoi + leaseDepreciation;
-      }
-    }
-
-    // Derive grossRoi from the SAME base as netRoi so tooltip math is consistent.
-    // preDepreciationNet = grossRoi * (1 - TOTAL_COST_RATIO), therefore:
-    const grossRoi = TOTAL_COST_RATIO < 1 ? preDepreciationNet / (1 - TOTAL_COST_RATIO) : 0;
-
-    return {
-      netRoi: Math.max(netRoi, -10),
-      leaseDepreciation,
-      grossRoi: Math.min(grossRoi, 50),
-      isFreehold,
-      preDepreciationNet: Math.min(preDepreciationNet, 50),
-      leaseYears: years,
-    };
-  };
 
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
   const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
@@ -479,7 +443,10 @@ export default function BaliVillaTruth() {
     const years = Number(villa.lease_years) || 0;
     const priceUSD = getPriceUSD(villa);
     const nightly = getDisplayNightly(villa);
-    const { netRoi, grossRoi } = calculateNetROI(villa);
+    // Use dynamic calculation so flag text matches tooltip & calculator
+    const dynROI = calculateDynamicROI(villa, sliderNightly, sliderOccupancy, sliderExpense);
+    const grossRoi = dynROI.grossYield;
+    const cashFlowYield = priceUSD > 0 ? (dynROI.netRevenue / priceUSD) * 100 : 0;
 
     // --- ALL flags read from pipeline (auditor_remote.py --enrich) ---
     // No client-side flag computation — everything is pre-computed server-side.
@@ -493,24 +460,21 @@ export default function BaliVillaTruth() {
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
       const annualDepreciation = years > 0 ? Math.round(priceUSD / years) : 0;
-      const occupancyEst = villa.est_occupancy || 0.55;
-      const nightlyEst = villa.est_nightly_rate || nightly;
-      const annualNetRent = Math.round(nightlyEst * 365 * occupancyEst * 0.60);
-      const depreciationExceedsRent = annualDepreciation > annualNetRent;
+      const depreciationExceedsRent = annualDepreciation > dynROI.netRevenue;
       const depreciationDetail = annualDepreciation > 0
         ? depreciationExceedsRent
-          ? ` Rental income (~$${annualNetRent.toLocaleString()}/yr) cannot cover lease depreciation ($${annualDepreciation.toLocaleString()}/yr).`
-          : ` Lease depreciation costs $${annualDepreciation.toLocaleString()}/yr against ~$${annualNetRent.toLocaleString()}/yr net rent.`
+          ? ` Rental income (~$${dynROI.netRevenue.toLocaleString()}/yr) cannot cover lease depreciation ($${annualDepreciation.toLocaleString()}/yr).`
+          : ` Lease depreciation costs $${annualDepreciation.toLocaleString()}/yr against ~$${dynROI.netRevenue.toLocaleString()}/yr net rent.`
         : '';
       flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.${depreciationDetail}` });
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
-      flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Gross ROI of ${grossRoi.toFixed(0)}% is almost certainly inflated. After real costs, BVT estimates ~${netRoi.toFixed(1)}%.` });
+      flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Gross yield of ${grossRoi.toFixed(0)}% is almost certainly inflated. After real costs, cash flow yield is ~${cashFlowYield.toFixed(1)}%.` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
-      flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `Gross ${grossRoi.toFixed(0)}% is above Bali averages. After 40% expenses, net yield is ~${netRoi.toFixed(1)}%.` });
+      flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `Gross ${grossRoi.toFixed(0)}% is above Bali averages. After ${sliderExpense}% expenses, cash flow yield is ~${cashFlowYield.toFixed(1)}%.` });
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
