@@ -33,6 +33,7 @@ export default function BaliVillaTruth() {
   const [sortOption, setSortOption] = useState('roi-desc');
   const [showMap, setShowMap] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
   const [hoveredListingUrl, setHoveredListingUrl] = useState<string | null>(null);
   const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
@@ -588,10 +589,29 @@ export default function BaliVillaTruth() {
          </div>
       </div>
 
+      {/* MOBILE VIEW TOGGLE: List / Map */}
+      <div className="md:hidden max-w-7xl mx-auto mb-3 px-1">
+        <div className="flex bg-slate-100 rounded-lg p-0.5">
+          <button onClick={() => setMobileView('list')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-md transition-colors ${mobileView === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
+            <LayoutList size={13} /> List
+          </button>
+          <button onClick={() => setMobileView('map')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-md transition-colors ${mobileView === 'map' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>
+            <Map size={13} /> Map
+          </button>
+        </div>
+      </div>
+
+      {/* MOBILE MAP VIEW */}
+      {mobileView === 'map' && (
+        <div className="md:hidden max-w-7xl mx-auto mb-4 px-1" style={{ height: 'calc(100vh - 12rem)' }}>
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} />
+        </div>
+      )}
+
       {/* SPLIT LAYOUT: TABLE + MAP */}
       <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto flex gap-4 transition-all`}>
       {/* MOBILE CARD VIEW */}
-      <main className={`md:hidden transition-all w-full`}>
+      <main className={`${mobileView === 'list' ? 'block' : 'hidden'} md:hidden transition-all w-full`}>
         <div className="space-y-3 px-1">
           {processedListings.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
