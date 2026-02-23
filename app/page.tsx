@@ -1073,7 +1073,7 @@ export default function BaliVillaTruth() {
 
       {/* MODAL */}
       {selectedVilla && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
             <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={20}/></button>
             <div className="text-center">
@@ -1360,7 +1360,7 @@ export default function BaliVillaTruth() {
                           </tr>
                           {/* Unlock row */}
                           <tr className="bg-slate-50/50">
-                            <td className="py-3 pr-4 text-slate-500 font-medium">Full Audit</td>
+                            <td className="py-3 pr-4 text-slate-500 font-medium">Unlock Source</td>
                             {compareVillas.map(v => (
                               <td key={v.id} className="text-center py-3 px-3">
                                 <button
