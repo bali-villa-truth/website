@@ -10,6 +10,32 @@ const supabase = createClient(
 
 const FALLBACK_RATES: Record<string, number> = { USD: 1, IDR: 16782, AUD: 1.53, EUR: 0.92, SGD: 1.34 };
 
+// Indonesian real estate glossary for foreign buyers
+const GLOSSARY: Record<string, { label: string; tip: string }> = {
+  'hak_milik': { label: 'Hak Milik', tip: 'Freehold ownership — the strongest title in Indonesia. Foreigners cannot hold Hak Milik directly; most use a PT PMA (foreign-owned company) or nominee structure.' },
+  'hak_sewa': { label: 'Hak Sewa', tip: 'Leasehold — a right to use property for a fixed period. The most common structure for foreign buyers in Bali. The asset reverts to the landowner when the lease expires.' },
+  'shm': { label: 'SHM', tip: 'Sertifikat Hak Milik — the freehold land certificate. The highest form of land ownership in Indonesia, reserved for Indonesian citizens.' },
+  'imb': { label: 'IMB', tip: 'Izin Mendirikan Bangunan — the building construction permit. Essential for legal builds. Without an IMB (now called PBG), a property may face demolition risk.' },
+  'pbg': { label: 'PBG', tip: 'Persetujuan Bangunan Gedung — the new building approval that replaced IMB in 2021. Required for all new construction.' },
+  'pt_pma': { label: 'PT PMA', tip: 'Foreign-owned Indonesian company (Penanaman Modal Asing). The legal way for foreigners to hold property — requires minimum investment and ongoing compliance costs.' },
+  'notaris': { label: 'Notaris', tip: 'Indonesian notary — handles all property transactions, lease agreements, and company formations. A trusted notaris is essential for any Bali property purchase.' },
+};
+
+function GlossaryTip({ term }: { term: keyof typeof GLOSSARY }) {
+  const g = GLOSSARY[term];
+  if (!g) return null;
+  return (
+    <span className="relative group/glossary inline-flex items-center">
+      <Info size={11} className="text-slate-400 group-hover/glossary:text-blue-500 cursor-help ml-1 flex-shrink-0" />
+      <span className="invisible group-hover/glossary:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none">
+        <span className="font-bold text-blue-300">{g.label}</span>
+        <span className="block mt-1 text-slate-300">{g.tip}</span>
+        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></span>
+      </span>
+    </span>
+  );
+}
+
 export default function BaliVillaTruth() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -756,7 +782,7 @@ export default function BaliVillaTruth() {
                     <div className="bg-white p-2.5 text-center">
                       <div className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Specs</div>
                       <div className="text-xs font-medium text-slate-700">{villa.bedrooms || '?'} Bed</div>
-                      <div className="text-[9px] text-slate-500">{isFreehold ? 'Freehold' : leaseYears > 0 ? `${leaseYears}yr lease` : 'Leasehold'}</div>
+                      <div className="text-[9px] text-slate-500 inline-flex items-center justify-center">{isFreehold ? <>Freehold<GlossaryTip term="hak_milik" /></> : leaseYears > 0 ? <>{leaseYears}yr lease<GlossaryTip term="hak_sewa" /></> : <>Leasehold<GlossaryTip term="hak_sewa" /></>}</div>
                     </div>
                   </div>
 
@@ -1025,11 +1051,11 @@ export default function BaliVillaTruth() {
                                     const years = Number(villa.lease_years) || 0;
                                     const isFreehold = f.includes("Freehold") || f.includes("Hak Milik") || years === 999;
                                     const isLeasehold = f.includes("Leasehold") || f.includes("Hak Sewa") || (years > 0 && years < 999);
-                                    if (isFreehold) return <span className="font-bold text-green-600">Freehold (Hak Milik)</span>;
+                                    if (isFreehold) return <span className="font-bold text-green-600 inline-flex items-center">Freehold (Hak Milik)<GlossaryTip term="hak_milik" /></span>;
                                     if (isLeasehold) {
                                         const label = f ? "Leasehold (Hak Sewa)" : "Leasehold";
                                         const yearsLabel = years > 0 && years < 999 ? ` – ${years} years remaining` : " – years not stated";
-                                        return <span className="text-slate-700">{label}{yearsLabel}</span>;
+                                        return <span className="text-slate-700 inline-flex items-center">{label}<GlossaryTip term="hak_sewa" />{yearsLabel}</span>;
                                     }
                                     if (years > 0 && years < 999) return <span className="text-slate-700">{years} years remaining</span>;
                                     if (years === 999) return <span className="font-bold text-green-600">Freehold</span>;
@@ -1234,7 +1260,7 @@ export default function BaliVillaTruth() {
                         const isFH = f.includes('freehold') || f.includes('hak milik') || yrs === 999;
                         return (
                           <td key={v.id} className={`text-center py-2.5 px-3 ${isFH ? 'text-green-600 font-bold' : 'text-slate-600'}`}>
-                            {isFH ? 'Freehold' : yrs > 0 ? `${yrs}yr lease` : 'Unknown'}
+                            <span className="inline-flex items-center justify-center">{isFH ? <>Freehold<GlossaryTip term="hak_milik" /></> : yrs > 0 ? <>{yrs}yr lease<GlossaryTip term="hak_sewa" /></> : 'Unknown'}</span>
                           </td>
                         );
                       })}
