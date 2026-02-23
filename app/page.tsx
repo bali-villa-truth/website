@@ -32,6 +32,7 @@ export default function BaliVillaTruth() {
   const [displayCurrency, setDisplayCurrency] = useState<string>('USD'); // Show all prices in this currency
   const [sortOption, setSortOption] = useState('roi-desc');
   const [showMap, setShowMap] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [hoveredListingUrl, setHoveredListingUrl] = useState<string | null>(null);
   const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
@@ -434,19 +435,34 @@ export default function BaliVillaTruth() {
       
       {/* HEADER */}
       <header className="max-w-7xl mx-auto mb-6">
-        <div className="text-center mb-8">
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
+        <div className="text-center mb-4 md:mb-8">
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-1 md:mb-2">
             Bali Villa <span className="text-blue-600">Truth</span>
             </h1>
-            <p className="text-slate-500 max-w-xl mx-auto text-sm leading-relaxed">
+            <p className="text-slate-500 max-w-xl mx-auto text-xs md:text-sm leading-relaxed">
             Independent ROI auditing for serious investors. We verify the data agents hide.
             </p>
         </div>
         
         {/* FILTER DASHBOARD */}
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
-            
-            {/* ROW 1: Core Filters */}
+        <div className="bg-white p-3 md:p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
+
+            {/* Mobile filter toggle */}
+            <div className="flex md:hidden items-center justify-between mb-2">
+              <button onClick={() => setShowMobileFilters(!showMobileFilters)} className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <Filter size={14} /> Filters & Sort
+                <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full text-slate-500">{processedListings.length} results</span>
+              </button>
+              <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="text-xs bg-blue-50 border border-blue-200 text-blue-700 font-medium rounded-lg px-2 py-1.5 outline-none">
+                <option value="roi-desc">ROI: High → Low</option>
+                <option value="roi-asc">ROI: Low → High</option>
+                <option value="price-asc">Price: Low → High</option>
+                <option value="price-desc">Price: High → Low</option>
+              </select>
+            </div>
+
+            {/* ROW 1: Core Filters (hidden on mobile unless toggled) */}
+            <div className={`${showMobileFilters ? 'block' : 'hidden'} md:block`}>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
                 <div className="relative">
                     <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -555,17 +571,18 @@ export default function BaliVillaTruth() {
                     Reset All
                 </button>
             </div>
+            </div>{/* end mobile collapsible wrapper */}
         </div>
       </header>
 
       {/* RESULTS BAR */}
       <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex justify-between items-center px-2 transition-all`}>
-         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Showing {processedListings.length} Properties</p>
-         <div className="flex gap-4 items-center">
+         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide hidden md:block">Showing {processedListings.length} Properties</p>
+         <div className="flex gap-4 items-center ml-auto">
             <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200">
                 <ShieldAlert size={10}/> {flaggedCount} Flagged
             </div>
-            <button onClick={() => setShowMap(!showMap)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showMap ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600'}`}>
+            <button onClick={() => setShowMap(!showMap)} className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showMap ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600'}`}>
               <Map size={12} /> {showMap ? 'Hide Map' : 'Show Map'}
             </button>
          </div>
@@ -573,8 +590,102 @@ export default function BaliVillaTruth() {
 
       {/* SPLIT LAYOUT: TABLE + MAP */}
       <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto flex gap-4 transition-all`}>
-      {/* TABLE */}
-      <main className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
+      {/* MOBILE CARD VIEW */}
+      <main className={`md:hidden transition-all w-full`}>
+        <div className="space-y-3 px-1">
+          {processedListings.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+              <Filter size={36} className="mx-auto mb-3 opacity-20" />
+              <p>No properties match your filters.</p>
+            </div>
+          ) : (
+            processedListings.map((villa) => {
+              const { netRoi, leaseDepreciation, grossRoi, isFreehold, preDepreciationNet, leaseYears } = calculateNetROI(villa);
+              const redFlags = getRedFlags(villa);
+              const hasDanger = redFlags.some(f => f.level === 'danger');
+              const hasWarning = redFlags.length > 0;
+              const priceUSD = getPriceUSD(villa);
+
+              return (
+                <div key={villa.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  {/* Card Header: Image + Name + Location */}
+                  <div className="flex items-start gap-3 p-3 pb-2">
+                    {villa.thumbnail_url ? (
+                      <img src={villa.thumbnail_url} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0 bg-slate-100" loading="lazy" />
+                    ) : (
+                      <div className="w-20 h-16 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center">
+                        <Home size={18} className="text-slate-300" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-slate-900 text-sm leading-tight truncate">
+                        {villa.villa_name || 'Luxury Villa'}
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-slate-500 mt-0.5">
+                        <MapPin size={10} className="text-blue-500 flex-shrink-0" /> {villa.location || "Bali"}
+                      </div>
+                      {(hasDanger || hasWarning) && (
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          {hasDanger && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[8px] font-bold border border-red-200 flex items-center gap-0.5"><ShieldAlert size={8}/> VERIFY</span>}
+                          {!hasDanger && hasWarning && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[8px] font-bold border border-amber-200 flex items-center gap-0.5"><AlertTriangle size={8}/> CAUTION</span>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card Body: Key Metrics Grid */}
+                  <div className="grid grid-cols-3 gap-px bg-slate-100 border-t border-slate-100">
+                    {/* Price */}
+                    <div className="bg-white p-2.5 text-center">
+                      <div className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Price</div>
+                      <div className="font-mono text-xs font-bold text-slate-800">{formatPriceInCurrency(villa)}</div>
+                    </div>
+                    {/* ROI */}
+                    <div className="bg-white p-2.5 text-center">
+                      <div className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Net ROI</div>
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                        netRoi >= 12 ? 'bg-green-100 text-green-700' :
+                        netRoi >= 7 ? 'bg-blue-100 text-blue-700' :
+                        netRoi >= 0 ? 'bg-slate-100 text-slate-700' :
+                        'bg-red-100 text-red-600'
+                      }`}>{netRoi.toFixed(1)}%</span>
+                      <div className="text-[8px] text-slate-400 line-through mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
+                    </div>
+                    {/* Specs */}
+                    <div className="bg-white p-2.5 text-center">
+                      <div className="text-[9px] text-slate-400 uppercase font-bold mb-0.5">Specs</div>
+                      <div className="text-xs font-medium text-slate-700">{villa.bedrooms || '?'} Bed</div>
+                      <div className="text-[9px] text-slate-500">{isFreehold ? 'Freehold' : leaseYears > 0 ? `${leaseYears}yr lease` : 'Leasehold'}</div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer: Nightly rate + flags + action */}
+                  <div className="flex items-center justify-between px-3 py-2 border-t border-slate-100 bg-slate-50/50">
+                    <div className="text-[10px] text-slate-500 font-mono">
+                      ~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ
+                      {redFlags.length > 0 && (
+                        <div className="flex gap-1 mt-0.5 flex-wrap">
+                          {redFlags.map((flag, idx) => (
+                            <span key={idx} className={`px-1 py-0.5 rounded text-[7px] font-bold ${flag.level === 'danger' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+                              {flag.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-900 hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all">
+                      <Lock size={10}/> UNLOCK
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </main>
+
+      {/* DESKTOP TABLE */}
+      <main className={`hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -857,7 +968,7 @@ export default function BaliVillaTruth() {
 
       {/* FLOATING COMPARE BAR */}
       {compareSet.size > 0 && !showCompare && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4 animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white rounded-2xl shadow-2xl px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4 animate-in slide-in-from-bottom duration-300 max-w-[95vw]">
           <div className="flex items-center gap-2">
             <BarChart3 size={16} className="text-blue-400" />
             <span className="font-bold text-sm">{compareSet.size} villa{compareSet.size !== 1 ? 's' : ''} selected</span>
