@@ -399,7 +399,17 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
-      flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.` });
+      const annualDepreciation = years > 0 ? Math.round(priceUSD / years) : 0;
+      const occupancyEst = villa.est_occupancy || 0.55;
+      const nightlyEst = villa.est_nightly_rate || nightly;
+      const annualNetRent = Math.round(nightlyEst * 365 * occupancyEst * 0.60);
+      const depreciationExceedsRent = annualDepreciation > annualNetRent;
+      const depreciationDetail = annualDepreciation > 0
+        ? depreciationExceedsRent
+          ? ` Rental income (~$${annualNetRent.toLocaleString()}/yr) cannot cover lease depreciation ($${annualDepreciation.toLocaleString()}/yr).`
+          : ` Lease depreciation costs $${annualDepreciation.toLocaleString()}/yr against ~$${annualNetRent.toLocaleString()}/yr net rent.`
+        : '';
+      flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.${depreciationDetail}` });
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
@@ -717,12 +727,20 @@ export default function BaliVillaTruth() {
                                         <span className="text-red-400 font-mono">-{(cost.rate * 100).toFixed(0)}%</span>
                                       </div>
                                     ))}
-                                    {leaseDepreciation > 0 && (
-                                      <div className="flex justify-between mt-1 pt-1 border-t border-slate-800">
-                                        <span className="text-orange-400">Lease Depreciation</span>
-                                        <span className="text-red-400 font-mono">-{leaseDepreciation.toFixed(1)}%</span>
-                                      </div>
-                                    )}
+                                    {leaseDepreciation > 0 && (() => {
+                                      const depCostAnnual = leaseYears > 0 ? Math.round(getPriceUSD(villa) / leaseYears) : 0;
+                                      return (
+                                        <div className="mt-1 pt-1 border-t border-slate-800">
+                                          <div className="flex justify-between">
+                                            <span className="text-orange-400">Lease Depreciation ({leaseYears}yr)</span>
+                                            <span className="text-red-400 font-mono">-{leaseDepreciation.toFixed(1)}%</span>
+                                          </div>
+                                          {depCostAnnual > 0 && (
+                                            <div className="text-orange-300 text-[8px] mt-0.5">≈ ${depCostAnnual.toLocaleString()}/yr in capital loss</div>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                     <div className="flex justify-between mt-1 pt-1 border-t border-slate-700 font-bold">
                                       <span>Total Deducted:</span>
                                       <span className="text-red-400 font-mono">~{((TOTAL_COST_RATIO) * 100).toFixed(0)}%{leaseDepreciation > 0 ? ` + ${leaseDepreciation.toFixed(1)}%` : ''} of revenue</span>
