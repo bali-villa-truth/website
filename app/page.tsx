@@ -436,7 +436,9 @@ export default function BaliVillaTruth() {
   };
 
   // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
-  type RedFlag = { level: 'warning' | 'danger'; label: string; detail: string };
+  // Three levels: 'danger' (red) = deal-breaker risk, 'warning' (amber) = caution,
+  // 'assumed' (blue) = BVT filled in missing data with conservative defaults
+  type RedFlag = { level: 'warning' | 'danger' | 'assumed'; label: string; detail: string };
 
   const getRedFlags = (villa: any): RedFlag[] => {
     const flags: RedFlag[] = [];
@@ -452,10 +454,30 @@ export default function BaliVillaTruth() {
     // No client-side flag computation — everything is pre-computed server-side.
     const pipelineFlags = (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
 
+    // --- MISSING_DATA: Agent omitted critical listing data, BVT assumed conservative defaults ---
+    if (pipelineFlags.includes('MISSING_DATA')) {
+      const features = (villa.features || '').toLowerCase();
+      const isLeasehold = features.includes('leasehold') || features.includes('hak sewa');
+      const missingLease = isLeasehold && (years === 15 || years === 0);
+      const missingBeds = Number(villa.bedrooms) === 1 && pipelineFlags.filter((f: string) => f === 'MISSING_DATA').length > 1;
+
+      if (missingLease) {
+        const annualDep = priceUSD > 0 && years > 0 ? Math.round(priceUSD / years) : 0;
+        flags.push({ level: 'assumed', label: 'Lease Assumed', detail: `Agent omitted lease duration. BVT conservatively assumed a 15-year lease with $${annualDep.toLocaleString()}/yr depreciation to protect your ROI projection. Verify the actual lease term before investing.` });
+      }
+      if (missingBeds) {
+        flags.push({ level: 'assumed', label: 'Beds Assumed', detail: `Agent omitted bedroom count. BVT defaulted to 1 bedroom for rate estimation. The actual nightly rate may differ — verify the floor plan.` });
+      }
+      // Generic fallback if we can't determine which assumption
+      if (!missingLease && !missingBeds) {
+        flags.push({ level: 'assumed', label: 'BVT Assumed', detail: `Some listing data was missing. BVT applied conservative defaults to protect the ROI projection. Verify key details before investing.` });
+      }
+    }
+
     if (pipelineFlags.includes('BUDGET_VILLA')) {
       const beds = Number(villa.bedrooms) || 1;
       const ppr = Math.round(priceUSD / beds);
-      flags.push({ level: 'warning', label: 'Budget Villa', detail: `$${ppr.toLocaleString()}/room is below threshold. Nightly rate corrected down 25%.` });
+      flags.push({ level: 'warning', label: 'Budget Villa', detail: `$${ppr.toLocaleString()}/room is below the $50k threshold. Expect lower build quality, higher maintenance costs, and a less affluent renter demographic.` });
     }
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
@@ -470,18 +492,54 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
-      flags.push({ level: 'danger', label: 'Inflated ROI', detail: `Gross yield of ${grossRoi.toFixed(0)}% is almost certainly inflated. After real costs, cash flow yield is ~${cashFlowYield.toFixed(1)}%.` });
+      const agentRate = Number(villa.agent_claimed_rate) || 0;
+      const bvtRate = nightly;
+      const rateContext = agentRate > 0 && agentRate > bvtRate
+        ? ` The agent's claimed rate of $${agentRate}/nt was capped to $${bvtRate}/nt.`
+        : '';
+      flags.push({ level: 'warning', label: 'Inflated Claim', detail: `The agent marketing this property projected an unrealistic ROI (>${grossRoi.toFixed(0)}% gross). BVT audited and capped the nightly rate and occupancy to reflect realistic market maximums — the corrected cash flow yield is ~${cashFlowYield.toFixed(1)}%.${rateContext} Use this as negotiation leverage: the seller's math assumes near-zero costs and fantasy occupancy.` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
-      flags.push({ level: 'warning', label: 'Optimistic ROI', detail: `Gross ${grossRoi.toFixed(0)}% is above Bali averages. After ${sliderExpense}% expenses, cash flow yield is ~${cashFlowYield.toFixed(1)}%.` });
+      flags.push({ level: 'warning', label: 'Optimistic Claim', detail: `The agent's projected ROI (~${grossRoi.toFixed(0)}% gross) is well above Bali's historical net averages. This usually means the agent is quoting Gross Yield and ignoring realistic operating expenses (${sliderExpense}%) or lease depreciation. BVT's audited cash flow yield is ~${cashFlowYield.toFixed(1)}%.` });
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
-      flags.push({ level: 'warning', label: 'Rate vs Price Gap', detail: `$${nightly}/night on a $${Math.round(priceUSD/1000)}k property implies unrealistic occupancy or rates.` });
+      const agentRate = Number(villa.agent_claimed_rate) || 0;
+      const rateShown = agentRate > 0 && agentRate > nightly
+        ? ` The agent claimed $${agentRate}/nt — BVT modeled a realistic $${nightly}/nt.`
+        : '';
+      flags.push({ level: 'warning', label: 'Inflated Nightly Rate', detail: `The agent is claiming a nightly rate disproportionately high for a sub-$200k property. Budget builds rarely command premium luxury rates — the demographic paying $200+/nt expects finishes that cannot be built at this price point.${rateShown} BVT has modeled a rate that reflects the actual asset class.` });
+    }
+
+    // --- RATE_ADJUSTED: Pipeline significantly adjusted the nightly rate (>25% deviation from base model) ---
+    // Informational — not a red flag. Tells user the rate was modeled, not just pulled from area averages.
+    if (pipelineFlags.includes('RATE_ADJUSTED')) {
+      const agentRate = Number(villa.agent_claimed_rate) || 0;
+      const modelRate = nightly;
+      const rateSource = villa.rate_source || 'model';
+      const wasAuditorCapped = rateSource === 'auditor' && agentRate > 0 && modelRate < agentRate;
+      const detailText = wasAuditorCapped
+        ? `BVT adjusted the nightly rate from $${agentRate}/nt (agent-claimed) to $${modelRate}/nt. The original rate implied a gross yield above safe market limits, so BVT capped it to protect the ROI projection.`
+        : `BVT modeled this rate at $${modelRate}/nt — a >25% adjustment from the area baseline. This typically reflects a luxury build premium or a price-tier correction. The math is sound, but verify comparables.`;
+      flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: detailText });
     }
 
     return flags;
+  };
+
+  // Badge styling helper for the three flag levels
+  const flagBadgeClass = (level: RedFlag['level'], variant: 'compact' | 'bordered' = 'compact') => {
+    const base = variant === 'bordered' ? 'border ' : '';
+    if (level === 'danger') return base + 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400' + (variant === 'bordered' ? ' border-red-200 dark:border-red-900' : '');
+    if (level === 'assumed') return base + 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' + (variant === 'bordered' ? ' border-blue-200 dark:border-blue-900' : '');
+    return base + 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400' + (variant === 'bordered' ? ' border-amber-200 dark:border-amber-900' : '');
+  };
+
+  const flagTextClass = (level: RedFlag['level']) => {
+    if (level === 'danger') return 'text-red-400';
+    if (level === 'assumed') return 'text-blue-400';
+    return 'text-amber-400';
   };
 
   const flaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
@@ -791,7 +849,7 @@ export default function BaliVillaTruth() {
                       {redFlags.length > 0 && (
                         <div className="flex gap-1 mt-0.5 flex-wrap justify-center">
                           {redFlags.map((flag, idx) => (
-                            <span key={idx} className={`px-1 py-0.5 rounded text-[7px] font-bold ${flag.level === 'danger' ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400' : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400'}`}>
+                            <span key={idx} className={`px-1 py-0.5 rounded text-[7px] font-bold ${flagBadgeClass(flag.level)}`}>
                               {flag.label}
                             </span>
                           ))}
@@ -946,7 +1004,7 @@ export default function BaliVillaTruth() {
                             {redFlags.length > 0 && (
                               <div className="flex flex-wrap justify-center gap-1 mt-1.5">
                                 {redFlags.map((flag, idx) => (
-                                  <span key={idx} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flag.level === 'danger' ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900' : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900'}`}>
+                                  <span key={idx} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flagBadgeClass(flag.level, 'bordered')}`}>
                                     {flag.label}
                                   </span>
                                 ))}
@@ -1013,8 +1071,8 @@ export default function BaliVillaTruth() {
                                 {redFlags.length > 0 && (
                                   <div className="mb-2 pb-2 border-b border-slate-700">
                                     {redFlags.map((flag, idx) => (
-                                      <div key={idx} className={`flex items-start gap-1.5 mb-1 ${flag.level === 'danger' ? 'text-red-400' : 'text-amber-400'}`}>
-                                        <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" />
+                                      <div key={idx} className={`flex items-start gap-1.5 mb-1 ${flagTextClass(flag.level)}`}>
+                                        {flag.level === 'assumed' ? <Info size={10} className="mt-0.5 flex-shrink-0" /> : <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" />}
                                         <span>{flag.detail}</span>
                                       </div>
                                     ))}
@@ -1402,7 +1460,7 @@ export default function BaliVillaTruth() {
                                   ) : (
                                     <div className="flex flex-wrap justify-center gap-1">
                                       {flags.map((f, i) => (
-                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${f.level === 'danger' ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400' : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400'}`}>{f.label}</span>
+                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
                                       ))}
                                     </div>
                                   )}
