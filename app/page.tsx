@@ -445,10 +445,13 @@ export default function BaliVillaTruth() {
     const years = Number(villa.lease_years) || 0;
     const priceUSD = getPriceUSD(villa);
     const nightly = getDisplayNightly(villa);
-    // Use dynamic calculation so flag text matches tooltip & calculator
-    const dynROI = calculateDynamicROI(villa, sliderNightly, sliderOccupancy, sliderExpense);
-    const grossRoi = dynROI.grossYield;
-    const cashFlowYield = priceUSD > 0 ? (dynROI.netRevenue / priceUSD) * 100 : 0;
+    // Use pipeline values for flag text — consistent with badge and sort order
+    const netRoiPipeline = Number(villa.projected_roi) || 0;
+    const occupancy = villa.est_occupancy || 0.58;
+    const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
+    const grossRevenue = nightly * 365 * occupancy;
+    const netRevenue = grossRevenue * 0.60;
+    const cashFlowYield = priceUSD > 0 ? (netRevenue / priceUSD) * 100 : 0;
 
     // --- ALL flags read from pipeline (auditor_remote.py --enrich) ---
     // No client-side flag computation — everything is pre-computed server-side.
@@ -482,11 +485,12 @@ export default function BaliVillaTruth() {
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
       const annualDepreciation = years > 0 ? Math.round(priceUSD / years) : 0;
-      const depreciationExceedsRent = annualDepreciation > dynROI.netRevenue;
+      const netRevenueAnnual = Math.round(netRevenue);
+      const depreciationExceedsRent = annualDepreciation > netRevenueAnnual;
       const depreciationDetail = annualDepreciation > 0
         ? depreciationExceedsRent
-          ? ` Rental income (~$${dynROI.netRevenue.toLocaleString()}/yr) cannot cover lease depreciation ($${annualDepreciation.toLocaleString()}/yr).`
-          : ` Lease depreciation costs $${annualDepreciation.toLocaleString()}/yr against ~$${dynROI.netRevenue.toLocaleString()}/yr net rent.`
+          ? ` Rental income (~$${netRevenueAnnual.toLocaleString()}/yr) cannot cover lease depreciation ($${annualDepreciation.toLocaleString()}/yr).`
+          : ` Lease depreciation costs $${annualDepreciation.toLocaleString()}/yr against ~$${netRevenueAnnual.toLocaleString()}/yr net rent.`
         : '';
       flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.${depreciationDetail}` });
     }
@@ -761,17 +765,16 @@ export default function BaliVillaTruth() {
             </div>
           ) : (
             processedListings.map((villa) => {
-              const dynROI = calculateDynamicROI(villa, sliderNightly, sliderOccupancy, sliderExpense);
-              const grossRoi = dynROI.grossYield;
-              const netRoi = dynROI.netYield;
-              const isFreehold = dynROI.isFreehold;
-              const leaseYears = dynROI.leaseYears;
-              const leaseDepreciation = dynROI.depreciationYield;
-              const preDepreciationNet = dynROI.netRevenue > 0 && getPriceUSD(villa) > 0 ? (dynROI.netRevenue / getPriceUSD(villa)) * 100 : 0;
+              const netRoi = Number(villa.projected_roi) || 0;
+              const occupancy = villa.est_occupancy || 0.58;
+              const nightly = getDisplayNightly(villa);
+              const priceUSD = getPriceUSD(villa);
+              const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
+              const isFreehold = (() => { const f = (villa.features || '').toLowerCase(); const ly = Number(villa.lease_years); return f.includes('freehold') || f.includes('hak milik') || ly === 999; })();
+              const leaseYears = Number(villa.lease_years) || 0;
               const redFlags = getRedFlags(villa);
               const hasDanger = redFlags.some(f => f.level === 'danger');
               const hasWarning = redFlags.length > 0;
-              const priceUSD = getPriceUSD(villa);
 
               return (
                 <div key={villa.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -895,13 +898,17 @@ export default function BaliVillaTruth() {
                 processedListings.map((villa) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
-                    const dynROI = calculateDynamicROI(villa, sliderNightly, sliderOccupancy, sliderExpense);
-                    const grossRoi = dynROI.grossYield;
-                    const netRoi = dynROI.netYield;
-                    const isFreehold = dynROI.isFreehold;
-                    const leaseYears = dynROI.leaseYears;
-                    const leaseDepreciation = dynROI.depreciationYield; // % of purchase price
-                    const preDepreciationNet = dynROI.netRevenue > 0 && getPriceUSD(villa) > 0 ? (dynROI.netRevenue / getPriceUSD(villa)) * 100 : 0; // cash flow yield %
+                    const netRoi = Number(villa.projected_roi) || 0;
+                    const occupancy = villa.est_occupancy || 0.58;
+                    const nightly = getDisplayNightly(villa);
+                    const priceUSD = getPriceUSD(villa);
+                    const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
+                    const isFreehold = (() => { const f = (villa.features || '').toLowerCase(); const ly = Number(villa.lease_years); return f.includes('freehold') || f.includes('hak milik') || ly === 999; })();
+                    const leaseYears = Number(villa.lease_years) || 0;
+                    const leaseDepreciation = (!isFreehold && leaseYears > 0 && leaseYears < 15) ? (1 / leaseYears) * 100 : 0;
+                    const grossRevenue = nightly * 365 * occupancy;
+                    const netRevenue = grossRevenue * 0.60;
+                    const preDepreciationNet = priceUSD > 0 ? (netRevenue / priceUSD) * 100 : 0;
                     const hasDanger = redFlags.some(f => f.level === 'danger');
                     const hasWarning = redFlags.length > 0;
 
@@ -1011,14 +1018,13 @@ export default function BaliVillaTruth() {
                               </div>
                             )}
 
-                            {/* Enhanced tooltip with full cost breakdown */}
+                            {/* Simplified tooltip with pipeline-sourced values */}
                             {hoveredRoi === villa.id && (
                                 <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-slate-900"></div>
                                 <div className="font-bold mb-1 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Yield Breakdown</div>
-                                <div className="text-[8px] text-slate-500 mb-2 font-mono">{sliderOccupancy}% occ · {sliderExpense}% expenses · {sliderNightly !== 1.0 ? `${sliderNightly.toFixed(1)}x rate` : 'base rate'}{sliderOccupancy !== 58 || sliderExpense !== 40 || sliderNightly !== 1.0 ? ' (custom)' : ' (BVT defaults)'}</div>
 
-                                {/* Gross vs Net comparison — the core value prop */}
+                                {/* Gross vs Net comparison */}
                                 <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
                                   <div className="flex-1 text-center">
                                     <div className="text-slate-500 text-[9px] mb-0.5">Gross Yield</div>
@@ -1030,28 +1036,21 @@ export default function BaliVillaTruth() {
                                   </div>
                                 </div>
 
-                                {/* Cost breakdown — what BVT deducts */}
+                                {/* Simplified assumptions line */}
                                 <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-slate-500 font-bold mb-1">Operating Costs <span className="font-normal text-[8px]">(% of revenue)</span></div>
-                                    {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
-                                      <div key={key} className="flex justify-between">
-                                        <span className="text-slate-400">{cost.label}</span>
-                                        <span className="text-red-400 font-mono">-{(cost.rate * 100).toFixed(0)}%</span>
-                                      </div>
-                                    ))}
-                                    <div className="flex justify-between mt-1 pt-1 border-t border-slate-700 font-bold">
-                                      <span>Total Expense Load</span>
-                                      <span className="text-red-400 font-mono">-{((TOTAL_COST_RATIO) * 100).toFixed(0)}% of revenue</span>
+                                    <div className="text-slate-500 font-bold mb-1">Based on</div>
+                                    <div className="text-slate-300 font-mono text-[9px] space-y-0.5">
+                                      <div>Rented {Math.round(365 * occupancy)} nights/yr · ${nightly}/night</div>
+                                      <div>40% to operating costs <span className="text-slate-500">(mgmt, OTA fees, maintenance)</span></div>
                                     </div>
-                                    <div className="text-slate-500 text-[8px] mt-0.5">→ Cash Flow Yield: <span className="text-emerald-400 font-bold">{preDepreciationNet.toFixed(1)}%</span></div>
                                 </div>
 
-                                {/* Capital depreciation — separate section, different denominator */}
+                                {/* Capital depreciation for short leases */}
                                 {!isFreehold && leaseDepreciation > 0 && (
                                 <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-orange-400 font-bold mb-1">Capital Depreciation <span className="font-normal text-[8px]">(% of purchase price)</span></div>
+                                    <div className="text-orange-400 font-bold mb-1">Lease Depreciation</div>
                                     {(() => {
-                                      const depCostAnnual = leaseYears > 0 ? Math.round(getPriceUSD(villa) / leaseYears) : 0;
+                                      const depCostAnnual = leaseYears > 0 ? Math.round(priceUSD / leaseYears) : 0;
                                       return (
                                         <>
                                           <div className="flex justify-between">
