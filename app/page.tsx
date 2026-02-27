@@ -717,7 +717,7 @@ export default function BaliVillaTruth() {
                  const batch = Array.from(favorites).slice(0, 5);
                  setCompareSet(new Set(batch));
                  setShowCompare(true);
-                 setSliderNightly(1.0); setSliderOccupancy(58); setSliderExpense(40);
+                 setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40);
                }}
                className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
              >
@@ -1184,7 +1184,7 @@ export default function BaliVillaTruth() {
             <span className="font-bold text-sm">{compareSet.size} villa{compareSet.size !== 1 ? 's' : ''} selected</span>
           </div>
           <button
-            onClick={() => { setShowCompare(true); setSliderNightly(1.0); setSliderOccupancy(58); setSliderExpense(40); }}
+            onClick={() => { setShowCompare(true); setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
             className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2 rounded-xl transition-colors flex items-center gap-2"
           >
             <SlidersHorizontal size={14} /> Compare Now
@@ -1201,7 +1201,7 @@ export default function BaliVillaTruth() {
       {/* COMPARE PANEL MODAL */}
       {showCompare && (() => {
         const compareVillas = listings.filter(v => compareSet.has(v.id));
-        const BVT_DEFAULTS = { nightly: 1.0, occupancy: 58, expense: 40 };
+        const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
         return (
           <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/70 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
@@ -1292,7 +1292,7 @@ export default function BaliVillaTruth() {
                 {/* Reset to BVT defaults */}
                 <div className="flex justify-end mt-3">
                   <button
-                    onClick={() => { setSliderNightly(1.0); setSliderOccupancy(58); setSliderExpense(40); }}
+                    onClick={() => { setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                   >
                     Reset to BVT Defaults
