@@ -126,7 +126,7 @@ export default function BaliVillaTruth() {
   const [compareSet, setCompareSet] = useState<Set<number>>(new Set());
   const [showCompare, setShowCompare] = useState(false);
   const [sliderNightly, setSliderNightly] = useState(1.0);   // multiplier: 0.5x–2.0x
-  const [sliderOccupancy, setSliderOccupancy] = useState(58); // percent: 20–95
+  const [sliderOccupancy, setSliderOccupancy] = useState(65); // percent: 20–95 — matches pipeline flat 65%
   const [sliderExpense, setSliderExpense] = useState(40);     // percent: 20–60
 
   const toggleCompare = (villaId: number) => {
@@ -315,7 +315,7 @@ export default function BaliVillaTruth() {
   const getDisplayNightly = (villa: any): number =>
     villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
   const getDisplayOccupancy = (villa: any): number =>
-    (villa.est_occupancy ?? 0.58) * 100;
+    (villa.est_occupancy ?? 0.65) * 100;
 
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
   const processedListings = useMemo(() => {
@@ -447,7 +447,7 @@ export default function BaliVillaTruth() {
     const nightly = getDisplayNightly(villa);
     // Use pipeline values for flag text — consistent with badge and sort order
     const netRoiPipeline = Number(villa.projected_roi) || 0;
-    const occupancy = villa.est_occupancy || 0.58;
+    const occupancy = villa.est_occupancy || 0.65;
     const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
     const grossRevenue = nightly * 365 * occupancy;
     const netRevenue = grossRevenue * 0.60;
@@ -766,7 +766,7 @@ export default function BaliVillaTruth() {
           ) : (
             processedListings.map((villa) => {
               const netRoi = Number(villa.projected_roi) || 0;
-              const occupancy = villa.est_occupancy || 0.58;
+              const occupancy = villa.est_occupancy || 0.65;
               const nightly = getDisplayNightly(villa);
               const priceUSD = getPriceUSD(villa);
               const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
@@ -899,13 +899,13 @@ export default function BaliVillaTruth() {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
                     const netRoi = Number(villa.projected_roi) || 0;
-                    const occupancy = villa.est_occupancy || 0.58;
+                    const occupancy = villa.est_occupancy || 0.65;
                     const nightly = getDisplayNightly(villa);
                     const priceUSD = getPriceUSD(villa);
                     const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
                     const isFreehold = (() => { const f = (villa.features || '').toLowerCase(); const ly = Number(villa.lease_years); return f.includes('freehold') || f.includes('hak milik') || ly === 999; })();
                     const leaseYears = Number(villa.lease_years) || 0;
-                    const leaseDepreciation = (!isFreehold && leaseYears > 0 && leaseYears < 15) ? (1 / leaseYears) * 100 : 0;
+                    const leaseDepreciation = (!isFreehold && leaseYears > 0) ? (1 / leaseYears) * 100 : 0;
                     const grossRevenue = nightly * 365 * occupancy;
                     const netRevenue = grossRevenue * 0.60;
                     const preDepreciationNet = priceUSD > 0 ? (netRevenue / priceUSD) * 100 : 0;
@@ -1036,16 +1036,18 @@ export default function BaliVillaTruth() {
                                   </div>
                                 </div>
 
-                                {/* Simplified assumptions line */}
+                                {/* Transparent assumptions */}
                                 <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-slate-500 font-bold mb-1">Based on</div>
-                                    <div className="text-slate-300 font-mono text-[9px] space-y-0.5">
-                                      <div>Rented {Math.round(365 * occupancy)} nights/yr · ${nightly}/night</div>
-                                      <div>40% to operating costs <span className="text-slate-500">(mgmt, OTA fees, maintenance)</span></div>
+                                    <div className="text-slate-500 font-bold mb-1">Computed using</div>
+                                    <div className="text-slate-300 text-[9px] space-y-1">
+                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
+                                      <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-slate-400">(65% occ)</span> <span className="text-slate-500">— assumed, we don't have occupancy data for this area</span></div>
+                                      <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
+                                    <p className="text-blue-400 text-[9px] font-medium flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9}/> Compare villas to stress-test with your own assumptions →</p>
                                 </div>
 
-                                {/* Capital depreciation for short leases */}
+                                {/* Capital depreciation for leaseholds */}
                                 {!isFreehold && leaseDepreciation > 0 && (
                                 <div className="mb-2 pb-2 border-b border-slate-700">
                                     <div className="text-orange-400 font-bold mb-1">Lease Depreciation</div>
@@ -1084,7 +1086,6 @@ export default function BaliVillaTruth() {
                                   </div>
                                 )}
                                 <p className="text-slate-500 italic text-[9px] mb-1.5">Benchmarks: leasehold 8–12% net, freehold 4–7% net.</p>
-                                <p className="text-blue-400 text-[9px] font-medium flex items-center gap-1"><SlidersHorizontal size={9}/> Select villas to compare with your own assumptions →</p>
                                 </div>
                             )}
                             </div>
