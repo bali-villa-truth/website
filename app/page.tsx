@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon } from 'lucide-react';
+import Link from 'next/link';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -1045,6 +1046,7 @@ export default function BaliVillaTruth() {
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
                                     <p className="text-blue-400 text-[9px] font-medium flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9}/> Compare villas to stress-test with your own assumptions →</p>
+                                    <a href="/methodology" className="text-slate-500 text-[9px] flex items-center gap-1 mt-1 hover:text-blue-400 transition-colors"><BookOpen size={8}/> How we calculate these numbers</a>
                                 </div>
 
                                 {/* Capital depreciation for leaseholds */}
@@ -1502,7 +1504,7 @@ export default function BaliVillaTruth() {
       <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
-          <div className="flex items-center gap-4"><a href="#" className="hover:text-blue-600 transition-colors">Contact</a><span className="text-slate-300">|</span><a href="#" className="hover:text-blue-600 transition-colors">Privacy Policy</a></div>
+          <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</a><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</a></div>
         </div>
         <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
       </footer>
