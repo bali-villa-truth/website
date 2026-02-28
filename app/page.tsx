@@ -540,14 +540,16 @@ export default function BaliVillaTruth() {
     <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans ${darkMode ? 'dark' : ''}`}>
 
       {/* HERO SECTION */}
-      <section className="relative h-[50vh] md:h-[70vh] w-full overflow-hidden">
-        {/* Background image */}
+      <section className="relative h-[55vh] md:h-[75vh] w-full overflow-hidden">
+        {/* Background image — Bali ocean cliff view */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1920&q=80&fm=webp')` }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=1920&q=80&fm=webp')` }}
         />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-slate-950/95" />
+        {/* Gradient overlay — heavy at bottom for seamless transition to page bg */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-slate-950" />
+        {/* Extra bottom fade for seamless bleed */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent" />
         {/* Fallback gradient (shows while image loads) */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-emerald-950 -z-10" />
 
@@ -572,7 +574,7 @@ export default function BaliVillaTruth() {
           {/* Scroll indicator */}
           <button
             onClick={() => document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' })}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 hover:text-white/80 transition-colors animate-bounce"
+            className="absolute bottom-32 md:bottom-40 left-1/2 -translate-x-1/2 text-white/50 hover:text-white/80 transition-colors animate-bounce"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
@@ -581,7 +583,7 @@ export default function BaliVillaTruth() {
 
       {/* FILTER + LISTINGS SECTION */}
       <div id="listings-section" className="px-4 md:px-8">
-      <header className="relative max-w-7xl mx-auto -mt-16 md:-mt-20 mb-6 z-20">
+      <header className="relative max-w-7xl mx-auto -mt-28 md:-mt-36 mb-6 z-20">
 
         {/* FILTER DASHBOARD — glass-morphism panel overlapping hero */}
         <div className="backdrop-blur-xl bg-white/85 dark:bg-slate-900/85 p-3 md:p-5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 mb-6">
