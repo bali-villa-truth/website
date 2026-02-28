@@ -1200,26 +1200,26 @@ export default function BaliVillaTruth() {
         const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
         return (
-          <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/70 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl my-8 relative">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl relative flex flex-col max-h-[92vh]">
+              {/* Header — compact */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <SlidersHorizontal size={20} className="text-blue-600 dark:text-blue-400" /> Villa ROI Calculator
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <SlidersHorizontal size={18} className="text-blue-600 dark:text-blue-400" /> Villa ROI Calculator
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Adjust assumptions to see how yields change across your selection</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Adjust assumptions to see how yields change across your selection</p>
                 </div>
                 <button onClick={() => setShowCompare(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 p-2"><X size={24}/></button>
               </div>
 
-              {/* Villa Picker — shows when user has more saved than are being compared */}
+              {/* Villa Picker — horizontal scroll to reclaim vertical space */}
               {savedVillas.length > compareVillas.length && (
-                <div className="px-6 pt-4 pb-2 border-b border-slate-200 dark:border-slate-700">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 mb-2">
-                    Comparing {compareVillas.length} of {savedVillas.length} saved — click to swap villas (max 5)
+                <div className="px-6 py-2 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 mb-1.5">
+                    Comparing {compareVillas.length} of {savedVillas.length} saved — click to swap (max 5)
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                     {savedVillas.map(v => {
                       const isIncluded = compareSet.has(v.id);
                       return (
@@ -1237,7 +1237,7 @@ export default function BaliVillaTruth() {
                             });
                           }}
                           disabled={!isIncluded && compareSet.size >= 5}
-                          className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors truncate max-w-[180px] ${
+                          className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors truncate max-w-[180px] flex-shrink-0 ${
                             isIncluded
                               ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
                               : compareSet.size >= 5
@@ -1254,12 +1254,12 @@ export default function BaliVillaTruth() {
                 </div>
               )}
 
-              {/* Sliders */}
-              <div className="p-6 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Sliders — compact to keep cause+effect on screen together */}
+              <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Nightly Rate Multiplier */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-2">
+                    <div className="flex justify-between items-baseline mb-1">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Nightly Rate</label>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderNightly.toFixed(1)}x</span>
                     </div>
@@ -1279,7 +1279,7 @@ export default function BaliVillaTruth() {
 
                   {/* Occupancy */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-2">
+                    <div className="flex justify-between items-baseline mb-1">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Occupancy</label>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderOccupancy}%</span>
                     </div>
@@ -1298,7 +1298,7 @@ export default function BaliVillaTruth() {
 
                   {/* Expense Load */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-2">
+                    <div className="flex justify-between items-baseline mb-1">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide relative group/expense inline-flex items-center gap-1">
                         Expense Load
                         <Info size={12} className="text-slate-400 group-hover/expense:text-blue-500 cursor-help" />
@@ -1328,7 +1328,7 @@ export default function BaliVillaTruth() {
                 </div>
 
                 {/* Reset to BVT defaults */}
-                <div className="flex justify-end mt-3">
+                <div className="flex justify-end mt-2">
                   <button
                     onClick={() => { setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
@@ -1338,8 +1338,8 @@ export default function BaliVillaTruth() {
                 </div>
               </div>
 
-              {/* Comparison Table — sticky left labels, horizontal scroll for 5+ villas */}
-              <div className="p-6 overflow-x-auto">
+              {/* Comparison Table — scrollable middle, sticky Net Yield at bottom */}
+              <div className="px-6 py-4 overflow-auto flex-1 min-h-0">
                 <table className="w-full text-sm border-collapse min-w-[600px]">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-700">
@@ -1474,26 +1474,6 @@ export default function BaliVillaTruth() {
                               </td>
                             ))}
                           </tr>
-                          {/* === NET YIELD — THE HERO METRIC === */}
-                          {/* Strong green treatment: this is BVT's brand — the true bottom line */}
-                          <tr className="bg-emerald-50/60 dark:bg-emerald-950/30 border-t-2 border-emerald-200 dark:border-emerald-800">
-                            <td className="py-3.5 pr-4 font-bold text-sm text-emerald-700 dark:text-emerald-400 sticky left-0 bg-emerald-50/60 dark:bg-emerald-950/30">
-                              Net Yield
-                              <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
-                            </td>
-                            {results.map(r => (
-                              <td key={r.id} className={`text-center py-3.5 px-3 font-mono font-bold text-lg ${
-                                r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
-                              }`}>
-                                {r.netYield.toFixed(1)}%
-                                {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
-                                  <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-bold mt-0.5">BEST</span>
-                                )}
-                              </td>
-                            ))}
-                          </tr>
                           {/* Red Flags row */}
                           <tr className="border-b border-slate-100 dark:border-slate-700">
                             <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Flags</td>
@@ -1515,16 +1495,36 @@ export default function BaliVillaTruth() {
                             })}
                           </tr>
                           {/* Unlock row */}
-                          <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-3 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Unlock Source</td>
+                          <tr className="border-b border-slate-200 dark:border-slate-600">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Unlock Source</td>
                             {compareVillas.map(v => (
-                              <td key={v.id} className="text-center py-3 px-3">
+                              <td key={v.id} className="text-center py-2.5 px-3">
                                 <button
                                   onClick={() => { setSelectedVilla(v); }}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-[10px] font-bold rounded-lg transition-colors shadow-sm"
                                 >
-                                  <Lock size={12} /> Unlock
+                                  <Lock size={10} /> Unlock
                                 </button>
+                              </td>
+                            ))}
+                          </tr>
+                          {/* === NET YIELD — THE HERO METRIC (sticky bottom) === */}
+                          {/* Pinned so sliders + bottom line are always on screen simultaneously */}
+                          <tr className="bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800 sticky bottom-0 z-[2] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                            <td className="py-3 pr-4 font-bold text-sm text-emerald-700 dark:text-emerald-400 sticky left-0 z-[3] bg-emerald-50 dark:bg-emerald-950/50">
+                              Net Yield
+                              <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
+                            </td>
+                            {results.map(r => (
+                              <td key={r.id} className={`text-center py-3 px-3 font-mono font-bold text-lg bg-emerald-50 dark:bg-emerald-950/50 ${
+                                r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
+                              }`}>
+                                {r.netYield.toFixed(1)}%
+                                {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
+                                  <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-bold mt-0.5">BEST</span>
+                                )}
                               </td>
                             ))}
                           </tr>
@@ -1536,7 +1536,7 @@ export default function BaliVillaTruth() {
               </div>
 
               {/* Footer note */}
-              <div className="px-6 pb-6 text-[10px] text-slate-400 italic">
+              <div className="px-6 py-3 text-[10px] text-slate-400 italic flex-shrink-0 border-t border-slate-100 dark:border-slate-800">
                 These projections are estimates based on your inputs. Actual returns depend on management quality, market conditions, and property-specific factors. BVT does not provide financial advice.
               </div>
             </div>
