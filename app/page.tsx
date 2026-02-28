@@ -502,11 +502,11 @@ export default function BaliVillaTruth() {
       const rateContext = agentRate > 0 && agentRate > bvtRate
         ? ` The agent's claimed rate of $${agentRate}/nt was capped to $${bvtRate}/nt.`
         : '';
-      flags.push({ level: 'warning', label: 'Inflated Claim', detail: `The agent marketing this property projected an unrealistic ROI (>${grossRoi.toFixed(0)}% gross). BVT audited and capped the nightly rate and occupancy to reflect realistic market maximums — the corrected cash flow yield is ~${cashFlowYield.toFixed(1)}%.${rateContext} Use this as negotiation leverage: the seller's math assumes near-zero costs and fantasy occupancy.` });
+      flags.push({ level: 'warning', label: 'Inflated Claim', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is unrealistically high — a number like this typically ignores operating costs and lease depreciation. BVT capped the nightly rate to reflect market reality. After 40% expenses, the cash flow yield is ~${cashFlowYield.toFixed(1)}%.${rateContext}` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
-      flags.push({ level: 'warning', label: 'Optimistic Claim', detail: `The agent's projected ROI (~${grossRoi.toFixed(0)}% gross) is well above Bali's historical net averages. This usually means the agent is quoting Gross Yield and ignoring realistic operating expenses (${sliderExpense}%) or lease depreciation. BVT's audited cash flow yield is ~${cashFlowYield.toFixed(1)}%.` });
+      flags.push({ level: 'warning', label: 'Optimistic Claim', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is well above Bali's historical net averages (leasehold 10–15%, freehold 5–8%). Gross yield ignores operating expenses (${sliderExpense}%) and lease depreciation. After those costs, BVT estimates a net cash flow yield of ~${cashFlowYield.toFixed(1)}%.` });
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
