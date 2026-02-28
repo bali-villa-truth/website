@@ -403,6 +403,7 @@ export default function BaliVillaTruth() {
 
 
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
+  // All monetary values returned in USD — the display layer converts to displayCurrency
   const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
     const priceUSD = getPriceUSD(villa);
     if (priceUSD <= 0) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0, leaseDepreciation: 0, depreciationYield: 0, isFreehold: true, leaseYears: 0 };
@@ -435,6 +436,15 @@ export default function BaliVillaTruth() {
       isFreehold,
       leaseYears: years,
     };
+  };
+
+  // --- Format USD value into display currency with symbol (for compare panel P&L rows) ---
+  const formatCompareAmount = (usdValue: number, suffix?: string): string => {
+    const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
+    const sym = symbols[displayCurrency] || displayCurrency + ' ';
+    const r = rates[displayCurrency] || 1;
+    const converted = displayCurrency === 'USD' ? usdValue : usdValue * r;
+    return `${sym}${Math.round(converted).toLocaleString()}${suffix || ''}`;
   };
 
   // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
@@ -1264,6 +1274,7 @@ export default function BaliVillaTruth() {
                       <span className="text-blue-500 dark:text-blue-400 font-bold">BVT: {BVT_DEFAULTS.nightly}x</span>
                       <span>2.0x</span>
                     </div>
+                    <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1">Multiplier applied to BVT Audited Baseline rate</p>
                   </div>
 
                   {/* Occupancy */}
@@ -1327,15 +1338,15 @@ export default function BaliVillaTruth() {
                 </div>
               </div>
 
-              {/* Comparison Table */}
+              {/* Comparison Table — sticky left labels, horizontal scroll for 5+ villas */}
               <div className="p-6 overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
+                <table className="w-full text-sm border-collapse min-w-[600px]">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                      <th className="text-left py-3 pr-4 w-36">Metric</th>
+                      <th className="text-left py-3 pr-4 w-36 sticky left-0 bg-white dark:bg-slate-900 z-[1]">Metric</th>
                       {compareVillas.map(v => (
                         <th key={v.id} className="text-center py-3 px-3 min-w-[140px]">
-                          <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold truncate max-w-[160px]">{toTitleCase(v.villa_name)}</div>
+                          <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold line-clamp-2 max-w-[160px] mx-auto">{toTitleCase(v.villa_name)}</div>
                           <div className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{v.location}</div>
                         </th>
                       ))}
@@ -1344,14 +1355,14 @@ export default function BaliVillaTruth() {
                   <tbody className="text-xs">
                     {/* Price */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Price</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Price</td>
                       {compareVillas.map(v => (
                         <td key={v.id} className="text-center py-2.5 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300">{formatPriceInCurrency(v)}</td>
                       ))}
                     </tr>
                     {/* Lease */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Lease</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Lease</td>
                       {compareVillas.map(v => {
                         const f = (v.features || '').toLowerCase();
                         const yrs = Number(v.lease_years) || 0;
@@ -1365,27 +1376,27 @@ export default function BaliVillaTruth() {
                     </tr>
                     {/* Nightly Rate */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Nightly Rate</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Nightly Rate</td>
                       {compareVillas.map(v => {
                         const base = v.est_nightly_rate || getDisplayNightly(v);
                         const adjusted = Math.round(base * sliderNightly);
                         return (
                           <td key={v.id} className="text-center py-2.5 px-3 font-mono">
-                            <span className="text-slate-700 dark:text-slate-300 font-semibold">${adjusted}</span>
-                            {sliderNightly !== 1.0 && <span className="text-slate-400 dark:text-slate-500 text-[10px] ml-1">(base ${base})</span>}
+                            <span className="text-slate-700 dark:text-slate-300 font-semibold">{formatCompareAmount(adjusted)}</span>
+                            {sliderNightly !== 1.0 && <span className="text-slate-400 dark:text-slate-500 text-[10px] ml-1">(base {formatCompareAmount(base)})</span>}
                           </td>
                         );
                       })}
                     </tr>
                     {/* Occupancy & Expense (shared) */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Occupancy</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Occupancy</td>
                       {compareVillas.map(v => (
                         <td key={v.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{sliderOccupancy}%</td>
                       ))}
                     </tr>
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Expense Load</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Expense Load</td>
                       {compareVillas.map(v => (
                         <td key={v.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{sliderExpense}%</td>
                       ))}
@@ -1400,49 +1411,53 @@ export default function BaliVillaTruth() {
 
                       return (
                         <>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Gross Revenue</td>
+                          {/* --- P&L MATH RECEIPT --- */}
+                          {/* Visually quiet rows for the calculation flow: Gross → Expenses → Net */}
+                          <tr className="border-b border-slate-100 dark:border-slate-700">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Gross Revenue</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">${r.annualRevenue.toLocaleString()}/yr</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{formatCompareAmount(r.annualRevenue, '/yr')}</td>
                             ))}
                           </tr>
                           <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium">Gross Yield</td>
+                            <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium sticky left-0 bg-white dark:bg-slate-900">Gross Yield</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-600 dark:text-slate-400 line-through font-medium">{r.grossYield.toFixed(1)}%</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-500 dark:text-slate-500 line-through">{r.grossYield.toFixed(1)}%</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Expenses</td>
+                          <tr className="border-b border-slate-100 dark:border-slate-700">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Expenses</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-red-500 dark:text-red-400">-${r.annualExpenses.toLocaleString()}/yr</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-red-500 dark:text-red-400">-{formatCompareAmount(r.annualExpenses, '/yr')}</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-300 font-bold">Net Revenue</td>
+                          <tr className="border-b border-slate-100 dark:border-slate-700">
+                            <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-300 font-bold sticky left-0 bg-white dark:bg-slate-900">Net Revenue</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100">${r.netRevenue.toLocaleString()}/yr</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100">{formatCompareAmount(r.netRevenue, '/yr')}</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-200 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/20">
-                            <td className="py-2.5 pr-4 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                          {/* Cash Flow Yield — quiet, not competing with Net Yield */}
+                          <tr className="border-b border-slate-100 dark:border-slate-700">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">
                               Cash Flow Yield
-                              <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-normal">Cash-on-cash return</span>
+                              <span className="block text-[9px] text-slate-400 dark:text-slate-500 font-normal">Before depreciation</span>
                             </td>
                             {results.map(r => {
                               const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
                               const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
                               return (
-                                <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base">
+                                <td key={r.id} className="text-center py-2.5 px-3 font-mono font-semibold text-slate-600 dark:text-slate-400">
                                   {cashFlowYield.toFixed(1)}%
                                 </td>
                               );
                             })}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-amber-50/40 dark:bg-amber-950/30">
-                            <td className="py-2.5 pr-4 text-amber-700 dark:text-amber-400 font-medium text-sm">
+                          {/* Lease Depreciation — quiet, informational */}
+                          <tr className="border-b border-slate-200 dark:border-slate-600">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">
                               Lease Depreciation
-                              <span className="block text-[9px] text-amber-500 dark:text-amber-400 font-normal">Asset value loss/yr</span>
+                              <span className="block text-[9px] text-slate-400 dark:text-slate-500 font-normal">Asset value loss/yr</span>
                             </td>
                             {results.map(r => (
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono">
@@ -1450,8 +1465,8 @@ export default function BaliVillaTruth() {
                                   <span className="text-green-600 dark:text-green-400 text-xs font-medium">Freehold — N/A</span>
                                 ) : r.leaseDepreciation > 0 ? (
                                   <div>
-                                    <span className="text-amber-600 dark:text-amber-400 font-bold">-${r.leaseDepreciation.toLocaleString()}/yr</span>
-                                    <span className="block text-[9px] text-amber-500 dark:text-amber-400">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
+                                    <span className="text-amber-600 dark:text-amber-400 font-semibold">-{formatCompareAmount(r.leaseDepreciation, '/yr')}</span>
+                                    <span className="block text-[9px] text-slate-400 dark:text-slate-500">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
                                   </div>
                                 ) : (
                                   <span className="text-slate-400 dark:text-slate-500 text-xs">Unknown tenure</span>
@@ -1459,16 +1474,18 @@ export default function BaliVillaTruth() {
                               </td>
                             ))}
                           </tr>
-                          <tr className="bg-blue-50/50 dark:bg-blue-950/30">
-                            <td className="py-3 pr-4 text-blue-700 dark:text-blue-400 font-bold text-sm">
+                          {/* === NET YIELD — THE HERO METRIC === */}
+                          {/* Strong green treatment: this is BVT's brand — the true bottom line */}
+                          <tr className="bg-emerald-50/60 dark:bg-emerald-950/30 border-t-2 border-emerald-200 dark:border-emerald-800">
+                            <td className="py-3.5 pr-4 font-bold text-sm text-emerald-700 dark:text-emerald-400 sticky left-0 bg-emerald-50/60 dark:bg-emerald-950/30">
                               Net Yield
-                              <span className="block text-[9px] text-blue-400 dark:text-blue-400 font-normal">After depreciation</span>
+                              <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
                             </td>
                             {results.map(r => (
-                              <td key={r.id} className={`text-center py-3 px-3 font-mono font-bold text-lg ${
+                              <td key={r.id} className={`text-center py-3.5 px-3 font-mono font-bold text-lg ${
                                 r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
                                   ? 'text-emerald-600 dark:text-emerald-400'
-                                  : r.netYield >= 7 ? 'text-blue-600 dark:text-blue-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
+                                  : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
                               }`}>
                                 {r.netYield.toFixed(1)}%
                                 {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
@@ -1479,7 +1496,7 @@ export default function BaliVillaTruth() {
                           </tr>
                           {/* Red Flags row */}
                           <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Flags</td>
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Flags</td>
                             {compareVillas.map(v => {
                               const flags = getRedFlags(v);
                               return (
@@ -1499,7 +1516,7 @@ export default function BaliVillaTruth() {
                           </tr>
                           {/* Unlock row */}
                           <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-3 pr-4 text-slate-500 dark:text-slate-400 font-medium">Unlock Source</td>
+                            <td className="py-3 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Unlock Source</td>
                             {compareVillas.map(v => (
                               <td key={v.id} className="text-center py-3 px-3">
                                 <button
