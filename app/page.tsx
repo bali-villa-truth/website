@@ -1474,59 +1474,51 @@ export default function BaliVillaTruth() {
                               </td>
                             ))}
                           </tr>
-                          {/* Red Flags row */}
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Flags</td>
-                            {compareVillas.map(v => {
-                              const flags = getRedFlags(v);
+                          {/* === NET YIELD — THE HERO METRIC (sticky bottom) === */}
+                          {/* Combines Net Yield + Flags + Unlock into one pinned row */}
+                          {/* Cause (sliders) and Effect (this row) always visible simultaneously */}
+                          <tr className="bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800 sticky bottom-0 z-[2] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                            <td className="py-3 pr-4 sticky left-0 z-[3] bg-emerald-50 dark:bg-emerald-950/50">
+                              <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400">Net Yield</span>
+                              <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
+                            </td>
+                            {results.map(r => {
+                              const villa = compareVillas.find(v => v.id === r.id);
+                              const flags = villa ? getRedFlags(villa) : [];
                               return (
-                                <td key={v.id} className="text-center py-2.5 px-3">
-                                  {flags.length === 0 ? (
-                                    <span className="text-green-500 dark:text-green-400 text-[10px] font-medium">Clean</span>
-                                  ) : (
-                                    <div className="flex flex-wrap justify-center gap-1">
-                                      {flags.map((f, i) => (
-                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
+                                <td key={r.id} className="text-center py-2.5 px-3 bg-emerald-50 dark:bg-emerald-950/50">
+                                  {/* Net Yield number */}
+                                  <span className={`font-mono font-bold text-lg block ${
+                                    r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
+                                  }`}>
+                                    {r.netYield.toFixed(1)}%
+                                  </span>
+                                  {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
+                                    <span className="text-[9px] text-emerald-500 dark:text-emerald-400 font-bold">BEST</span>
+                                  )}
+                                  {/* Inline flags */}
+                                  {flags.length > 0 && (
+                                    <div className="flex flex-wrap justify-center gap-0.5 mt-1">
+                                      {flags.slice(0, 3).map((f, i) => (
+                                        <span key={i} className={`px-1 py-0 rounded text-[7px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
                                       ))}
+                                      {flags.length > 3 && <span className="text-[7px] text-slate-400">+{flags.length - 3}</span>}
                                     </div>
+                                  )}
+                                  {/* Inline unlock */}
+                                  {villa && (
+                                    <button
+                                      onClick={() => { setSelectedVilla(villa); }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 mt-1.5 bg-slate-900/80 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white text-[9px] font-bold rounded-md transition-colors"
+                                    >
+                                      <Lock size={9} /> Unlock
+                                    </button>
                                   )}
                                 </td>
                               );
                             })}
-                          </tr>
-                          {/* Unlock row */}
-                          <tr className="border-b border-slate-200 dark:border-slate-600">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Unlock Source</td>
-                            {compareVillas.map(v => (
-                              <td key={v.id} className="text-center py-2.5 px-3">
-                                <button
-                                  onClick={() => { setSelectedVilla(v); }}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-[10px] font-bold rounded-lg transition-colors shadow-sm"
-                                >
-                                  <Lock size={10} /> Unlock
-                                </button>
-                              </td>
-                            ))}
-                          </tr>
-                          {/* === NET YIELD — THE HERO METRIC (sticky bottom) === */}
-                          {/* Pinned so sliders + bottom line are always on screen simultaneously */}
-                          <tr className="bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800 sticky bottom-0 z-[2] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                            <td className="py-3 pr-4 font-bold text-sm text-emerald-700 dark:text-emerald-400 sticky left-0 z-[3] bg-emerald-50 dark:bg-emerald-950/50">
-                              Net Yield
-                              <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
-                            </td>
-                            {results.map(r => (
-                              <td key={r.id} className={`text-center py-3 px-3 font-mono font-bold text-lg bg-emerald-50 dark:bg-emerald-950/50 ${
-                                r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
-                              }`}>
-                                {r.netYield.toFixed(1)}%
-                                {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
-                                  <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-bold mt-0.5">BEST</span>
-                                )}
-                              </td>
-                            ))}
                           </tr>
                         </>
                       );
