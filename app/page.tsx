@@ -560,7 +560,7 @@ export default function BaliVillaTruth() {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-emerald-950 -z-10" />
 
         {/* Dark mode toggle */}
-        <button onClick={() => setDarkMode(!darkMode)} className="absolute top-4 right-4 md:top-6 md:right-6 z-10 p-2.5 rounded-xl bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white transition-all border border-white/10" title={darkMode ? 'Light mode' : 'Dark mode'}>
+        <button onClick={() => setDarkMode(!darkMode)} className="absolute top-4 right-4 md:top-6 md:right-6 z-20 p-2.5 rounded-xl bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white transition-all border border-white/10" title={darkMode ? 'Light mode' : 'Dark mode'}>
           {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
