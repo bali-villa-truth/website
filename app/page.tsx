@@ -497,10 +497,10 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
-      const agentRate = Number(villa.agent_claimed_rate) || 0;
-      const bvtRate = nightly;
-      const rateContext = agentRate > 0 && agentRate > bvtRate
-        ? ` The agent's claimed rate of $${agentRate}/nt was capped to $${bvtRate}/nt.`
+      const preCapRate = Number(villa.agent_claimed_rate) || 0;
+      const cappedRate = nightly;
+      const rateContext = preCapRate > 0 && preCapRate > cappedRate
+        ? ` BVT's initial model estimated $${preCapRate}/nt, but this was capped to $${cappedRate}/nt to stay within market limits.`
         : '';
       flags.push({ level: 'warning', label: 'Inflated Claim', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is unrealistically high — a number like this typically ignores operating costs and lease depreciation. BVT capped the nightly rate to reflect market reality. After 40% expenses, the cash flow yield is ~${cashFlowYield.toFixed(1)}%.${rateContext}` });
     }
@@ -510,22 +510,18 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
-      const agentRate = Number(villa.agent_claimed_rate) || 0;
-      const rateShown = agentRate > 0 && agentRate > nightly
-        ? ` The agent claimed $${agentRate}/nt — BVT modeled a realistic $${nightly}/nt.`
-        : '';
-      flags.push({ level: 'warning', label: 'Inflated Nightly Rate', detail: `The agent is claiming a nightly rate disproportionately high for a sub-$200k property. Budget builds rarely command premium luxury rates — the demographic paying $200+/nt expects finishes that cannot be built at this price point.${rateShown} BVT has modeled a rate that reflects the actual asset class.` });
+      flags.push({ level: 'warning', label: 'Inflated Nightly Rate', detail: `This is a sub-$200k property showing a high nightly rate. Budget builds rarely command premium luxury rates — the demographic paying $200+/nt expects finishes that typically can't be built at this price point. BVT has modeled a rate of $${nightly}/nt that reflects the actual asset class.` });
     }
 
     // --- RATE_ADJUSTED: Pipeline significantly adjusted the nightly rate (>25% deviation from base model) ---
     // Informational — not a red flag. Tells user the rate was modeled, not just pulled from area averages.
     if (pipelineFlags.includes('RATE_ADJUSTED')) {
-      const agentRate = Number(villa.agent_claimed_rate) || 0;
+      const preCapRate = Number(villa.agent_claimed_rate) || 0;
       const modelRate = nightly;
       const rateSource = villa.rate_source || 'model';
-      const wasAuditorCapped = rateSource === 'auditor' && agentRate > 0 && modelRate < agentRate;
+      const wasAuditorCapped = rateSource === 'auditor' && preCapRate > 0 && modelRate < preCapRate;
       const detailText = wasAuditorCapped
-        ? `BVT adjusted the nightly rate from $${agentRate}/nt (agent-claimed) to $${modelRate}/nt. The original rate implied a gross yield above safe market limits, so BVT capped it to protect the ROI projection.`
+        ? `BVT's rate model initially estimated $${preCapRate}/nt, but this implied a gross yield above safe market limits. The rate was capped to $${modelRate}/nt to keep the ROI projection realistic.`
         : `BVT modeled this rate at $${modelRate}/nt — a >25% adjustment from the area baseline. This typically reflects a luxury build premium or a price-tier correction. The math is sound, but verify comparables.`;
       flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: detailText });
     }
