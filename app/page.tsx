@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen } from 'lucide-react';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, Heart, Sun, Moon, BookOpen } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,15 +129,6 @@ export default function BaliVillaTruth() {
   const [sliderNightly, setSliderNightly] = useState(1.0);   // multiplier: 0.5x–2.0x
   const [sliderOccupancy, setSliderOccupancy] = useState(65); // percent: 20–95 — matches pipeline flat 65%
   const [sliderExpense, setSliderExpense] = useState(40);     // percent: 20–60
-
-  const toggleCompare = (villaId: number) => {
-    setCompareSet(prev => {
-      const next = new Set(prev);
-      if (next.has(villaId)) next.delete(villaId);
-      else if (next.size < 5) next.add(villaId);
-      return next;
-    });
-  };
 
   useEffect(() => {
     async function fetchData() {
@@ -710,19 +701,29 @@ export default function BaliVillaTruth() {
            >
              <Heart size={10} className={showFavoritesOnly ? 'fill-red-500' : ''} /> Saved ({favorites.size})
            </button>
-           {showFavoritesOnly && favorites.size > 0 && compareSet.size === 0 && !showCompare && (
-             <button
-               onClick={() => {
+           <button
+             onClick={() => {
+               if (favorites.size >= 2) {
                  const batch = Array.from(favorites).slice(0, 5);
                  setCompareSet(new Set(batch));
                  setShowCompare(true);
                  setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40);
-               }}
-               className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-             >
-               <SlidersHorizontal size={10} /> Compare Saved
-             </button>
-           )}
+               }
+             }}
+             className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+               favorites.size >= 2
+                 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900'
+                 : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-900 hover:text-blue-500 dark:hover:text-blue-400'
+             } group/compare relative`}
+           >
+             <SlidersHorizontal size={10} /> Compare{favorites.size >= 2 ? ` (${Math.min(favorites.size, 5)})` : ''}
+             {favorites.size < 2 && (
+               <span className="invisible group-hover/compare:visible absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2 shadow-xl z-50 pointer-events-none text-center">
+                 Save 2+ villas with the heart icon to compare them side-by-side
+                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></span>
+               </span>
+             )}
+           </button>
          </div>
          <div className="flex gap-2 md:gap-4 items-center">
             <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-1 rounded border border-amber-200 dark:border-amber-900">
@@ -749,7 +750,7 @@ export default function BaliVillaTruth() {
       {/* MOBILE MAP VIEW */}
       {mobileView === 'map' && (
         <div className="md:hidden max-w-7xl mx-auto mb-4 px-1" style={{ height: 'calc(100vh - 12rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} onToggleFavorite={toggleFavorite} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
         </div>
       )}
 
@@ -832,21 +833,8 @@ export default function BaliVillaTruth() {
                     </div>
                   </div>
 
-                  {/* Card Footer: Compare + nightly rate + flags + action */}
+                  {/* Card Footer: nightly rate + flags + action */}
                   <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                    <button
-                      onClick={() => toggleCompare(villa.id)}
-                      disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
-                      className={`flex items-center gap-1 text-[9px] font-bold px-2 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
-                        compareSet.has(villa.id)
-                          ? 'bg-blue-600 dark:bg-blue-700 border-blue-600 dark:border-blue-700 text-white'
-                          : compareSet.size >= 5
-                            ? 'border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                            : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      <BarChart3 size={10} /> {compareSet.has(villa.id) ? 'Selected' : 'Compare'}
-                    </button>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono text-center flex-1 min-w-0">
                       ~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ
                       {redFlags.length > 0 && (
@@ -876,7 +864,6 @@ export default function BaliVillaTruth() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
-                <th className="p-3 w-10 text-center"><BarChart3 size={14} className="mx-auto text-slate-400 dark:text-slate-500" /></th>
                 <th className="p-3 w-10 text-center"><Heart size={14} className="mx-auto text-slate-300 dark:text-slate-600" /></th>
                 <th className="p-5">Asset & Location</th>
                 <th className="p-5">Price ({displayCurrency})</th>
@@ -889,7 +876,7 @@ export default function BaliVillaTruth() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {processedListings.length === 0 ? (
                   <tr>
-                      <td colSpan={8} className="p-10 text-center text-slate-400 dark:text-slate-500">
+                      <td colSpan={7} className="p-10 text-center text-slate-400 dark:text-slate-500">
                           {showFavoritesOnly ? <Heart size={48} className="mx-auto mb-4 opacity-20" /> : <Filter size={48} className="mx-auto mb-4 opacity-20" />}
                           {showFavoritesOnly ? 'No saved properties yet. Click the heart icon to save listings.' : 'No properties match your filters.'}
                       </td>
@@ -914,22 +901,6 @@ export default function BaliVillaTruth() {
 
                     return (
                     <tr key={villa.id} className={`hover:bg-blue-50/50 dark:hover:bg-blue-950/40 transition-colors group ${hoveredListingUrl === villa.url ? 'bg-blue-50/70 dark:bg-blue-950/50' : ''}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
-                        <td className="p-3 text-center">
-                          <button
-                            onClick={() => toggleCompare(villa.id)}
-                            disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                              compareSet.has(villa.id)
-                                ? 'bg-blue-600 dark:bg-blue-700 border-blue-600 dark:border-blue-700 text-white'
-                                : compareSet.size >= 5
-                                  ? 'border-slate-200 dark:border-slate-700 text-slate-200 dark:text-slate-600 cursor-not-allowed'
-                                  : 'border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-600 text-transparent hover:text-blue-400 dark:hover:text-blue-400'
-                            }`}
-                            title={compareSet.has(villa.id) ? 'Remove from compare' : compareSet.size >= 5 ? 'Max 5 villas' : 'Add to compare'}
-                          >
-                            <Check size={12} strokeWidth={3} />
-                          </button>
-                        </td>
                         <td className="p-3 text-center">
                           <button
                             onClick={() => toggleFavorite(villa.id)}
@@ -1044,7 +1015,7 @@ export default function BaliVillaTruth() {
                                       <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-slate-400">(65% occ)</span> <span className="text-slate-500">— assumed, we don't have occupancy data for this area</span></div>
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
-                                    <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Select villas with the checkbox to compare and adjust these assumptions</p>
+                                    <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Save villas with the heart icon, then click Compare to adjust these assumptions</p>
                                 </div>
 
                                 {/* Capital depreciation for leaseholds */}
@@ -1149,7 +1120,7 @@ export default function BaliVillaTruth() {
       {/* MAP PANEL (sticky alongside table) */}
       {showMap && (
         <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} onToggleFavorite={toggleFavorite} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
         </div>
       )}
       </div>{/* end split layout flex */}
@@ -1173,31 +1144,10 @@ export default function BaliVillaTruth() {
         </div>
       )}
 
-      {/* FLOATING COMPARE BAR */}
-      {compareSet.size > 0 && !showCompare && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl shadow-2xl px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4 animate-in slide-in-from-bottom duration-300 max-w-[95vw]">
-          <div className="flex items-center gap-2">
-            <BarChart3 size={16} className="text-blue-400" />
-            <span className="font-bold text-sm">{compareSet.size} villa{compareSet.size !== 1 ? 's' : ''} selected</span>
-          </div>
-          <button
-            onClick={() => { setShowCompare(true); setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2 rounded-xl transition-colors flex items-center gap-2"
-          >
-            <SlidersHorizontal size={14} /> Compare Now
-          </button>
-          <button
-            onClick={() => setCompareSet(new Set())}
-            className="text-slate-400 hover:text-white text-sm font-medium px-2 py-1 transition-colors"
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
       {/* COMPARE PANEL MODAL */}
       {showCompare && (() => {
         const compareVillas = listings.filter(v => compareSet.has(v.id));
+        const savedVillas = listings.filter(v => favorites.has(v.id));
         const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
         return (
@@ -1213,6 +1163,47 @@ export default function BaliVillaTruth() {
                 </div>
                 <button onClick={() => setShowCompare(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 p-2"><X size={24}/></button>
               </div>
+
+              {/* Villa Picker — shows when user has more saved than are being compared */}
+              {savedVillas.length > compareVillas.length && (
+                <div className="px-6 pt-4 pb-2 border-b border-slate-200 dark:border-slate-700">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 mb-2">
+                    Comparing {compareVillas.length} of {savedVillas.length} saved — click to swap villas (max 5)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {savedVillas.map(v => {
+                      const isIncluded = compareSet.has(v.id);
+                      return (
+                        <button
+                          key={v.id}
+                          onClick={() => {
+                            setCompareSet(prev => {
+                              const next = new Set(prev);
+                              if (isIncluded) {
+                                if (next.size > 2) next.delete(v.id);
+                              } else if (next.size < 5) {
+                                next.add(v.id);
+                              }
+                              return next;
+                            });
+                          }}
+                          disabled={!isIncluded && compareSet.size >= 5}
+                          className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors truncate max-w-[180px] ${
+                            isIncluded
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                              : compareSet.size >= 5
+                                ? 'text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-not-allowed'
+                                : 'text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400'
+                          }`}
+                          title={isIncluded ? (compareSet.size <= 2 ? 'Minimum 2 villas required' : `Remove ${v.villa_name}`) : compareSet.size >= 5 ? 'Max 5 villas' : `Add ${v.villa_name}`}
+                        >
+                          {isIncluded ? '✓ ' : ''}{v.villa_name || 'Villa'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Sliders */}
               <div className="p-6 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -1534,7 +1525,7 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Nusa Penida': [-8.7300, 115.5400],
 };
 
-function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favorites, compareSet, onToggleFavorite, onToggleCompare, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; compareSet: Set<number>; onToggleFavorite: (id: number) => void; onToggleCompare: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
+function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favorites, onToggleFavorite, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; onToggleFavorite: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapRef, setMapRef] = useState<any>(null);
   const [markersRef, setMarkersRef] = useState<Record<string, any>>({});
@@ -1639,8 +1630,6 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       }
 
       const isFav = favorites.has(villa.id);
-      const isCmp = compareSet.has(villa.id);
-      const cmpFull = compareSet.size >= 5 && !isCmp;
 
       const bgColor = darkMode ? '#1e293b' : '#f8fafc';
       const borderColor = darkMode ? '#475569' : '#e2e8f0';
@@ -1662,7 +1651,6 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
           </div>
           <div style="display: flex; gap: 6px; padding: 10px 12px; background: ${bgColor};">
             <button data-action="favorite" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isFav ? '#f43f5e' : darkMode ? '#475569' : '#cbd5e1'}; border-radius: 6px; background: ${isFav ? (darkMode ? '#7f1d1d' : '#ffe4e6') : darkMode ? '#334155' : 'white'}; font-size: 10px; font-weight: 600; color: ${isFav ? (darkMode ? '#fca5ce' : '#e11d48') : darkMode ? '#cbd5e1' : '#64748b'}; cursor: pointer; text-align: center; line-height: 1.3;">${isFav ? '♥ Saved' : '♡ Save'}</button>
-            <button data-action="compare" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isCmp ? (darkMode ? '#1e40af' : '#2563eb') : cmpFull ? (darkMode ? '#475569' : '#e2e8f0') : darkMode ? '#475569' : '#cbd5e1'}; border-radius: 6px; background: ${isCmp ? (darkMode ? '#1e3a8a' : '#dbeafe') : darkMode ? '#334155' : 'white'}; font-size: 10px; font-weight: 600; color: ${isCmp ? (darkMode ? '#93c5fd' : '#2563eb') : cmpFull ? (darkMode ? '#64748b' : '#94a3b8') : darkMode ? '#cbd5e1' : '#64748b'}; cursor: ${cmpFull ? 'default' : 'pointer'}; text-align: center; line-height: 1.3; ${cmpFull ? 'opacity: 0.5;' : ''}">${isCmp ? '✓ Selected' : 'Compare'}</button>
             <button data-action="unlock" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${darkMode ? '#475569' : '#334155'}; border-radius: 6px; background: ${darkMode ? '#334155' : '#1e293b'}; font-size: 10px; font-weight: 600; color: white; cursor: pointer; text-align: center; line-height: 1.3;">🔒 Unlock</button>
           </div>
         </div>
@@ -1673,7 +1661,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     });
 
     setMarkersRef(newMarkers);
-  }, [mapRef, mapLoaded, listings, displayCurrency, rates, favorites, compareSet]);
+  }, [mapRef, mapLoaded, listings, displayCurrency, rates, favorites]);
 
   // Highlight marker on hover
   useEffect(() => {
@@ -1708,9 +1696,6 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
 
       if (action === 'favorite') {
         onToggleFavorite(villaId);
-      } else if (action === 'compare') {
-        if (compareSet.size >= 5 && !compareSet.has(villaId)) return;
-        onToggleCompare(villaId);
       } else if (action === 'unlock') {
         const villa = listings.find((v: any) => v.id === villaId);
         if (villa) {
@@ -1722,7 +1707,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
 
     container.addEventListener('click', handlePopupClick);
     return () => container.removeEventListener('click', handlePopupClick);
-  }, [onToggleFavorite, onToggleCompare, onUnlockVilla, listings, compareSet, mapRef]);
+  }, [onToggleFavorite, onUnlockVilla, listings, mapRef]);
 
   // Refresh open popup button states when favorites/compareSet change
   useEffect(() => {
@@ -1734,7 +1719,6 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     if (!villaId) return;
 
     const favBtn = popupEl.querySelector('[data-action="favorite"]') as HTMLElement | null;
-    const cmpBtn = popupEl.querySelector('[data-action="compare"]') as HTMLElement | null;
 
     if (favBtn) {
       const isFav = favorites.has(villaId);
@@ -1743,17 +1727,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       favBtn.style.color = isFav ? (darkMode ? '#fca5ce' : '#e11d48') : darkMode ? '#cbd5e1' : '#64748b';
       favBtn.textContent = isFav ? '♥ Saved' : '♡ Save';
     }
-
-    if (cmpBtn) {
-      const isCmp = compareSet.has(villaId);
-      const cmpFull = compareSet.size >= 5 && !isCmp;
-      cmpBtn.style.borderColor = isCmp ? (darkMode ? '#1e40af' : '#2563eb') : cmpFull ? (darkMode ? '#475569' : '#e2e8f0') : darkMode ? '#475569' : '#cbd5e1';
-      cmpBtn.style.background = isCmp ? (darkMode ? '#1e3a8a' : '#dbeafe') : darkMode ? '#334155' : 'white';
-      cmpBtn.style.color = isCmp ? (darkMode ? '#93c5fd' : '#2563eb') : cmpFull ? (darkMode ? '#64748b' : '#94a3b8') : darkMode ? '#cbd5e1' : '#64748b';
-      cmpBtn.style.opacity = cmpFull ? '0.5' : '1';
-      cmpBtn.textContent = isCmp ? '✓ Selected' : 'Compare';
-    }
-  }, [favorites, compareSet, mapRef]);
+  }, [favorites, mapRef]);
 
   // Resize map when panel becomes visible
   useEffect(() => {
