@@ -537,27 +537,54 @@ export default function BaliVillaTruth() {
   const flaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans p-4 md:p-8 ${darkMode ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans ${darkMode ? 'dark' : ''}`}>
 
-      {/* HEADER */}
-      <header className="relative max-w-7xl mx-auto mb-6">
-        <button onClick={() => setDarkMode(!darkMode)} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title={darkMode ? 'Light mode' : 'Dark mode'}>
+      {/* HERO SECTION */}
+      <section className="relative h-[50vh] md:h-[70vh] w-full overflow-hidden">
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1920&q=80&fm=webp')` }}
+        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-slate-950/95" />
+        {/* Fallback gradient (shows while image loads) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-emerald-950 -z-10" />
+
+        {/* Dark mode toggle */}
+        <button onClick={() => setDarkMode(!darkMode)} className="absolute top-4 right-4 md:top-6 md:right-6 z-10 p-2.5 rounded-xl bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white transition-all border border-white/10" title={darkMode ? 'Light mode' : 'Dark mode'}>
           {darkMode ? <Sun size={18} /> : <Moon size={18} />}
         </button>
-        <div className="text-center mb-4 md:mb-8">
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 mb-1 md:mb-2">
-            Bali Villa <span className="text-blue-600 dark:text-blue-400">Truth</span>
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-xs md:text-sm leading-relaxed">
+
+        {/* Hero content */}
+        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-3 md:mb-4 drop-shadow-lg">
+            Bali Villa <span className="text-blue-400">Truth</span>
+          </h1>
+          <p className="text-white/70 max-w-2xl mx-auto text-sm md:text-lg leading-relaxed font-light">
             Independent ROI auditing for serious investors. We verify the data agents hide.
-            </p>
-            <Link href="/methodology" className="inline-flex items-center gap-1.5 mt-2 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+          </p>
+          <div className="flex items-center gap-4 mt-4 md:mt-6">
+            <Link href="/methodology" className="inline-flex items-center gap-1.5 text-[11px] md:text-xs text-blue-300 hover:text-blue-200 font-medium transition-colors bg-white/5 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
               <BookOpen size={12} /> How we calculate our numbers
             </Link>
+          </div>
+          {/* Scroll indicator */}
+          <button
+            onClick={() => document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' })}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 hover:text-white/80 transition-colors animate-bounce"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
         </div>
-        
-        {/* FILTER DASHBOARD */}
-        <div className="bg-white dark:bg-slate-900 p-3 md:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+      </section>
+
+      {/* FILTER + LISTINGS SECTION */}
+      <div id="listings-section" className="px-4 md:px-8">
+      <header className="relative max-w-7xl mx-auto -mt-16 md:-mt-20 mb-6 z-20">
+
+        {/* FILTER DASHBOARD — glass-morphism panel overlapping hero */}
+        <div className="backdrop-blur-xl bg-white/85 dark:bg-slate-900/85 p-3 md:p-5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 mb-6">
 
             {/* Mobile filter toggle */}
             <div className="flex md:hidden items-center justify-between mb-2">
@@ -778,7 +805,7 @@ export default function BaliVillaTruth() {
               const hasWarning = redFlags.length > 0;
 
               return (
-                <div key={villa.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div key={villa.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden">
                   {/* Card Header: Image + Name + Location */}
                   <div className="flex items-start gap-3 p-3 pb-2">
                     {villa.thumbnail_url ? (
@@ -859,7 +886,7 @@ export default function BaliVillaTruth() {
       </main>
 
       {/* DESKTOP TABLE */}
-      <main className={`hidden md:block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
+      <main className={`hidden md:block bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -1489,13 +1516,14 @@ export default function BaliVillaTruth() {
       })()}
 
       {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
+      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200/50 dark:border-slate-700/50">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <div><span className="font-bold text-slate-700 dark:text-slate-300 text-sm">Bali Villa Truth</span><span className="mx-2 text-slate-300 dark:text-slate-600">•</span><span>Independent villa investment analysis</span></div>
           <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</a><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</a></div>
         </div>
-        <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
+        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4 pb-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
       </footer>
+      </div>{/* end listings-section wrapper */}
     </div>
   );
 }
