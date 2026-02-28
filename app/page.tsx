@@ -547,7 +547,7 @@ export default function BaliVillaTruth() {
           style={{ backgroundImage: `url('/hero-bg.webp')` }}
         />
         {/* Gradient overlay — heavy at bottom for seamless transition to page bg */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/25 to-slate-950" />
         {/* Extra bottom fade for seamless bleed */}
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent" />
         {/* Fallback gradient (shows while image loads) */}
@@ -583,7 +583,7 @@ export default function BaliVillaTruth() {
 
       {/* FILTER + LISTINGS SECTION */}
       <div id="listings-section" className="px-4 md:px-8">
-      <header className="relative max-w-7xl mx-auto -mt-28 md:-mt-36 mb-6 z-20">
+      <header className="sticky top-0 max-w-7xl mx-auto -mt-28 md:-mt-36 mb-6 z-20">
 
         {/* FILTER DASHBOARD — glass-morphism panel overlapping hero */}
         <div className="backdrop-blur-xl bg-white/85 dark:bg-slate-900/85 p-3 md:p-5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 mb-6">
@@ -818,8 +818,8 @@ export default function BaliVillaTruth() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight truncate">
-                        {villa.villa_name || 'Luxury Villa'}
+                      <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight line-clamp-2">
+                        {toTitleCase(villa.villa_name) || 'Luxury Villa'}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         <MapPin size={10} className="text-blue-500 flex-shrink-0" /> {villa.location || "Bali"}
@@ -852,7 +852,7 @@ export default function BaliVillaTruth() {
                         netRoi >= 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' :
                         'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400'
                       }`}>{netRoi.toFixed(1)}%</span>
-                      <div className="text-[8px] text-slate-400 dark:text-slate-500 line-through mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
+                      <div className="text-[8px] text-slate-500 dark:text-slate-400 line-through opacity-80 font-medium mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
                     </div>
                     {/* Specs */}
                     <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
@@ -876,7 +876,7 @@ export default function BaliVillaTruth() {
                         </div>
                       )}
                     </div>
-                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-900 hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0">
+                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0 border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm">
                       <Lock size={10}/> UNLOCK
                     </button>
                   </div>
@@ -888,10 +888,10 @@ export default function BaliVillaTruth() {
       </main>
 
       {/* DESKTOP TABLE */}
-      <main className={`hidden md:block bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
-        <div className="overflow-x-auto">
+      <main className={`hidden md:block bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-x-auto transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
+        <div>
           <table className="w-full text-left border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
                 <th className="p-3 w-10 text-center"><Heart size={14} className="mx-auto text-slate-300 dark:text-slate-600" /></th>
                 <th className="p-5">Asset & Location</th>
@@ -949,8 +949,8 @@ export default function BaliVillaTruth() {
                             </div>
                           )}
                           <div>
-                            <div className="font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                {villa.villa_name || 'Luxury Villa'}
+                            <div className="font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                                {toTitleCase(villa.villa_name) || 'Luxury Villa'}
                                 {hasDanger && <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 rounded text-[9px] font-bold border border-red-200 dark:border-red-900 flex items-center gap-0.5"><ShieldAlert size={9}/> VERIFY</span>}
                                 {!hasDanger && hasWarning && <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 rounded text-[9px] font-bold border border-amber-200 dark:border-amber-900 flex items-center gap-0.5"><AlertTriangle size={9}/> CAUTION</span>}
                             </div>
@@ -999,7 +999,7 @@ export default function BaliVillaTruth() {
                             }`}>
                                 Est. {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
                             </span>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 line-through opacity-60 font-mono">Gross: {grossRoi.toFixed(1)}%</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-through opacity-80 font-mono font-medium">Gross: {grossRoi.toFixed(1)}%</p>
                             <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
 
                             {/* Pre-depreciation yield for leaseholds */}
@@ -1028,7 +1028,7 @@ export default function BaliVillaTruth() {
                                 <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
                                   <div className="flex-1 text-center">
                                     <div className="text-slate-500 text-[9px] mb-0.5">Gross Yield</div>
-                                    <div className="text-lg font-bold text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
+                                    <div className="text-lg font-bold text-slate-400 line-through opacity-80">{grossRoi.toFixed(1)}%</div>
                                   </div>
                                   <div className="flex-1 text-center">
                                     <div className="text-blue-400 text-[9px] mb-0.5 font-bold">Net Yield</div>
@@ -1133,7 +1133,7 @@ export default function BaliVillaTruth() {
                             </div>
                         </td>
                         <td className="p-5 text-right">
-                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all">
+                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2.5 rounded-lg transition-all border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm hover:shadow-md">
                             <Lock size={12}/> UNLOCK SOURCE
                         </button>
                         </td>
@@ -1162,7 +1162,7 @@ export default function BaliVillaTruth() {
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600 dark:text-blue-400" size={32} /></div>
               <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Unlock Full Audit</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedVilla.villa_name}</span>.</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800 dark:text-slate-200">{toTitleCase(selectedVilla.villa_name)}</span>.</p>
               <form onSubmit={handleLeadCapture} className="space-y-4">
                 <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
                 <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 dark:shadow-blue-900 disabled:opacity-50">{isSubmitting ? 'Verifying...' : 'Unlock Now'}</button>
@@ -1226,7 +1226,7 @@ export default function BaliVillaTruth() {
                           }`}
                           title={isIncluded ? (compareSet.size <= 2 ? 'Minimum 2 villas required' : `Remove ${v.villa_name}`) : compareSet.size >= 5 ? 'Max 5 villas' : `Add ${v.villa_name}`}
                         >
-                          {isIncluded ? '✓ ' : ''}{v.villa_name || 'Villa'}
+                          {isIncluded ? '✓ ' : ''}{toTitleCase(v.villa_name) || 'Villa'}
                         </button>
                       );
                     })}
@@ -1325,7 +1325,7 @@ export default function BaliVillaTruth() {
                       <th className="text-left py-3 pr-4 w-36">Metric</th>
                       {compareVillas.map(v => (
                         <th key={v.id} className="text-center py-3 px-3 min-w-[140px]">
-                          <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold truncate max-w-[160px]">{v.villa_name}</div>
+                          <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold truncate max-w-[160px]">{toTitleCase(v.villa_name)}</div>
                           <div className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{v.location}</div>
                         </th>
                       ))}
@@ -1399,7 +1399,7 @@ export default function BaliVillaTruth() {
                           <tr className="border-b border-slate-100 dark:border-slate-700">
                             <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium">Gross Yield</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-400 dark:text-slate-500 line-through">{r.grossYield.toFixed(1)}%</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-500 dark:text-slate-400 line-through opacity-80 font-medium">{r.grossYield.toFixed(1)}%</td>
                             ))}
                           </tr>
                           <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
@@ -1555,6 +1555,14 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Nusa Penida': [-8.7300, 115.5400],
 };
 
+// --- Clean agent titles: ALL CAPS → Title Case ---
+function toTitleCase(str: string): string {
+  if (!str) return str;
+  return str
+    .toLowerCase()
+    .replace(/(?:^|\s|-|\/)\S/g, (match) => match.toUpperCase());
+}
+
 function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favorites, onToggleFavorite, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; onToggleFavorite: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapRef, setMapRef] = useState<any>(null);
@@ -1672,7 +1680,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       marker.bindPopup(`
         <div class="bvt-map-popup" data-villa-id="${villa.id}" style="font-family: system-ui, -apple-system, sans-serif;">
           <div style="padding: 10px 12px 8px; border-bottom: 1px solid ${borderColor};">
-            <div style="font-weight: 700; font-size: 13px; color: ${textColor}; line-height: 1.3; word-wrap: break-word;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
+            <div style="font-weight: 700; font-size: 13px; color: ${textColor}; line-height: 1.3; word-wrap: break-word;">${toTitleCase((villa.villa_name || 'Villa').substring(0, 50))}</div>
             <div style="font-size: 11px; color: ${mutedColor}; margin-top: 2px; font-weight: 500;">${villa.location || 'Bali'} · ${villa.bedrooms || '?'} bed${villa.bathrooms ? ' · ' + villa.bathrooms + ' bath' : ''}</div>
           </div>
           <div style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${borderColor};">
