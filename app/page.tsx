@@ -1049,7 +1049,6 @@ export default function BaliVillaTruth() {
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
                                     <p className="text-blue-400 text-[9px] font-medium flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9}/> Compare villas to stress-test with your own assumptions →</p>
-                                    <a href="/methodology" className="text-slate-500 text-[9px] flex items-center gap-1 mt-1 hover:text-blue-400 transition-colors"><BookOpen size={8}/> How we calculate these numbers</a>
                                 </div>
 
                                 {/* Capital depreciation for leaseholds */}
