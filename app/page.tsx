@@ -77,6 +77,12 @@ export default function BaliVillaTruth() {
 
   useEffect(() => {
     try { localStorage.setItem('bvt-dark-mode', String(darkMode)); } catch {}
+    // Toggle .dark on <html> so CSS variables + all dark: utilities propagate to body and all descendants
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [darkMode]);
 
   // --- FAVORITES STATES ---
