@@ -1423,12 +1423,7 @@ export default function BaliVillaTruth() {
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{formatCompareAmount(r.annualRevenue, '/yr')}</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium sticky left-0 bg-white dark:bg-slate-900">Gross Yield</td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-500 dark:text-slate-500 line-through">{r.grossYield.toFixed(1)}%</td>
-                            ))}
-                          </tr>
+                          {/* Gross Yield removed — converges to same value across villas due to price-dampened rate model, adds no differentiation. Shown in main table ROI cell instead. */}
                           <tr className="border-b border-slate-100 dark:border-slate-700">
                             <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Expenses</td>
                             {results.map(r => (
@@ -1441,22 +1436,7 @@ export default function BaliVillaTruth() {
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100">{formatCompareAmount(r.netRevenue, '/yr')}</td>
                             ))}
                           </tr>
-                          {/* Cash Flow Yield — quiet, not competing with Net Yield */}
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">
-                              Cash Flow Yield
-                              <span className="block text-[9px] text-slate-400 dark:text-slate-500 font-normal">Before depreciation</span>
-                            </td>
-                            {results.map(r => {
-                              const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
-                              const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
-                              return (
-                                <td key={r.id} className="text-center py-2.5 px-3 font-mono font-semibold text-slate-600 dark:text-slate-400">
-                                  {cashFlowYield.toFixed(1)}%
-                                </td>
-                              );
-                            })}
-                          </tr>
+                          {/* Cash Flow Yield removed — same convergence issue as Gross Yield. Net Yield (in footer bar) is the metric that actually differentiates villas. */}
                           {/* Lease Depreciation — quiet, informational */}
                           <tr className="border-b border-slate-200 dark:border-slate-600">
                             <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">
