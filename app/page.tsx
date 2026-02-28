@@ -544,7 +544,7 @@ export default function BaliVillaTruth() {
         {/* Background image — Bali ocean cliff view */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=1920&q=80&fm=webp')` }}
+          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=1920&q=80&fm=webp')` }}
         />
         {/* Gradient overlay — heavy at bottom for seamless transition to page bg */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-slate-950" />
