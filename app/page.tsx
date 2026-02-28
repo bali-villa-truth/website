@@ -506,7 +506,7 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
-      flags.push({ level: 'warning', label: 'Optimistic Claim', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is well above Bali's historical net averages (leasehold 10–15%, freehold 5–8%). Gross yield ignores operating expenses (${sliderExpense}%) and lease depreciation. After those costs, BVT estimates a net cash flow yield of ~${cashFlowYield.toFixed(1)}%.` });
+      flags.push({ level: 'warning', label: 'Optimistic Claim', detail: `This property's gross yield is ${grossRoi.toFixed(0)}% — but gross yield ignores operating expenses (${sliderExpense}%) and lease depreciation. After those costs, BVT estimates a net yield of ~${cashFlowYield.toFixed(1)}%. The gap between gross and net is where investors lose money when they rely on headline numbers.` });
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
@@ -1089,7 +1089,6 @@ export default function BaliVillaTruth() {
                                     <p className="text-slate-400 text-[9px]"><span className="text-emerald-400 font-bold">Cash Flow ({preDepreciationNet.toFixed(1)}%)</span> = money hitting your account each year. <span className="text-blue-400 font-bold">Net Yield ({netRoi.toFixed(1)}%)</span> = true return after accounting for your asset depreciating to $0.</p>
                                   </div>
                                 )}
-                                <p className="text-slate-500 italic text-[9px] mb-1.5">Benchmarks: leasehold 8–12% net, freehold 4–7% net.</p>
                                 </div>
                             )}
                             </div>
