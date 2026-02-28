@@ -564,6 +564,9 @@ export default function BaliVillaTruth() {
             <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-xs md:text-sm leading-relaxed">
             Independent ROI auditing for serious investors. We verify the data agents hide.
             </p>
+            <Link href="/methodology" className="inline-flex items-center gap-1.5 mt-2 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+              <BookOpen size={12} /> How we calculate our numbers
+            </Link>
         </div>
         
         {/* FILTER DASHBOARD */}
