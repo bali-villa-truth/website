@@ -541,10 +541,10 @@ export default function BaliVillaTruth() {
 
       {/* HERO SECTION */}
       <section className="relative h-[55vh] md:h-[75vh] w-full overflow-hidden">
-        {/* Background image — Bali villa with private pool */}
+        {/* Background image — Bali cliffside villa with infinity pool overlooking ocean */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1602002418816-5c0aeef426aa?w=1920&q=80&fm=webp')` }}
+          style={{ backgroundImage: `url('https://images.pexels.com/photos/31359181/pexels-photo-31359181.jpeg?auto=compress&cs=tinysrgb&w=1920')` }}
         />
         {/* Gradient overlay — heavy at bottom for seamless transition to page bg */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-slate-950" />
