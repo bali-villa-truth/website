@@ -1199,6 +1199,13 @@ export default function BaliVillaTruth() {
         const savedVillas = listings.filter(v => favorites.has(v.id));
         const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
+        // Pre-compute dynamic results for both table and footer bar
+        const dynamicResults = compareVillas.map(v => ({
+          id: v.id,
+          ...calculateDynamicROI(v, sliderNightly, sliderOccupancy, sliderExpense),
+        }));
+        const bestYieldValue = Math.max(...dynamicResults.map(r => r.netYield));
+
         return (
           <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl relative flex flex-col max-h-[92vh]">
@@ -1401,13 +1408,10 @@ export default function BaliVillaTruth() {
                         <td key={v.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{sliderExpense}%</td>
                       ))}
                     </tr>
-                    {/* Dynamic calculations */}
+                    {/* Dynamic calculations — uses pre-computed dynamicResults */}
                     {(() => {
-                      const results = compareVillas.map(v => ({
-                        id: v.id,
-                        ...calculateDynamicROI(v, sliderNightly, sliderOccupancy, sliderExpense),
-                      }));
-                      const bestYield = Math.max(...results.map(r => r.netYield));
+                      const results = dynamicResults;
+                      const bestYield = bestYieldValue;
 
                       return (
                         <>
@@ -1474,52 +1478,7 @@ export default function BaliVillaTruth() {
                               </td>
                             ))}
                           </tr>
-                          {/* === NET YIELD — THE HERO METRIC (sticky bottom) === */}
-                          {/* Combines Net Yield + Flags + Unlock into one pinned row */}
-                          {/* Cause (sliders) and Effect (this row) always visible simultaneously */}
-                          <tr className="bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800 sticky bottom-0 z-[2] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                            <td className="py-3 pr-4 sticky left-0 z-[3] bg-emerald-50 dark:bg-emerald-950/50">
-                              <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400">Net Yield</span>
-                              <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
-                            </td>
-                            {results.map(r => {
-                              const villa = compareVillas.find(v => v.id === r.id);
-                              const flags = villa ? getRedFlags(villa) : [];
-                              return (
-                                <td key={r.id} className="text-center py-2.5 px-3 bg-emerald-50 dark:bg-emerald-950/50">
-                                  {/* Net Yield number */}
-                                  <span className={`font-mono font-bold text-lg block ${
-                                    r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
-                                      ? 'text-emerald-600 dark:text-emerald-400'
-                                      : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
-                                  }`}>
-                                    {r.netYield.toFixed(1)}%
-                                  </span>
-                                  {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
-                                    <span className="text-[9px] text-emerald-500 dark:text-emerald-400 font-bold">BEST</span>
-                                  )}
-                                  {/* Inline flags */}
-                                  {flags.length > 0 && (
-                                    <div className="flex flex-wrap justify-center gap-0.5 mt-1">
-                                      {flags.slice(0, 3).map((f, i) => (
-                                        <span key={i} className={`px-1 py-0 rounded text-[7px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
-                                      ))}
-                                      {flags.length > 3 && <span className="text-[7px] text-slate-400">+{flags.length - 3}</span>}
-                                    </div>
-                                  )}
-                                  {/* Inline unlock */}
-                                  {villa && (
-                                    <button
-                                      onClick={() => { setSelectedVilla(villa); }}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 mt-1.5 bg-slate-900/80 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white text-[9px] font-bold rounded-md transition-colors"
-                                    >
-                                      <Lock size={9} /> Unlock
-                                    </button>
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
+                          {/* Net Yield rendered outside table as fixed footer bar */}
                         </>
                       );
                     })()}
@@ -1527,8 +1486,62 @@ export default function BaliVillaTruth() {
                 </table>
               </div>
 
+              {/* === NET YIELD FOOTER BAR — always visible, never overlaps table === */}
+              <div className="flex-shrink-0 bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div className="px-6 py-3 overflow-x-auto">
+                  <div className="flex items-start gap-0 min-w-[600px]">
+                    {/* Label column — matches table's w-36 */}
+                    <div className="w-36 flex-shrink-0 pr-4">
+                      <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400">Net Yield</span>
+                      <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
+                    </div>
+                    {/* Villa columns — equal width flex */}
+                    <div className="flex-1 flex">
+                      {dynamicResults.map(r => {
+                        const villa = compareVillas.find(v => v.id === r.id);
+                        const flags = villa ? getRedFlags(villa) : [];
+                        return (
+                          <div key={r.id} className="flex-1 text-center px-3 min-w-[140px]">
+                            {/* Yield number */}
+                            <span className={`font-mono font-bold text-xl block ${
+                              r.netYield === bestYieldValue && dynamicResults.filter(x => x.netYield === bestYieldValue).length === 1
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
+                            }`}>
+                              {r.netYield.toFixed(1)}%
+                            </span>
+                            {r.netYield === bestYieldValue && dynamicResults.filter(x => x.netYield === bestYieldValue).length === 1 && (
+                              <span className="text-[9px] text-emerald-500 dark:text-emerald-400 font-bold">BEST</span>
+                            )}
+                            {/* Flags + Unlock in a fixed-height row so buttons always align */}
+                            <div className="mt-1.5 flex flex-col items-center gap-1 min-h-[40px] justify-end">
+                              {flags.length > 0 && (
+                                <div className="flex flex-wrap justify-center gap-0.5">
+                                  {flags.slice(0, 2).map((f, i) => (
+                                    <span key={i} className={`px-1 py-0 rounded text-[7px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
+                                  ))}
+                                  {flags.length > 2 && <span className="text-[7px] text-slate-400">+{flags.length - 2}</span>}
+                                </div>
+                              )}
+                              {villa && (
+                                <button
+                                  onClick={() => { setSelectedVilla(villa); }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-900/80 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white text-[9px] font-bold rounded-md transition-colors"
+                                >
+                                  <Lock size={9} /> Unlock
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Footer note */}
-              <div className="px-6 py-3 text-[10px] text-slate-400 italic flex-shrink-0 border-t border-slate-100 dark:border-slate-800">
+              <div className="px-6 py-2 text-[10px] text-slate-400 italic flex-shrink-0 border-t border-emerald-100 dark:border-emerald-900/30">
                 These projections are estimates based on your inputs. Actual returns depend on management quality, market conditions, and property-specific factors. BVT does not provide financial advice.
               </div>
             </div>
