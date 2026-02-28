@@ -65,13 +65,13 @@ export default function BaliVillaTruth() {
   const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
 
-  // --- DARK MODE ---
-  const [darkMode, setDarkMode] = useState(false);
+  // --- DARK MODE (default: dark — Bloomberg Terminal vibe for financial data) ---
+  const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('bvt-dark-mode');
-      if (saved === 'true') setDarkMode(true);
+      if (saved === 'false') setDarkMode(false);
     } catch {}
   }, []);
 
@@ -553,9 +553,9 @@ export default function BaliVillaTruth() {
           style={{ backgroundImage: `url('/hero-bg.webp')` }}
         />
         {/* Gradient overlay — heavy at bottom for seamless transition to page bg */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/25 to-slate-950" />
-        {/* Extra bottom fade for seamless bleed */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-slate-50 dark:from-slate-950 to-transparent" />
+        <div className={`absolute inset-0 bg-gradient-to-b ${darkMode ? 'from-black/40 via-black/25 to-slate-950' : 'from-black/30 via-black/10 to-white/80'}`} />
+        {/* Extra bottom fade for seamless bleed into page background */}
+        <div className={`absolute bottom-0 left-0 right-0 ${darkMode ? 'h-48 bg-gradient-to-t from-slate-950 to-transparent' : 'h-64 bg-gradient-to-t from-slate-50 via-white/90 to-transparent'}`} />
         {/* Fallback gradient (shows while image loads) */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-emerald-950 -z-10" />
 
@@ -858,7 +858,7 @@ export default function BaliVillaTruth() {
                         netRoi >= 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' :
                         'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400'
                       }`}>{netRoi.toFixed(1)}%</span>
-                      <div className="text-[8px] text-slate-500 dark:text-slate-400 line-through opacity-80 font-medium mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
+                      <div className="text-[8px] text-slate-600 dark:text-slate-400 line-through font-medium mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
                     </div>
                     {/* Specs */}
                     <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
@@ -901,8 +901,8 @@ export default function BaliVillaTruth() {
               <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
                 <th className="p-3 w-10 text-center"><Heart size={14} className="mx-auto text-slate-300 dark:text-slate-600" /></th>
                 <th className="p-5">Asset & Location</th>
-                <th className="p-5">Price ({displayCurrency})</th>
-                <th className="p-5">Price/m²</th>
+                <th className="p-5 text-right">Price ({displayCurrency})</th>
+                <th className="p-5 text-right">Price/m²</th>
                 <th className="p-5 text-center">ROI Analysis</th>
                 <th className="p-5">Specs</th>
                 <th className="p-5 text-right">Action</th>
@@ -966,8 +966,8 @@ export default function BaliVillaTruth() {
                           </div>
                         </div>
                         </td>
-                        <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
-                         <div className="flex items-center gap-2">
+                        <td className="p-5 font-mono text-slate-600 dark:text-slate-300 font-semibold text-sm text-right">
+                         <div className="flex items-center gap-2 justify-end">
                            {formatPriceInCurrency(villa)}
                            {(() => {
                              const badge = getPriceChangeBadge(villa);
@@ -990,7 +990,7 @@ export default function BaliVillaTruth() {
                            })()}
                          </div>
                         </td>
-                        <td className="p-5 font-mono text-slate-500 dark:text-slate-400 text-xs">
+                        <td className="p-5 font-mono text-slate-500 dark:text-slate-400 text-xs text-right">
                          {getPricePerSqm(villa)}
                         </td>
                         <td className="p-5">
@@ -1005,7 +1005,7 @@ export default function BaliVillaTruth() {
                             }`}>
                                 Est. {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
                             </span>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-through opacity-80 font-mono font-medium">Gross: {grossRoi.toFixed(1)}%</p>
+                            <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 line-through font-mono font-medium">Gross: {grossRoi.toFixed(1)}%</p>
                             <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
 
                             {/* Pre-depreciation yield for leaseholds */}
@@ -1034,7 +1034,7 @@ export default function BaliVillaTruth() {
                                 <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
                                   <div className="flex-1 text-center">
                                     <div className="text-slate-500 text-[9px] mb-0.5">Gross Yield</div>
-                                    <div className="text-lg font-bold text-slate-400 line-through opacity-80">{grossRoi.toFixed(1)}%</div>
+                                    <div className="text-lg font-bold text-slate-500 dark:text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
                                   </div>
                                   <div className="flex-1 text-center">
                                     <div className="text-blue-400 text-[9px] mb-0.5 font-bold">Net Yield</div>
@@ -1405,7 +1405,7 @@ export default function BaliVillaTruth() {
                           <tr className="border-b border-slate-100 dark:border-slate-700">
                             <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium">Gross Yield</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-500 dark:text-slate-400 line-through opacity-80 font-medium">{r.grossYield.toFixed(1)}%</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-600 dark:text-slate-400 line-through font-medium">{r.grossYield.toFixed(1)}%</td>
                             ))}
                           </tr>
                           <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
