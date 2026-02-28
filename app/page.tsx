@@ -220,26 +220,30 @@ export default function BaliVillaTruth() {
   };
 
   // --- Convert and format price in display currency (for table) ---
+  // Currency label lives in the column header ("PRICE (USD)"), so cells show just the number
+  // with a leading currency symbol for scannability. This keeps columns right-aligned cleanly.
   const formatPriceInCurrency = (villa: any): string => {
     const priceUSD = getPriceUSD(villa);
     const r = rates[displayCurrency];
-    if (!r) return `${displayCurrency} ${priceUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    if (!r) return `$${priceUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
     const value = displayCurrency === 'USD' ? priceUSD : priceUSD * r;
-    if (displayCurrency === 'IDR') return `IDR ${Math.round(value).toLocaleString()}`;
-    return `${displayCurrency} ${value.toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}`;
+    const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
+    const sym = symbols[displayCurrency] || displayCurrency + ' ';
+    return `${sym}${Math.round(value).toLocaleString()}`;
   };
 
-  // --- Price per sqm in display currency ---
+  // --- Price per sqm in display currency (symbol only, no currency code) ---
   const getPricePerSqm = (villa: any): string => {
     const priceUSD = getPriceUSD(villa);
     const landSize = parseInt(villa.land_size) || 0;
     if (!priceUSD || !landSize) return '—';
     const perSqmUSD = priceUSD / landSize;
     const r = rates[displayCurrency];
-    if (!r) return `${displayCurrency} ${Math.round(perSqmUSD).toLocaleString()}`;
+    const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
+    const sym = symbols[displayCurrency] || displayCurrency + ' ';
+    if (!r) return `${sym}${Math.round(perSqmUSD).toLocaleString()}`;
     const value = displayCurrency === 'USD' ? perSqmUSD : perSqmUSD * r;
-    if (displayCurrency === 'IDR') return `IDR ${Math.round(value).toLocaleString()}`;
-    return `${displayCurrency} ${Math.round(value).toLocaleString()}`;
+    return `${sym}${Math.round(value).toLocaleString()}`;
   };
 
   // --- Price change badge: show ↓12% or ↑5% when previous_price exists ---
@@ -1655,7 +1659,9 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
         fillOpacity: 0.7,
       }).addTo(mapRef);
 
-      // Price formatting for popup
+      // Price formatting for popup (symbol only, matches table formatting)
+      const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
+      const sym = symbols[displayCurrency] || displayCurrency + ' ';
       const desc = (villa.price_description || '').trim();
       const priceMatch = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
       let priceStr = '';
@@ -1665,12 +1671,12 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
         const r = rates[cur];
         const priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
         const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
-        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
+        priceStr = `${sym}${Math.round(displayVal).toLocaleString()}`;
       } else {
         const p = Number(villa.last_price) || 0;
         const priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
         const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
-        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
+        priceStr = `${sym}${Math.round(displayVal).toLocaleString()}`;
       }
 
       const isFav = favorites.has(villa.id);
