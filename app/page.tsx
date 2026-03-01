@@ -490,9 +490,12 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('BUDGET_VILLA')) {
-      const beds = Number(villa.bedrooms) || 1;
-      const ppr = Math.round(priceUSD / beds);
-      flags.push({ level: 'warning', label: 'Budget Villa', detail: `$${ppr.toLocaleString()}/room is below the $50k threshold. Expect lower build quality, higher maintenance costs, and a less affluent renter demographic.` });
+      const baseRate = Number(villa.agent_claimed_rate) || nightly;
+      const isDiscounted = baseRate > nightly && nightly > 0;
+      const discountDetail = isDiscounted
+        ? ` BVT estimates $${nightly}/nt (discounted from $${baseRate} area median) because a property at this price point likely can't command the same nightly rate as higher-end villas in ${villa.location || 'this area'}.`
+        : '';
+      flags.push({ level: 'warning', label: 'Budget Villa', detail: `Asking price is below the 25th percentile for ${villa.location || 'this area'} ${villa.bedrooms || '?'}-bedrooms.${discountDetail} Expect lower build quality, higher maintenance costs, and a less affluent renter demographic.` });
     }
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
@@ -1049,7 +1052,7 @@ export default function BaliVillaTruth() {
                                 <div className="mb-2 pb-2 border-b border-slate-700">
                                     <div className="text-slate-500 font-bold mb-1">Computed using</div>
                                     <div className="text-slate-300 text-[9px] space-y-1">
-                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
+                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— {(() => { const baseR = Number(villa.agent_claimed_rate) || nightly; const isBudget = (villa.flags || '').includes('BUDGET_VILLA') && baseR > nightly; return isBudget ? `discounted from $${baseR} area median (budget property — price below 25th percentile for ${villa.location || 'this area'})` : `based on Booking.com market data for ${villa.location || 'this area'}, ${villa.bedrooms || '?'}-bed villas`; })()}</span></div>
                                       <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-slate-400">(65% occ)</span> <span className="text-slate-500">— assumed, we don't have occupancy data for this area</span></div>
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
