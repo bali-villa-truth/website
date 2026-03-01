@@ -533,7 +533,7 @@ export default function BaliVillaTruth() {
       const wasAuditorCapped = rateSource === 'auditor' && preCapRate > 0 && modelRate < preCapRate;
       const detailText = wasAuditorCapped
         ? `BVT's rate model initially estimated $${preCapRate}/nt, but this implied a gross yield above safe market limits. The rate was capped to $${modelRate}/nt to keep the ROI projection realistic.`
-        : `BVT modeled this rate at $${modelRate}/nt — a >25% adjustment from the area baseline. This typically reflects a luxury build premium or a price-tier correction. The math is sound, but verify comparables.`;
+        : `BVT's area+bedroom base rate is $${modelRate}/nt — the auditor adjusted this by >25%, likely due to the price cap (25% max gross yield). Verify rental comparables in the area.`;
       flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: detailText });
     }
 
