@@ -508,12 +508,7 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
-      const preCapRate = Number(villa.agent_claimed_rate) || 0;
-      const cappedRate = nightly;
-      const rateContext = preCapRate > 0 && preCapRate > cappedRate
-        ? ` BVT's initial model estimated $${preCapRate}/nt, but this was capped to $${cappedRate}/nt to stay within market limits.`
-        : '';
-      flags.push({ level: 'warning', label: 'Inflated Claim', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is unrealistically high — a number like this typically ignores operating costs and lease depreciation. BVT capped the nightly rate to reflect market reality. After 40% expenses, the cash flow yield is ~${cashFlowYield.toFixed(1)}%.${rateContext}` });
+      flags.push({ level: 'warning', label: 'High Yield', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is unusually high. This could mean it's genuinely underpriced, or that the asking price doesn't reflect what you'll actually pay. BVT uses the market rate for ${villa.area || 'this area'} (${nightly > 0 ? '$' + nightly + '/nt' : 'area average'}) — investigate the property directly before relying on this number.` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
@@ -524,17 +519,11 @@ export default function BaliVillaTruth() {
       flags.push({ level: 'warning', label: 'Inflated Nightly Rate', detail: `This is a sub-$200k property showing a high nightly rate. Budget builds rarely command premium luxury rates — the demographic paying $200+/nt expects finishes that typically can't be built at this price point. BVT has modeled a rate of $${nightly}/nt that reflects the actual asset class.` });
     }
 
-    // --- RATE_ADJUSTED: Pipeline significantly adjusted the nightly rate (>25% deviation from base model) ---
-    // Informational — not a red flag. Tells user the rate was modeled, not just pulled from area averages.
+    // --- RATE_ADJUSTED: Legacy flag, mostly inactive after BVT 7 (no price cap, base rates only) ---
+    // Kept for forward compatibility if we add future rate adjustments.
     if (pipelineFlags.includes('RATE_ADJUSTED')) {
-      const preCapRate = Number(villa.agent_claimed_rate) || 0;
       const modelRate = nightly;
-      const rateSource = villa.rate_source || 'model';
-      const wasAuditorCapped = rateSource === 'auditor' && preCapRate > 0 && modelRate < preCapRate;
-      const detailText = wasAuditorCapped
-        ? `BVT's rate model initially estimated $${preCapRate}/nt, but this implied a gross yield above safe market limits. The rate was capped to $${modelRate}/nt to keep the ROI projection realistic.`
-        : `BVT's area+bedroom base rate is $${modelRate}/nt — the auditor adjusted this by >25%, likely due to the price cap (25% max gross yield). Verify rental comparables in the area.`;
-      flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: detailText });
+      flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: `BVT's base rate for this area and bedroom count is $${modelRate}/nt. The auditor made an adjustment — verify rental comparables in the area.` });
     }
 
     return flags;
