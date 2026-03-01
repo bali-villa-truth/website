@@ -72,31 +72,29 @@ export default function Methodology() {
             </p>
 
             <Step num={1} title="Area + bedroom rate lookup">
-              We maintain a rate model with real Booking.com data for 12 Bali areas across 5 bedroom tiers.
+              Every listing gets a nightly rate based purely on its area and bedroom count. We maintain a
+              rate model with real Booking.com data for 12 Bali areas across 5 bedroom tiers.
               For example, a 2-bedroom villa in Canggu is estimated at $143/night, while a 2-bedroom
               in Ungasan is $96/night. These are medians from actual Booking.com listings, not assumptions.
               Every villa in the same area and bedroom tier gets the same base rate — the rental market
               sets prices by location and size, not by what sellers are asking.
             </Step>
 
-            <Step num={2} title="Price cap">
-              No villa can show a gross yield above 25%. This prevents cheap properties from displaying
-              unrealistically high nightly rates. The cap formula: maximum nightly rate = (asking price × 25%) / (365 × occupancy).
+            <Step num={2} title="That&apos;s it — no adjustments">
+              The rate goes straight into the yield formula. We don&apos;t cap it, inflate it, or adjust it
+              based on the asking price. If a cheap villa shows a high yield, that&apos;s real information — it
+              means the rental market rate for that area is high relative to the purchase price. We flag
+              unusually high yields so you can investigate, but we never hide the number from you.
             </Step>
 
             <InfoBox>
-              <strong>Why we don&apos;t adjust rates by asking price:</strong> An earlier version of BVT scaled nightly rates
-              up or down based on the villa&apos;s sale price — the logic being that expensive villas command higher rents.
-              We removed this because it creates circular math: rate derived from price, then yield computed by dividing by
-              price. The result was that all villas in the same area showed nearly identical yields regardless of price,
-              which defeats the purpose of comparison. Now, rates reflect the rental market independently, and the yield
-              differences you see are real.
-            </InfoBox>
-
-            <InfoBox>
-              <strong>What else we removed:</strong> We also previously applied a &ldquo;yield floor&rdquo; that artificially
-              inflated nightly rates so no listing showed below 4% net yield. We removed this in our transparency overhaul.
-              If a luxury villa genuinely yields 1-2%, you should see that number — not a manufactured minimum.
+              <strong>What we deliberately removed:</strong> Earlier versions of BVT applied two manipulations
+              that undermined trust. First, a price-based rate adjustment that scaled nightly rates up or
+              down based on the villa&apos;s sale price — this created circular math where yields converged to
+              the same number regardless of price. Second, a yield cap and floor that artificially compressed
+              all results into a narrow band. Both defeated the purpose of comparison. Now, the numbers you
+              see reflect the rental market independently. If a luxury villa yields 1-2% and a budget villa
+              yields 20%, those are real differences — exactly what an investor needs to see.
             </InfoBox>
           </div>
         </section>
