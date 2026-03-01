@@ -80,11 +80,21 @@ export default function Methodology() {
               sets prices by location and size, not by what sellers are asking.
             </Step>
 
-            <Step num={2} title="That&apos;s it — no adjustments">
-              The rate goes straight into the yield formula. We don&apos;t cap it, inflate it, or adjust it
-              based on the asking price. If a cheap villa shows a high yield, that&apos;s real information — it
-              means the rental market rate for that area is high relative to the purchase price. We flag
-              unusually high yields so you can investigate, but we never hide the number from you.
+            <Step num={2} title="Budget property discount">
+              If a villa&apos;s asking price falls below the <strong>25th percentile</strong> for its area and bedroom tier,
+              we apply a flat 30% discount to the nightly rate. A $107K villa in Nusa Dua almost certainly can&apos;t
+              command the same $170/night as a $500K property with an infinity pool and ocean view — even though
+              they&apos;re in the same area with the same bedroom count. The discount acknowledges this reality
+              without reintroducing circular math: it&apos;s a binary trigger (below threshold → yes/no), not a
+              continuous function of price. You&apos;ll see &quot;Budget Villa&quot; flagged on these listings with the
+              discounted rate shown transparently — e.g. &quot;$119/nt (discounted from $170 area median)&quot;.
+            </Step>
+
+            <Step num={3} title="No other adjustments">
+              Beyond the budget discount, the rate goes straight into the yield formula. We don&apos;t cap it,
+              inflate it, or apply continuous price-based scaling. If a mid-range villa shows a high yield,
+              that&apos;s real information — the rental market rate for that area is high relative to the purchase
+              price. We flag unusually high yields so you can investigate, but we never hide the number.
             </Step>
 
             <InfoBox>
@@ -92,9 +102,9 @@ export default function Methodology() {
               that undermined trust. First, a price-based rate adjustment that scaled nightly rates up or
               down based on the villa&apos;s sale price — this created circular math where yields converged to
               the same number regardless of price. Second, a yield cap and floor that artificially compressed
-              all results into a narrow band. Both defeated the purpose of comparison. Now, the numbers you
-              see reflect the rental market independently. If a luxury villa yields 1-2% and a budget villa
-              yields 20%, those are real differences — exactly what an investor needs to see.
+              all results into a narrow band. Both defeated the purpose of comparison. The budget discount
+              (step 2) is the honest middle ground: it acknowledges that cheap properties can&apos;t command
+              median rates, without letting price flow continuously into yield math.
             </InfoBox>
           </div>
         </section>
@@ -209,29 +219,6 @@ export default function Methodology() {
           </div>
         </section>
 
-        {/* === SECTION: Price Cap === */}
-        <section className="mb-10">
-          <SectionHeading icon={<Percent size={18} />} title="Price cap (25% gross yield limit)" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            <p>
-              No listing can display a gross yield above 25%. This prevents very cheap properties
-              from showing unrealistic returns. The cap works by limiting the maximum nightly rate
-              the system will assign:
-            </p>
-
-            <div className="bg-slate-900 dark:bg-slate-800 text-slate-100 rounded-xl p-4 font-mono text-xs">
-              max_nightly = (asking_price × 0.25) / (365 × 0.65)
-            </div>
-
-            <p>
-              If the Booking.com-based rate model produces a higher rate, we use this cap instead.
-              Properties that hit the price cap are flagged with a
-              <span className="inline-flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">PRICE CAP</span>
-              warning so you know the rate was constrained.
-            </p>
-          </div>
-        </section>
-
         {/* === SECTION: Red Flags === */}
         <section className="mb-10">
           <SectionHeading icon={<AlertTriangle size={18} />} title="Red flags" />
@@ -243,8 +230,9 @@ export default function Methodology() {
 
             <div className="space-y-3">
               <FlagRow name="SHORT LEASE" desc="Less than 15 years remaining on the lease. Lease depreciation significantly impacts returns." />
-              <FlagRow name="PRICE CAP" desc="The nightly rate was capped to prevent unrealistic yields. Usually means the asking price is very low relative to the area." />
-              <FlagRow name="BUDGET VILLA" desc="Price per bedroom is under $50,000. May indicate lower build quality, poor location within the area, or unusual property characteristics." />
+              <FlagRow name="BUDGET VILLA" desc="Asking price is below the 25th percentile for its area and bedroom tier. Nightly rate is discounted 30% from the area median to reflect that budget properties typically can't command median rates. Tooltip shows the exact discount." />
+              <FlagRow name="HIGH YIELD" desc="Gross yield exceeds 20%. This could mean it's genuinely underpriced, or that the asking price doesn't reflect reality. Investigate the property directly." />
+              <FlagRow name="OPTIMISTIC CLAIM" desc="Gross yield is 15-20%. The gap between gross and net yield (after expenses and depreciation) is where investors lose money." />
             </div>
           </div>
         </section>
