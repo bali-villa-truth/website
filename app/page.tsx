@@ -489,13 +489,35 @@ export default function BaliVillaTruth() {
       }
     }
 
-    if (pipelineFlags.includes('BUDGET_VILLA')) {
-      const baseRate = Number(villa.agent_claimed_rate) || nightly;
-      const isDiscounted = baseRate > nightly && nightly > 0;
+    // --- Graduated budget discount flags (BVT 9) ---
+    const baseRate = Number(villa.agent_claimed_rate) || nightly;
+    const isDiscounted = baseRate > nightly && nightly > 0;
+
+    if (pipelineFlags.includes('EXTREME_BUDGET')) {
       const discountDetail = isDiscounted
-        ? ` BVT estimates $${nightly}/nt (discounted from $${baseRate} area median) because a property at this price point likely can't command the same nightly rate as higher-end villas in ${villa.location || 'this area'}.`
+        ? ` BVT estimates $${nightly}/nt (50% discount from $${baseRate} area median).`
+        : '';
+      flags.push({ level: 'danger', label: 'Extreme Budget', detail: `Asking price is well below 50% of the 25th percentile for ${villa.location || 'this area'} ${villa.bedrooms || '?'}-bedrooms.${discountDetail} At this price point, expect significant compromises in build quality, location, or condition. Verify the property exists and is habitable before investing.` });
+    } else if (pipelineFlags.includes('BUDGET_VILLA')) {
+      const discountDetail = isDiscounted
+        ? ` BVT estimates $${nightly}/nt (30% discount from $${baseRate} area median) because a property at this price point likely can't command the same nightly rate as higher-end villas in ${villa.location || 'this area'}.`
         : '';
       flags.push({ level: 'warning', label: 'Budget Villa', detail: `Asking price is below the 25th percentile for ${villa.location || 'this area'} ${villa.bedrooms || '?'}-bedrooms.${discountDetail} Expect lower build quality, higher maintenance costs, and a less affluent renter demographic.` });
+    } else if (pipelineFlags.includes('NEAR_BUDGET')) {
+      const discountDetail = isDiscounted
+        ? ` BVT estimates $${nightly}/nt (15% discount from $${baseRate} area median).`
+        : '';
+      flags.push({ level: 'assumed', label: 'Near Budget', detail: `Asking price is between the 25th and 35th percentile for ${villa.location || 'this area'} ${villa.bedrooms || '?'}-bedrooms.${discountDetail} BVT applies a modest rate discount to reflect the lower market positioning.` });
+    }
+
+    // --- Multi-unit detection (BVT 9) ---
+    if (pipelineFlags.includes('MULTI_UNIT')) {
+      flags.push({ level: 'warning', label: 'Multi-Unit', detail: `This listing appears to contain multiple rental units (not a single villa). The nightly rate and yield shown are per-unit estimates — total property revenue may be higher, but so are management complexity and costs. Verify the unit count and individual rental performance.` });
+    }
+
+    // --- Off-plan detection (BVT 9) ---
+    if (pipelineFlags.includes('OFF_PLAN')) {
+      flags.push({ level: 'danger', label: 'Off-Plan', detail: `This appears to be an off-plan or pre-construction property. It has no rental history, so the yield estimate is entirely speculative. Construction delays, cost overruns, and market changes between now and completion are significant risks. Do not rely on projected yields for off-plan properties.` });
     }
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
@@ -1052,7 +1074,7 @@ export default function BaliVillaTruth() {
                                 <div className="mb-2 pb-2 border-b border-slate-700">
                                     <div className="text-slate-500 font-bold mb-1">Computed using</div>
                                     <div className="text-slate-300 text-[9px] space-y-1">
-                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— {(() => { const baseR = Number(villa.agent_claimed_rate) || nightly; const isBudget = (villa.flags || '').includes('BUDGET_VILLA') && baseR > nightly; return isBudget ? `discounted from $${baseR} area median (budget property — price below 25th percentile for ${villa.location || 'this area'})` : `based on Booking.com market data for ${villa.location || 'this area'}, ${villa.bedrooms || '?'}-bed villas`; })()}</span></div>
+                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— {(() => { const baseR = Number(villa.agent_claimed_rate) || nightly; const pflags = (villa.flags || ''); const isExtreme = pflags.includes('EXTREME_BUDGET') && baseR > nightly; const isBudget = pflags.includes('BUDGET_VILLA') && baseR > nightly; const isNear = pflags.includes('NEAR_BUDGET') && baseR > nightly; if (isExtreme) return `50% discount from $${baseR} area median (extreme outlier — price well below 50% of 25th percentile for ${villa.location || 'this area'})`; if (isBudget) return `30% discount from $${baseR} area median (budget property — price below 25th percentile for ${villa.location || 'this area'})`; if (isNear) return `15% discount from $${baseR} area median (near-budget — price between 25th-35th percentile for ${villa.location || 'this area'})`; return `based on Booking.com market data for ${villa.location || 'this area'}, ${villa.bedrooms || '?'}-bed villas`; })()}</span></div>
                                       <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-slate-400">(65% occ)</span> <span className="text-slate-500">— assumed, we don't have occupancy data for this area</span></div>
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
