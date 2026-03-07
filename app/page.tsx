@@ -750,6 +750,14 @@ export default function BaliVillaTruth() {
         </div>
       </header>
 
+      {/* DISCLAIMER BAR */}
+      <div className="max-w-7xl mx-auto mb-3 px-2">
+        <div className="flex items-start gap-2 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 rounded-lg px-3 py-2 text-[10px] text-amber-700 dark:text-amber-400">
+          <AlertTriangle size={12} className="flex-shrink-0 mt-0.5" />
+          <span><strong>Not financial advice.</strong> All yields are estimates based on assumed 65% occupancy and area-average nightly rates from Booking.com — not actual rental data for individual properties. Lease depreciation is included for leasehold villas. Verify all numbers independently before investing. <Link href="/methodology" className="underline hover:text-amber-900 dark:hover:text-amber-300">Read our methodology →</Link></span>
+        </div>
+      </div>
+
       {/* RESULTS BAR */}
       <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex flex-wrap justify-between items-center gap-2 px-2 transition-all`}>
          <div className="flex items-center gap-2">
@@ -879,14 +887,21 @@ export default function BaliVillaTruth() {
                     </div>
                     {/* ROI */}
                     <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
-                      <div className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-0.5">Net ROI</div>
+                      <div className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-0.5">Est. Yield</div>
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
                         netRoi >= 12 ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400' :
                         netRoi >= 7 ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400' :
                         netRoi >= 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' :
                         'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400'
                       }`}>{netRoi.toFixed(1)}%</span>
-                      <div className="text-[8px] text-slate-600 dark:text-slate-400 line-through font-medium mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
+                      {!isFreehold && leaseYears > 0 ? (
+                        <div className="text-[7px] mt-0.5 space-y-0">
+                          <div className="text-emerald-500">Cash: {(priceUSD > 0 ? ((nightly * 365 * occupancy * 0.60) / priceUSD) * 100 : 0).toFixed(1)}%</div>
+                          <div className="text-amber-500">Lease: −{(1/leaseYears*100).toFixed(1)}%</div>
+                        </div>
+                      ) : (
+                        <div className="text-[8px] text-slate-600 dark:text-slate-400 line-through font-medium mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
+                      )}
                     </div>
                     {/* Specs */}
                     <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
@@ -899,7 +914,13 @@ export default function BaliVillaTruth() {
                   {/* Card Footer: nightly rate + flags + action */}
                   <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono text-center flex-1 min-w-0">
-                      ~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ
+                      {(() => {
+                        const baseR = Number(villa.agent_claimed_rate) || nightly;
+                        const isDisc = baseR > nightly && nightly > 0;
+                        return isDisc
+                          ? <><span className="line-through text-slate-400">${baseR}/nt</span> <span className="text-blue-500">${nightly}/nt</span></>
+                          : <>~${nightly}/nt</>;
+                      })()} • <span className="text-amber-500 dark:text-amber-400">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
                       {redFlags.length > 0 && (
                         <div className="flex gap-1 mt-0.5 flex-wrap justify-center">
                           {redFlags.map((flag, idx) => (
@@ -931,7 +952,13 @@ export default function BaliVillaTruth() {
                 <th className="p-5">Asset & Location</th>
                 <th className="p-5 text-right">Price ({displayCurrency})</th>
                 <th className="p-5 text-right">Price/m²</th>
-                <th className="p-5 text-center">ROI Analysis</th>
+                <th className="p-5 text-center relative group/roihdr">Est. Net Yield <Info size={10} className="inline text-slate-400 group-hover/roihdr:text-blue-500 cursor-help" />
+                  <span className="invisible group-hover/roihdr:visible absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none normal-case tracking-normal font-normal">
+                    <span className="font-bold text-blue-300 block mb-1">How we calculate this</span>
+                    <span className="text-slate-300">Net Yield = (Revenue − Expenses − Lease Depreciation) ÷ Price. Uses <span className="text-amber-400">assumed 65% occupancy</span>, 40% expense load, and area-based nightly rates from Booking.com data. Hover any row for the full breakdown.</span>
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></span>
+                  </span>
+                </th>
                 <th className="p-5">Specs</th>
                 <th className="p-5 text-right">Action</th>
               </tr>
@@ -1034,11 +1061,22 @@ export default function BaliVillaTruth() {
                                 Est. {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
                             </span>
                             <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 line-through font-mono font-medium">Gross: {grossRoi.toFixed(1)}%</p>
-                            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
+                            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">
+                              {(() => {
+                                const baseR = Number(villa.agent_claimed_rate) || nightly;
+                                const isDisc = baseR > nightly && nightly > 0;
+                                return isDisc
+                                  ? <><span className="line-through text-slate-400 dark:text-slate-500">${baseR}/nt</span> <span className="text-blue-500 dark:text-blue-400">${nightly}/nt</span></>
+                                  : <>~${nightly}/nt</>;
+                              })()} • <span className="text-amber-500 dark:text-amber-400" title="Assumed occupancy — not based on actual booking data for this property">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
+                            </p>
 
-                            {/* Pre-depreciation yield for leaseholds */}
+                            {/* Separated cash yield vs depreciation for leaseholds */}
                             {!isFreehold && leaseDepreciation > 0 && (
-                              <p className="text-[9px] text-amber-500 dark:text-amber-400 font-mono mt-0.5">Before lease exp: {preDepreciationNet.toFixed(1)}%</p>
+                              <div className="text-[9px] font-mono mt-0.5 space-y-0.5">
+                                <p className="text-emerald-500 dark:text-emerald-400">Cash flow: {preDepreciationNet.toFixed(1)}%</p>
+                                <p className="text-amber-500 dark:text-amber-400">Lease cost: −{leaseDepreciation.toFixed(1)}%/yr</p>
+                              </div>
                             )}
 
                             {/* Red flag badges under ROI */}
@@ -1075,7 +1113,8 @@ export default function BaliVillaTruth() {
                                     <div className="text-slate-500 font-bold mb-1">Computed using</div>
                                     <div className="text-slate-300 text-[9px] space-y-1">
                                       <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— {(() => { const baseR = Number(villa.agent_claimed_rate) || nightly; const pflags = (villa.flags || ''); const isExtreme = pflags.includes('EXTREME_BUDGET') && baseR > nightly; const isBudget = pflags.includes('BUDGET_VILLA') && baseR > nightly; const isNear = pflags.includes('NEAR_BUDGET') && baseR > nightly; if (isExtreme) return `50% discount from $${baseR} area median (extreme outlier — price well below 50% of 25th percentile for ${villa.location || 'this area'})`; if (isBudget) return `30% discount from $${baseR} area median (budget property — price below 25th percentile for ${villa.location || 'this area'})`; if (isNear) return `15% discount from $${baseR} area median (near-budget — price between 25th-35th percentile for ${villa.location || 'this area'})`; return `based on Booking.com market data for ${villa.location || 'this area'}, ${villa.bedrooms || '?'}-bed villas`; })()}</span></div>
-                                      <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-slate-400">(65% occ)</span> <span className="text-slate-500">— assumed, we don't have occupancy data for this area</span></div>
+                                      <div className="text-slate-600 text-[8px] mt-0.5">Benchmarks derived from 2,171 audited listings across Bali. <a href="/methodology" className="text-blue-400 underline">See methodology →</a></div>
+                                      <div><span className="text-amber-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-amber-400">(65% occ)</span> <span className="text-amber-500">⚠ ASSUMED — we have no occupancy data. Real occupancy varies 40–80% by area and season. Use the Compare tool to test different scenarios.</span></div>
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
                                     <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Save villas with the heart icon, then click Compare to adjust these assumptions</p>
@@ -1365,12 +1404,22 @@ export default function BaliVillaTruth() {
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-700">
                       <th className="text-left py-3 pr-4 w-36 sticky left-0 bg-white dark:bg-slate-900 z-[1]">Metric</th>
-                      {compareVillas.map(v => (
-                        <th key={v.id} className="text-center py-3 px-3 min-w-[140px]">
-                          <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold line-clamp-2 max-w-[160px] mx-auto">{toTitleCase(v.villa_name)}</div>
-                          <div className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{v.location}</div>
-                        </th>
-                      ))}
+                      {compareVillas.map(v => {
+                        const vFlags = getRedFlags(v);
+                        return (
+                          <th key={v.id} className="text-center py-3 px-3 min-w-[140px]">
+                            <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold line-clamp-2 max-w-[160px] mx-auto">{toTitleCase(v.villa_name)}</div>
+                            <div className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{v.location}</div>
+                            {vFlags.length > 0 && (
+                              <div className="flex flex-wrap justify-center gap-0.5 mt-1">
+                                {vFlags.map((f, i) => (
+                                  <span key={i} className={`px-1 py-0 rounded text-[7px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
+                                ))}
+                              </div>
+                            )}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody className="text-xs">
@@ -1549,7 +1598,7 @@ export default function BaliVillaTruth() {
           <div><span className="font-bold text-slate-700 dark:text-slate-300 text-sm">Bali Villa Truth</span><span className="mx-2 text-slate-300 dark:text-slate-600">•</span><span>Independent villa investment analysis</span></div>
           <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</a><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</a></div>
         </div>
-        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4 pb-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
+        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4 pb-4">© 2026 Bali Villa Truth. All projections are estimates and not financial advice. Occupancy (65%) and nightly rates are assumptions — verify independently before investing. Past performance does not guarantee future returns.</p>
       </footer>
       </div>{/* end listings-section wrapper */}
     </div>
