@@ -318,6 +318,13 @@ export default function BaliVillaTruth() {
     villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
   const getDisplayOccupancy = (villa: any): number =>
     (villa.est_occupancy ?? 0.65) * 100;
+  // BVT 11: Check if occupancy is review-based (area-specific) vs flat assumed
+  const isReviewBasedOccupancy = (villa: any): boolean => {
+    if (villa.occupancy_source && villa.occupancy_source.startsWith('review')) return true;
+    // Heuristic: if est_occupancy differs from 0.65, it's area-specific
+    const occ = villa.est_occupancy ?? 0.65;
+    return Math.abs(occ - 0.65) > 0.005;
+  };
 
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
   const processedListings = useMemo(() => {
@@ -754,7 +761,7 @@ export default function BaliVillaTruth() {
       <div className="max-w-7xl mx-auto mb-3 px-2">
         <div className="flex items-start gap-2 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 rounded-lg px-3 py-2 text-[10px] text-amber-700 dark:text-amber-400">
           <AlertTriangle size={12} className="flex-shrink-0 mt-0.5" />
-          <span><strong>Not financial advice.</strong> All yields are estimates based on assumed 65% occupancy and area-average nightly rates from Booking.com — not actual rental data for individual properties. Lease depreciation is included for leasehold villas. Verify all numbers independently before investing. <Link href="/methodology" className="underline hover:text-amber-900 dark:hover:text-amber-300">Read our methodology →</Link></span>
+          <span><strong>Not financial advice.</strong> All yields are estimates based on area-specific occupancy (estimated from Booking.com review density, 40–80%) and area-average nightly rates — not actual rental data for individual properties. Lease depreciation is included for leasehold villas. Verify all numbers independently before investing. <Link href="/methodology" className="underline hover:text-amber-900 dark:hover:text-amber-300">Read our methodology →</Link></span>
         </div>
       </div>
 
@@ -920,7 +927,11 @@ export default function BaliVillaTruth() {
                         return isDisc
                           ? <><span className="line-through text-slate-400">${baseR}/nt</span> <span className="text-blue-500">${nightly}/nt</span></>
                           : <>~${nightly}/nt</>;
-                      })()} • <span className="text-amber-500 dark:text-amber-400">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
+                      })()} • {isReviewBasedOccupancy(villa) ? (
+                        <span className="text-emerald-500 dark:text-emerald-400">{Math.round(getDisplayOccupancy(villa))}% occ</span>
+                      ) : (
+                        <span className="text-amber-500 dark:text-amber-400">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
+                      )}
                       {redFlags.length > 0 && (
                         <div className="flex gap-1 mt-0.5 flex-wrap justify-center">
                           {redFlags.map((flag, idx) => (
@@ -955,7 +966,7 @@ export default function BaliVillaTruth() {
                 <th className="p-5 text-center relative group/roihdr">Est. Net Yield <Info size={10} className="inline text-slate-400 group-hover/roihdr:text-blue-500 cursor-help" />
                   <span className="invisible group-hover/roihdr:visible absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none normal-case tracking-normal font-normal">
                     <span className="font-bold text-blue-300 block mb-1">How we calculate this</span>
-                    <span className="text-slate-300">Net Yield = (Revenue − Expenses − Lease Depreciation) ÷ Price. Uses <span className="text-amber-400">assumed 65% occupancy</span>, 40% expense load, and area-based nightly rates from Booking.com data. Hover any row for the full breakdown.</span>
+                    <span className="text-slate-300">Net Yield = (Revenue − Expenses − Lease Depreciation) ÷ Price. Uses <span className="text-emerald-400">area-specific occupancy (40–80%)</span> estimated from Booking.com review density, 40% expense load, and area-based nightly rates. Hover any row for the full breakdown.</span>
                     <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></span>
                   </span>
                 </th>
@@ -1068,7 +1079,11 @@ export default function BaliVillaTruth() {
                                 return isDisc
                                   ? <><span className="line-through text-slate-400 dark:text-slate-500">${baseR}/nt</span> <span className="text-blue-500 dark:text-blue-400">${nightly}/nt</span></>
                                   : <>~${nightly}/nt</>;
-                              })()} • <span className="text-amber-500 dark:text-amber-400" title="Assumed occupancy — not based on actual booking data for this property">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
+                              })()} • {isReviewBasedOccupancy(villa) ? (
+                                <span className="text-emerald-500 dark:text-emerald-400" title={`Area-specific occupancy estimated from Booking.com review density for ${villa.location}`}>{Math.round(getDisplayOccupancy(villa))}% occ</span>
+                              ) : (
+                                <span className="text-amber-500 dark:text-amber-400" title="Assumed occupancy — not based on actual booking data for this property">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
+                              )}
                             </p>
 
                             {/* Separated cash yield vs depreciation for leaseholds */}
@@ -1114,7 +1129,11 @@ export default function BaliVillaTruth() {
                                     <div className="text-slate-300 text-[9px] space-y-1">
                                       <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— {(() => { const baseR = Number(villa.agent_claimed_rate) || nightly; const pflags = (villa.flags || ''); const isExtreme = pflags.includes('EXTREME_BUDGET') && baseR > nightly; const isBudget = pflags.includes('BUDGET_VILLA') && baseR > nightly; const isNear = pflags.includes('NEAR_BUDGET') && baseR > nightly; if (isExtreme) return `50% discount from $${baseR} area median (extreme outlier — price well below 50% of 25th percentile for ${villa.location || 'this area'})`; if (isBudget) return `30% discount from $${baseR} area median (budget property — price below 25th percentile for ${villa.location || 'this area'})`; if (isNear) return `15% discount from $${baseR} area median (near-budget — price between 25th-35th percentile for ${villa.location || 'this area'})`; return `based on Booking.com market data for ${villa.location || 'this area'}, ${villa.bedrooms || '?'}-bed villas`; })()}</span></div>
                                       <div className="text-slate-600 text-[8px] mt-0.5">Benchmarks derived from 2,171 audited listings across Bali. <a href="/methodology" className="text-blue-400 underline">See methodology →</a></div>
-                                      <div><span className="text-amber-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-amber-400">(65% occ)</span> <span className="text-amber-500">⚠ ASSUMED — we have no occupancy data. Real occupancy varies 40–80% by area and season. Use the Compare tool to test different scenarios.</span></div>
+                                      {isReviewBasedOccupancy(villa) ? (
+                                        <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-emerald-400">({Math.round(occupancy * 100)}% occ)</span> <span className="text-emerald-500/80">Estimated from Booking.com review density for {villa.location || 'this area'}. Higher review counts → higher inferred demand. Range: 40–80% across Bali.</span></div>
+                                      ) : (
+                                        <div><span className="text-amber-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-amber-400">({Math.round(occupancy * 100)}% occ)</span> <span className="text-amber-500">⚠ ASSUMED — we have no area-specific occupancy data for {villa.location || 'this area'} yet. Real occupancy varies 40–80% by area and season. Use the Compare tool to test different scenarios.</span></div>
+                                      )}
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
                                     <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Save villas with the heart icon, then click Compare to adjust these assumptions</p>
@@ -1598,7 +1617,7 @@ export default function BaliVillaTruth() {
           <div><span className="font-bold text-slate-700 dark:text-slate-300 text-sm">Bali Villa Truth</span><span className="mx-2 text-slate-300 dark:text-slate-600">•</span><span>Independent villa investment analysis</span></div>
           <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</a><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</a></div>
         </div>
-        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4 pb-4">© 2026 Bali Villa Truth. All projections are estimates and not financial advice. Occupancy (65%) and nightly rates are assumptions — verify independently before investing. Past performance does not guarantee future returns.</p>
+        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4 pb-4">© 2026 Bali Villa Truth. All projections are estimates and not financial advice. Occupancy (40–80%, estimated from Booking.com review density) and nightly rates are assumptions — verify independently before investing. Past performance does not guarantee future returns.</p>
       </footer>
       </div>{/* end listings-section wrapper */}
     </div>
