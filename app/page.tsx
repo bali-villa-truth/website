@@ -325,6 +325,22 @@ export default function BaliVillaTruth() {
     const occ = villa.est_occupancy ?? 0.65;
     return Math.abs(occ - 0.65) > 0.005;
   };
+  // BVT 11b: Confidence metadata for trust indicators
+  const getOccupancyConfidence = (villa: any): { confidence: string; sampleSize: number; label: string; colorClass: string; titleText: string } => {
+    const conf = villa.occupancy_confidence || 'none';
+    const n = villa.occupancy_sample_size || 0;
+    const area = villa.location || 'this area';
+    if (!isReviewBasedOccupancy(villa)) {
+      return { confidence: 'none', sampleSize: 0, label: 'assumed*', colorClass: 'text-amber-500 dark:text-amber-400', titleText: `Assumed 65% occupancy — no area-specific data for ${area} yet` };
+    }
+    if (conf === 'high' || n >= 15) {
+      return { confidence: 'high', sampleSize: n, label: `n=${n}`, colorClass: 'text-emerald-500 dark:text-emerald-400', titleText: `High confidence (${n} properties sampled) — estimated from Booking.com review density for ${area}` };
+    }
+    if (conf === 'medium' || n >= 8) {
+      return { confidence: 'medium', sampleSize: n, label: `n=${n}`, colorClass: 'text-emerald-400/70 dark:text-emerald-500/70', titleText: `Medium confidence (${n} properties sampled) — estimated from Booking.com review density for ${area}. More data would improve accuracy.` };
+    }
+    return { confidence: 'low', sampleSize: n, label: `n=${n}`, colorClass: 'text-yellow-500 dark:text-yellow-400', titleText: `Low confidence (only ${n} properties sampled) — treat as rough estimate for ${area}. Small sample may not represent the area well.` };
+  };
 
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
   const processedListings = useMemo(() => {
@@ -927,11 +943,12 @@ export default function BaliVillaTruth() {
                         return isDisc
                           ? <><span className="line-through text-slate-400">${baseR}/nt</span> <span className="text-blue-500">${nightly}/nt</span></>
                           : <>~${nightly}/nt</>;
-                      })()} • {isReviewBasedOccupancy(villa) ? (
-                        <span className="text-emerald-500 dark:text-emerald-400">{Math.round(getDisplayOccupancy(villa))}% occ</span>
-                      ) : (
-                        <span className="text-amber-500 dark:text-amber-400">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
-                      )}
+                      })()} • {(() => {
+                        const occConf = getOccupancyConfidence(villa);
+                        return <span className={occConf.colorClass} title={occConf.titleText}>
+                          {Math.round(getDisplayOccupancy(villa))}% occ{occConf.confidence === 'none' ? '*' : ''}{occConf.confidence !== 'none' && <span className="text-[8px] opacity-60 ml-0.5">({occConf.label})</span>}
+                        </span>;
+                      })()}
                       {redFlags.length > 0 && (
                         <div className="flex gap-1 mt-0.5 flex-wrap justify-center">
                           {redFlags.map((flag, idx) => (
@@ -966,7 +983,7 @@ export default function BaliVillaTruth() {
                 <th className="p-5 text-center relative group/roihdr">Est. Net Yield <Info size={10} className="inline text-slate-400 group-hover/roihdr:text-blue-500 cursor-help" />
                   <span className="invisible group-hover/roihdr:visible absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none normal-case tracking-normal font-normal">
                     <span className="font-bold text-blue-300 block mb-1">How we calculate this</span>
-                    <span className="text-slate-300">Net Yield = (Revenue − Expenses − Lease Depreciation) ÷ Price. Uses <span className="text-emerald-400">area-specific occupancy (40–80%)</span> estimated from Booking.com review density, 40% expense load, and area-based nightly rates. Hover any row for the full breakdown.</span>
+                    <span className="text-slate-300">Net Yield = (Revenue − Expenses − Lease Depreciation) ÷ Price. Uses <span className="text-emerald-400">area-specific occupancy (40–80%)</span> estimated from Booking.com review density with confidence indicators (high/medium/low based on sample size), 40% expense load, and area-based nightly rates. Hover any row for the full breakdown.</span>
                     <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></span>
                   </span>
                 </th>
@@ -1079,11 +1096,12 @@ export default function BaliVillaTruth() {
                                 return isDisc
                                   ? <><span className="line-through text-slate-400 dark:text-slate-500">${baseR}/nt</span> <span className="text-blue-500 dark:text-blue-400">${nightly}/nt</span></>
                                   : <>~${nightly}/nt</>;
-                              })()} • {isReviewBasedOccupancy(villa) ? (
-                                <span className="text-emerald-500 dark:text-emerald-400" title={`Area-specific occupancy estimated from Booking.com review density for ${villa.location}`}>{Math.round(getDisplayOccupancy(villa))}% occ</span>
-                              ) : (
-                                <span className="text-amber-500 dark:text-amber-400" title="Assumed occupancy — not based on actual booking data for this property">{Math.round(getDisplayOccupancy(villa))}% occ*</span>
-                              )}
+                              })()} • {(() => {
+                                const occConf = getOccupancyConfidence(villa);
+                                return <span className={occConf.colorClass} title={occConf.titleText}>
+                                  {Math.round(getDisplayOccupancy(villa))}% occ{occConf.confidence === 'none' ? '*' : ''}{occConf.confidence !== 'none' && <span className="text-[7px] opacity-60 ml-0.5">({occConf.label})</span>}
+                                </span>;
+                              })()}
                             </p>
 
                             {/* Separated cash yield vs depreciation for leaseholds */}
@@ -1129,11 +1147,23 @@ export default function BaliVillaTruth() {
                                     <div className="text-slate-300 text-[9px] space-y-1">
                                       <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— {(() => { const baseR = Number(villa.agent_claimed_rate) || nightly; const pflags = (villa.flags || ''); const isExtreme = pflags.includes('EXTREME_BUDGET') && baseR > nightly; const isBudget = pflags.includes('BUDGET_VILLA') && baseR > nightly; const isNear = pflags.includes('NEAR_BUDGET') && baseR > nightly; if (isExtreme) return `50% discount from $${baseR} area median (extreme outlier — price well below 50% of 25th percentile for ${villa.location || 'this area'})`; if (isBudget) return `30% discount from $${baseR} area median (budget property — price below 25th percentile for ${villa.location || 'this area'})`; if (isNear) return `15% discount from $${baseR} area median (near-budget — price between 25th-35th percentile for ${villa.location || 'this area'})`; return `based on Booking.com market data for ${villa.location || 'this area'}, ${villa.bedrooms || '?'}-bed villas`; })()}</span></div>
                                       <div className="text-slate-600 text-[8px] mt-0.5">Benchmarks derived from 2,171 audited listings across Bali. <a href="/methodology" className="text-blue-400 underline">See methodology →</a></div>
-                                      {isReviewBasedOccupancy(villa) ? (
-                                        <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-emerald-400">({Math.round(occupancy * 100)}% occ)</span> <span className="text-emerald-500/80">Estimated from Booking.com review density for {villa.location || 'this area'}. Higher review counts → higher inferred demand. Range: 40–80% across Bali.</span></div>
-                                      ) : (
-                                        <div><span className="text-amber-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-amber-400">({Math.round(occupancy * 100)}% occ)</span> <span className="text-amber-500">⚠ ASSUMED — we have no area-specific occupancy data for {villa.location || 'this area'} yet. Real occupancy varies 40–80% by area and season. Use the Compare tool to test different scenarios.</span></div>
-                                      )}
+                                      {(() => {
+                                        const occConf = getOccupancyConfidence(villa);
+                                        if (occConf.confidence === 'none') {
+                                          return <div><span className="text-amber-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-amber-400">({Math.round(occupancy * 100)}% occ)</span> <span className="text-amber-500">⚠ ASSUMED — we have no area-specific occupancy data for {villa.location || 'this area'} yet. Real occupancy varies 40–80% by area and season. Use the Compare tool to test different scenarios.</span></div>;
+                                        }
+                                        const confColor = occConf.confidence === 'high' ? 'text-emerald-400' : occConf.confidence === 'medium' ? 'text-emerald-400/70' : 'text-yellow-400';
+                                        const confBg = occConf.confidence === 'high' ? 'bg-emerald-900/30' : occConf.confidence === 'medium' ? 'bg-emerald-900/20' : 'bg-yellow-900/20';
+                                        const confLabel = occConf.confidence === 'high' ? 'HIGH' : occConf.confidence === 'medium' ? 'MEDIUM' : 'LOW';
+                                        const confNote = occConf.confidence === 'high' ? 'Large sample size — reliable estimate.' : occConf.confidence === 'medium' ? 'Moderate sample size — reasonable estimate.' : 'Small sample — treat as rough estimate.';
+                                        return <div>
+                                          <span className={`${confColor} font-bold`}>{Math.round(365 * occupancy)} nights/yr</span>{' '}
+                                          <span className={confColor}>({Math.round(occupancy * 100)}% occ)</span>{' '}
+                                          <span className={`${confBg} ${confColor} px-1 py-0.5 rounded text-[8px] font-bold`}>{confLabel} CONFIDENCE</span>{' '}
+                                          <span className={`text-[8px] ${confColor}/60`}>n={occConf.sampleSize}</span>
+                                          <div className="text-emerald-500/80 mt-0.5">Estimated from Booking.com review density for {villa.location || 'this area'}. {confNote} Range: 40–80% across Bali.</div>
+                                        </div>;
+                                      })()}
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
                                     <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Save villas with the heart icon, then click Compare to adjust these assumptions</p>
