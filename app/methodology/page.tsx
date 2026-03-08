@@ -52,7 +52,8 @@ export default function Methodology() {
             <p>
               Nightly rental rates are derived from <strong>Booking.com market data</strong>. We scraped 2,499 actual
               villa listings across 12 areas and 5 bedroom tiers to build our rate model. This gives us real market
-              rates — not agent estimates or wishful thinking.
+              rates — not agent estimates or wishful thinking. We also use Booking.com review density data
+              to estimate area-specific occupancy — more details in the occupancy section below.
             </p>
             <p>
               Exchange rates are fetched from <strong>ExchangeRate-API</strong> at the start of each pipeline run
@@ -114,24 +115,72 @@ export default function Methodology() {
           <SectionHeading icon={<Calendar size={18} />} title="Occupancy rate" />
           <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             <p>
-              We use a <strong>flat 65% occupancy rate</strong> across all areas — approximately 237 rented nights per year.
+              We estimate area-specific occupancy rates ranging from <strong>40% to 80%</strong> based on
+              Booking.com review density. Areas with more reviews per property indicate higher demand,
+              which we use as a proxy for occupancy. This replaced our earlier flat 65% assumption.
             </p>
+
+            <Step num={1} title="Review density as a demand proxy">
+              We sample villa listings on Booking.com across 12 Bali areas, collecting review counts
+              and scores per property. More reviews generally means more bookings — a property with 400 reviews
+              has almost certainly hosted more guests than one with 15. We use a blended median/mean of review
+              counts per area to reduce the skew from outlier mega-resorts.
+            </Step>
+
+            <Step num={2} title="Relative ranking, not absolute conversion">
+              We don&apos;t try to convert review counts directly into occupancy numbers — that would require
+              knowing average stay length, review-to-booking ratios, and listing ages, which we don&apos;t have.
+              Instead, we rank areas by review density and map them onto a 40%–80% range. The busiest area
+              gets the highest occupancy, the quietest gets the lowest, and everything else is interpolated.
+              This relative approach avoids brittle assumptions while still differentiating between areas.
+            </Step>
+
+            <Step num={3} title="Confidence levels">
+              Not all estimates are equally reliable. We show you how confident we are based on how many
+              properties we sampled per area:
+            </Step>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs">High confidence</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">n &ge; 15</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Large sample size. Reliable estimate for the area.</p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="font-semibold text-emerald-500/70 dark:text-emerald-500/70 text-xs">Medium confidence</span>
+                  <span className="text-emerald-500/70 dark:text-emerald-500/70 font-bold text-sm">n = 8–14</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Moderate sample. Reasonable estimate, but more data would help.</p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="font-semibold text-yellow-500 dark:text-yellow-400 text-xs">Low confidence</span>
+                  <span className="text-yellow-500 dark:text-yellow-400 font-bold text-sm">n &lt; 8</span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Small sample. Treat as a rough estimate — the area may not be well-represented.</p>
+              </div>
+            </div>
 
             <div className="bg-slate-100 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
               <p className="font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-1.5">
-                <AlertTriangle size={14} className="text-amber-500" /> Why not area-specific rates?
+                <AlertTriangle size={14} className="text-amber-500" /> What this is not
               </p>
               <p className="text-slate-600 dark:text-slate-400">
-                We don&apos;t have reliable, area-specific occupancy data for Bali villas. Previously, we used tiered
-                rates (75% for &ldquo;premium&rdquo; areas, 55% for &ldquo;emerging&rdquo; areas) — but those implied
-                a precision we didn&apos;t actually have. A flat 65% is honest about the limitation.
+                This is not actual occupancy data. It&apos;s an estimate derived from a proxy (review density)
+                for a proxy (demand). It&apos;s better than a flat guess — it captures the real difference
+                between a bustling Seminyak and a quiet Tabanan — but it&apos;s still an approximation.
+                For areas where we couldn&apos;t gather enough data, we fall back to a flat 65% and label
+                it clearly as &ldquo;assumed.&rdquo;
               </p>
             </div>
 
             <p>
               In the compare panel, you can adjust occupancy from 20% to 95% to stress-test how
-              different scenarios affect your returns. This is where area knowledge matters — if you know
-              Canggu villas book at 80%, plug that in.
+              different scenarios affect your returns. If you have on-the-ground knowledge that
+              Canggu villas book at 80%, plug that in — your local insight will always beat our model.
             </p>
           </div>
         </section>
@@ -270,8 +319,10 @@ export default function Methodology() {
             <p>We believe in being upfront about the limits of our analysis:</p>
             <ul className="space-y-3 list-none">
               <LimitItem title="Actual occupancy rates">
-                We assume 65% across the board. Real occupancy varies by area, season, marketing quality,
-                and property condition. We&apos;re actively working on sourcing area-specific data.
+                Our occupancy estimates are derived from Booking.com review density — a proxy for demand,
+                not a direct measure of bookings. Review counts don&apos;t account for seasonality,
+                direct bookings (which skip OTAs entirely), or how long a property has been listed.
+                We show confidence levels so you can judge how much weight to give each estimate.
               </LimitItem>
               <LimitItem title="True operating costs">
                 Our 40% estimate is a reasonable industry midpoint, but your actual costs depend on
@@ -298,14 +349,15 @@ export default function Methodology() {
           <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             <p>
               Our pipeline runs periodically to capture new listings and price changes. Booking.com rate data
-              is refreshed approximately monthly. When prices change by more than 1%, we log the event and
-              snapshot the ROI at that point.
+              is refreshed approximately monthly. Occupancy estimates are refreshed quarterly — review
+              counts change slowly, so more frequent updates would add noise without signal.
+              When prices change by more than 1%, we log the event and snapshot the ROI at that point.
             </p>
             <p>
               This methodology page is a living document. When we change how we calculate something, we
-              update it here. The most recent update was our &ldquo;transparency overhaul&rdquo; — unifying
-              occupancy to a flat 65%, removing the artificial yield floor, and extending lease depreciation
-              to all leasehold properties.
+              update it here. The most recent updates: area-specific occupancy estimation with confidence
+              indicators (replacing the flat 65% assumption), graduated budget discounts for cheap
+              properties, and transparent rate sourcing showing where every nightly rate comes from.
             </p>
           </div>
         </section>
