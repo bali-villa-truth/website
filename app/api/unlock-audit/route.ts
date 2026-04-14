@@ -576,13 +576,17 @@ function renderFinalDisclaimer(doc: PDFKit.PDFDocument) {
 }
 
 function renderFooter(doc: PDFKit.PDFDocument, pageNum: number, total: number) {
+  // Write in the bottom margin area. lineBreak:false prevents pdfkit from
+  // auto-paginating when y is past the content area (which was creating
+  // two ghost pages per real page — 6 extra blank pages total).
+  const y = 755;
   doc.fontSize(7).font("Helvetica").fillColor(COLORS.slate500)
     .text(
       "Not financial advice. Estimates based on market-average data, not audited owner books. Verify independently before investing.  |  balivillatruth.com",
-      50, 750, { width: 512, align: "center" }
+      50, y, { width: 512, align: "center", lineBreak: false }
     );
   doc.fontSize(7).fillColor(COLORS.slate500)
-    .text(`Page ${pageNum} of ${total}`, 50, 750, { width: 512, align: "right" });
+    .text(`Page ${pageNum} of ${total}`, 50, y, { width: 512, align: "right", lineBreak: false });
 }
 
 // ------------------------------------------------------------------
