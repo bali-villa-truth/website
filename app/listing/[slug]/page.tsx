@@ -24,6 +24,30 @@ async function getListing(slug: string) {
   return data;
 }
 
+// Price stored in `last_price` may be in IDR (when >= 1M) or USD. Convert to USD.
+// Falls back to current BI mid-rate (2026-04): 1 USD ≈ 16,782 IDR.
+const FALLBACK_RATES: Record<string, number> = {
+  USD: 1, IDR: 16782, AUD: 1.53, EUR: 0.92, SGD: 1.34,
+};
+
+function parseListingPrice(listing: any): { amount: number; currency: string } {
+  const desc = (listing.price_description || "").trim();
+  const match = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
+  if (match) {
+    const amount = parseFloat(match[2].replace(/\s|,/g, "")) || 0;
+    return { amount, currency: match[1].toUpperCase() };
+  }
+  const p = Number(listing.last_price) || 0;
+  return { amount: p, currency: p >= 1e6 ? "IDR" : "USD" };
+}
+
+function getPriceUSD(listing: any): number {
+  const { amount, currency } = parseListingPrice(listing);
+  const r = FALLBACK_RATES[currency];
+  if (!r || r <= 0) return amount;
+  return currency === "USD" ? amount : amount / r;
+}
+
 // ---------------------------------------------------------------------------
 // Dynamic metadata (SEO)
 // ---------------------------------------------------------------------------
@@ -34,8 +58,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const listing = await getListing(slug);
   if (!listing) return { title: "Listing Not Found" };
 
-  const priceUsd = listing.last_price
-    ? `$${Math.round(listing.last_price).toLocaleString("en-US")}`
+  const priceUsdNum = Math.round(getPriceUSD(listing));
+  const priceUsd = priceUsdNum > 0
+    ? `$${priceUsdNum.toLocaleString("en-US")} USD`
     : "Price N/A";
   const roi = listing.projected_roi
     ? `${Number(listing.projected_roi).toFixed(1)}%`
@@ -46,7 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? `Leasehold (${listing.lease_years}yr)`
     : "Freehold";
 
-  const title = `${beds}-Bed ${location} Villa — ${priceUsd} | ${roi} Net Yield | Bali Villa Truth`;
+  const title = `${beds}-Bed ${location} Villa — ${priceUsd} | ${roi} Net Yield`;
   const description = `Independent audit: ${listing.villa_name}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location} listed at ${priceUsd}. Stress-tested net yield: ${roi} after 40% expenses. View full breakdown, flags, and comparable data.`;
 
   return {
@@ -76,7 +101,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // Structured data (JSON-LD)
 // ---------------------------------------------------------------------------
 function buildJsonLd(listing: any, slug: string) {
-  const priceUsd = listing.last_price || 0;
+  const priceUsd = Math.round(getPriceUSD(listing));
   return {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
@@ -116,9 +141,7 @@ export default async function ListingPage({ params }: Props) {
 
   const jsonLd = buildJsonLd(listing, slug);
 
-  const priceUsd = listing.last_price
-    ? Math.round(listing.last_price)
-    : null;
+  const priceUsd = Math.round(getPriceUSD(listing)) || null;
   const roi = listing.projected_roi
     ? Number(listing.projected_roi).toFixed(1)
     : null;
