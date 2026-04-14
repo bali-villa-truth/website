@@ -385,27 +385,43 @@ export default function BaliVillaTruth() {
     });
   }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates, showFavoritesOnly, favorites]);
 
+  const [auditSent, setAuditSent] = useState(false);
+
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const { error } = await supabase.from('leads').insert([
-      { email, villa_id: selectedVilla.id, villa_name: selectedVilla.villa_name, lead_type: 'Unlock Audit' }
-    ]);
-    if (!error) {
-      window.open(selectedVilla.url, '_blank');
-      setSelectedVilla(null);
-      setLeadCount(prev => prev + 1);
-      // Sync favorites to Supabase and persist email
-      try {
-        localStorage.setItem('bvt-email', email);
-        if (favorites.size > 0) {
-          const rows = Array.from(favorites).map(villa_id => ({ email, villa_id }));
-          await supabase.from('user_favorites').upsert(rows, { onConflict: 'email,villa_id' });
-        }
-      } catch {}
-      setEmail('');
-    } else {
-      alert("Error joining. Please try again.");
+    try {
+      // Call our new audit API — handles lead insert + PDF generation + email send server-side
+      const res = await fetch('/api/unlock-audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, villa_id: selectedVilla.id }),
+      });
+      const json = await res.json();
+
+      if (res.ok && json.success) {
+        setAuditSent(true);
+        setLeadCount(prev => prev + 1);
+        // Persist email + sync favorites
+        try {
+          localStorage.setItem('bvt-email', email);
+          if (favorites.size > 0) {
+            const rows = Array.from(favorites).map(villa_id => ({ email, villa_id }));
+            await supabase.from('user_favorites').upsert(rows, { onConflict: 'email,villa_id' });
+          }
+        } catch {}
+        // Auto-close modal after 3.5s so user can see the success message
+        setTimeout(() => {
+          setSelectedVilla(null);
+          setAuditSent(false);
+          setEmail('');
+          if (selectedVilla?.url) window.open(selectedVilla.url, '_blank');
+        }, 3500);
+      } else {
+        alert(json.error || 'Something went wrong. Please try again.');
+      }
+    } catch (err) {
+      alert('Network error. Please check your connection and try again.');
     }
     setIsSubmitting(false);
   };
@@ -1294,17 +1310,28 @@ export default function BaliVillaTruth() {
       {selectedVilla && (
         <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"><X size={20}/></button>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600 dark:text-blue-400" size={32} /></div>
-              <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Unlock Full Audit</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800 dark:text-slate-200">{toTitleCase(selectedVilla.villa_name)}</span>.</p>
-              <form onSubmit={handleLeadCapture} className="space-y-4">
-                <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 dark:shadow-blue-900 disabled:opacity-50">{isSubmitting ? 'Verifying...' : 'Unlock Now'}</button>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500">By clicking, you agree to our Investor Privacy Terms.</p>
-              </form>
-            </div>
+            <button onClick={() => { setSelectedVilla(null); setAuditSent(false); }} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"><X size={20}/></button>
+            {auditSent ? (
+              <div className="text-center">
+                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="text-emerald-600 dark:text-emerald-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Audit on its way</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">We emailed your 3-page audit PDF to <span className="font-semibold text-slate-800 dark:text-slate-200">{email}</span>.</p>
+                <p className="text-slate-400 dark:text-slate-500 text-xs">Check your inbox (and spam, first time). Opening the source listing now...</p>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600 dark:text-blue-400" size={32} /></div>
+                <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Get the Full Audit</h2>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter your email and we'll send you a <b>3-page audit PDF</b> with the full math, 5-year cashflow projection, sensitivity analysis, and questions to ask the agent for <span className="font-semibold text-slate-800 dark:text-slate-200">{toTitleCase(selectedVilla.villa_name)}</span>.</p>
+                <form onSubmit={handleLeadCapture} className="space-y-4">
+                  <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 dark:shadow-blue-900 disabled:opacity-50">{isSubmitting ? 'Generating your audit...' : 'Email Me the Audit'}</button>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">Free. One email, no newsletter spam. By clicking, you agree to our Investor Privacy Terms.</p>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}
