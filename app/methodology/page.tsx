@@ -50,10 +50,13 @@ export default function Methodology() {
               locations, bedroom counts, land size, lease terms, and property details.
             </p>
             <p>
-              Nightly rental rates are derived from <strong>Booking.com market data</strong>. We scraped 2,499 actual
-              villa listings across 12 areas and 5 bedroom tiers to build our rate model. This gives us real market
-              rates — not agent estimates or wishful thinking. We also use Booking.com review density data
-              to estimate area-specific occupancy — more details in the occupancy section below.
+              Nightly rental rates are derived from a <strong>50/50 blend of Booking.com and Airbnb market data</strong>.
+              We scrape actual villa listings across 12 areas and 5 bedroom tiers on both platforms to build our rate model
+              — Booking.com gave us 2,499 data points and Airbnb added 415 more. Blending both platforms gives us a more
+              honest market rate: Booking.com skews toward established properties, Airbnb toward newer and boutique stays.
+              Neither alone tells the full story. A 15% &quot;reality discount&quot; is applied to the platform medians to
+              account for the fact that asking rates are not the same as realized rates. We also use Booking.com review
+              density data to estimate area-specific occupancy — more details in the occupancy section below.
             </p>
             <p>
               Exchange rates are fetched from <strong>ExchangeRate-API</strong> at the start of each pipeline run
@@ -74,9 +77,9 @@ export default function Methodology() {
 
             <Step num={1} title="Area + bedroom rate lookup">
               Every listing gets a nightly rate based purely on its area and bedroom count. We maintain a
-              rate model with real Booking.com data for 12 Bali areas across 5 bedroom tiers.
+              rate model blending real Booking.com and Airbnb data for 12 Bali areas across 5 bedroom tiers.
               For example, a 2-bedroom villa in Canggu is estimated at $143/night, while a 2-bedroom
-              in Ungasan is $96/night. These are medians from actual Booking.com listings, not assumptions.
+              in Ungasan is $96/night. These are medians from actual listings on both platforms, not assumptions.
               Every villa in the same area and bedroom tier gets the same base rate — the rental market
               sets prices by location and size, not by what sellers are asking.
             </Step>
