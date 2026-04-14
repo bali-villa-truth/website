@@ -959,9 +959,16 @@ export default function BaliVillaTruth() {
                         </div>
                       )}
                     </div>
-                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0 border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm">
-                      <Lock size={10}/> UNLOCK
-                    </button>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      {villa.slug && (
+                        <Link href={`/listing/${villa.slug}`} className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all border border-blue-500 shadow-sm whitespace-nowrap">
+                          <Eye size={10}/> FULL AUDIT
+                        </Link>
+                      )}
+                      <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm whitespace-nowrap">
+                        <Lock size={10}/> UNLOCK
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -1255,9 +1262,16 @@ export default function BaliVillaTruth() {
                             </div>
                         </td>
                         <td className="p-5 text-right">
-                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2.5 rounded-lg transition-all border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm hover:shadow-md">
-                            <Lock size={12}/> UNLOCK SOURCE
-                        </button>
+                        <div className="flex flex-col gap-1.5 items-end">
+                          {villa.slug && (
+                            <Link href={`/listing/${villa.slug}`} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-4 py-2.5 rounded-lg transition-all border border-blue-500 shadow-sm hover:shadow-md whitespace-nowrap">
+                              <Eye size={12}/> FULL AUDIT
+                            </Link>
+                          )}
+                          <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2.5 rounded-lg transition-all border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm hover:shadow-md whitespace-nowrap">
+                              <Lock size={12}/> UNLOCK SOURCE
+                          </button>
+                        </div>
                         </td>
                     </tr>
                     );
