@@ -576,9 +576,11 @@ function renderFinalDisclaimer(doc: PDFKit.PDFDocument) {
 }
 
 function renderFooter(doc: PDFKit.PDFDocument, pageNum: number, total: number) {
-  // Write in the bottom margin area. lineBreak:false prevents pdfkit from
-  // auto-paginating when y is past the content area (which was creating
-  // two ghost pages per real page — 6 extra blank pages total).
+  // Writing in the bottom margin area triggers pdfkit's auto-pagination
+  // (which was creating 6 ghost pages). Temporarily zero out the bottom
+  // margin so pdfkit thinks there's room, then restore it.
+  const savedBottom = doc.page.margins.bottom;
+  doc.page.margins.bottom = 0;
   const y = 755;
   doc.fontSize(7).font("Helvetica").fillColor(COLORS.slate500)
     .text(
@@ -587,6 +589,7 @@ function renderFooter(doc: PDFKit.PDFDocument, pageNum: number, total: number) {
     );
   doc.fontSize(7).fillColor(COLORS.slate500)
     .text(`Page ${pageNum} of ${total}`, 50, y, { width: 512, align: "right", lineBreak: false });
+  doc.page.margins.bottom = savedBottom;
 }
 
 // ------------------------------------------------------------------
