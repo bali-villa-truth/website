@@ -640,7 +640,7 @@ export default function BaliVillaTruth() {
 
       {/* FILTER + LISTINGS SECTION */}
       <div id="listings-section" className="px-4 md:px-8">
-      <header className="sticky top-0 max-w-7xl mx-auto -mt-28 md:-mt-36 mb-6 z-20">
+      <header className="md:sticky md:top-0 max-w-7xl mx-auto -mt-28 md:-mt-36 mb-6 z-20">
 
         {/* FILTER DASHBOARD — glass-morphism panel overlapping hero */}
         <div className="backdrop-blur-xl bg-white/85 dark:bg-slate-900/85 p-3 md:p-5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 mb-6">
