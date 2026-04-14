@@ -981,9 +981,6 @@ export default function BaliVillaTruth() {
                           <Eye size={10}/> FULL AUDIT
                         </Link>
                       )}
-                      <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm whitespace-nowrap">
-                        <Lock size={10}/> UNLOCK
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -1284,9 +1281,6 @@ export default function BaliVillaTruth() {
                               <Eye size={12}/> FULL AUDIT
                             </Link>
                           )}
-                          <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-800 dark:bg-slate-700 hover:bg-blue-600 dark:hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2.5 rounded-lg transition-all border border-slate-600 dark:border-slate-500 hover:border-blue-500 shadow-sm hover:shadow-md whitespace-nowrap">
-                              <Lock size={12}/> UNLOCK SOURCE
-                          </button>
                         </div>
                         </td>
                     </tr>
@@ -1656,13 +1650,13 @@ export default function BaliVillaTruth() {
                                   {flags.length > 2 && <span className="text-[7px] text-slate-400">+{flags.length - 2}</span>}
                                 </div>
                               )}
-                              {villa && (
-                                <button
-                                  onClick={() => { setSelectedVilla(villa); }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-900/80 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white text-[9px] font-bold rounded-md transition-colors"
+                              {villa?.slug && (
+                                <Link
+                                  href={`/listing/${villa.slug}`}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold rounded-md transition-colors"
                                 >
-                                  <Lock size={9} /> Unlock
-                                </button>
+                                  <Eye size={9} /> Audit
+                                </Link>
                               )}
                             </div>
                           </div>
@@ -1856,7 +1850,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
           </div>
           <div style="display: flex; gap: 6px; padding: 10px 12px; background: ${bgColor};">
             <button data-action="favorite" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isFav ? '#f43f5e' : darkMode ? '#475569' : '#cbd5e1'}; border-radius: 6px; background: ${isFav ? (darkMode ? '#7f1d1d' : '#ffe4e6') : darkMode ? '#334155' : 'white'}; font-size: 10px; font-weight: 600; color: ${isFav ? (darkMode ? '#fca5ce' : '#e11d48') : darkMode ? '#cbd5e1' : '#64748b'}; cursor: pointer; text-align: center; line-height: 1.3;">${isFav ? '♥ Saved' : '♡ Save'}</button>
-            <button data-action="unlock" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${darkMode ? '#475569' : '#334155'}; border-radius: 6px; background: ${darkMode ? '#334155' : '#1e293b'}; font-size: 10px; font-weight: 600; color: white; cursor: pointer; text-align: center; line-height: 1.3;">🔒 Unlock</button>
+            ${villa.slug ? `<a data-action="audit" data-villa-slug="${villa.slug}" href="/listing/${villa.slug}" style="flex: 1; padding: 8px 4px; border: 1px solid #2563eb; border-radius: 6px; background: #2563eb; font-size: 10px; font-weight: 600; color: white; cursor: pointer; text-align: center; line-height: 1.3; text-decoration: none; display: block;">👁 Full Audit</a>` : ''}
           </div>
         </div>
       `, { closeButton: true, className: 'bvt-leaflet-popup' });
