@@ -240,6 +240,11 @@ function generatePdf(villa: Villa, audit: AuditNumbers): Promise<Buffer> {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
+      // PDF is always 3 pages. Render footer inline on each page BEFORE
+      // advancing so we're actively on the page when drawing (avoids
+      // bufferPages+switchToPage pagination quirk that created 6 ghost pages).
+      const TOTAL_PAGES = 3;
+
       // =========================================================
       // PAGE 1: Summary
       // =========================================================
@@ -248,6 +253,7 @@ function generatePdf(villa: Villa, audit: AuditNumbers): Promise<Buffer> {
       renderKeyStats(doc, villa, audit);
       renderVerdict(doc, villa, audit);
       renderFlags(doc, villa);
+      renderFooter(doc, 1, TOTAL_PAGES);
 
       // =========================================================
       // PAGE 2: The Math
@@ -255,6 +261,7 @@ function generatePdf(villa: Villa, audit: AuditNumbers): Promise<Buffer> {
       doc.addPage();
       renderMathSection(doc, villa, audit);
       renderConfidenceSection(doc, villa, audit);
+      renderFooter(doc, 2, TOTAL_PAGES);
 
       // =========================================================
       // PAGE 3: 5-Year Projection
@@ -264,14 +271,14 @@ function generatePdf(villa: Villa, audit: AuditNumbers): Promise<Buffer> {
       renderSensitivity(doc, audit);
       renderQuestions(doc);
       renderFinalDisclaimer(doc);
+      renderFooter(doc, 3, TOTAL_PAGES);
 
-      // =========================================================
-      // Footer on every page
-      // =========================================================
+      // (Footer loop removed — now rendered inline above.)
+      // Keeping the buffer loop no-op-safe in case anything else needs it.
       const range = doc.bufferedPageRange();
       for (let i = range.start; i < range.start + range.count; i++) {
         doc.switchToPage(i);
-        renderFooter(doc, i - range.start + 1, range.count);
+        // intentionally empty — footer already rendered inline
       }
 
       doc.end();
