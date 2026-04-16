@@ -568,7 +568,7 @@ export default function BaliVillaTruth() {
         </button>
 
         {/* Hero content */}
-        <div className="relative z-10 min-h-[50vh] md:min-h-[70vh] flex flex-col items-center justify-center text-center px-6 py-12">
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-16 pb-12 md:pt-24 md:pb-16">
 
           {/* Audit Seal */}
           <div className="w-20 h-20 md:w-[120px] md:h-[120px] mb-5 md:mb-8" style={{ filter: 'drop-shadow(0 0 40px rgba(212,148,58,0.15))' }}>
