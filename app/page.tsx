@@ -604,18 +604,14 @@ export default function BaliVillaTruth() {
           </p>
 
           {/* Stats bar */}
-          <div className="flex gap-8 md:gap-12 mb-8 md:mb-10">
+          <div className="flex gap-12 md:gap-16 mb-8 md:mb-10">
             <div className="text-center">
               <div className="text-xl md:text-3xl font-bold text-white tabular-nums">{listings.length.toLocaleString()}<span className="text-[#d4943a]">+</span></div>
               <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Villas Audited</div>
             </div>
             <div className="text-center">
-              <div className="text-xl md:text-3xl font-bold text-white">40<span className="text-[#d4943a]">%</span></div>
-              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Expense Load</div>
-            </div>
-            <div className="text-center">
               <div className="text-xl md:text-3xl font-bold text-white tabular-nums">{flaggedCount.toLocaleString()}</div>
-              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Flags Detected</div>
+              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Red Flags Detected</div>
             </div>
           </div>
 
