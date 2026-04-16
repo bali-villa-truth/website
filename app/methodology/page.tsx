@@ -12,7 +12,7 @@ export default function Methodology() {
 
         {/* NAV */}
         <div className="flex items-center justify-between mb-10">
-          <Link href="/" className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-sm text-[#d4943a] dark:text-[#d4943a] hover:text-[#e5a84d] dark:hover:text-[#e5a84d] font-medium transition-colors">
             <ArrowLeft size={16} /> Back to listings
           </Link>
           <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title={darkMode ? 'Light mode' : 'Dark mode'}>
@@ -23,12 +23,12 @@ export default function Methodology() {
         {/* HEADER */}
         <header className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-              <BookOpen size={20} className="text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+              <BookOpen size={20} className="text-[#d4943a] dark:text-[#d4943a]" />
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                Our <span className="text-blue-600 dark:text-blue-400">Methodology</span>
+                Our <span className="text-[#d4943a] dark:text-[#d4943a]">Methodology</span>
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">How every number on Bali Villa Truth is calculated</p>
             </div>
@@ -369,7 +369,7 @@ export default function Methodology() {
         <footer className="pt-8 border-t border-slate-200 dark:border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
             <div><span className="font-bold text-slate-700 dark:text-slate-300">Bali Villa Truth</span><span className="mx-2">&bull;</span><span>Independent villa investment analysis</span></div>
-            <Link href="/" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors flex items-center gap-1">
+            <Link href="/" className="text-[#d4943a] dark:text-[#d4943a] hover:text-[#e5a84d] dark:hover:text-[#e5a84d] font-medium transition-colors flex items-center gap-1">
               <ArrowLeft size={12} /> Back to listings
             </Link>
           </div>
@@ -385,7 +385,7 @@ export default function Methodology() {
 function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <h2 className="flex items-center gap-2.5 text-lg font-bold text-slate-900 dark:text-slate-50 mb-4">
-      <span className="text-blue-600 dark:text-blue-400">{icon}</span>
+      <span className="text-[#d4943a] dark:text-[#d4943a]">{icon}</span>
       {title}
     </h2>
   );
@@ -394,7 +394,7 @@ function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string 
 function Step({ num, title, children }: { num: number; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-xs font-bold text-[#d4943a] dark:text-[#d4943a] mt-0.5">
         {num}
       </div>
       <div>
@@ -407,7 +407,7 @@ function Step({ num, title, children }: { num: number; title: string; children: 
 
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-blue-800 dark:text-blue-200">
+    <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-amber-800 dark:text-amber-200">
       {children}
     </div>
   );
@@ -418,7 +418,7 @@ function CostCard({ title, pct, desc }: { title: string; pct: string; desc: stri
     <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
       <div className="flex items-baseline justify-between mb-1">
         <span className="font-semibold text-slate-900 dark:text-slate-100 text-xs">{title}</span>
-        <span className="text-blue-600 dark:text-blue-400 font-bold text-lg">{pct}</span>
+        <span className="text-[#d4943a] dark:text-[#d4943a] font-bold text-lg">{pct}</span>
       </div>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>
     </div>
