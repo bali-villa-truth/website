@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, Heart, Sun, Moon, BookOpen } from 'lucide-react';
+import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -65,24 +65,18 @@ export default function BaliVillaTruth() {
   const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
 
-  // --- DARK MODE (default: dark — Bloomberg Terminal vibe for financial data) ---
-  const [darkMode, setDarkMode] = useState(true);
+  // --- DARK MODE ---
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('bvt-dark-mode');
-      if (saved === 'false') setDarkMode(false);
+      if (saved === 'true') setDarkMode(true);
     } catch {}
   }, []);
 
   useEffect(() => {
     try { localStorage.setItem('bvt-dark-mode', String(darkMode)); } catch {}
-    // Toggle .dark on <html> so CSS variables + all dark: utilities propagate to body and all descendants
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
   }, [darkMode]);
 
   // --- FAVORITES STATES ---
@@ -135,6 +129,15 @@ export default function BaliVillaTruth() {
   const [sliderNightly, setSliderNightly] = useState(1.0);   // multiplier: 0.5x–2.0x
   const [sliderOccupancy, setSliderOccupancy] = useState(65); // percent: 20–95 — matches pipeline flat 65%
   const [sliderExpense, setSliderExpense] = useState(40);     // percent: 20–60
+
+  const toggleCompare = (villaId: number) => {
+    setCompareSet(prev => {
+      const next = new Set(prev);
+      if (next.has(villaId)) next.delete(villaId);
+      else if (next.size < 5) next.add(villaId);
+      return next;
+    });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -220,30 +223,26 @@ export default function BaliVillaTruth() {
   };
 
   // --- Convert and format price in display currency (for table) ---
-  // Currency label lives in the column header ("PRICE (USD)"), so cells show just the number
-  // with a leading currency symbol for scannability. This keeps columns right-aligned cleanly.
   const formatPriceInCurrency = (villa: any): string => {
     const priceUSD = getPriceUSD(villa);
     const r = rates[displayCurrency];
-    if (!r) return `$${priceUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+    if (!r) return `${displayCurrency} ${priceUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
     const value = displayCurrency === 'USD' ? priceUSD : priceUSD * r;
-    const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
-    const sym = symbols[displayCurrency] || displayCurrency + ' ';
-    return `${sym}${Math.round(value).toLocaleString()}`;
+    if (displayCurrency === 'IDR') return `IDR ${Math.round(value).toLocaleString()}`;
+    return `${displayCurrency} ${value.toLocaleString(undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })}`;
   };
 
-  // --- Price per sqm in display currency (symbol only, no currency code) ---
+  // --- Price per sqm in display currency ---
   const getPricePerSqm = (villa: any): string => {
     const priceUSD = getPriceUSD(villa);
     const landSize = parseInt(villa.land_size) || 0;
     if (!priceUSD || !landSize) return '—';
     const perSqmUSD = priceUSD / landSize;
     const r = rates[displayCurrency];
-    const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
-    const sym = symbols[displayCurrency] || displayCurrency + ' ';
-    if (!r) return `${sym}${Math.round(perSqmUSD).toLocaleString()}`;
+    if (!r) return `${displayCurrency} ${Math.round(perSqmUSD).toLocaleString()}`;
     const value = displayCurrency === 'USD' ? perSqmUSD : perSqmUSD * r;
-    return `${sym}${Math.round(value).toLocaleString()}`;
+    if (displayCurrency === 'IDR') return `IDR ${Math.round(value).toLocaleString()}`;
+    return `${displayCurrency} ${Math.round(value).toLocaleString()}`;
   };
 
   // --- Price change badge: show ↓12% or ↑5% when previous_price exists ---
@@ -318,29 +317,6 @@ export default function BaliVillaTruth() {
     villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
   const getDisplayOccupancy = (villa: any): number =>
     (villa.est_occupancy ?? 0.65) * 100;
-  // BVT 11: Check if occupancy is review-based (area-specific) vs flat assumed
-  const isReviewBasedOccupancy = (villa: any): boolean => {
-    if (villa.occupancy_source && villa.occupancy_source.startsWith('review')) return true;
-    // Heuristic: if est_occupancy differs from 0.65, it's area-specific
-    const occ = villa.est_occupancy ?? 0.65;
-    return Math.abs(occ - 0.65) > 0.005;
-  };
-  // BVT 11b: Confidence metadata for trust indicators
-  const getOccupancyConfidence = (villa: any): { confidence: string; sampleSize: number; label: string; colorClass: string; titleText: string } => {
-    const conf = villa.occupancy_confidence || 'none';
-    const n = villa.occupancy_sample_size || 0;
-    const area = villa.location || 'this area';
-    if (!isReviewBasedOccupancy(villa)) {
-      return { confidence: 'none', sampleSize: 0, label: 'assumed*', colorClass: 'text-amber-500 dark:text-amber-400', titleText: `Assumed 65% occupancy — no area-specific data for ${area} yet` };
-    }
-    if (conf === 'high' || n >= 15) {
-      return { confidence: 'high', sampleSize: n, label: `n=${n}`, colorClass: 'text-emerald-500 dark:text-emerald-400', titleText: `High confidence (${n} properties sampled) — estimated from Booking.com review density for ${area}` };
-    }
-    if (conf === 'medium' || n >= 8) {
-      return { confidence: 'medium', sampleSize: n, label: `n=${n}`, colorClass: 'text-emerald-400/70 dark:text-emerald-500/70', titleText: `Medium confidence (${n} properties sampled) — estimated from Booking.com review density for ${area}. More data would improve accuracy.` };
-    }
-    return { confidence: 'low', sampleSize: n, label: `n=${n}`, colorClass: 'text-yellow-500 dark:text-yellow-400', titleText: `Low confidence (only ${n} properties sampled) — treat as rough estimate for ${area}. Small sample may not represent the area well.` };
-  };
 
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
   const processedListings = useMemo(() => {
@@ -385,43 +361,27 @@ export default function BaliVillaTruth() {
     });
   }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates, showFavoritesOnly, favorites]);
 
-  const [auditSent, setAuditSent] = useState(false);
-
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    try {
-      // Call our new audit API — handles lead insert + PDF generation + email send server-side
-      const res = await fetch('/api/unlock-audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, villa_id: selectedVilla.id }),
-      });
-      const json = await res.json();
-
-      if (res.ok && json.success) {
-        setAuditSent(true);
-        setLeadCount(prev => prev + 1);
-        // Persist email + sync favorites
-        try {
-          localStorage.setItem('bvt-email', email);
-          if (favorites.size > 0) {
-            const rows = Array.from(favorites).map(villa_id => ({ email, villa_id }));
-            await supabase.from('user_favorites').upsert(rows, { onConflict: 'email,villa_id' });
-          }
-        } catch {}
-        // Auto-close modal after 3.5s so user can see the success message
-        setTimeout(() => {
-          setSelectedVilla(null);
-          setAuditSent(false);
-          setEmail('');
-          if (selectedVilla?.url) window.open(selectedVilla.url, '_blank');
-        }, 3500);
-      } else {
-        alert(json.error || 'Something went wrong. Please try again.');
-      }
-    } catch (err) {
-      alert('Network error. Please check your connection and try again.');
+    const { error } = await supabase.from('leads').insert([
+      { email, villa_id: selectedVilla.id, villa_name: selectedVilla.villa_name, lead_type: 'Unlock Audit' }
+    ]);
+    if (!error) {
+      window.open(selectedVilla.url, '_blank');
+      setSelectedVilla(null);
+      setLeadCount(prev => prev + 1);
+      // Sync favorites to Supabase and persist email
+      try {
+        localStorage.setItem('bvt-email', email);
+        if (favorites.size > 0) {
+          const rows = Array.from(favorites).map(villa_id => ({ email, villa_id }));
+          await supabase.from('user_favorites').upsert(rows, { onConflict: 'email,villa_id' });
+        }
+      } catch {}
+      setEmail('');
+    } else {
+      alert("Error joining. Please try again.");
     }
     setIsSubmitting(false);
   };
@@ -442,7 +402,6 @@ export default function BaliVillaTruth() {
 
 
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
-  // All monetary values returned in USD — the display layer converts to displayCurrency
   const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
     const priceUSD = getPriceUSD(villa);
     if (priceUSD <= 0) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0, leaseDepreciation: 0, depreciationYield: 0, isFreehold: true, leaseYears: 0 };
@@ -475,15 +434,6 @@ export default function BaliVillaTruth() {
       isFreehold,
       leaseYears: years,
     };
-  };
-
-  // --- Format USD value into display currency with symbol (for compare panel P&L rows) ---
-  const formatCompareAmount = (usdValue: number, suffix?: string): string => {
-    const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
-    const sym = symbols[displayCurrency] || displayCurrency + ' ';
-    const r = rates[displayCurrency] || 1;
-    const converted = displayCurrency === 'USD' ? usdValue : usdValue * r;
-    return `${sym}${Math.round(converted).toLocaleString()}${suffix || ''}`;
   };
 
   // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
@@ -528,35 +478,10 @@ export default function BaliVillaTruth() {
       }
     }
 
-    // --- Graduated budget discount flags (BVT 9) ---
-    const baseRate = Number(villa.agent_claimed_rate) || nightly;
-    const isDiscounted = baseRate > nightly && nightly > 0;
-
-    if (pipelineFlags.includes('EXTREME_BUDGET')) {
-      const discountDetail = isDiscounted
-        ? ` BVT estimates $${nightly}/nt (50% discount from $${baseRate} area median).`
-        : '';
-      flags.push({ level: 'danger', label: 'Extreme Budget', detail: `Asking price is well below 50% of the 25th percentile for ${villa.location || 'this area'} ${villa.bedrooms || '?'}-bedrooms.${discountDetail} At this price point, expect significant compromises in build quality, location, or condition. Verify the property exists and is habitable before investing.` });
-    } else if (pipelineFlags.includes('BUDGET_VILLA')) {
-      const discountDetail = isDiscounted
-        ? ` BVT estimates $${nightly}/nt (30% discount from $${baseRate} area median) because a property at this price point likely can't command the same nightly rate as higher-end villas in ${villa.location || 'this area'}.`
-        : '';
-      flags.push({ level: 'warning', label: 'Budget Villa', detail: `Asking price is below the 25th percentile for ${villa.location || 'this area'} ${villa.bedrooms || '?'}-bedrooms.${discountDetail} Expect lower build quality, higher maintenance costs, and a less affluent renter demographic.` });
-    } else if (pipelineFlags.includes('NEAR_BUDGET')) {
-      const discountDetail = isDiscounted
-        ? ` BVT estimates $${nightly}/nt (15% discount from $${baseRate} area median).`
-        : '';
-      flags.push({ level: 'assumed', label: 'Near Budget', detail: `Asking price is between the 25th and 35th percentile for ${villa.location || 'this area'} ${villa.bedrooms || '?'}-bedrooms.${discountDetail} BVT applies a modest rate discount to reflect the lower market positioning.` });
-    }
-
-    // --- Multi-unit detection (BVT 9) ---
-    if (pipelineFlags.includes('MULTI_UNIT')) {
-      flags.push({ level: 'warning', label: 'Multi-Unit', detail: `This listing appears to contain multiple rental units (not a single villa). The nightly rate and yield shown are per-unit estimates — total property revenue may be higher, but so are management complexity and costs. Verify the unit count and individual rental performance.` });
-    }
-
-    // --- Off-plan detection (BVT 9) ---
-    if (pipelineFlags.includes('OFF_PLAN')) {
-      flags.push({ level: 'danger', label: 'Off-Plan', detail: `This appears to be an off-plan or pre-construction property. It has no rental history, so the yield estimate is entirely speculative. Construction delays, cost overruns, and market changes between now and completion are significant risks. Do not rely on projected yields for off-plan properties.` });
+    if (pipelineFlags.includes('BUDGET_VILLA')) {
+      const beds = Number(villa.bedrooms) || 1;
+      const ppr = Math.round(priceUSD / beds);
+      flags.push({ level: 'warning', label: 'Budget Villa', detail: `$${ppr.toLocaleString()}/room is below the $50k threshold. Expect lower build quality, higher maintenance costs, and a less affluent renter demographic.` });
     }
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
@@ -572,7 +497,12 @@ export default function BaliVillaTruth() {
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
-      flags.push({ level: 'warning', label: 'High Yield', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is unusually high. This could mean it's genuinely underpriced, or that the asking price doesn't reflect what you'll actually pay. BVT uses the market rate for ${villa.area || 'this area'} (${nightly > 0 ? '$' + nightly + '/nt' : 'area average'}) — investigate the property directly before relying on this number.` });
+      const preCapRate = Number(villa.agent_claimed_rate) || 0;
+      const cappedRate = nightly;
+      const rateContext = preCapRate > 0 && preCapRate > cappedRate
+        ? ` BVT's initial model estimated $${preCapRate}/nt, but this was capped to $${cappedRate}/nt to stay within market limits.`
+        : '';
+      flags.push({ level: 'warning', label: 'Inflated Claim', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is unrealistically high — a number like this typically ignores operating costs and lease depreciation. BVT capped the nightly rate to reflect market reality. After 40% expenses, the cash flow yield is ~${cashFlowYield.toFixed(1)}%.${rateContext}` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
@@ -583,11 +513,17 @@ export default function BaliVillaTruth() {
       flags.push({ level: 'warning', label: 'Inflated Nightly Rate', detail: `This is a sub-$200k property showing a high nightly rate. Budget builds rarely command premium luxury rates — the demographic paying $200+/nt expects finishes that typically can't be built at this price point. BVT has modeled a rate of $${nightly}/nt that reflects the actual asset class.` });
     }
 
-    // --- RATE_ADJUSTED: Legacy flag, mostly inactive after BVT 7 (no price cap, base rates only) ---
-    // Kept for forward compatibility if we add future rate adjustments.
+    // --- RATE_ADJUSTED: Pipeline significantly adjusted the nightly rate (>25% deviation from base model) ---
+    // Informational — not a red flag. Tells user the rate was modeled, not just pulled from area averages.
     if (pipelineFlags.includes('RATE_ADJUSTED')) {
+      const preCapRate = Number(villa.agent_claimed_rate) || 0;
       const modelRate = nightly;
-      flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: `BVT's base rate for this area and bedroom count is $${modelRate}/nt. The auditor made an adjustment — verify rental comparables in the area.` });
+      const rateSource = villa.rate_source || 'model';
+      const wasAuditorCapped = rateSource === 'auditor' && preCapRate > 0 && modelRate < preCapRate;
+      const detailText = wasAuditorCapped
+        ? `BVT's rate model initially estimated $${preCapRate}/nt, but this implied a gross yield above safe market limits. The rate was capped to $${modelRate}/nt to keep the ROI projection realistic.`
+        : `BVT modeled this rate at $${modelRate}/nt — a >25% adjustment from the area baseline. This typically reflects a luxury build premium or a price-tier correction. The math is sound, but verify comparables.`;
+      flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: detailText });
     }
 
     return flags;
@@ -613,18 +549,18 @@ export default function BaliVillaTruth() {
     <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans ${darkMode ? 'dark' : ''}`}>
 
       {/* HERO SECTION */}
-      <section className="relative h-[55vh] md:h-[75vh] w-full overflow-hidden">
-        {/* Background image — Bali cliffside villa with infinity pool (AI generated, self-hosted) */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
-          style={{ backgroundImage: `url('/hero-bg.webp')` }}
-        />
-        {/* Gradient overlay — heavy at bottom for seamless transition to page bg */}
-        <div className={`absolute inset-0 bg-gradient-to-b ${darkMode ? 'from-black/40 via-black/25 to-slate-950' : 'from-black/30 via-black/10 to-white/80'}`} />
-        {/* Extra bottom fade for seamless bleed into page background */}
-        <div className={`absolute bottom-0 left-0 right-0 ${darkMode ? 'h-48 bg-gradient-to-t from-slate-950 to-transparent' : 'h-64 bg-gradient-to-t from-slate-50 via-white/90 to-transparent'}`} />
-        {/* Fallback gradient (shows while image loads) */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-emerald-950 -z-10" />
+      <section className="relative min-h-[50vh] md:min-h-[70vh] w-full overflow-hidden bg-[#0a1120]">
+        {/* Subtle grid background */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: 'linear-gradient(rgba(148,163,184,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.3) 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }} />
+        {/* Subtle amber glow */}
+        <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none" style={{
+          background: 'radial-gradient(circle, rgba(212,148,58,0.06) 0%, transparent 70%)'
+        }} />
+        {/* Bottom fade to page bg */}
+        <div className={`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t ${darkMode ? 'from-slate-950' : 'from-slate-50'} to-transparent`} />
 
         {/* Dark mode toggle */}
         <button onClick={() => setDarkMode(!darkMode)} className="absolute top-4 right-4 md:top-6 md:right-6 z-20 p-2.5 rounded-xl bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white transition-all border border-white/10" title={darkMode ? 'Light mode' : 'Dark mode'}>
@@ -632,34 +568,98 @@ export default function BaliVillaTruth() {
         </button>
 
         {/* Hero content */}
-        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-3 md:mb-4 drop-shadow-lg">
-            Bali Villa <span className="text-blue-400">Truth</span>
+        <div className="relative z-10 min-h-[50vh] md:min-h-[70vh] flex flex-col items-center justify-center text-center px-6 py-12">
+
+          {/* Audit Seal */}
+          <div className="w-20 h-20 md:w-[120px] md:h-[120px] mb-5 md:mb-8" style={{ filter: 'drop-shadow(0 0 40px rgba(212,148,58,0.15))' }}>
+            <svg viewBox="0 0 400 400" className="w-full h-full">
+              <circle cx="200" cy="200" r="200" fill="#0a1120"/>
+              <circle cx="200" cy="200" r="178" fill="#1a2538"/>
+              <circle cx="200" cy="200" r="175" fill="none" stroke="#2a3a52" strokeWidth="1"/>
+              <circle cx="200" cy="200" r="145" fill="#0a1120"/>
+              <circle cx="200" cy="200" r="124" fill="#111c2e"/>
+              <circle cx="200" cy="200" r="124" fill="none" stroke="#d4943a" strokeWidth="3"/>
+              <text x="200" y="192" textAnchor="middle" fill="#f8fafc" fontFamily="system-ui, sans-serif" fontSize="68" fontWeight="700" letterSpacing="10">BVT</text>
+              <line x1="140" y1="208" x2="260" y2="208" stroke="#d4943a" strokeWidth="2"/>
+              <text x="200" y="236" textAnchor="middle" fill="#d4943a" fontFamily="system-ui, sans-serif" fontSize="22" fontWeight="500" letterSpacing="8">AUDIT</text>
+              <path id="heroSealTop" d="M 42,200 a 158,158 0 0,1 316,0" fill="none"/>
+              <text fill="#4a5a70" fontFamily="system-ui, sans-serif" fontSize="20" fontWeight="600" letterSpacing="6">
+                <textPath href="#heroSealTop" startOffset="50%" textAnchor="middle">BALI VILLA TRUTH</textPath>
+              </text>
+              <path id="heroSealBot" d="M 358,210 a 158,158 0 0,1 -316,0" fill="none"/>
+              <text fill="#4a5a70" fontFamily="system-ui, sans-serif" fontSize="16" fontWeight="500" letterSpacing="4">
+                <textPath href="#heroSealBot" startOffset="50%" textAnchor="middle">INDEPENDENT  ·  CONSERVATIVE</textPath>
+              </text>
+            </svg>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3 md:mb-4">
+            Bali Villa <span className="text-[#d4943a]">Truth</span>
           </h1>
-          <p className="text-white/70 max-w-2xl mx-auto text-sm md:text-lg leading-relaxed font-light">
-            Independent ROI auditing for serious investors. We verify the data agents hide.
+          <p className="text-slate-500 max-w-xl mx-auto text-sm md:text-base leading-relaxed mb-2">
+            We stress-test villa asking prices so you don&apos;t have to trust the agent&apos;s spreadsheet.
           </p>
-          <div className="flex items-center gap-4 mt-4 md:mt-6">
-            <Link href="/methodology" className="inline-flex items-center gap-1.5 text-[11px] md:text-xs text-blue-300 hover:text-blue-200 font-medium transition-colors bg-white/5 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-              <BookOpen size={12} /> How we calculate our numbers
+          <p className="text-slate-400 max-w-lg mx-auto text-xs md:text-sm font-medium mb-8">
+            Independent audits. Conservative assumptions. Every number decomposable.
+          </p>
+
+          {/* Stats bar */}
+          <div className="flex gap-8 md:gap-12 mb-8 md:mb-10">
+            <div className="text-center">
+              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">{listings.length.toLocaleString()}<span className="text-[#d4943a]">+</span></div>
+              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Villas Audited</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl md:text-3xl font-bold text-white">40<span className="text-[#d4943a]">%</span></div>
+              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Expense Load</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">{flaggedCount.toLocaleString()}</div>
+              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Flags Detected</div>
+            </div>
+          </div>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3 items-center">
+            <button
+              onClick={() => document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0a1120] bg-[#d4943a] hover:bg-[#e5a84d] px-6 py-3 rounded-lg transition-colors"
+            >
+              <ChevronDown size={16} />
+              Browse Audited Listings
+            </button>
+            <Link href="/methodology" className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-300 bg-white/[0.03] border border-slate-800 hover:border-slate-700 px-5 py-3 rounded-lg transition-all">
+              <BookOpen size={14} />
+              Our Methodology
             </Link>
           </div>
-          {/* Scroll indicator */}
-          <button
-            onClick={() => document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' })}
-            className="absolute bottom-32 md:bottom-40 left-1/2 -translate-x-1/2 text-white/50 hover:text-white/80 transition-colors animate-bounce"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
+        </div>
+
+        {/* Trust strip */}
+        <div className={`relative z-10 border-t ${darkMode ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50/80'} backdrop-blur-sm`}>
+          <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-x-8 gap-y-2 px-4 py-3">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Shield size={13} className="text-slate-600" />
+              <span className="text-slate-400 font-medium">Not a broker</span> — we don&apos;t sell villas
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Clock size={13} className="text-slate-600" />
+              Updated <span className="text-slate-400 font-medium">weekly</span> with fresh scrapes
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Globe size={13} className="text-slate-600" />
+              Booking.com + Airbnb <span className="text-slate-400 font-medium">blended rate model</span>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* FILTER + LISTINGS SECTION */}
-      <div id="listings-section" className="px-4 md:px-8">
-      <header className="md:sticky md:top-0 max-w-7xl mx-auto -mt-28 md:-mt-36 mb-6 z-20">
+      <div id="listings-section" className="p-4 md:p-8">
+      <header className="relative max-w-7xl mx-auto mb-6">
 
-        {/* FILTER DASHBOARD — glass-morphism panel overlapping hero */}
-        <div className="backdrop-blur-xl bg-white/85 dark:bg-slate-900/85 p-3 md:p-5 rounded-2xl shadow-xl border border-white/20 dark:border-slate-700/50 mb-6">
+        {/* FILTER DASHBOARD */}
+        <div className="bg-white dark:bg-slate-900 p-3 md:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
 
             {/* Mobile filter toggle */}
             <div className="flex md:hidden items-center justify-between mb-2">
@@ -789,14 +789,6 @@ export default function BaliVillaTruth() {
         </div>
       </header>
 
-      {/* DISCLAIMER BAR */}
-      <div className="max-w-7xl mx-auto mb-3 px-2">
-        <div className="flex items-start gap-2 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 rounded-lg px-3 py-2 text-[10px] text-amber-700 dark:text-amber-400">
-          <AlertTriangle size={12} className="flex-shrink-0 mt-0.5" />
-          <span><strong>Not financial advice.</strong> All yields are estimates based on area-specific occupancy (estimated from Booking.com review density, 40–80%) and area-average nightly rates — not actual rental data for individual properties. Lease depreciation is included for leasehold villas. Verify all numbers independently before investing. <Link href="/methodology" className="underline hover:text-amber-900 dark:hover:text-amber-300">Read our methodology →</Link></span>
-        </div>
-      </div>
-
       {/* RESULTS BAR */}
       <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex flex-wrap justify-between items-center gap-2 px-2 transition-all`}>
          <div className="flex items-center gap-2">
@@ -811,29 +803,19 @@ export default function BaliVillaTruth() {
            >
              <Heart size={10} className={showFavoritesOnly ? 'fill-red-500' : ''} /> Saved ({favorites.size})
            </button>
-           <button
-             onClick={() => {
-               if (favorites.size >= 2) {
+           {showFavoritesOnly && favorites.size > 0 && compareSet.size === 0 && !showCompare && (
+             <button
+               onClick={() => {
                  const batch = Array.from(favorites).slice(0, 5);
                  setCompareSet(new Set(batch));
                  setShowCompare(true);
                  setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40);
-               }
-             }}
-             className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
-               favorites.size >= 2
-                 ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900'
-                 : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-900 hover:text-blue-500 dark:hover:text-blue-400'
-             } group/compare relative`}
-           >
-             <SlidersHorizontal size={10} /> Compare{favorites.size >= 2 ? ` (${Math.min(favorites.size, 5)})` : ''}
-             {favorites.size < 2 && (
-               <span className="invisible group-hover/compare:visible absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2 shadow-xl z-50 pointer-events-none text-center">
-                 Save 2+ villas with the heart icon to compare them side-by-side
-                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></span>
-               </span>
-             )}
-           </button>
+               }}
+               className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+             >
+               <SlidersHorizontal size={10} /> Compare Saved
+             </button>
+           )}
          </div>
          <div className="flex gap-2 md:gap-4 items-center">
             <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-1 rounded border border-amber-200 dark:border-amber-900">
@@ -860,7 +842,7 @@ export default function BaliVillaTruth() {
       {/* MOBILE MAP VIEW */}
       {mobileView === 'map' && (
         <div className="md:hidden max-w-7xl mx-auto mb-4 px-1" style={{ height: 'calc(100vh - 12rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} onToggleFavorite={toggleFavorite} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
         </div>
       )}
 
@@ -888,7 +870,7 @@ export default function BaliVillaTruth() {
               const hasWarning = redFlags.length > 0;
 
               return (
-                <div key={villa.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden">
+                <div key={villa.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                   {/* Card Header: Image + Name + Location */}
                   <div className="flex items-start gap-3 p-3 pb-2">
                     {villa.thumbnail_url ? (
@@ -899,8 +881,8 @@ export default function BaliVillaTruth() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight line-clamp-2">
-                        {toTitleCase(villa.villa_name) || 'Luxury Villa'}
+                      <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight truncate">
+                        {villa.villa_name || 'Luxury Villa'}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         <MapPin size={10} className="text-blue-500 flex-shrink-0" /> {villa.location || "Bali"}
@@ -926,21 +908,14 @@ export default function BaliVillaTruth() {
                     </div>
                     {/* ROI */}
                     <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
-                      <div className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-0.5">Est. Yield</div>
+                      <div className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-0.5">Net ROI</div>
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
                         netRoi >= 12 ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400' :
                         netRoi >= 7 ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400' :
                         netRoi >= 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' :
                         'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400'
                       }`}>{netRoi.toFixed(1)}%</span>
-                      {!isFreehold && leaseYears > 0 ? (
-                        <div className="text-[7px] mt-0.5 space-y-0">
-                          <div className="text-emerald-500">Cash: {(priceUSD > 0 ? ((nightly * 365 * occupancy * 0.60) / priceUSD) * 100 : 0).toFixed(1)}%</div>
-                          <div className="text-amber-500">Lease: −{(1/leaseYears*100).toFixed(1)}%</div>
-                        </div>
-                      ) : (
-                        <div className="text-[8px] text-slate-600 dark:text-slate-400 line-through font-medium mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
-                      )}
+                      <div className="text-[8px] text-slate-400 dark:text-slate-500 line-through mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
                     </div>
                     {/* Specs */}
                     <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
@@ -950,21 +925,23 @@ export default function BaliVillaTruth() {
                     </div>
                   </div>
 
-                  {/* Card Footer: nightly rate + flags + action */}
+                  {/* Card Footer: Compare + nightly rate + flags + action */}
                   <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                    <button
+                      onClick={() => toggleCompare(villa.id)}
+                      disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
+                      className={`flex items-center gap-1 text-[9px] font-bold px-2 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
+                        compareSet.has(villa.id)
+                          ? 'bg-blue-600 dark:bg-blue-700 border-blue-600 dark:border-blue-700 text-white'
+                          : compareSet.size >= 5
+                            ? 'border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                            : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400'
+                      }`}
+                    >
+                      <BarChart3 size={10} /> {compareSet.has(villa.id) ? 'Selected' : 'Compare'}
+                    </button>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono text-center flex-1 min-w-0">
-                      {(() => {
-                        const baseR = Number(villa.agent_claimed_rate) || nightly;
-                        const isDisc = baseR > nightly && nightly > 0;
-                        return isDisc
-                          ? <><span className="line-through text-slate-400">${baseR}/nt</span> <span className="text-blue-500">${nightly}/nt</span></>
-                          : <>~${nightly}/nt</>;
-                      })()} • {(() => {
-                        const occConf = getOccupancyConfidence(villa);
-                        return <span className={occConf.colorClass} title={occConf.titleText}>
-                          {Math.round(getDisplayOccupancy(villa))}% occ{occConf.confidence === 'none' ? '*' : ''}{occConf.confidence !== 'none' && <span className="text-[8px] opacity-60 ml-0.5">({occConf.label})</span>}
-                        </span>;
-                      })()}
+                      ~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ
                       {redFlags.length > 0 && (
                         <div className="flex gap-1 mt-0.5 flex-wrap justify-center">
                           {redFlags.map((flag, idx) => (
@@ -975,13 +952,9 @@ export default function BaliVillaTruth() {
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col gap-1 flex-shrink-0">
-                      {villa.slug && (
-                        <Link href={`/listing/${villa.slug}`} className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all border border-blue-500 shadow-sm whitespace-nowrap">
-                          <Eye size={10}/> FULL AUDIT
-                        </Link>
-                      )}
-                    </div>
+                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-900 hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0">
+                      <Lock size={10}/> UNLOCK
+                    </button>
                   </div>
                 </div>
               );
@@ -991,22 +964,17 @@ export default function BaliVillaTruth() {
       </main>
 
       {/* DESKTOP TABLE */}
-      <main className={`hidden md:block bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-x-auto transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
-        <div>
+      <main className={`hidden md:block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
+        <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="sticky top-0 z-10">
+            <thead>
               <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
+                <th className="p-3 w-10 text-center"><BarChart3 size={14} className="mx-auto text-slate-400 dark:text-slate-500" /></th>
                 <th className="p-3 w-10 text-center"><Heart size={14} className="mx-auto text-slate-300 dark:text-slate-600" /></th>
                 <th className="p-5">Asset & Location</th>
-                <th className="p-5 text-right">Price ({displayCurrency})</th>
-                <th className="p-5 text-right">Price/m²</th>
-                <th className="p-5 text-center relative group/roihdr">Est. Net Yield <Info size={10} className="inline text-slate-400 group-hover/roihdr:text-blue-500 cursor-help" />
-                  <span className="invisible group-hover/roihdr:visible absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none normal-case tracking-normal font-normal">
-                    <span className="font-bold text-blue-300 block mb-1">How we calculate this</span>
-                    <span className="text-slate-300">Net Yield = (Revenue − Expenses − Lease Depreciation) ÷ Price. Uses <span className="text-emerald-400">area-specific occupancy (40–80%)</span> estimated from Booking.com review density with confidence indicators (high/medium/low based on sample size), 40% expense load, and area-based nightly rates. Hover any row for the full breakdown.</span>
-                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></span>
-                  </span>
-                </th>
+                <th className="p-5">Price ({displayCurrency})</th>
+                <th className="p-5">Price/m²</th>
+                <th className="p-5 text-center">ROI Analysis</th>
                 <th className="p-5">Specs</th>
                 <th className="p-5 text-right">Action</th>
               </tr>
@@ -1014,7 +982,7 @@ export default function BaliVillaTruth() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {processedListings.length === 0 ? (
                   <tr>
-                      <td colSpan={7} className="p-10 text-center text-slate-400 dark:text-slate-500">
+                      <td colSpan={8} className="p-10 text-center text-slate-400 dark:text-slate-500">
                           {showFavoritesOnly ? <Heart size={48} className="mx-auto mb-4 opacity-20" /> : <Filter size={48} className="mx-auto mb-4 opacity-20" />}
                           {showFavoritesOnly ? 'No saved properties yet. Click the heart icon to save listings.' : 'No properties match your filters.'}
                       </td>
@@ -1041,6 +1009,22 @@ export default function BaliVillaTruth() {
                     <tr key={villa.id} className={`hover:bg-blue-50/50 dark:hover:bg-blue-950/40 transition-colors group ${hoveredListingUrl === villa.url ? 'bg-blue-50/70 dark:bg-blue-950/50' : ''}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
                         <td className="p-3 text-center">
                           <button
+                            onClick={() => toggleCompare(villa.id)}
+                            disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                              compareSet.has(villa.id)
+                                ? 'bg-blue-600 dark:bg-blue-700 border-blue-600 dark:border-blue-700 text-white'
+                                : compareSet.size >= 5
+                                  ? 'border-slate-200 dark:border-slate-700 text-slate-200 dark:text-slate-600 cursor-not-allowed'
+                                  : 'border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-600 text-transparent hover:text-blue-400 dark:hover:text-blue-400'
+                            }`}
+                            title={compareSet.has(villa.id) ? 'Remove from compare' : compareSet.size >= 5 ? 'Max 5 villas' : 'Add to compare'}
+                          >
+                            <Check size={12} strokeWidth={3} />
+                          </button>
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
                             onClick={() => toggleFavorite(villa.id)}
                             className="transition-all hover:scale-110"
                             title={favorites.has(villa.id) ? 'Remove from saved' : 'Save listing'}
@@ -1058,8 +1042,8 @@ export default function BaliVillaTruth() {
                             </div>
                           )}
                           <div>
-                            <div className="font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                                {toTitleCase(villa.villa_name) || 'Luxury Villa'}
+                            <div className="font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                {villa.villa_name || 'Luxury Villa'}
                                 {hasDanger && <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 rounded text-[9px] font-bold border border-red-200 dark:border-red-900 flex items-center gap-0.5"><ShieldAlert size={9}/> VERIFY</span>}
                                 {!hasDanger && hasWarning && <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 rounded text-[9px] font-bold border border-amber-200 dark:border-amber-900 flex items-center gap-0.5"><AlertTriangle size={9}/> CAUTION</span>}
                             </div>
@@ -1069,8 +1053,8 @@ export default function BaliVillaTruth() {
                           </div>
                         </div>
                         </td>
-                        <td className="p-5 font-mono text-slate-600 dark:text-slate-300 font-semibold text-sm text-right">
-                         <div className="flex items-center gap-2 justify-end">
+                        <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
+                         <div className="flex items-center gap-2">
                            {formatPriceInCurrency(villa)}
                            {(() => {
                              const badge = getPriceChangeBadge(villa);
@@ -1093,7 +1077,7 @@ export default function BaliVillaTruth() {
                            })()}
                          </div>
                         </td>
-                        <td className="p-5 font-mono text-slate-500 dark:text-slate-400 text-xs text-right">
+                        <td className="p-5 font-mono text-slate-500 dark:text-slate-400 text-xs">
                          {getPricePerSqm(villa)}
                         </td>
                         <td className="p-5">
@@ -1108,28 +1092,12 @@ export default function BaliVillaTruth() {
                             }`}>
                                 Est. {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
                             </span>
-                            <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1 line-through font-mono font-medium">Gross: {grossRoi.toFixed(1)}%</p>
-                            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">
-                              {(() => {
-                                const baseR = Number(villa.agent_claimed_rate) || nightly;
-                                const isDisc = baseR > nightly && nightly > 0;
-                                return isDisc
-                                  ? <><span className="line-through text-slate-400 dark:text-slate-500">${baseR}/nt</span> <span className="text-blue-500 dark:text-blue-400">${nightly}/nt</span></>
-                                  : <>~${nightly}/nt</>;
-                              })()} • {(() => {
-                                const occConf = getOccupancyConfidence(villa);
-                                return <span className={occConf.colorClass} title={occConf.titleText}>
-                                  {Math.round(getDisplayOccupancy(villa))}% occ{occConf.confidence === 'none' ? '*' : ''}{occConf.confidence !== 'none' && <span className="text-[7px] opacity-60 ml-0.5">({occConf.label})</span>}
-                                </span>;
-                              })()}
-                            </p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 line-through opacity-60 font-mono">Gross: {grossRoi.toFixed(1)}%</p>
+                            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
 
-                            {/* Separated cash yield vs depreciation for leaseholds */}
+                            {/* Pre-depreciation yield for leaseholds */}
                             {!isFreehold && leaseDepreciation > 0 && (
-                              <div className="text-[9px] font-mono mt-0.5 space-y-0.5">
-                                <p className="text-emerald-500 dark:text-emerald-400">Cash flow: {preDepreciationNet.toFixed(1)}%</p>
-                                <p className="text-amber-500 dark:text-amber-400">Lease cost: −{leaseDepreciation.toFixed(1)}%/yr</p>
-                              </div>
+                              <p className="text-[9px] text-amber-500 dark:text-amber-400 font-mono mt-0.5">Before lease exp: {preDepreciationNet.toFixed(1)}%</p>
                             )}
 
                             {/* Red flag badges under ROI */}
@@ -1153,7 +1121,7 @@ export default function BaliVillaTruth() {
                                 <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
                                   <div className="flex-1 text-center">
                                     <div className="text-slate-500 text-[9px] mb-0.5">Gross Yield</div>
-                                    <div className="text-lg font-bold text-slate-500 dark:text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
+                                    <div className="text-lg font-bold text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
                                   </div>
                                   <div className="flex-1 text-center">
                                     <div className="text-blue-400 text-[9px] mb-0.5 font-bold">Net Yield</div>
@@ -1165,28 +1133,11 @@ export default function BaliVillaTruth() {
                                 <div className="mb-2 pb-2 border-b border-slate-700">
                                     <div className="text-slate-500 font-bold mb-1">Computed using</div>
                                     <div className="text-slate-300 text-[9px] space-y-1">
-                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— {(() => { const baseR = Number(villa.agent_claimed_rate) || nightly; const pflags = (villa.flags || ''); const isExtreme = pflags.includes('EXTREME_BUDGET') && baseR > nightly; const isBudget = pflags.includes('BUDGET_VILLA') && baseR > nightly; const isNear = pflags.includes('NEAR_BUDGET') && baseR > nightly; if (isExtreme) return `50% discount from $${baseR} area median (extreme outlier — price well below 50% of 25th percentile for ${villa.location || 'this area'})`; if (isBudget) return `30% discount from $${baseR} area median (budget property — price below 25th percentile for ${villa.location || 'this area'})`; if (isNear) return `15% discount from $${baseR} area median (near-budget — price between 25th-35th percentile for ${villa.location || 'this area'})`; return `based on Booking.com market data for ${villa.location || 'this area'}, ${villa.bedrooms || '?'}-bed villas`; })()}</span></div>
-                                      <div className="text-slate-600 text-[8px] mt-0.5">Benchmarks derived from 2,171 audited listings across Bali. <a href="/methodology" className="text-blue-400 underline">See methodology →</a></div>
-                                      {(() => {
-                                        const occConf = getOccupancyConfidence(villa);
-                                        if (occConf.confidence === 'none') {
-                                          return <div><span className="text-amber-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-amber-400">({Math.round(occupancy * 100)}% occ)</span> <span className="text-amber-500">⚠ ASSUMED — we have no area-specific occupancy data for {villa.location || 'this area'} yet. Real occupancy varies 40–80% by area and season. Use the Compare tool to test different scenarios.</span></div>;
-                                        }
-                                        const confColor = occConf.confidence === 'high' ? 'text-emerald-400' : occConf.confidence === 'medium' ? 'text-emerald-400/70' : 'text-yellow-400';
-                                        const confBg = occConf.confidence === 'high' ? 'bg-emerald-900/30' : occConf.confidence === 'medium' ? 'bg-emerald-900/20' : 'bg-yellow-900/20';
-                                        const confLabel = occConf.confidence === 'high' ? 'HIGH' : occConf.confidence === 'medium' ? 'MEDIUM' : 'LOW';
-                                        const confNote = occConf.confidence === 'high' ? 'Large sample size — reliable estimate.' : occConf.confidence === 'medium' ? 'Moderate sample size — reasonable estimate.' : 'Small sample — treat as rough estimate.';
-                                        return <div>
-                                          <span className={`${confColor} font-bold`}>{Math.round(365 * occupancy)} nights/yr</span>{' '}
-                                          <span className={confColor}>({Math.round(occupancy * 100)}% occ)</span>{' '}
-                                          <span className={`${confBg} ${confColor} px-1 py-0.5 rounded text-[8px] font-bold`}>{confLabel} CONFIDENCE</span>{' '}
-                                          <span className={`text-[8px] ${confColor}/60`}>n={occConf.sampleSize}</span>
-                                          <div className="text-emerald-500/80 mt-0.5">Estimated from Booking.com review density for {villa.location || 'this area'}. {confNote} Range: 40–80% across Bali.</div>
-                                        </div>;
-                                      })()}
+                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
+                                      <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-slate-400">(65% occ)</span> <span className="text-slate-500">— assumed, we don't have occupancy data for this area</span></div>
                                       <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
                                     </div>
-                                    <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Save villas with the heart icon, then click Compare to adjust these assumptions</p>
+                                    <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Select villas with the checkbox to compare and adjust these assumptions</p>
                                 </div>
 
                                 {/* Capital depreciation for leaseholds */}
@@ -1275,13 +1226,9 @@ export default function BaliVillaTruth() {
                             </div>
                         </td>
                         <td className="p-5 text-right">
-                        <div className="flex flex-col gap-1.5 items-end">
-                          {villa.slug && (
-                            <Link href={`/listing/${villa.slug}`} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-4 py-2.5 rounded-lg transition-all border border-blue-500 shadow-sm hover:shadow-md whitespace-nowrap">
-                              <Eye size={12}/> FULL AUDIT
-                            </Link>
-                          )}
-                        </div>
+                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all">
+                            <Lock size={12}/> UNLOCK SOURCE
+                        </button>
                         </td>
                     </tr>
                     );
@@ -1295,7 +1242,7 @@ export default function BaliVillaTruth() {
       {/* MAP PANEL (sticky alongside table) */}
       {showMap && (
         <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} onToggleFavorite={toggleFavorite} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
         </div>
       )}
       </div>{/* end split layout flex */}
@@ -1304,106 +1251,68 @@ export default function BaliVillaTruth() {
       {selectedVilla && (
         <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => { setSelectedVilla(null); setAuditSent(false); }} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"><X size={20}/></button>
-            {auditSent ? (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="text-emerald-600 dark:text-emerald-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Audit on its way</h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">We emailed your 3-page audit PDF to <span className="font-semibold text-slate-800 dark:text-slate-200">{email}</span>.</p>
-                <p className="text-slate-400 dark:text-slate-500 text-xs">Check your inbox (and spam, first time). Opening the source listing now...</p>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600 dark:text-blue-400" size={32} /></div>
-                <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Get the Full Audit</h2>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter your email and we'll send you a <b>3-page audit PDF</b> with the full math, 5-year cashflow projection, sensitivity analysis, and questions to ask the agent for <span className="font-semibold text-slate-800 dark:text-slate-200">{toTitleCase(selectedVilla.villa_name)}</span>.</p>
-                <form onSubmit={handleLeadCapture} className="space-y-4">
-                  <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 dark:shadow-blue-900 disabled:opacity-50">{isSubmitting ? 'Generating your audit...' : 'Email Me the Audit'}</button>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">Free. One email, no newsletter spam. By clicking, you agree to our Investor Privacy Terms.</p>
-                </form>
-              </div>
-            )}
+            <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"><X size={20}/></button>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600 dark:text-blue-400" size={32} /></div>
+              <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Unlock Full Audit</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedVilla.villa_name}</span>.</p>
+              <form onSubmit={handleLeadCapture} className="space-y-4">
+                <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 dark:shadow-blue-900 disabled:opacity-50">{isSubmitting ? 'Verifying...' : 'Unlock Now'}</button>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">By clicking, you agree to our Investor Privacy Terms.</p>
+              </form>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* FLOATING COMPARE BAR */}
+      {compareSet.size > 0 && !showCompare && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl shadow-2xl px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4 animate-in slide-in-from-bottom duration-300 max-w-[95vw]">
+          <div className="flex items-center gap-2">
+            <BarChart3 size={16} className="text-blue-400" />
+            <span className="font-bold text-sm">{compareSet.size} villa{compareSet.size !== 1 ? 's' : ''} selected</span>
+          </div>
+          <button
+            onClick={() => { setShowCompare(true); setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
+            className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2 rounded-xl transition-colors flex items-center gap-2"
+          >
+            <SlidersHorizontal size={14} /> Compare Now
+          </button>
+          <button
+            onClick={() => setCompareSet(new Set())}
+            className="text-slate-400 hover:text-white text-sm font-medium px-2 py-1 transition-colors"
+          >
+            Clear
+          </button>
         </div>
       )}
 
       {/* COMPARE PANEL MODAL */}
       {showCompare && (() => {
         const compareVillas = listings.filter(v => compareSet.has(v.id));
-        const savedVillas = listings.filter(v => favorites.has(v.id));
         const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
-        // Pre-compute dynamic results for both table and footer bar
-        const dynamicResults = compareVillas.map(v => ({
-          id: v.id,
-          ...calculateDynamicROI(v, sliderNightly, sliderOccupancy, sliderExpense),
-        }));
-        const bestYieldValue = Math.max(...dynamicResults.map(r => r.netYield));
-
         return (
-          <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl relative flex flex-col max-h-[92vh]">
-              {/* Header — compact */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+          <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/70 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl my-8 relative">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <SlidersHorizontal size={18} className="text-blue-600 dark:text-blue-400" /> Villa ROI Calculator
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <SlidersHorizontal size={20} className="text-blue-600 dark:text-blue-400" /> Villa ROI Calculator
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Adjust assumptions to see how yields change across your selection</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Adjust assumptions to see how yields change across your selection</p>
                 </div>
                 <button onClick={() => setShowCompare(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 p-2"><X size={24}/></button>
               </div>
 
-              {/* Villa Picker — horizontal scroll to reclaim vertical space */}
-              {savedVillas.length > compareVillas.length && (
-                <div className="px-6 py-2 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 mb-1.5">
-                    Comparing {compareVillas.length} of {savedVillas.length} saved — click to swap (max 5)
-                  </p>
-                  <div className="flex flex-nowrap gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                    {savedVillas.map(v => {
-                      const isIncluded = compareSet.has(v.id);
-                      return (
-                        <button
-                          key={v.id}
-                          onClick={() => {
-                            setCompareSet(prev => {
-                              const next = new Set(prev);
-                              if (isIncluded) {
-                                if (next.size > 2) next.delete(v.id);
-                              } else if (next.size < 5) {
-                                next.add(v.id);
-                              }
-                              return next;
-                            });
-                          }}
-                          disabled={!isIncluded && compareSet.size >= 5}
-                          className={`text-[10px] font-medium px-2.5 py-1 rounded-full border transition-colors truncate max-w-[180px] flex-shrink-0 ${
-                            isIncluded
-                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
-                              : compareSet.size >= 5
-                                ? 'text-slate-300 dark:text-slate-600 border-slate-200 dark:border-slate-700 cursor-not-allowed'
-                                : 'text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-600 dark:hover:text-blue-400'
-                          }`}
-                          title={isIncluded ? (compareSet.size <= 2 ? 'Minimum 2 villas required' : `Remove ${v.villa_name}`) : compareSet.size >= 5 ? 'Max 5 villas' : `Add ${v.villa_name}`}
-                        >
-                          {isIncluded ? '✓ ' : ''}{toTitleCase(v.villa_name) || 'Villa'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Sliders — compact to keep cause+effect on screen together */}
-              <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Sliders */}
+              <div className="p-6 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Nightly Rate Multiplier */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-1">
+                    <div className="flex justify-between items-baseline mb-2">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Nightly Rate</label>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderNightly.toFixed(1)}x</span>
                     </div>
@@ -1418,12 +1327,11 @@ export default function BaliVillaTruth() {
                       <span className="text-blue-500 dark:text-blue-400 font-bold">BVT: {BVT_DEFAULTS.nightly}x</span>
                       <span>2.0x</span>
                     </div>
-                    <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1">Multiplier applied to BVT Audited Baseline rate</p>
                   </div>
 
                   {/* Occupancy */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-1">
+                    <div className="flex justify-between items-baseline mb-2">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Occupancy</label>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderOccupancy}%</span>
                     </div>
@@ -1442,7 +1350,7 @@ export default function BaliVillaTruth() {
 
                   {/* Expense Load */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-1">
+                    <div className="flex justify-between items-baseline mb-2">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide relative group/expense inline-flex items-center gap-1">
                         Expense Load
                         <Info size={12} className="text-slate-400 group-hover/expense:text-blue-500 cursor-help" />
@@ -1472,7 +1380,7 @@ export default function BaliVillaTruth() {
                 </div>
 
                 {/* Reset to BVT defaults */}
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-end mt-3">
                   <button
                     onClick={() => { setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
@@ -1482,41 +1390,31 @@ export default function BaliVillaTruth() {
                 </div>
               </div>
 
-              {/* Comparison Table — scrollable middle, sticky Net Yield at bottom */}
-              <div className="px-6 py-4 overflow-auto flex-1 min-h-0">
-                <table className="w-full text-sm border-collapse min-w-[600px]">
+              {/* Comparison Table */}
+              <div className="p-6 overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                      <th className="text-left py-3 pr-4 w-36 sticky left-0 bg-white dark:bg-slate-900 z-[1]">Metric</th>
-                      {compareVillas.map(v => {
-                        const vFlags = getRedFlags(v);
-                        return (
-                          <th key={v.id} className="text-center py-3 px-3 min-w-[140px]">
-                            <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold line-clamp-2 max-w-[160px] mx-auto">{toTitleCase(v.villa_name)}</div>
-                            <div className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{v.location}</div>
-                            {vFlags.length > 0 && (
-                              <div className="flex flex-wrap justify-center gap-0.5 mt-1">
-                                {vFlags.map((f, i) => (
-                                  <span key={i} className={`px-1 py-0 rounded text-[7px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
-                                ))}
-                              </div>
-                            )}
-                          </th>
-                        );
-                      })}
+                      <th className="text-left py-3 pr-4 w-36">Metric</th>
+                      {compareVillas.map(v => (
+                        <th key={v.id} className="text-center py-3 px-3 min-w-[140px]">
+                          <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold truncate max-w-[160px]">{v.villa_name}</div>
+                          <div className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{v.location}</div>
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="text-xs">
                     {/* Price */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Price</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Price</td>
                       {compareVillas.map(v => (
                         <td key={v.id} className="text-center py-2.5 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300">{formatPriceInCurrency(v)}</td>
                       ))}
                     </tr>
                     {/* Lease */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Lease</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Lease</td>
                       {compareVillas.map(v => {
                         const f = (v.features || '').toLowerCase();
                         const yrs = Number(v.lease_years) || 0;
@@ -1530,65 +1428,84 @@ export default function BaliVillaTruth() {
                     </tr>
                     {/* Nightly Rate */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Nightly Rate</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Nightly Rate</td>
                       {compareVillas.map(v => {
                         const base = v.est_nightly_rate || getDisplayNightly(v);
                         const adjusted = Math.round(base * sliderNightly);
                         return (
                           <td key={v.id} className="text-center py-2.5 px-3 font-mono">
-                            <span className="text-slate-700 dark:text-slate-300 font-semibold">{formatCompareAmount(adjusted)}</span>
-                            {sliderNightly !== 1.0 && <span className="text-slate-400 dark:text-slate-500 text-[10px] ml-1">(base {formatCompareAmount(base)})</span>}
+                            <span className="text-slate-700 dark:text-slate-300 font-semibold">${adjusted}</span>
+                            {sliderNightly !== 1.0 && <span className="text-slate-400 dark:text-slate-500 text-[10px] ml-1">(base ${base})</span>}
                           </td>
                         );
                       })}
                     </tr>
                     {/* Occupancy & Expense (shared) */}
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Occupancy</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Occupancy</td>
                       {compareVillas.map(v => (
                         <td key={v.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{sliderOccupancy}%</td>
                       ))}
                     </tr>
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Expense Load</td>
+                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Expense Load</td>
                       {compareVillas.map(v => (
                         <td key={v.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{sliderExpense}%</td>
                       ))}
                     </tr>
-                    {/* Dynamic calculations — uses pre-computed dynamicResults */}
+                    {/* Dynamic calculations */}
                     {(() => {
-                      const results = dynamicResults;
-                      const bestYield = bestYieldValue;
+                      const results = compareVillas.map(v => ({
+                        id: v.id,
+                        ...calculateDynamicROI(v, sliderNightly, sliderOccupancy, sliderExpense),
+                      }));
+                      const bestYield = Math.max(...results.map(r => r.netYield));
 
                       return (
                         <>
-                          {/* --- P&L MATH RECEIPT --- */}
-                          {/* Visually quiet rows for the calculation flow: Gross → Expenses → Net */}
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Gross Revenue</td>
+                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Gross Revenue</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{formatCompareAmount(r.annualRevenue, '/yr')}</td>
-                            ))}
-                          </tr>
-                          {/* Gross Yield removed — converges to same value across villas due to price-dampened rate model, adds no differentiation. Shown in main table ROI cell instead. */}
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">Expenses</td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-red-500 dark:text-red-400">-{formatCompareAmount(r.annualExpenses, '/yr')}</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">${r.annualRevenue.toLocaleString()}/yr</td>
                             ))}
                           </tr>
                           <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-300 font-bold sticky left-0 bg-white dark:bg-slate-900">Net Revenue</td>
+                            <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium">Gross Yield</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100">{formatCompareAmount(r.netRevenue, '/yr')}</td>
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-400 dark:text-slate-500 line-through">{r.grossYield.toFixed(1)}%</td>
                             ))}
                           </tr>
-                          {/* Cash Flow Yield removed — same convergence issue as Gross Yield. Net Yield (in footer bar) is the metric that actually differentiates villas. */}
-                          {/* Lease Depreciation — quiet, informational */}
-                          <tr className="border-b border-slate-200 dark:border-slate-600">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium sticky left-0 bg-white dark:bg-slate-900">
+                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Expenses</td>
+                            {results.map(r => (
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-red-500 dark:text-red-400">-${r.annualExpenses.toLocaleString()}/yr</td>
+                            ))}
+                          </tr>
+                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+                            <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-300 font-bold">Net Revenue</td>
+                            {results.map(r => (
+                              <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100">${r.netRevenue.toLocaleString()}/yr</td>
+                            ))}
+                          </tr>
+                          <tr className="border-b border-slate-200 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/20">
+                            <td className="py-2.5 pr-4 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+                              Cash Flow Yield
+                              <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-normal">Cash-on-cash return</span>
+                            </td>
+                            {results.map(r => {
+                              const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
+                              const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
+                              return (
+                                <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base">
+                                  {cashFlowYield.toFixed(1)}%
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-amber-50/40 dark:bg-amber-950/30">
+                            <td className="py-2.5 pr-4 text-amber-700 dark:text-amber-400 font-medium text-sm">
                               Lease Depreciation
-                              <span className="block text-[9px] text-slate-400 dark:text-slate-500 font-normal">Asset value loss/yr</span>
+                              <span className="block text-[9px] text-amber-500 dark:text-amber-400 font-normal">Asset value loss/yr</span>
                             </td>
                             {results.map(r => (
                               <td key={r.id} className="text-center py-2.5 px-3 font-mono">
@@ -1596,8 +1513,8 @@ export default function BaliVillaTruth() {
                                   <span className="text-green-600 dark:text-green-400 text-xs font-medium">Freehold — N/A</span>
                                 ) : r.leaseDepreciation > 0 ? (
                                   <div>
-                                    <span className="text-amber-600 dark:text-amber-400 font-semibold">-{formatCompareAmount(r.leaseDepreciation, '/yr')}</span>
-                                    <span className="block text-[9px] text-slate-400 dark:text-slate-500">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
+                                    <span className="text-amber-600 dark:text-amber-400 font-bold">-${r.leaseDepreciation.toLocaleString()}/yr</span>
+                                    <span className="block text-[9px] text-amber-500 dark:text-amber-400">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
                                   </div>
                                 ) : (
                                   <span className="text-slate-400 dark:text-slate-500 text-xs">Unknown tenure</span>
@@ -1605,7 +1522,58 @@ export default function BaliVillaTruth() {
                               </td>
                             ))}
                           </tr>
-                          {/* Net Yield rendered outside table as fixed footer bar */}
+                          <tr className="bg-blue-50/50 dark:bg-blue-950/30">
+                            <td className="py-3 pr-4 text-blue-700 dark:text-blue-400 font-bold text-sm">
+                              Net Yield
+                              <span className="block text-[9px] text-blue-400 dark:text-blue-400 font-normal">After depreciation</span>
+                            </td>
+                            {results.map(r => (
+                              <td key={r.id} className={`text-center py-3 px-3 font-mono font-bold text-lg ${
+                                r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
+                                  ? 'text-emerald-600 dark:text-emerald-400'
+                                  : r.netYield >= 7 ? 'text-blue-600 dark:text-blue-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
+                              }`}>
+                                {r.netYield.toFixed(1)}%
+                                {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
+                                  <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-bold mt-0.5">BEST</span>
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                          {/* Red Flags row */}
+                          <tr className="border-b border-slate-100 dark:border-slate-700">
+                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Flags</td>
+                            {compareVillas.map(v => {
+                              const flags = getRedFlags(v);
+                              return (
+                                <td key={v.id} className="text-center py-2.5 px-3">
+                                  {flags.length === 0 ? (
+                                    <span className="text-green-500 dark:text-green-400 text-[10px] font-medium">Clean</span>
+                                  ) : (
+                                    <div className="flex flex-wrap justify-center gap-1">
+                                      {flags.map((f, i) => (
+                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          {/* Unlock row */}
+                          <tr className="bg-slate-50/50 dark:bg-slate-800/30">
+                            <td className="py-3 pr-4 text-slate-500 dark:text-slate-400 font-medium">Unlock Source</td>
+                            {compareVillas.map(v => (
+                              <td key={v.id} className="text-center py-3 px-3">
+                                <button
+                                  onClick={() => { setSelectedVilla(v); }}
+                                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                                >
+                                  <Lock size={12} /> Unlock
+                                </button>
+                              </td>
+                            ))}
+                          </tr>
                         </>
                       );
                     })()}
@@ -1613,62 +1581,8 @@ export default function BaliVillaTruth() {
                 </table>
               </div>
 
-              {/* === NET YIELD FOOTER BAR — always visible, never overlaps table === */}
-              <div className="flex-shrink-0 bg-emerald-50 dark:bg-emerald-950/50 border-t-2 border-emerald-200 dark:border-emerald-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <div className="px-6 py-3 overflow-x-auto">
-                  <div className="flex items-start gap-0 min-w-[600px]">
-                    {/* Label column — matches table's w-36 */}
-                    <div className="w-36 flex-shrink-0 pr-4">
-                      <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400">Net Yield</span>
-                      <span className="block text-[9px] text-emerald-500/80 dark:text-emerald-400/70 font-normal">After all costs + depreciation</span>
-                    </div>
-                    {/* Villa columns — equal width flex */}
-                    <div className="flex-1 flex">
-                      {dynamicResults.map(r => {
-                        const villa = compareVillas.find(v => v.id === r.id);
-                        const flags = villa ? getRedFlags(villa) : [];
-                        return (
-                          <div key={r.id} className="flex-1 text-center px-3 min-w-[140px]">
-                            {/* Yield number */}
-                            <span className={`font-mono font-bold text-xl block ${
-                              r.netYield === bestYieldValue && dynamicResults.filter(x => x.netYield === bestYieldValue).length === 1
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : r.netYield >= 7 ? 'text-emerald-600 dark:text-emerald-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
-                            }`}>
-                              {r.netYield.toFixed(1)}%
-                            </span>
-                            {r.netYield === bestYieldValue && dynamicResults.filter(x => x.netYield === bestYieldValue).length === 1 && (
-                              <span className="text-[9px] text-emerald-500 dark:text-emerald-400 font-bold">BEST</span>
-                            )}
-                            {/* Flags + Unlock in a fixed-height row so buttons always align */}
-                            <div className="mt-1.5 flex flex-col items-center gap-1 min-h-[40px] justify-end">
-                              {flags.length > 0 && (
-                                <div className="flex flex-wrap justify-center gap-0.5">
-                                  {flags.slice(0, 2).map((f, i) => (
-                                    <span key={i} className={`px-1 py-0 rounded text-[7px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
-                                  ))}
-                                  {flags.length > 2 && <span className="text-[7px] text-slate-400">+{flags.length - 2}</span>}
-                                </div>
-                              )}
-                              {villa?.slug && (
-                                <Link
-                                  href={`/listing/${villa.slug}`}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold rounded-md transition-colors"
-                                >
-                                  <Eye size={9} /> Audit
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Footer note */}
-              <div className="px-6 py-2 text-[10px] text-slate-400 italic flex-shrink-0 border-t border-emerald-100 dark:border-emerald-900/30">
+              <div className="px-6 pb-6 text-[10px] text-slate-400 italic">
                 These projections are estimates based on your inputs. Actual returns depend on management quality, market conditions, and property-specific factors. BVT does not provide financial advice.
               </div>
             </div>
@@ -1677,14 +1591,14 @@ export default function BaliVillaTruth() {
       })()}
 
       {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200/50 dark:border-slate-700/50">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-          <div><span className="font-bold text-slate-700 dark:text-slate-300 text-sm">Bali Villa Truth</span><span className="mx-2 text-slate-300 dark:text-slate-600">•</span><span>Independent villa investment analysis</span></div>
+      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+          <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
           <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</a><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</a></div>
         </div>
-        <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4 pb-4">© 2026 Bali Villa Truth. All projections are estimates and not financial advice. Occupancy (40–80%, estimated from Booking.com review density) and nightly rates are assumptions — verify independently before investing. Past performance does not guarantee future returns.</p>
+        <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
       </footer>
-      </div>{/* end listings-section wrapper */}
+      </div>{/* end listings-section */}
     </div>
   );
 }
@@ -1714,15 +1628,7 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Nusa Penida': [-8.7300, 115.5400],
 };
 
-// --- Clean agent titles: ALL CAPS → Title Case ---
-function toTitleCase(str: string): string {
-  if (!str) return str;
-  return str
-    .toLowerCase()
-    .replace(/(?:^|\s|-|\/)\S/g, (match) => match.toUpperCase());
-}
-
-function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favorites, onToggleFavorite, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; onToggleFavorite: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
+function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favorites, compareSet, onToggleFavorite, onToggleCompare, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; compareSet: Set<number>; onToggleFavorite: (id: number) => void; onToggleCompare: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapRef, setMapRef] = useState<any>(null);
   const [markersRef, setMarkersRef] = useState<Record<string, any>>({});
@@ -1808,9 +1714,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
         fillOpacity: 0.7,
       }).addTo(mapRef);
 
-      // Price formatting for popup (symbol only, matches table formatting)
-      const symbols: Record<string, string> = { USD: '$', AUD: 'A$', EUR: '€', SGD: 'S$', IDR: 'Rp' };
-      const sym = symbols[displayCurrency] || displayCurrency + ' ';
+      // Price formatting for popup
       const desc = (villa.price_description || '').trim();
       const priceMatch = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
       let priceStr = '';
@@ -1820,15 +1724,17 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
         const r = rates[cur];
         const priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
         const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
-        priceStr = `${sym}${Math.round(displayVal).toLocaleString()}`;
+        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
       } else {
         const p = Number(villa.last_price) || 0;
         const priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
         const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
-        priceStr = `${sym}${Math.round(displayVal).toLocaleString()}`;
+        priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
       }
 
       const isFav = favorites.has(villa.id);
+      const isCmp = compareSet.has(villa.id);
+      const cmpFull = compareSet.size >= 5 && !isCmp;
 
       const bgColor = darkMode ? '#1e293b' : '#f8fafc';
       const borderColor = darkMode ? '#475569' : '#e2e8f0';
@@ -1841,7 +1747,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       marker.bindPopup(`
         <div class="bvt-map-popup" data-villa-id="${villa.id}" style="font-family: system-ui, -apple-system, sans-serif;">
           <div style="padding: 10px 12px 8px; border-bottom: 1px solid ${borderColor};">
-            <div style="font-weight: 700; font-size: 13px; color: ${textColor}; line-height: 1.3; word-wrap: break-word;">${toTitleCase((villa.villa_name || 'Villa').substring(0, 50))}</div>
+            <div style="font-weight: 700; font-size: 13px; color: ${textColor}; line-height: 1.3; word-wrap: break-word;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
             <div style="font-size: 11px; color: ${mutedColor}; margin-top: 2px; font-weight: 500;">${villa.location || 'Bali'} · ${villa.bedrooms || '?'} bed${villa.bathrooms ? ' · ' + villa.bathrooms + ' bath' : ''}</div>
           </div>
           <div style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${borderColor};">
@@ -1850,7 +1756,8 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
           </div>
           <div style="display: flex; gap: 6px; padding: 10px 12px; background: ${bgColor};">
             <button data-action="favorite" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isFav ? '#f43f5e' : darkMode ? '#475569' : '#cbd5e1'}; border-radius: 6px; background: ${isFav ? (darkMode ? '#7f1d1d' : '#ffe4e6') : darkMode ? '#334155' : 'white'}; font-size: 10px; font-weight: 600; color: ${isFav ? (darkMode ? '#fca5ce' : '#e11d48') : darkMode ? '#cbd5e1' : '#64748b'}; cursor: pointer; text-align: center; line-height: 1.3;">${isFav ? '♥ Saved' : '♡ Save'}</button>
-            ${villa.slug ? `<a data-action="audit" data-villa-slug="${villa.slug}" href="/listing/${villa.slug}" style="flex: 1; padding: 8px 4px; border: 1px solid #2563eb; border-radius: 6px; background: #2563eb; font-size: 10px; font-weight: 600; color: white; cursor: pointer; text-align: center; line-height: 1.3; text-decoration: none; display: block;">👁 Full Audit</a>` : ''}
+            <button data-action="compare" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isCmp ? (darkMode ? '#1e40af' : '#2563eb') : cmpFull ? (darkMode ? '#475569' : '#e2e8f0') : darkMode ? '#475569' : '#cbd5e1'}; border-radius: 6px; background: ${isCmp ? (darkMode ? '#1e3a8a' : '#dbeafe') : darkMode ? '#334155' : 'white'}; font-size: 10px; font-weight: 600; color: ${isCmp ? (darkMode ? '#93c5fd' : '#2563eb') : cmpFull ? (darkMode ? '#64748b' : '#94a3b8') : darkMode ? '#cbd5e1' : '#64748b'}; cursor: ${cmpFull ? 'default' : 'pointer'}; text-align: center; line-height: 1.3; ${cmpFull ? 'opacity: 0.5;' : ''}">${isCmp ? '✓ Selected' : 'Compare'}</button>
+            <button data-action="unlock" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${darkMode ? '#475569' : '#334155'}; border-radius: 6px; background: ${darkMode ? '#334155' : '#1e293b'}; font-size: 10px; font-weight: 600; color: white; cursor: pointer; text-align: center; line-height: 1.3;">🔒 Unlock</button>
           </div>
         </div>
       `, { closeButton: true, className: 'bvt-leaflet-popup' });
@@ -1860,7 +1767,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     });
 
     setMarkersRef(newMarkers);
-  }, [mapRef, mapLoaded, listings, displayCurrency, rates, favorites]);
+  }, [mapRef, mapLoaded, listings, displayCurrency, rates, favorites, compareSet]);
 
   // Highlight marker on hover
   useEffect(() => {
@@ -1895,6 +1802,9 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
 
       if (action === 'favorite') {
         onToggleFavorite(villaId);
+      } else if (action === 'compare') {
+        if (compareSet.size >= 5 && !compareSet.has(villaId)) return;
+        onToggleCompare(villaId);
       } else if (action === 'unlock') {
         const villa = listings.find((v: any) => v.id === villaId);
         if (villa) {
@@ -1906,7 +1816,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
 
     container.addEventListener('click', handlePopupClick);
     return () => container.removeEventListener('click', handlePopupClick);
-  }, [onToggleFavorite, onUnlockVilla, listings, mapRef]);
+  }, [onToggleFavorite, onToggleCompare, onUnlockVilla, listings, compareSet, mapRef]);
 
   // Refresh open popup button states when favorites/compareSet change
   useEffect(() => {
@@ -1918,6 +1828,7 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     if (!villaId) return;
 
     const favBtn = popupEl.querySelector('[data-action="favorite"]') as HTMLElement | null;
+    const cmpBtn = popupEl.querySelector('[data-action="compare"]') as HTMLElement | null;
 
     if (favBtn) {
       const isFav = favorites.has(villaId);
@@ -1926,7 +1837,17 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       favBtn.style.color = isFav ? (darkMode ? '#fca5ce' : '#e11d48') : darkMode ? '#cbd5e1' : '#64748b';
       favBtn.textContent = isFav ? '♥ Saved' : '♡ Save';
     }
-  }, [favorites, mapRef]);
+
+    if (cmpBtn) {
+      const isCmp = compareSet.has(villaId);
+      const cmpFull = compareSet.size >= 5 && !isCmp;
+      cmpBtn.style.borderColor = isCmp ? (darkMode ? '#1e40af' : '#2563eb') : cmpFull ? (darkMode ? '#475569' : '#e2e8f0') : darkMode ? '#475569' : '#cbd5e1';
+      cmpBtn.style.background = isCmp ? (darkMode ? '#1e3a8a' : '#dbeafe') : darkMode ? '#334155' : 'white';
+      cmpBtn.style.color = isCmp ? (darkMode ? '#93c5fd' : '#2563eb') : cmpFull ? (darkMode ? '#64748b' : '#94a3b8') : darkMode ? '#cbd5e1' : '#64748b';
+      cmpBtn.style.opacity = cmpFull ? '0.5' : '1';
+      cmpBtn.textContent = isCmp ? '✓ Selected' : 'Compare';
+    }
+  }, [favorites, compareSet, mapRef]);
 
   // Resize map when panel becomes visible
   useEffect(() => {
