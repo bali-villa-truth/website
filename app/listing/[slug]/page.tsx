@@ -169,11 +169,11 @@ export default async function ListingPage({ params }: Props) {
         <nav className="border-b border-slate-800 bg-slate-950/90 backdrop-blur-lg sticky top-0 z-30">
           <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
             <Link href="/" className="text-lg font-extrabold tracking-tight">
-              Bali Villa <span className="text-blue-400">Truth</span>
+              Bali Villa <span className="text-[#d4943a]">Truth</span>
             </Link>
             <Link
               href="/"
-              className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              className="text-sm text-[#d4943a] hover:text-[#e5a84d] font-medium transition-colors"
             >
               ← Back to all listings
             </Link>
@@ -285,7 +285,7 @@ export default async function ListingPage({ params }: Props) {
                 <h2 className="text-lg font-bold mb-4">Net Yield Breakdown</h2>
                 <p className="text-xs text-slate-500 mb-4">
                   Our stress-test uses conservative assumptions applied uniformly to all {">"}2,000 listings.{" "}
-                  <Link href="/methodology" className="text-blue-400 hover:text-blue-300 underline">
+                  <Link href="/methodology" className="text-[#d4943a] hover:text-[#e5a84d] underline">
                     Full methodology →
                   </Link>
                 </p>
@@ -377,7 +377,7 @@ export default async function ListingPage({ params }: Props) {
               <div className="text-center">
                 <Link
                   href="/"
-                  className="text-sm text-blue-400 hover:text-blue-300 underline transition-colors"
+                  className="text-sm text-[#d4943a] hover:text-[#e5a84d] underline transition-colors"
                 >
                   Compare with other listings →
                 </Link>
@@ -395,9 +395,9 @@ export default async function ListingPage({ params }: Props) {
               <span>Independent villa investment analysis</span>
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/methodology" className="hover:text-blue-400 transition-colors">Methodology</Link>
+              <Link href="/methodology" className="hover:text-[#d4943a] transition-colors">Methodology</Link>
               <span className="text-slate-600">|</span>
-              <Link href="/" className="hover:text-blue-400 transition-colors">All Listings</Link>
+              <Link href="/" className="hover:text-[#d4943a] transition-colors">All Listings</Link>
             </div>
           </div>
           <p className="text-center text-[10px] text-slate-500 mt-4">
