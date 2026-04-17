@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
 import { BvtLockup } from './_components/BvtSeal';
 
 const supabase = createClient(
@@ -305,11 +305,8 @@ function NewsletterBlock() {
 export default function BaliVillaTruth() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVilla, setSelectedVilla] = useState<any>(null);
   const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredRoi, setHoveredRoi] = useState<number | null>(null);
-  const [leadCount, setLeadCount] = useState<number>(0);
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
 
   // --- FILTER STATES ---
@@ -424,11 +421,6 @@ export default function BaliVillaTruth() {
         const real = raw.filter((v: any) => (v.last_price || 0) > 0 && (v.villa_name || '').length > 2);
         setListings(real);
       }
-      
-      const { count } = await supabase
-        .from('leads')
-        .select('*', { count: 'exact', head: true });
-      setLeadCount(count || 0);
       
       // Fetch price history for listings with price changes
       const { data: historyData } = await supabase
@@ -636,31 +628,6 @@ export default function BaliVillaTruth() {
     if (!showFavoritesOnly) return baseFilteredListings;
     return baseFilteredListings.filter(v => favorites.has(v.id));
   }, [baseFilteredListings, showFavoritesOnly, favorites]);
-
-  const handleLeadCapture = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const { error } = await supabase.from('leads').insert([
-      { email, villa_id: selectedVilla.id, villa_name: selectedVilla.villa_name, lead_type: 'Unlock Audit' }
-    ]);
-    if (!error) {
-      window.open(selectedVilla.url, '_blank');
-      setSelectedVilla(null);
-      setLeadCount(prev => prev + 1);
-      // Sync favorites to Supabase and persist email
-      try {
-        localStorage.setItem('bvt-email', email);
-        if (favorites.size > 0) {
-          const rows = Array.from(favorites).map(villa_id => ({ email, villa_id }));
-          await supabase.from('user_favorites').upsert(rows, { onConflict: 'email,villa_id' });
-        }
-      } catch {}
-      setEmail('');
-    } else {
-      alert("Error joining. Please try again.");
-    }
-    setIsSubmitting(false);
-  };
 
   const parseRateFactors = (factorsStr: string | null): string[] => {
     if (!factorsStr) return [];
@@ -1161,7 +1128,7 @@ export default function BaliVillaTruth() {
       {/* MOBILE MAP VIEW */}
       {mobileView === 'map' && (
         <div className="md:hidden max-w-[1400px] mx-auto mb-4" style={{ height: 'calc(100vh - 12rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} darkMode={darkMode} />
         </div>
       )}
 
@@ -1281,9 +1248,13 @@ export default function BaliVillaTruth() {
                     <span className="font-mono text-[10px] tabular-nums text-[color:var(--bvt-ink-dim)] flex-1 text-center">
                       ${getDisplayNightly(villa)}/nt · {Math.round(getDisplayOccupancy(villa))}% occ
                     </span>
-                    <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] transition-colors">
-                      <Lock size={10} strokeWidth={1.5}/> Unlock →
-                    </button>
+                    {villa.slug ? (
+                      <Link href={`/listing/${villa.slug}`} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] transition-colors">
+                        Full audit →
+                      </Link>
+                    ) : (
+                      <span className="text-[10px] text-[color:var(--bvt-ink-faint)]">Audit pending</span>
+                    )}
                   </div>
                   {redFlags.length > 0 && (
                     <div className="ml-10 mt-2 flex flex-wrap gap-x-3 gap-y-1">
@@ -1592,11 +1563,14 @@ export default function BaliVillaTruth() {
                             </div>
                         </td>
                         <td className="py-6 pl-3 text-right align-middle">
-                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-1 text-[12px] font-medium text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] transition-colors group/btn whitespace-nowrap">
-                            <Lock size={11} strokeWidth={1.5}/>
-                            <span className="border-b border-[color:var(--bvt-accent-dim)] group-hover/btn:border-[color:var(--bvt-accent)] pb-px transition-colors">Unlock</span>
+                        {villa.slug ? (
+                          <Link href={`/listing/${villa.slug}`} className="inline-flex items-center gap-1 text-[12px] font-medium text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] transition-colors group/btn whitespace-nowrap">
+                            <span className="border-b border-[color:var(--bvt-accent-dim)] group-hover/btn:border-[color:var(--bvt-accent)] pb-px transition-colors">Full audit</span>
                             <span aria-hidden className="text-[color:var(--bvt-accent)]">→</span>
-                        </button>
+                          </Link>
+                        ) : (
+                          <span className="text-[11px] text-[color:var(--bvt-ink-faint)] italic">pending</span>
+                        )}
                         </td>
                     </tr>
                     );
@@ -1610,29 +1584,10 @@ export default function BaliVillaTruth() {
       {/* MAP PANEL (sticky alongside table) */}
       {showMap && (
         <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} darkMode={darkMode} />
         </div>
       )}
       </div>{/* end split layout flex */}
-
-      {/* MODAL */}
-      {selectedVilla && (
-        <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => setSelectedVilla(null)} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"><X size={20}/></button>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-950 rounded-full flex items-center justify-center mx-auto mb-4"><ShieldCheck className="text-blue-600 dark:text-blue-400" size={32} /></div>
-              <h2 className="text-2xl font-bold dark:text-slate-100 mb-2">Unlock Full Audit</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter your professional email to unlock the original source link and our 5-year ROI projection for <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedVilla.villa_name}</span>.</p>
-              <form onSubmit={handleLeadCapture} className="space-y-4">
-                <input type="email" required placeholder="name@company.com" className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 focus:ring-2 focus:ring-blue-500 outline-none transition-all" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-200 dark:shadow-blue-900 disabled:opacity-50">{isSubmitting ? 'Verifying...' : 'Unlock Now'}</button>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500">By clicking, you agree to our Investor Privacy Terms.</p>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* FLOATING COMPARE BAR */}
       {compareSet.size > 0 && !showCompare && (
@@ -1928,17 +1883,21 @@ export default function BaliVillaTruth() {
                               );
                             })}
                           </tr>
-                          {/* Unlock row */}
+                          {/* Full audit row — routes to the dedicated listing page */}
                           <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-3 pr-4 text-slate-500 dark:text-slate-400 font-medium">Unlock Source</td>
+                            <td className="py-3 pr-4 text-slate-500 dark:text-slate-400 font-medium">Full audit</td>
                             {compareVillas.map(v => (
                               <td key={v.id} className="text-center py-3 px-3">
-                                <button
-                                  onClick={() => { setSelectedVilla(v); }}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
-                                >
-                                  <Lock size={12} /> Unlock
-                                </button>
+                                {v.slug ? (
+                                  <Link
+                                    href={`/listing/${v.slug}`}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-xs font-bold rounded-lg transition-colors shadow-sm"
+                                  >
+                                    Open audit →
+                                  </Link>
+                                ) : (
+                                  <span className="text-[11px] text-slate-400">pending</span>
+                                )}
                               </td>
                             ))}
                           </tr>
@@ -1995,7 +1954,7 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Nusa Penida': [-8.7300, 115.5400],
 };
 
-function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl, favorites, compareSet, onToggleFavorite, onToggleCompare, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; compareSet: Set<number>; onToggleFavorite: (id: number) => void; onToggleCompare: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
+function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl, favorites, compareSet, onToggleFavorite, onToggleCompare, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; compareSet: Set<number>; onToggleFavorite: (id: number) => void; onToggleCompare: (id: number) => void; darkMode?: boolean }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapInstance = useRef<any>(null);
   const markers = useRef<Record<string, any>>({});
@@ -2007,13 +1966,11 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
   const listingsRef = useRef(listings);
   const onToggleFavoriteRef = useRef(onToggleFavorite);
   const onToggleCompareRef = useRef(onToggleCompare);
-  const onUnlockVillaRef = useRef(onUnlockVilla);
   useEffect(() => { favoritesRef.current = favorites; }, [favorites]);
   useEffect(() => { compareSetRef.current = compareSet; }, [compareSet]);
   useEffect(() => { listingsRef.current = listings; }, [listings]);
   useEffect(() => { onToggleFavoriteRef.current = onToggleFavorite; }, [onToggleFavorite]);
   useEffect(() => { onToggleCompareRef.current = onToggleCompare; }, [onToggleCompare]);
-  useEffect(() => { onUnlockVillaRef.current = onUnlockVilla; }, [onUnlockVilla]);
 
   useEffect(() => {
     if (!document.querySelector('link[data-bvt-leaflet]')) {
@@ -2333,9 +2290,9 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
             <button data-action="compare" data-villa-id="${villa.id}" style="display: inline-flex; align-items: center; gap: 5px; background: none; border: none; padding: 4px 0; font-size: 11px; color: ${isCmp ? '#d4943a' : cmpFull ? '#4a5060' : '#a0a3ad'}; cursor: ${cmpFull ? 'default' : 'pointer'}; ${cmpFull ? 'opacity: 0.6;' : ''}">
               ${isCmp ? '✓' : '+'} ${isCmp ? 'Selected' : 'Compare'}
             </button>
-            <button data-action="unlock" data-villa-id="${villa.id}" style="display: inline-flex; align-items: center; gap: 5px; background: none; border: none; border-bottom: 1px solid #8f6324; padding: 4px 0; font-size: 11px; color: #f5f0e6; cursor: pointer; font-weight: 500;">
-              Unlock <span style="color: #d4943a;">→</span>
-            </button>
+            ${villa.slug ? `<a href="/listing/${villa.slug}" data-action="audit" style="display: inline-flex; align-items: center; gap: 5px; text-decoration: none; padding: 4px 0; border-bottom: 1px solid #8f6324; font-size: 11px; color: #f5f0e6; font-weight: 500;">
+              Full audit <span style="color: #d4943a;">→</span>
+            </a>` : `<span style="font-size: 11px; color: #4a5060; font-style: italic;">pending</span>`}
           </div>
         </div>
       `, { closeButton: true, className: 'bvt-leaflet-popup', offset: [0, -4] });
@@ -2394,14 +2351,8 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
         const cs = compareSetRef.current;
         if (cs.size >= 5 && !cs.has(villaId)) return;
         onToggleCompareRef.current(villaId);
-      } else if (action === 'unlock') {
-        const villa = listingsRef.current.find((v: any) => v.id === villaId);
-        if (villa) {
-          const map = mapInstance.current;
-          if (map) map.closePopup();
-          onUnlockVillaRef.current(villa);
-        }
       }
+      // action === 'audit' is a plain <a href> and navigates natively — no JS needed
     };
 
     container.addEventListener('click', handlePopupClick);
