@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
@@ -353,7 +353,7 @@ export default function BaliVillaTruth() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
 
-  const toggleFavorite = (villaId: number) => {
+  const toggleFavorite = useCallback((villaId: number) => {
     setFavorites(prev => {
       const next = new Set(prev);
       if (next.has(villaId)) next.delete(villaId);
@@ -362,7 +362,7 @@ export default function BaliVillaTruth() {
       try { localStorage.setItem('bvt-favorites', JSON.stringify(Array.from(next))); } catch {}
       return next;
     });
-  };
+  }, []);
 
   // Load favorites from localStorage on mount
   useEffect(() => {
@@ -399,14 +399,14 @@ export default function BaliVillaTruth() {
   const [sliderOccupancy, setSliderOccupancy] = useState(65); // percent: 20–95 — matches pipeline flat 65%
   const [sliderExpense, setSliderExpense] = useState(40);     // percent: 20–60
 
-  const toggleCompare = (villaId: number) => {
+  const toggleCompare = useCallback((villaId: number) => {
     setCompareSet(prev => {
       const next = new Set(prev);
       if (next.has(villaId)) next.delete(villaId);
       else if (next.size < 5) next.add(villaId);
       return next;
     });
-  };
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -588,7 +588,9 @@ export default function BaliVillaTruth() {
     (villa.est_occupancy ?? 0.65) * 100;
 
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
-  const processedListings = useMemo(() => {
+  // Split into two memos so clicking a heart doesn't invalidate the whole filtered set
+  // (which would otherwise cascade into rebuilding every map marker).
+  const baseFilteredListings = useMemo(() => {
     const filtered = listings.filter(villa => {
       const priceUSD = getPriceUSD(villa);
       const matchLocation = filterLocation === 'All' || (villa.location && villa.location.includes(filterLocation));
@@ -605,8 +607,7 @@ export default function BaliVillaTruth() {
         if (filterLeaseType === 'Freehold') matchLease = features.includes('freehold') || features.includes('hak milik') || years === 999;
         else if (filterLeaseType === 'Leasehold') matchLease = features.includes('leasehold') || features.includes('hak sewa') || (years > 0 && years < 999);
       }
-      const matchSaved = !showFavoritesOnly || favorites.has(villa.id);
-      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease && matchSaved;
+      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
     });
 
     return filtered.sort((a, b) => {
@@ -628,7 +629,12 @@ export default function BaliVillaTruth() {
         default: return 0;
       }
     });
-  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates, showFavoritesOnly, favorites]);
+  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates]);
+
+  const processedListings = useMemo(() => {
+    if (!showFavoritesOnly) return baseFilteredListings;
+    return baseFilteredListings.filter(v => favorites.has(v.id));
+  }, [baseFilteredListings, showFavoritesOnly, favorites]);
 
   const handleLeadCapture = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1355,7 +1361,7 @@ export default function BaliVillaTruth() {
                     const hasWarning = redFlags.length > 0;
 
                     return (
-                    <tr key={villa.id} className={`transition-colors group ${hoveredListingUrl === villa.url ? 'bg-[color:var(--bvt-ink)]/[0.04]' : 'hover:bg-[color:var(--bvt-ink)]/[0.025]'}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
+                    <tr key={villa.id} className="transition-colors group hover:bg-[color:var(--bvt-ink)]/[0.04]" onMouseEnter={() => startTransition(() => setHoveredListingUrl(villa.url))} onMouseLeave={() => startTransition(() => setHoveredListingUrl(null))}>
                         <td className="py-6 pr-2 align-middle">
                           <span className="font-mono text-[11px] tabular-nums text-[color:var(--bvt-accent)]">{String(idx + 1).padStart(2, '0')}</span>
                         </td>
@@ -1984,10 +1990,24 @@ const AREA_COORDS: Record<string, [number, number]> = {
   'Nusa Penida': [-8.7300, 115.5400],
 };
 
-function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favorites, compareSet, onToggleFavorite, onToggleCompare, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; compareSet: Set<number>; onToggleFavorite: (id: number) => void; onToggleCompare: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
+function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl, favorites, compareSet, onToggleFavorite, onToggleCompare, onUnlockVilla, darkMode }: { listings: any[]; displayCurrency: string; rates: Record<string, number>; hoveredListingUrl?: string | null; favorites: Set<number>; compareSet: Set<number>; onToggleFavorite: (id: number) => void; onToggleCompare: (id: number) => void; onUnlockVilla: (villa: any) => void; darkMode?: boolean }) {
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapRef, setMapRef] = useState<any>(null);
-  const [markersRef, setMarkersRef] = useState<Record<string, any>>({});
+  const mapInstance = useRef<any>(null);
+  const markers = useRef<Record<string, any>>({});
+  // Keep live refs to volatile state so the popup-click handler + popup-HTML code
+  // can read current values without forcing effect re-subscriptions.
+  const favoritesRef = useRef(favorites);
+  const compareSetRef = useRef(compareSet);
+  const listingsRef = useRef(listings);
+  const onToggleFavoriteRef = useRef(onToggleFavorite);
+  const onToggleCompareRef = useRef(onToggleCompare);
+  const onUnlockVillaRef = useRef(onUnlockVilla);
+  useEffect(() => { favoritesRef.current = favorites; }, [favorites]);
+  useEffect(() => { compareSetRef.current = compareSet; }, [compareSet]);
+  useEffect(() => { listingsRef.current = listings; }, [listings]);
+  useEffect(() => { onToggleFavoriteRef.current = onToggleFavorite; }, [onToggleFavorite]);
+  useEffect(() => { onToggleCompareRef.current = onToggleCompare; }, [onToggleCompare]);
+  useEffect(() => { onUnlockVillaRef.current = onUnlockVilla; }, [onUnlockVilla]);
 
   useEffect(() => {
     if (!document.querySelector('link[href*="leaflet"]')) {
@@ -2098,9 +2118,15 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       (container as any)._leafletMap = null;
     }
 
-    const map = L.map('bali-map', { zoomControl: true }).setView([-8.65, 115.15], 11);
+    const map = L.map('bali-map', {
+      zoomControl: true,
+      preferCanvas: true,
+      zoomAnimation: true,
+      fadeAnimation: false,
+      markerZoomAnimation: false,
+    }).setView([-8.65, 115.15], 11);
     (container as any)._leafletMap = map;
-    setMapRef(map);
+    mapInstance.current = map;
 
     // Carto Dark Matter — editorial dark basemap (free for non-commercial, same terms as OSM)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
@@ -2119,18 +2145,23 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
 
     return () => {
       map.remove();
+      mapInstance.current = null;
+      markers.current = {};
       if (container) (container as any)._leafletMap = null;
     };
   }, [mapLoaded]);
 
-  // Add/update property markers when listings change
+  // Add/update property markers when listings change.
+  // Deps intentionally EXCLUDE favorites/compareSet — their state is read via refs
+  // inside the popup handler, and the popup-refresh effect repaints the open popup.
   useEffect(() => {
-    if (!mapRef || !mapLoaded) return;
+    const map = mapInstance.current;
+    if (!map || !mapLoaded) return;
     const L = (window as any).L;
     if (!L) return;
 
     // Clear existing markers
-    Object.values(markersRef).forEach((m: any) => { try { mapRef.removeLayer(m); } catch {} });
+    Object.values(markers.current).forEach((m: any) => { try { map.removeLayer(m); } catch {} });
 
     const newMarkers: Record<string, any> = {};
     const markerCluster: any[] = [];
@@ -2172,11 +2203,11 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
           iconSize: [0, 0],
           iconAnchor: [0, 0],
         }),
-      }).addTo(mapRef);
+      }).addTo(map);
 
-      const isFav = favorites.has(villa.id);
-      const isCmp = compareSet.has(villa.id);
-      const cmpFull = compareSet.size >= 5 && !isCmp;
+      const isFav = favoritesRef.current.has(villa.id);
+      const isCmp = compareSetRef.current.has(villa.id);
+      const cmpFull = compareSetRef.current.size >= 5 && !isCmp;
 
       // ROI dot color (matches marker)
       const dotColor = roiTier === 'hi' ? '#7cc087' : roiTier === 'mid' ? '#d4943a' : '#6b7080';
@@ -2219,14 +2250,15 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       markerCluster.push(marker);
     });
 
-    setMarkersRef(newMarkers);
-  }, [mapRef, mapLoaded, listings, displayCurrency, rates, favorites, compareSet]);
+    markers.current = newMarkers;
+  }, [mapLoaded, listings, displayCurrency, rates]);
 
   // Highlight marker on hover — DivIcon markers use a class toggle
   useEffect(() => {
-    if (!mapRef || !mapLoaded) return;
+    const map = mapInstance.current;
+    if (!map || !mapLoaded) return;
 
-    Object.entries(markersRef).forEach(([url, marker]) => {
+    Object.entries(markers.current).forEach(([url, marker]) => {
       const el = (marker as any).getElement && (marker as any).getElement();
       if (!el) return;
       if (url === hoveredListingUrl) {
@@ -2236,10 +2268,11 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
         el.classList.remove('bvt-price-marker--active');
       }
     });
-  }, [hoveredListingUrl, markersRef, mapRef, mapLoaded]);
+  }, [hoveredListingUrl, mapLoaded]);
 
-  // Event delegation for popup action buttons
+  // Event delegation for popup action buttons — attached ONCE, reads from refs.
   useEffect(() => {
+    if (!mapLoaded) return;
     const container = document.getElementById('bali-map');
     if (!container) return;
 
@@ -2254,26 +2287,28 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       if (!villaId) return;
 
       if (action === 'favorite') {
-        onToggleFavorite(villaId);
+        onToggleFavoriteRef.current(villaId);
       } else if (action === 'compare') {
-        if (compareSet.size >= 5 && !compareSet.has(villaId)) return;
-        onToggleCompare(villaId);
+        const cs = compareSetRef.current;
+        if (cs.size >= 5 && !cs.has(villaId)) return;
+        onToggleCompareRef.current(villaId);
       } else if (action === 'unlock') {
-        const villa = listings.find((v: any) => v.id === villaId);
+        const villa = listingsRef.current.find((v: any) => v.id === villaId);
         if (villa) {
-          if (mapRef) mapRef.closePopup();
-          onUnlockVilla(villa);
+          const map = mapInstance.current;
+          if (map) map.closePopup();
+          onUnlockVillaRef.current(villa);
         }
       }
     };
 
     container.addEventListener('click', handlePopupClick);
     return () => container.removeEventListener('click', handlePopupClick);
-  }, [onToggleFavorite, onToggleCompare, onUnlockVilla, listings, compareSet, mapRef]);
+  }, [mapLoaded]);
 
   // Refresh open popup button states when favorites/compareSet change
   useEffect(() => {
-    if (!mapRef) return;
+    if (!mapLoaded) return;
     const popupEl = document.querySelector('.bvt-map-popup');
     if (!popupEl) return;
 
@@ -2297,14 +2332,15 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       cmpBtn.style.opacity = cmpFull ? '0.6' : '1';
       cmpBtn.textContent = `${isCmp ? '✓' : '+'} ${isCmp ? 'Selected' : 'Compare'}`;
     }
-  }, [favorites, compareSet, mapRef]);
+  }, [favorites, compareSet, mapLoaded]);
 
   // Resize map when panel becomes visible
   useEffect(() => {
-    if (mapRef) {
-      setTimeout(() => { mapRef.invalidateSize(); }, 200);
+    const map = mapInstance.current;
+    if (map) {
+      setTimeout(() => { map.invalidateSize(); }, 200);
     }
-  }, [mapRef]);
+  }, [mapLoaded]);
 
   return (
     <div className="bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline)] overflow-hidden h-full flex flex-col">
@@ -2332,3 +2368,18 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     </div>
   );
 }
+
+// Memoize so that parent re-renders (row hovers, currency toggles that don't touch listings,
+// rate updates, etc.) don't trigger a whole-map re-render.
+const BaliMapView = memo(BaliMapViewInner, (prev, next) => {
+  return (
+    prev.listings === next.listings &&
+    prev.displayCurrency === next.displayCurrency &&
+    prev.rates === next.rates &&
+    prev.hoveredListingUrl === next.hoveredListingUrl &&
+    prev.favorites === next.favorites &&
+    prev.compareSet === next.compareSet
+    // intentionally omit callback refs — they're read via refs inside
+  );
+});
+BaliMapView.displayName = 'BaliMapView';
