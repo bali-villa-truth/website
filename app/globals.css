@@ -1,26 +1,156 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* -----------------------------------------------------------------------------
+ * Bali Villa Truth — Design tokens (2026-04-16)
+ *
+ * Reference palette: The Modern House + Linear + Aesop + FT.
+ * Dark-first. Single warm accent. Cream body text, not pure white.
+ * Numbers are monospace (data-as-art). Headlines are serif (editorial authority).
+ * --------------------------------------------------------------------------- */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Neutrals — warm ink */
+  --bvt-bg:          #0a0e16;  /* page base — deeper than slate */
+  --bvt-bg-elev:     #111723;  /* elevated surfaces */
+  --bvt-bg-soft:     #1a2030;  /* cards */
+  --bvt-hairline:    #232b3d;  /* fine dividers */
+  --bvt-hairline-2:  #2d364a;  /* emphasis dividers */
+
+  --bvt-ink:         #f5f0e6;  /* pure display — cream, not white */
+  --bvt-ink-body:    #e8e4dc;  /* body copy */
+  --bvt-ink-muted:   #a0a3ad;  /* secondary */
+  --bvt-ink-dim:     #6b7080;  /* tertiary */
+  --bvt-ink-faint:   #4a5060;  /* disabled / labels */
+
+  /* Single brand accent — gold ochre */
+  --bvt-accent:      #d4943a;
+  --bvt-accent-warm: #e5a84d;
+  --bvt-accent-dim:  #8f6324;
+
+  /* Semantic — used sparingly */
+  --bvt-good:        #7cc087;
+  --bvt-warn:        #d4a85a;
+  --bvt-bad:         #c96b6b;
+
+  /* Type */
+  --font-display: var(--font-fraunces, "Fraunces"), "Times New Roman", serif;
+  --font-sans:    var(--font-geist-sans, "Geist"), "Inter", system-ui, sans-serif;
+  --font-mono:    var(--font-geist-mono, "Geist Mono"), "SF Mono", ui-monospace, monospace;
 }
 
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background: var(--bvt-bg);
+  color: var(--bvt-ink-body);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv01", "cv02";
+  letter-spacing: -0.005em;
 }
+
+/* Display serif — editorial headlines */
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01";
+  letter-spacing: -0.02em;
+}
+
+/* Tabular numerals for all monospace numbers */
+.font-mono, .tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Uppercase micro-label — Aesop / Stripe style */
+.label-micro {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--bvt-ink-dim);
+}
+
+/* FT-style hairline divider with an optional gold mark */
+.hairline {
+  height: 1px;
+  background: var(--bvt-hairline);
+}
+.hairline-gold {
+  position: relative;
+  height: 1px;
+  background: var(--bvt-hairline);
+}
+.hairline-gold::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0;
+  width: 40px; height: 1px;
+  background: var(--bvt-accent);
+}
+
+/* Editorial link — gold underline offset */
+.link-editorial {
+  color: var(--bvt-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--bvt-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 200ms;
+}
+.link-editorial:hover {
+  text-decoration-color: var(--bvt-accent-warm);
+}
+
+/* Mesh-gradient hero halo (used behind hero headline) */
+.mesh-halo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(at 20% 30%, rgba(212,148,58,0.08) 0%, transparent 45%),
+    radial-gradient(at 80% 70%, rgba(124,192,135,0.04) 0%, transparent 40%),
+    radial-gradient(at 50% 100%, rgba(212,148,58,0.05) 0%, transparent 50%);
+  filter: blur(10px);
+}
+
+/* Noise overlay for texture (luxury tell — used very subtly) */
+.noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Scroll reveal — respects reduced-motion */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal.revealed {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Details / summary marker */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker { display: none; }
+
+/* Default focus ring — gold, high contrast */
+:focus-visible {
+  outline: 2px solid var(--bvt-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Honor dark mode class as a no-op (we're dark by default) */
+.dark { color-scheme: dark; }
