@@ -1202,16 +1202,26 @@ export default function BaliVillaTruth() {
 
               return (
                 <div key={villa.id} className="py-5 group">
-                  {/* Top: index, image, name, favorite */}
+                  {/* Top: index, image, name */}
                   <div className="flex items-start gap-4 mb-4">
                     <span className="font-mono text-[10px] tabular-nums text-[color:var(--bvt-accent)] mt-1 w-6">{String(idx + 1).padStart(2, '0')}</span>
-                    {villa.thumbnail_url ? (
-                      <img src={villa.thumbnail_url} alt="" className="w-20 h-20 object-cover flex-shrink-0 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
-                    ) : (
-                      <div className="w-20 h-20 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex-shrink-0 flex items-center justify-center">
-                        <Home size={18} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
-                      </div>
-                    )}
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                      {villa.thumbnail_url ? (
+                        <img src={villa.thumbnail_url} alt="" className="w-20 h-20 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
+                      ) : (
+                        <div className="w-20 h-20 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex items-center justify-center">
+                          <Home size={18} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
+                        </div>
+                      )}
+                      {/* Heart overlay — top right */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorite(villa.id); }}
+                        title={favorites.has(villa.id) ? 'Remove from saved' : 'Save listing'}
+                        className="absolute top-1.5 right-1.5 w-[22px] h-[22px] flex items-center justify-center rounded-full bg-[color:var(--bvt-bg)]/75 backdrop-blur-sm"
+                      >
+                        <Heart size={12} strokeWidth={1.5} className={favorites.has(villa.id) ? 'text-[color:var(--bvt-accent)] fill-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink)]'} />
+                      </button>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-display text-[17px] leading-[1.15] text-[color:var(--bvt-ink)] tracking-[-0.005em] mb-1">
                         {villa.villa_name || 'Luxury Villa'}
@@ -1224,9 +1234,6 @@ export default function BaliVillaTruth() {
                         </div>
                       )}
                     </div>
-                    <button onClick={() => toggleFavorite(villa.id)} className="flex-shrink-0 p-1">
-                      <Heart size={16} strokeWidth={1.5} className={`transition-all ${favorites.has(villa.id) ? 'text-[color:var(--bvt-accent)] fill-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink-faint)]'}`} />
-                    </button>
                   </div>
 
                   {/* Metrics row — hairline columns */}
@@ -1298,8 +1305,7 @@ export default function BaliVillaTruth() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-t border-b border-[color:var(--bvt-hairline-2)] text-[10px] uppercase tracking-[0.18em] font-medium text-[color:var(--bvt-ink-dim)]">
-                <th className="py-3 w-10 text-center font-medium"><span className="sr-only">Compare</span></th>
-                <th className="py-3 w-10 text-center font-medium"><span className="sr-only">Save</span></th>
+                <th className="py-3 w-10 pr-2 text-left font-medium"><span className="sr-only">No.</span></th>
                 <th className="py-3 pr-5 font-medium">Asset</th>
                 <th className="py-3 px-5 font-medium">Price · {displayCurrency}</th>
                 <th className="py-3 px-5 font-medium">Price/m²</th>
@@ -1313,8 +1319,7 @@ export default function BaliVillaTruth() {
                   loading ? (
                     [0,1,2,3,4,5].map(i => (
                       <tr key={i} className="animate-pulse">
-                        <td className="py-6"><div className="w-4 h-4 bg-[color:var(--bvt-bg-soft)] mx-auto" /></td>
-                        <td className="py-6"><div className="w-4 h-4 bg-[color:var(--bvt-bg-soft)] mx-auto" /></td>
+                        <td className="py-6 pr-2"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-6" /></td>
                         <td className="py-6 pr-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-48" /></td>
                         <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-24" /></td>
                         <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-16" /></td>
@@ -1325,14 +1330,14 @@ export default function BaliVillaTruth() {
                     ))
                   ) : (
                     <tr>
-                        <td colSpan={8} className="py-20 text-center">
+                        <td colSpan={7} className="py-20 text-center">
                             {showFavoritesOnly ? <Heart size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" /> : <Filter size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" />}
                             <p className="text-[14px] text-[color:var(--bvt-ink-muted)]">{showFavoritesOnly ? 'No saved dossiers yet. Click the heart to save one.' : 'No properties match your filters.'}</p>
                         </td>
                     </tr>
                   )
               ) : (
-                processedListings.map((villa) => {
+                processedListings.map((villa, idx) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
                     const netRoi = Number(villa.projected_roi) || 0;
@@ -1351,40 +1356,48 @@ export default function BaliVillaTruth() {
 
                     return (
                     <tr key={villa.id} className={`transition-colors group ${hoveredListingUrl === villa.url ? 'bg-[color:var(--bvt-ink)]/[0.04]' : 'hover:bg-[color:var(--bvt-ink)]/[0.025]'}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
-                        <td className="py-6 text-center align-middle">
-                          <button
-                            onClick={() => toggleCompare(villa.id)}
-                            disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
-                            className={`w-4 h-4 border flex items-center justify-center transition-all ${
-                              compareSet.has(villa.id)
-                                ? 'bg-[color:var(--bvt-accent)] border-[color:var(--bvt-accent)] text-[color:var(--bvt-bg)]'
-                                : compareSet.size >= 5
-                                  ? 'border-[color:var(--bvt-hairline)] text-transparent cursor-not-allowed'
-                                  : 'border-[color:var(--bvt-hairline-2)] hover:border-[color:var(--bvt-accent)] text-transparent'
-                            }`}
-                            title={compareSet.has(villa.id) ? 'Remove from compare' : compareSet.size >= 5 ? 'Max 5 villas' : 'Add to compare'}
-                          >
-                            <Check size={10} strokeWidth={3} />
-                          </button>
-                        </td>
-                        <td className="py-6 text-center align-middle">
-                          <button
-                            onClick={() => toggleFavorite(villa.id)}
-                            className="transition-all"
-                            title={favorites.has(villa.id) ? 'Remove from saved' : 'Save listing'}
-                          >
-                            <Heart size={14} strokeWidth={1.5} className={favorites.has(villa.id) ? 'text-[color:var(--bvt-accent)] fill-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink-faint)] hover:text-[color:var(--bvt-accent)]'} />
-                          </button>
+                        <td className="py-6 pr-2 align-middle">
+                          <span className="font-mono text-[11px] tabular-nums text-[color:var(--bvt-accent)]">{String(idx + 1).padStart(2, '0')}</span>
                         </td>
                         <td className="py-6 pr-5 align-middle">
                         <div className="flex items-center gap-4">
-                          {villa.thumbnail_url ? (
-                            <img src={villa.thumbnail_url} alt="" className="w-20 h-14 object-cover flex-shrink-0 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
-                          ) : (
-                            <div className="w-20 h-14 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex-shrink-0 flex items-center justify-center">
-                              <Home size={16} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
-                            </div>
-                          )}
+                          {/* Thumbnail with overlaid compare / favorite controls */}
+                          <div className="relative w-24 h-16 flex-shrink-0 group/thumb">
+                            {villa.thumbnail_url ? (
+                              <img src={villa.thumbnail_url} alt="" className="w-24 h-16 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
+                            ) : (
+                              <div className="w-24 h-16 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex items-center justify-center">
+                                <Home size={16} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
+                              </div>
+                            )}
+                            {/* Compare checkbox — top-left overlay */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleCompare(villa.id); }}
+                              disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
+                              title={compareSet.has(villa.id) ? 'Remove from compare' : compareSet.size >= 5 ? 'Max 5 villas' : 'Add to compare'}
+                              className={`absolute top-1.5 left-1.5 w-[18px] h-[18px] flex items-center justify-center backdrop-blur-sm transition-all ${
+                                compareSet.has(villa.id)
+                                  ? 'bg-[color:var(--bvt-accent)] text-[color:var(--bvt-bg)] opacity-100'
+                                  : compareSet.size >= 5
+                                    ? 'bg-[color:var(--bvt-bg)]/70 border border-[color:var(--bvt-hairline)] text-transparent opacity-0 cursor-not-allowed'
+                                    : 'bg-[color:var(--bvt-bg)]/70 border border-[color:var(--bvt-hairline-2)] text-transparent opacity-0 group-hover/thumb:opacity-100 hover:border-[color:var(--bvt-accent)]'
+                              }`}
+                            >
+                              <Check size={11} strokeWidth={3} />
+                            </button>
+                            {/* Heart — top-right overlay */}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleFavorite(villa.id); }}
+                              title={favorites.has(villa.id) ? 'Remove from saved' : 'Save listing'}
+                              className={`absolute top-1.5 right-1.5 w-[22px] h-[22px] flex items-center justify-center rounded-full backdrop-blur-sm transition-all ${
+                                favorites.has(villa.id)
+                                  ? 'bg-[color:var(--bvt-bg)]/80 opacity-100'
+                                  : 'bg-[color:var(--bvt-bg)]/60 opacity-0 group-hover/thumb:opacity-100 hover:bg-[color:var(--bvt-bg)]/80'
+                              }`}
+                            >
+                              <Heart size={12} strokeWidth={1.5} className={favorites.has(villa.id) ? 'text-[color:var(--bvt-accent)] fill-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink)]'} />
+                            </button>
+                          </div>
                           <div className="min-w-0">
                             <div className="font-display text-[17px] leading-[1.15] tracking-[-0.005em] text-[color:var(--bvt-ink)] group-hover:text-[color:var(--bvt-accent)] transition-colors flex items-center gap-2.5">
                                 <span className="truncate">{villa.villa_name || 'Luxury Villa'}</span>
@@ -1986,7 +1999,81 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     if (!document.querySelector('style[data-bvt-popup]')) {
       const style = document.createElement('style');
       style.setAttribute('data-bvt-popup', '1');
-      style.textContent = `.bvt-leaflet-popup .leaflet-popup-content-wrapper { padding: 0 !important; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: ${darkMode ? '#0f172a' : '#f8fafc'} !important; } .bvt-leaflet-popup .leaflet-popup-content { margin: 0 !important; width: 250px !important; } .bvt-leaflet-popup .leaflet-popup-tip { background: ${darkMode ? '#0f172a' : '#f8fafc'} !important; } .bvt-leaflet-popup .leaflet-popup-close-button { z-index: 10; right: 6px !important; top: 6px !important; color: ${darkMode ? '#64748b' : '#94a3b8'} !important; font-size: 18px !important; }`;
+      style.textContent = `
+        /* Editorial popup */
+        .bvt-leaflet-popup .leaflet-popup-content-wrapper {
+          padding: 0 !important;
+          border-radius: 0 !important;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px #2d364a;
+          background: #0a0e16 !important;
+          color: #f5f0e6 !important;
+        }
+        .bvt-leaflet-popup .leaflet-popup-content { margin: 0 !important; width: 260px !important; }
+        .bvt-leaflet-popup .leaflet-popup-tip { background: #0a0e16 !important; box-shadow: 0 0 0 1px #2d364a; }
+        .bvt-leaflet-popup .leaflet-popup-close-button {
+          z-index: 10; right: 8px !important; top: 8px !important;
+          color: #6b7080 !important; font-size: 18px !important;
+          font-family: var(--font-display, serif) !important;
+        }
+        .bvt-leaflet-popup .leaflet-popup-close-button:hover { color: #d4943a !important; }
+
+        /* Editorial price-pill marker */
+        .bvt-price-marker {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+        }
+        .bvt-price-marker__pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 7px;
+          background: rgba(10, 14, 22, 0.92);
+          border: 1px solid #2d364a;
+          color: #f5f0e6;
+          font-family: var(--font-mono, ui-monospace, monospace);
+          font-size: 11px;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+          transform: translate(-50%, -50%);
+          transition: border-color 0.15s, transform 0.15s;
+        }
+        .bvt-price-marker__pill::before {
+          content: "";
+          width: 5px; height: 5px; border-radius: 999px;
+          background: var(--dot, #6b7080);
+          flex-shrink: 0;
+        }
+        .bvt-price-marker:hover .bvt-price-marker__pill,
+        .bvt-price-marker--active .bvt-price-marker__pill {
+          border-color: #d4943a;
+          transform: translate(-50%, -50%) scale(1.08);
+          z-index: 1000;
+        }
+        .bvt-price-marker--hi { --dot: #7cc087; }
+        .bvt-price-marker--mid { --dot: #d4943a; }
+        .bvt-price-marker--low { --dot: #6b7080; }
+
+        /* Dark editorial Leaflet chrome */
+        .leaflet-container { background: #0a0e16 !important; font-family: inherit !important; }
+        .leaflet-control-attribution {
+          background: rgba(10,14,22,0.7) !important;
+          color: #6b7080 !important;
+          font-size: 9px !important;
+          padding: 1px 6px !important;
+          border: none !important;
+        }
+        .leaflet-control-attribution a { color: #a0a3ad !important; }
+        .leaflet-control-zoom a {
+          background: rgba(10,14,22,0.9) !important;
+          color: #f5f0e6 !important;
+          border: 1px solid #232b3d !important;
+          font-weight: 300 !important;
+        }
+        .leaflet-control-zoom a:hover { background: #1a2030 !important; color: #d4943a !important; border-color: #d4943a !important; }
+      `;
       document.head.appendChild(style);
     }
     const loadLeaflet = () => new Promise<void>((resolve) => {
@@ -2015,9 +2102,17 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     (container as any)._leafletMap = map;
     setMapRef(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OSM',
-      maxZoom: 18,
+    // Carto Dark Matter — editorial dark basemap (free for non-commercial, same terms as OSM)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+      attribution: '© OSM · Carto',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+    // Labels-only overlay so place names render above our price pills
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd',
+      maxZoom: 19,
+      pane: 'shadowPane',
     }).addTo(map);
 
     setTimeout(() => { map.invalidateSize(); }, 100);
@@ -2046,64 +2141,79 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
       if (!lat || !lng || lat === 0 || lng === 0) return;
 
       const roi = villa.projected_roi || 0;
-      const roiColor = roi >= 8 ? '#16a34a' : roi >= 5 ? '#2563eb' : '#64748b';
+      const roiTier = roi >= 10 ? 'hi' : roi >= 5 ? 'mid' : 'low';
 
-      const marker = L.circleMarker([lat, lng], {
-        radius: 5,
-        fillColor: roiColor,
-        color: '#fff',
-        weight: 1,
-        opacity: 0.9,
-        fillOpacity: 0.7,
-      }).addTo(mapRef);
-
-      // Price formatting for popup
+      // Price formatting for popup / marker label
       const desc = (villa.price_description || '').trim();
       const priceMatch = desc.match(/^(IDR|USD|AUD|EUR|SGD)\s*([\d,.\s]+)/i);
       let priceStr = '';
+      let priceUSD = 0;
       if (priceMatch) {
         const amount = parseFloat(priceMatch[2].replace(/\s|,/g, '')) || 0;
         const cur = priceMatch[1].toUpperCase();
         const r = rates[cur];
-        const priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
+        priceUSD = cur === 'USD' ? amount : (r && r > 0 ? amount / r : amount);
         const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
         priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
       } else {
         const p = Number(villa.last_price) || 0;
-        const priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
+        priceUSD = p >= 1e6 ? p / (rates['IDR'] || 16782) : p;
         const displayVal = displayCurrency === 'USD' ? priceUSD : priceUSD * (rates[displayCurrency] || 1);
         priceStr = `${displayCurrency} ${Math.round(displayVal).toLocaleString()}`;
       }
+      // Compact label for the marker itself — "$340k · 9.2%"
+      const priceShort = priceUSD >= 1e6 ? `$${(priceUSD / 1e6).toFixed(1)}M` : priceUSD >= 1000 ? `$${Math.round(priceUSD / 1000)}k` : `$${Math.round(priceUSD)}`;
+      const labelHtml = `<span class="bvt-price-marker__pill">${priceShort}<span style="color:#6b7080;padding:0 2px;">·</span>${roi.toFixed(1)}%</span>`;
+
+      const marker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: `bvt-price-marker bvt-price-marker--${roiTier}`,
+          html: labelHtml,
+          iconSize: [0, 0],
+          iconAnchor: [0, 0],
+        }),
+      }).addTo(mapRef);
 
       const isFav = favorites.has(villa.id);
       const isCmp = compareSet.has(villa.id);
       const cmpFull = compareSet.size >= 5 && !isCmp;
 
-      const bgColor = darkMode ? '#1e293b' : '#f8fafc';
-      const borderColor = darkMode ? '#475569' : '#e2e8f0';
-      const textColor = darkMode ? '#e2e8f0' : '#1e293b';
-      const mutedColor = darkMode ? '#94a3b8' : '#475569';
-      const roiBg = darkMode
-        ? (roi >= 8 ? '#064e3b' : roi >= 5 ? '#082f49' : '#1e293b')
-        : (roi >= 8 ? '#f0fdf4' : roi >= 5 ? '#eff6ff' : '#f8fafc');
+      // ROI dot color (matches marker)
+      const dotColor = roiTier === 'hi' ? '#7cc087' : roiTier === 'mid' ? '#d4943a' : '#6b7080';
 
       marker.bindPopup(`
-        <div class="bvt-map-popup" data-villa-id="${villa.id}" style="font-family: system-ui, -apple-system, sans-serif;">
-          <div style="padding: 10px 12px 8px; border-bottom: 1px solid ${borderColor};">
-            <div style="font-weight: 700; font-size: 13px; color: ${textColor}; line-height: 1.3; word-wrap: break-word;">${(villa.villa_name || 'Villa').substring(0, 50)}</div>
-            <div style="font-size: 11px; color: ${mutedColor}; margin-top: 2px; font-weight: 500;">${villa.location || 'Bali'} · ${villa.bedrooms || '?'} bed${villa.bathrooms ? ' · ' + villa.bathrooms + ' bath' : ''}</div>
+        <div class="bvt-map-popup" data-villa-id="${villa.id}" style="font-family: var(--font-sans, ui-sans-serif, system-ui); color: #f5f0e6;">
+          <div style="padding: 14px 14px 10px 14px; border-bottom: 1px solid #2d364a;">
+            <div style="font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7080; margin-bottom: 6px;">
+              Dossier · <span style="color:${dotColor};">${villa.location || 'Bali'}</span>
+            </div>
+            <div style="font-family: var(--font-display, 'Fraunces', serif); font-weight: 400; font-size: 16px; line-height: 1.18; letter-spacing: -0.005em; color: #f5f0e6; word-wrap: break-word;">
+              ${(villa.villa_name || 'Villa').substring(0, 60)}
+            </div>
           </div>
-          <div style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${borderColor};">
-            <div style="font-weight: 600; font-size: 13px; color: ${textColor};">${priceStr}</div>
-            <div style="font-size: 12px; font-weight: 700; color: ${roiColor}; background: ${roiBg}; padding: 2px 8px; border-radius: 99px;">${roi.toFixed(1)}%</div>
+          <div style="padding: 12px 14px; border-bottom: 1px solid #232b3d; display: flex; justify-content: space-between; align-items: baseline;">
+            <div>
+              <div style="font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7080; margin-bottom: 3px;">Price</div>
+              <div style="font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-size: 13px; color: #f5f0e6;">${priceStr}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7080; margin-bottom: 3px;">Net Yield</div>
+              <div style="font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-size: 18px; line-height: 1; color: ${dotColor};">${roi.toFixed(1)}<span style="font-size: 12px; color: #4a5060;">%</span></div>
+            </div>
           </div>
-          <div style="display: flex; gap: 6px; padding: 10px 12px; background: ${bgColor};">
-            <button data-action="favorite" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isFav ? '#f43f5e' : darkMode ? '#475569' : '#cbd5e1'}; border-radius: 6px; background: ${isFav ? (darkMode ? '#7f1d1d' : '#ffe4e6') : darkMode ? '#334155' : 'white'}; font-size: 10px; font-weight: 600; color: ${isFav ? (darkMode ? '#fca5ce' : '#e11d48') : darkMode ? '#cbd5e1' : '#64748b'}; cursor: pointer; text-align: center; line-height: 1.3;">${isFav ? '♥ Saved' : '♡ Save'}</button>
-            <button data-action="compare" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${isCmp ? (darkMode ? '#1e40af' : '#2563eb') : cmpFull ? (darkMode ? '#475569' : '#e2e8f0') : darkMode ? '#475569' : '#cbd5e1'}; border-radius: 6px; background: ${isCmp ? (darkMode ? '#1e3a8a' : '#dbeafe') : darkMode ? '#334155' : 'white'}; font-size: 10px; font-weight: 600; color: ${isCmp ? (darkMode ? '#93c5fd' : '#2563eb') : cmpFull ? (darkMode ? '#64748b' : '#94a3b8') : darkMode ? '#cbd5e1' : '#64748b'}; cursor: ${cmpFull ? 'default' : 'pointer'}; text-align: center; line-height: 1.3; ${cmpFull ? 'opacity: 0.5;' : ''}">${isCmp ? '✓ Selected' : 'Compare'}</button>
-            <button data-action="unlock" data-villa-id="${villa.id}" style="flex: 1; padding: 8px 4px; border: 1px solid ${darkMode ? '#475569' : '#334155'}; border-radius: 6px; background: ${darkMode ? '#334155' : '#1e293b'}; font-size: 10px; font-weight: 600; color: white; cursor: pointer; text-align: center; line-height: 1.3;">🔒 Unlock</button>
+          <div style="padding: 10px 14px 12px; display: flex; gap: 14px; align-items: center; justify-content: space-between;">
+            <button data-action="favorite" data-villa-id="${villa.id}" style="display: inline-flex; align-items: center; gap: 5px; background: none; border: none; padding: 4px 0; font-size: 11px; color: ${isFav ? '#d4943a' : '#a0a3ad'}; cursor: pointer;">
+              <span style="font-size: 13px; line-height: 1;">${isFav ? '●' : '○'}</span> ${isFav ? 'Saved' : 'Save'}
+            </button>
+            <button data-action="compare" data-villa-id="${villa.id}" style="display: inline-flex; align-items: center; gap: 5px; background: none; border: none; padding: 4px 0; font-size: 11px; color: ${isCmp ? '#d4943a' : cmpFull ? '#4a5060' : '#a0a3ad'}; cursor: ${cmpFull ? 'default' : 'pointer'}; ${cmpFull ? 'opacity: 0.6;' : ''}">
+              ${isCmp ? '✓' : '+'} ${isCmp ? 'Selected' : 'Compare'}
+            </button>
+            <button data-action="unlock" data-villa-id="${villa.id}" style="display: inline-flex; align-items: center; gap: 5px; background: none; border: none; border-bottom: 1px solid #8f6324; padding: 4px 0; font-size: 11px; color: #f5f0e6; cursor: pointer; font-weight: 500;">
+              Unlock <span style="color: #d4943a;">→</span>
+            </button>
           </div>
         </div>
-      `, { closeButton: true, className: 'bvt-leaflet-popup' });
+      `, { closeButton: true, className: 'bvt-leaflet-popup', offset: [0, -4] });
 
       if (villa.url) newMarkers[villa.url] = marker;
       markerCluster.push(marker);
@@ -2112,18 +2222,18 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
     setMarkersRef(newMarkers);
   }, [mapRef, mapLoaded, listings, displayCurrency, rates, favorites, compareSet]);
 
-  // Highlight marker on hover
+  // Highlight marker on hover — DivIcon markers use a class toggle
   useEffect(() => {
     if (!mapRef || !mapLoaded) return;
-    const L = (window as any).L;
-    if (!L) return;
 
     Object.entries(markersRef).forEach(([url, marker]) => {
+      const el = (marker as any).getElement && (marker as any).getElement();
+      if (!el) return;
       if (url === hoveredListingUrl) {
-        marker.setStyle({ radius: 10, weight: 3, fillOpacity: 1 });
+        el.classList.add('bvt-price-marker--active');
         marker.openPopup();
       } else {
-        marker.setStyle({ radius: 5, weight: 1, fillOpacity: 0.7 });
+        el.classList.remove('bvt-price-marker--active');
       }
     });
   }, [hoveredListingUrl, markersRef, mapRef, mapLoaded]);
@@ -2175,20 +2285,17 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
 
     if (favBtn) {
       const isFav = favorites.has(villaId);
-      favBtn.style.borderColor = isFav ? '#f43f5e' : darkMode ? '#475569' : '#cbd5e1';
-      favBtn.style.background = isFav ? (darkMode ? '#7f1d1d' : '#ffe4e6') : darkMode ? '#334155' : 'white';
-      favBtn.style.color = isFav ? (darkMode ? '#fca5ce' : '#e11d48') : darkMode ? '#cbd5e1' : '#64748b';
-      favBtn.textContent = isFav ? '♥ Saved' : '♡ Save';
+      favBtn.style.color = isFav ? '#d4943a' : '#a0a3ad';
+      favBtn.innerHTML = `<span style="font-size: 13px; line-height: 1;">${isFav ? '●' : '○'}</span> ${isFav ? 'Saved' : 'Save'}`;
     }
 
     if (cmpBtn) {
       const isCmp = compareSet.has(villaId);
       const cmpFull = compareSet.size >= 5 && !isCmp;
-      cmpBtn.style.borderColor = isCmp ? (darkMode ? '#1e40af' : '#2563eb') : cmpFull ? (darkMode ? '#475569' : '#e2e8f0') : darkMode ? '#475569' : '#cbd5e1';
-      cmpBtn.style.background = isCmp ? (darkMode ? '#1e3a8a' : '#dbeafe') : darkMode ? '#334155' : 'white';
-      cmpBtn.style.color = isCmp ? (darkMode ? '#93c5fd' : '#2563eb') : cmpFull ? (darkMode ? '#64748b' : '#94a3b8') : darkMode ? '#cbd5e1' : '#64748b';
-      cmpBtn.style.opacity = cmpFull ? '0.5' : '1';
-      cmpBtn.textContent = isCmp ? '✓ Selected' : 'Compare';
+      cmpBtn.style.color = isCmp ? '#d4943a' : cmpFull ? '#4a5060' : '#a0a3ad';
+      cmpBtn.style.cursor = cmpFull ? 'default' : 'pointer';
+      cmpBtn.style.opacity = cmpFull ? '0.6' : '1';
+      cmpBtn.textContent = `${isCmp ? '✓' : '+'} ${isCmp ? 'Selected' : 'Compare'}`;
     }
   }, [favorites, compareSet, mapRef]);
 
@@ -2200,15 +2307,25 @@ function BaliMapView({ listings, displayCurrency, rates, hoveredListingUrl, favo
   }, [mapRef]);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden h-full flex flex-col">
-      <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-          <Map size={14} className="text-blue-500" /> Property Map
+    <div className="bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline)] overflow-hidden h-full flex flex-col">
+      <div className="px-4 py-3 border-b border-[color:var(--bvt-hairline)] flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="h-px w-6 bg-[color:var(--bvt-accent)]" aria-hidden />
+          <span className="label-micro">The atlas · Bali coordinates</span>
         </div>
-        <div className="flex gap-2 text-[9px] text-slate-400 dark:text-slate-500">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600 inline-block"></span> ≥15%</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-600 inline-block"></span> 10-15%</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-500 inline-block"></span> &lt;10%</span>
+        <div className="flex gap-4 items-center text-[9px] tracking-[0.14em] uppercase text-[color:var(--bvt-ink-dim)]">
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#7cc087' }}></span>
+            <span className="font-mono tabular-nums normal-case tracking-normal text-[10px]">≥10%</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#d4943a' }}></span>
+            <span className="font-mono tabular-nums normal-case tracking-normal text-[10px]">5–10%</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#6b7080' }}></span>
+            <span className="font-mono tabular-nums normal-case tracking-normal text-[10px]">&lt;5%</span>
+          </span>
         </div>
       </div>
       <div id="bali-map" className="flex-1" style={{ minHeight: '500px', width: '100%' }}></div>
