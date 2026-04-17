@@ -16,121 +16,182 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#0a1120] text-slate-100">
-      <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
-        <nav className="text-xs text-slate-500 mb-8">
-          <Link href="/" className="hover:text-slate-300">Home</Link>
-          <span className="mx-2">/</span>
-          <span className="text-slate-400">About</span>
+    <div className="bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)]">
+      <article className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-16 pb-16">
+        {/* Breadcrumb */}
+        <nav className="mb-10 text-[12px]" aria-label="Breadcrumb">
+          <Link href="/" className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] transition-colors">
+            Home
+          </Link>
+          <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
+          <span className="text-[color:var(--bvt-ink)]">About</span>
         </nav>
 
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-          Why this <span className="text-[#d4943a]">exists</span>
-        </h1>
-        <p className="text-xl text-slate-400 leading-relaxed mb-10">
-          Every villa listing in Bali quotes an ROI figure. Most of those
-          figures wouldn&apos;t survive a junior analyst&apos;s first pass. So
-          we built a site that does the pass for you.
-        </p>
+        {/* Editorial hero */}
+        <header className="mb-20 md:mb-28">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+            <span className="label-micro">Masthead · About the publication</span>
+          </div>
 
-        <div className="space-y-8 text-slate-300 leading-relaxed">
-          <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-3">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
+            <div className="lg:col-span-8">
+              <h1 className="font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[44px] sm:text-[56px] md:text-[72px] lg:text-[84px]">
+                Why this
+                <br />
+                <span className="text-[color:var(--bvt-accent)]">exists.</span>
+              </h1>
+              <p className="mt-8 max-w-[58ch] text-[19px] md:text-[21px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
+                Every villa listing in Bali quotes an ROI figure. Most of those
+                figures wouldn&apos;t survive a junior analyst&apos;s first pass.
+                So we built a site that does the pass for you.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* The problem + what we do — two-column editorial */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 mb-20 md:mb-28">
+          <div className="lg:col-span-4">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="h-px w-8 bg-[color:var(--bvt-accent)]" aria-hidden />
+              <span className="label-micro">Section 01</span>
+            </div>
+            <h2 className="font-display text-[28px] md:text-[34px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)]">
               The problem
             </h2>
-            <p>
+          </div>
+          <div className="lg:col-span-8 lg:pt-2">
+            <p className="text-[17px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[62ch]">
               Bali&apos;s property market is brochure-driven. Agents publish
-              yields of 15-25% using gross revenue, peak-season nightly rates,
+              yields of 15–25% using gross revenue, peak-season nightly rates,
               and purchase prices that conveniently exclude tax, notaris fees,
               furniture, and lease depreciation. Buyers — often first-time
               foreign investors — have no neutral place to check the math.
             </p>
-          </section>
+          </div>
+        </section>
 
-          <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-3">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 mb-20 md:mb-28">
+          <div className="lg:col-span-4">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="h-px w-8 bg-[color:var(--bvt-accent)]" aria-hidden />
+              <span className="label-micro">Section 02</span>
+            </div>
+            <h2 className="font-display text-[28px] md:text-[34px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)]">
               What we do
             </h2>
-            <p>
-              We scrape every audited listing from Bali Home Immo, the largest
-              single source of Bali villa inventory, and run each one through a
+          </div>
+          <div className="lg:col-span-8 lg:pt-2">
+            <p className="text-[17px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[62ch]">
+              We scrape every listing from Bali Home Immo, the largest single
+              source of Bali villa inventory, and run each one through a
               standardized financial model:
             </p>
-            <ul className="list-disc pl-6 mt-3 space-y-2">
-              <li>Nightly rate benchmarked against AirDNA & booking platforms in the same area</li>
-              <li>Area-specific occupancy assumptions (not a flat 85%)</li>
-              <li>40% operating expense load — management, OTA commissions, maintenance, utilities</li>
-              <li>Lease-term amortisation for all Hak Sewa (leasehold) properties</li>
-              <li>Red-flag detection for short leases, price/rate mismatches, and inflated claims</li>
+            <ul className="mt-6 divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)] max-w-[62ch]">
+              {[
+                "Nightly rate benchmarked against AirDNA & booking platforms in the same area",
+                "Area-specific occupancy assumptions — not a flat 85%",
+                "40% operating expense load — management, OTA commissions, maintenance, utilities",
+                "Lease-term amortisation for all Hak Sewa (leasehold) properties",
+                "Red-flag detection for short leases, price/rate mismatches, and inflated claims",
+              ].map((x, i) => (
+                <li key={i} className="py-4 flex gap-4">
+                  <span className="font-mono text-[11px] text-[color:var(--bvt-accent)] tabular-nums mt-1">
+                    0{i + 1}
+                  </span>
+                  <span className="text-[15px] leading-[1.6] text-[color:var(--bvt-ink-body)]">{x}</span>
+                </li>
+              ))}
             </ul>
-            <p className="mt-3">
+            <p className="mt-6 text-[15px] leading-[1.6] text-[color:var(--bvt-ink-muted)] max-w-[62ch]">
               Everything is decomposable. Every number on every listing can be
               traced back to an input. Read the full{" "}
-              <Link href="/methodology" className="text-[#d4943a] hover:underline">
+              <Link href="/methodology" className="link-editorial">
                 methodology page
               </Link>{" "}
               for the gory details.
             </p>
-          </section>
+          </div>
+        </section>
 
-          <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-3">
-              How we stay honest
-            </h2>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 space-y-3">
-              <div>
-                <div className="text-sm font-bold text-slate-100">We&apos;re not a broker.</div>
-                <p className="text-sm text-slate-400">
-                  We earn zero commission on any sale. The &quot;view original
-                  listing&quot; link goes straight to the agent — if you buy,
-                  we don&apos;t see a rupiah.
-                </p>
+        {/* How we stay honest — four principles, FT-style principle rail */}
+        <section className="mb-20 md:mb-28">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+            <span className="label-micro">Editorial principles</span>
+          </div>
+          <h2 className="font-display text-[36px] md:text-[48px] leading-[1.02] tracking-[-0.02em] text-[color:var(--bvt-ink)] mb-10 md:mb-14">
+            How we stay honest.
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 md:gap-y-14 md:gap-x-16">
+            {[
+              {
+                n: "I.",
+                t: "We're not a broker.",
+                b: "We earn zero commission on any sale. The \"view original listing\" link goes straight to the agent — if you buy, we don't see a rupiah.",
+              },
+              {
+                n: "II.",
+                t: "We don't take agent money.",
+                b: "No paid rankings, no sponsored listings, no \"featured properties.\" Every audit is run on the same model.",
+              },
+              {
+                n: "III.",
+                t: "We show our assumptions.",
+                b: "Every sensitivity slider, every expense line item, every lease-decay calculation is exposed. You can disagree with our inputs and rebuild the math yourself.",
+              },
+              {
+                n: "IV.",
+                t: "We re-audit weekly.",
+                b: "Prices move. Flags change. Every listing shows its last re-audit date, and we keep price history on file so you can see which sellers are motivated.",
+              },
+            ].map((p) => (
+              <div key={p.n} className="border-t border-[color:var(--bvt-hairline)] pt-5">
+                <div className="font-mono text-[13px] text-[color:var(--bvt-accent)] mb-3">{p.n}</div>
+                <h3 className="font-display text-[22px] md:text-[24px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-3">
+                  {p.t}
+                </h3>
+                <p className="text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[50ch]">{p.b}</p>
               </div>
-              <div>
-                <div className="text-sm font-bold text-slate-100">We don&apos;t take agent money.</div>
-                <p className="text-sm text-slate-400">
-                  No paid rankings, no sponsored listings, no &quot;featured
-                  properties.&quot; Every audit is run on the same model.
-                </p>
-              </div>
-              <div>
-                <div className="text-sm font-bold text-slate-100">We show our assumptions.</div>
-                <p className="text-sm text-slate-400">
-                  Every sensitivity slider, every expense line item, every
-                  lease-decay calculation is exposed. You can disagree with our
-                  inputs and rebuild the math yourself.
-                </p>
-              </div>
-              <div>
-                <div className="text-sm font-bold text-slate-100">We re-audit weekly.</div>
-                <p className="text-sm text-slate-400">
-                  Prices move. Flags change. Every listing shows its last
-                  re-audit date, and we keep price history on file so you can
-                  see which sellers are motivated.
-                </p>
-              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* What we're not + who builds this */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 mb-20 md:mb-28">
+          <div className="lg:col-span-4">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="h-px w-8 bg-[color:var(--bvt-accent)]" aria-hidden />
+              <span className="label-micro">Section 03</span>
             </div>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-3">
+            <h2 className="font-display text-[28px] md:text-[34px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)]">
               What we&apos;re not
             </h2>
-            <p>
+          </div>
+          <div className="lg:col-span-8 lg:pt-2">
+            <p className="text-[17px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[62ch]">
               We&apos;re not a law firm, a notaris, or a licensed financial
               advisor. Our analysis is informational. Every serious purchase
-              still needs a contract review, a licensed notaris, and
-              independent tax advice. If an audit here gives you pause —
-              that&apos;s the point. If it gives you confidence — still do
-              your own diligence.
+              still needs a contract review, a licensed notaris, and independent
+              tax advice. If an audit here gives you pause — that&apos;s the
+              point. If it gives you confidence — still do your own diligence.
             </p>
-          </section>
+          </div>
+        </section>
 
-          <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-3">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+          <div className="lg:col-span-4">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="h-px w-8 bg-[color:var(--bvt-accent)]" aria-hidden />
+              <span className="label-micro">Colophon</span>
+            </div>
+            <h2 className="font-display text-[28px] md:text-[34px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)]">
               Who builds this
             </h2>
-            <p>
+          </div>
+          <div className="lg:col-span-8 lg:pt-2">
+            <p className="text-[17px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[62ch]">
               Bali Villa Truth is an independent project. The site,
               infrastructure, and audits are built and maintained by one person
               who splits time between Bali and the Australian east coast. The
@@ -138,27 +199,19 @@ export default function AboutPage() {
               tired of watching friends buy villas on the strength of a
               brochure.
             </p>
-            <p className="mt-3">
+            <p className="mt-4 text-[17px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[62ch]">
               Questions, corrections, or audit requests:{" "}
               <a
                 href="mailto:audits@balivillatruth.com"
-                className="text-[#d4943a] hover:underline"
+                className="link-editorial"
               >
                 audits@balivillatruth.com
               </a>
               .
             </p>
-          </section>
-        </div>
-
-        <div className="mt-16 pt-8 border-t border-slate-800 text-xs text-slate-500">
-          <Link href="/" className="hover:text-slate-300">← Back to listings</Link>
-          <span className="mx-3 text-slate-700">|</span>
-          <Link href="/methodology" className="hover:text-slate-300">Methodology</Link>
-          <span className="mx-3 text-slate-700">|</span>
-          <Link href="/contact" className="hover:text-slate-300">Contact</Link>
-        </div>
-      </div>
+          </div>
+        </section>
+      </article>
     </div>
   );
 }
