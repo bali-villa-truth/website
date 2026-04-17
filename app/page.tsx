@@ -1166,7 +1166,7 @@ export default function BaliVillaTruth() {
       )}
 
       {/* SPLIT LAYOUT: TABLE + MAP */}
-      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-[1400px]'} mx-auto flex gap-6 transition-all`}>
+      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-[1400px]'} mx-auto flex gap-6 transition-all min-w-0`}>
       {/* MOBILE CARD VIEW */}
       <main className={`${mobileView === 'list' ? 'block' : 'hidden'} md:hidden transition-all w-full`}>
         <div className="divide-y divide-[color:var(--bvt-hairline)] border-t border-b border-[color:var(--bvt-hairline)]">
@@ -1306,18 +1306,25 @@ export default function BaliVillaTruth() {
       </main>
 
       {/* DESKTOP TABLE — editorial ledger */}
-      <main className={`hidden md:block transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <main className={`hidden md:block transition-all min-w-0 ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
+        <div className="w-full">
+          <table className="w-full text-left border-collapse" style={{ tableLayout: 'fixed' }}>
+            <colgroup>
+              <col style={{ width: '2.5rem' }} />
+              <col style={{ width: showMap ? '38%' : '34%' }} />
+              <col style={{ width: showMap ? '18%' : '15%' }} />
+              <col style={{ width: showMap ? '14%' : '13%' }} />
+              <col style={{ width: showMap ? '20%' : '23%' }} />
+              <col style={{ width: showMap ? '16%' : '15%' }} />
+            </colgroup>
             <thead>
               <tr className="border-t border-b border-[color:var(--bvt-hairline-2)] text-[10px] uppercase tracking-[0.18em] font-medium text-[color:var(--bvt-ink-dim)]">
-                <th className="py-3 w-10 pr-2 text-left font-medium"><span className="sr-only">No.</span></th>
-                <th className="py-3 pr-5 font-medium">Asset</th>
-                <th className="py-3 px-5 font-medium">Price · {displayCurrency}</th>
-                <th className="py-3 px-5 font-medium">Price/m²</th>
-                <th className="py-3 px-5 text-center font-medium">Net Yield</th>
-                <th className="py-3 px-5 font-medium">Tenure · Specs</th>
-                <th className="py-3 pl-5 text-right font-medium">Source</th>
+                <th className="py-3 pr-2 text-left font-medium"><span className="sr-only">No.</span></th>
+                <th className="py-3 pr-4 font-medium">Asset</th>
+                <th className="py-3 px-3 font-medium">Price · {displayCurrency}</th>
+                <th className="py-3 px-3 text-center font-medium">Net Yield</th>
+                <th className="py-3 px-3 font-medium">Tenure · Specs</th>
+                <th className="py-3 pl-3 text-right font-medium">Source</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[color:var(--bvt-hairline)]">
@@ -1326,17 +1333,16 @@ export default function BaliVillaTruth() {
                     [0,1,2,3,4,5].map(i => (
                       <tr key={i} className="animate-pulse">
                         <td className="py-6 pr-2"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-6" /></td>
-                        <td className="py-6 pr-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-48" /></td>
-                        <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-24" /></td>
-                        <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-16" /></td>
-                        <td className="py-6 px-5"><div className="h-4 bg-[color:var(--bvt-bg-soft)] w-14 mx-auto" /></td>
-                        <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-24" /></td>
-                        <td className="py-6 pl-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-16 ml-auto" /></td>
+                        <td className="py-6 pr-4"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-48" /></td>
+                        <td className="py-6 px-3"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-24" /></td>
+                        <td className="py-6 px-3"><div className="h-4 bg-[color:var(--bvt-bg-soft)] w-14 mx-auto" /></td>
+                        <td className="py-6 px-3"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-24" /></td>
+                        <td className="py-6 pl-3"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-16 ml-auto" /></td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                        <td colSpan={7} className="py-20 text-center">
+                        <td colSpan={6} className="py-20 text-center">
                             {showFavoritesOnly ? <Heart size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" /> : <Filter size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" />}
                             <p className="text-[14px] text-[color:var(--bvt-ink-muted)]">{showFavoritesOnly ? 'No saved dossiers yet. Click the heart to save one.' : 'No properties match your filters.'}</p>
                         </td>
@@ -1365,14 +1371,14 @@ export default function BaliVillaTruth() {
                         <td className="py-6 pr-2 align-middle">
                           <span className="font-mono text-[11px] tabular-nums text-[color:var(--bvt-accent)]">{String(idx + 1).padStart(2, '0')}</span>
                         </td>
-                        <td className="py-6 pr-5 align-middle">
-                        <div className="flex items-center gap-4">
+                        <td className="py-6 pr-4 align-middle">
+                        <div className="flex items-center gap-3">
                           {/* Thumbnail with overlaid compare / favorite controls */}
-                          <div className="relative w-24 h-16 flex-shrink-0 group/thumb">
+                          <div className="relative w-20 h-14 flex-shrink-0 group/thumb">
                             {villa.thumbnail_url ? (
-                              <img src={villa.thumbnail_url} alt="" className="w-24 h-16 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
+                              <img src={villa.thumbnail_url} alt="" className="w-20 h-14 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
                             ) : (
-                              <div className="w-24 h-16 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex items-center justify-center">
+                              <div className="w-20 h-14 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex items-center justify-center">
                                 <Home size={16} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
                               </div>
                             )}
@@ -1404,20 +1410,20 @@ export default function BaliVillaTruth() {
                               <Heart size={12} strokeWidth={1.5} className={favorites.has(villa.id) ? 'text-[color:var(--bvt-accent)] fill-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink)]'} />
                             </button>
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-display text-[17px] leading-[1.15] tracking-[-0.005em] text-[color:var(--bvt-ink)] group-hover:text-[color:var(--bvt-accent)] transition-colors flex items-center gap-2.5">
-                                <span className="truncate">{villa.villa_name || 'Luxury Villa'}</span>
-                                {hasDanger && <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.12em] uppercase text-[color:var(--bvt-bad)]"><ShieldAlert size={9} strokeWidth={1.5}/> Verify</span>}
-                                {!hasDanger && hasWarning && <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.12em] uppercase text-[color:var(--bvt-warn)]"><AlertTriangle size={9} strokeWidth={1.5}/> Caution</span>}
+                          <div className="min-w-0 flex-1">
+                            <div className="font-display text-[15px] leading-[1.2] tracking-[-0.005em] text-[color:var(--bvt-ink)] group-hover:text-[color:var(--bvt-accent)] transition-colors">
+                                <span className="line-clamp-2 break-words">{villa.villa_name || 'Luxury Villa'}</span>
                             </div>
-                            <div className="mt-1 label-micro">
-                                {villa.location || "Bali"}
+                            <div className="mt-1 label-micro flex items-center gap-2 flex-wrap">
+                                <span>{villa.location || "Bali"}</span>
+                                {hasDanger && <span className="inline-flex items-center gap-1 text-[9px] font-medium tracking-[0.12em] uppercase text-[color:var(--bvt-bad)]"><ShieldAlert size={8} strokeWidth={1.5}/> Verify</span>}
+                                {!hasDanger && hasWarning && <span className="inline-flex items-center gap-1 text-[9px] font-medium tracking-[0.12em] uppercase text-[color:var(--bvt-warn)]"><AlertTriangle size={8} strokeWidth={1.5}/> Caution</span>}
                             </div>
                           </div>
                         </div>
                         </td>
-                        <td className="py-6 px-5 align-middle">
-                         <div className="flex items-center gap-2">
+                        <td className="py-6 px-3 align-middle">
+                         <div className="flex items-center gap-2 flex-wrap">
                            <span className="font-mono tabular-nums text-[14px] text-[color:var(--bvt-ink)]">{formatPriceInCurrency(villa)}</span>
                            {(() => {
                              const badge = getPriceChangeBadge(villa);
@@ -1439,11 +1445,11 @@ export default function BaliVillaTruth() {
                              );
                            })()}
                          </div>
+                         <div className="mt-1 font-mono tabular-nums text-[11px] text-[color:var(--bvt-ink-dim)]">
+                           {getPricePerSqm(villa)} <span className="text-[color:var(--bvt-ink-faint)] normal-case tracking-normal">/m²</span>
+                         </div>
                         </td>
-                        <td className="py-6 px-5 align-middle font-mono tabular-nums text-[12px] text-[color:var(--bvt-ink-muted)]">
-                         {getPricePerSqm(villa)}
-                        </td>
-                        <td className="py-6 px-5 align-middle">
+                        <td className="py-6 px-3 align-middle">
                         <div className="flex flex-col items-center relative">
                             <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
                             {/* BVT Adjusted ROI — prominent numeric */}
@@ -1553,18 +1559,17 @@ export default function BaliVillaTruth() {
                             </div>
                         </div>
                         </td>
-                        <td className="py-6 px-5 align-middle text-[12px] text-[color:var(--bvt-ink-muted)] space-y-1">
+                        <td className="py-6 px-3 align-middle text-[12px] text-[color:var(--bvt-ink-muted)]">
                             {/* Tenure — lead with the most important fact */}
-                            <div>
+                            <div className="leading-snug">
                                 {(() => {
                                     const f = (villa.features || "").trim();
                                     const years = Number(villa.lease_years) || 0;
                                     const isFreehold = f.includes("Freehold") || f.includes("Hak Milik") || years === 999;
                                     const isLeasehold = f.includes("Leasehold") || f.includes("Hak Sewa") || (years > 0 && years < 999);
-                                    if (isFreehold) return <span className="text-[color:var(--bvt-good)] inline-flex items-center gap-1 font-medium"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-good)] rounded-full" />Freehold<GlossaryTip term="hak_milik" /></span>;
+                                    if (isFreehold) return <span className="text-[color:var(--bvt-good)] inline-flex items-center gap-1 font-medium"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-good)] rounded-full flex-shrink-0" />Freehold<GlossaryTip term="hak_milik" /></span>;
                                     if (isLeasehold) {
-                                        const yearsLabel = years > 0 && years < 999 ? <><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> remaining</> : <>years unstated</>;
-                                        return <span className="text-[color:var(--bvt-ink-body)] inline-flex items-center gap-1"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-ink-dim)] rounded-full" />Leasehold<GlossaryTip term="hak_sewa" /> · {yearsLabel}</span>;
+                                        return <span className="text-[color:var(--bvt-ink-body)] inline-flex items-start gap-1 flex-wrap"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-ink-dim)] rounded-full flex-shrink-0 mt-1.5" /><span className="inline-flex items-center gap-1">Leasehold<GlossaryTip term="hak_sewa" /></span>{years > 0 && years < 999 && <span className="w-full"><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> remaining</span>}</span>;
                                     }
                                     if (years > 0 && years < 999) return <span className="text-[color:var(--bvt-ink-body)]"><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> remaining</span>;
                                     if (years === 999) return <span className="text-[color:var(--bvt-good)] font-medium">Freehold</span>;
@@ -1572,24 +1577,24 @@ export default function BaliVillaTruth() {
                                 })()}
                             </div>
 
-                            {/* Beds · baths · land · build — compact editorial row */}
-                            <div className="font-mono tabular-nums text-[11px] text-[color:var(--bvt-ink-dim)] pt-0.5">
+                            {/* Beds · baths · land · build — compact editorial row, wraps as needed */}
+                            <div className="mt-1.5 font-mono tabular-nums text-[11px] text-[color:var(--bvt-ink-dim)] leading-snug">
                                 {villa.bedrooms ? `${villa.bedrooms}bd` : '?bd'}
                                 {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1]?.trim().split(' ')[0] || '?'}ba`}
-                                <span className="mx-1.5 text-[color:var(--bvt-ink-faint)]">·</span>
-                                {villa.land_size || '?'}m² land
+                                <span className="mx-1 text-[color:var(--bvt-ink-faint)]">·</span>
+                                {villa.land_size || '?'}m²
                                 {villa.building_size > 0 && (
                                   <>
-                                    <span className="mx-1.5 text-[color:var(--bvt-ink-faint)]">·</span>
-                                    {villa.building_size}m² build
+                                    <span className="mx-1 text-[color:var(--bvt-ink-faint)]">/</span>
+                                    {villa.building_size}m²
                                   </>
                                 )}
                             </div>
                         </td>
-                        <td className="py-6 pl-5 text-right align-middle">
-                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] transition-colors group/btn">
+                        <td className="py-6 pl-3 text-right align-middle">
+                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-1 text-[12px] font-medium text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] transition-colors group/btn whitespace-nowrap">
                             <Lock size={11} strokeWidth={1.5}/>
-                            <span className="border-b border-[color:var(--bvt-accent-dim)] group-hover/btn:border-[color:var(--bvt-accent)] pb-px transition-colors">Unlock dossier</span>
+                            <span className="border-b border-[color:var(--bvt-accent-dim)] group-hover/btn:border-[color:var(--bvt-accent)] pb-px transition-colors">Unlock</span>
                             <span aria-hidden className="text-[color:var(--bvt-accent)]">→</span>
                         </button>
                         </td>
