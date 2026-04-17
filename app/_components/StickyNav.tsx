@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BvtSeal } from "./BvtSeal";
 
 /**
  * StickyNav — the one nav bar for the whole site.
@@ -25,16 +26,13 @@ export default function StickyNav() {
       className="sticky top-0 z-40 border-b border-[color:var(--bvt-hairline)]/60 bg-[color:var(--bvt-bg)]/75 backdrop-blur-xl supports-[backdrop-filter]:bg-[color:var(--bvt-bg)]/60"
     >
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-14 flex items-center justify-between">
-        {/* Brand — serif wordmark, tiny gold mark */}
+        {/* Brand — audit seal + serif wordmark */}
         <Link
           href="/"
-          className="group flex items-baseline gap-2.5"
+          className="group flex items-center gap-2.5 md:gap-3"
           aria-label="Bali Villa Truth home"
         >
-          <span
-            aria-hidden
-            className="h-1.5 w-1.5 rounded-full bg-[color:var(--bvt-accent)] translate-y-[-2px] group-hover:bg-[color:var(--bvt-accent-warm)] transition-colors"
-          />
+          <BvtSeal size={28} showRingText={false} className="flex-shrink-0" />
           <span className="font-display text-lg md:text-[19px] tracking-tight text-[color:var(--bvt-ink)] leading-none">
             Bali Villa Truth
           </span>
