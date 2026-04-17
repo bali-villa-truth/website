@@ -37,10 +37,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
-    const secret = process.env.STRIPE_SECRET_KEY;
-    const priceId = process.env.STRIPE_DEEP_AUDIT_PRICE_ID;
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL || "https://balivillatruth.com";
+    // Defensive: trim whitespace/newlines from env values. Vercel's
+    // env editor occasionally records a trailing newline if the user
+    // pastes from a multi-line source — Stripe then rejects the price
+    // id with "No such price: 'price_...\n'". Trim here so we're
+    // resilient to that.
+    const secret = (process.env.STRIPE_SECRET_KEY || "").trim();
+    const priceId = (process.env.STRIPE_DEEP_AUDIT_PRICE_ID || "").trim();
+    const siteUrl = (
+      process.env.NEXT_PUBLIC_SITE_URL || "https://balivillatruth.com"
+    ).trim();
 
     if (!secret || !priceId) {
       return NextResponse.json(
