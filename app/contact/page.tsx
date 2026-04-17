@@ -16,78 +16,105 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-[#0a1120] text-slate-100">
-      <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
-        <nav className="text-xs text-slate-500 mb-8">
-          <Link href="/" className="hover:text-slate-300">Home</Link>
-          <span className="mx-2">/</span>
-          <span className="text-slate-400">Contact</span>
+    <div className="bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)]">
+      <article className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-16 pb-16">
+        {/* Breadcrumb */}
+        <nav className="mb-10 text-[12px]" aria-label="Breadcrumb">
+          <Link href="/" className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] transition-colors">
+            Home
+          </Link>
+          <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
+          <span className="text-[color:var(--bvt-ink)]">Contact</span>
         </nav>
 
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-          Contact <span className="text-[#d4943a]">us</span>
-        </h1>
-        <p className="text-slate-400 text-lg leading-relaxed mb-10">
-          We&apos;re a small, independent team. There&apos;s no sales funnel — just
-          one email that reaches us directly.
-        </p>
-
-        <section className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 md:p-8 mb-8">
-          <div className="text-xs uppercase tracking-widest text-slate-500 mb-2">
-            Email
+        {/* Editorial hero */}
+        <header className="mb-16 md:mb-24">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+            <span className="label-micro">Letters to the editor</span>
           </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
+            <div className="lg:col-span-8">
+              <h1 className="font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[44px] sm:text-[56px] md:text-[72px] lg:text-[84px]">
+                Write to us.
+              </h1>
+              <p className="mt-8 max-w-[52ch] text-[19px] md:text-[21px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
+                We&apos;re a small, independent team. There&apos;s no sales
+                funnel — just one email address that reaches us directly.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Email call-to-action — giant editorial address */}
+        <section className="mb-20 md:mb-28 border-t border-b border-[color:var(--bvt-hairline)] py-14 md:py-20">
+          <div className="label-micro mb-5">Email</div>
           <a
             href="mailto:audits@balivillatruth.com"
-            className="text-2xl md:text-3xl font-bold text-[#d4943a] hover:text-[#e5a84d] transition-colors"
+            className="group font-display text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] text-[40px] sm:text-[56px] md:text-[72px] leading-[1.05] tracking-[-0.02em] break-all transition-colors"
           >
             audits@balivillatruth.com
+            <span className="inline-block text-[color:var(--bvt-accent)] ml-3 transition-transform group-hover:translate-x-1" aria-hidden>↗</span>
           </a>
-          <p className="text-sm text-slate-400 mt-4 leading-relaxed">
-            We reply within 48 hours (usually same day, Bali time — UTC+8).
+          <p className="mt-8 max-w-[60ch] text-[15px] leading-[1.65] text-[color:var(--bvt-ink-muted)]">
+            We reply within 48 hours — usually same day, Bali time (UTC+8).
             Include a BHI listing URL if you want a quick second opinion on a
             specific property.
           </p>
         </section>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-12">
-          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-sm font-bold text-slate-200 mb-2">
-              Good reasons to write
-            </h2>
-            <ul className="text-sm text-slate-400 space-y-1.5 leading-relaxed">
-              <li>· Audit a listing we haven&apos;t covered yet</li>
-              <li>· Second opinion before signing a lease</li>
-              <li>· Spotted an error in our data? Please tell us</li>
-              <li>· Feature requests, feedback, partnership ideas</li>
+        {/* Two-column editorial rails */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 mb-20 md:mb-28">
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="h-px w-8 bg-[color:var(--bvt-accent)]" aria-hidden />
+              <span className="label-micro">Good reasons to write</span>
+            </div>
+            <ul className="divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)]">
+              {[
+                "Audit a listing we haven't covered yet",
+                "Second opinion before signing a lease",
+                "Spotted an error in our data — please tell us",
+                "Feature requests, feedback, partnership ideas",
+              ].map((x, i) => (
+                <li key={i} className="py-4 flex gap-4">
+                  <span className="font-mono text-[11px] text-[color:var(--bvt-accent)] tabular-nums mt-1">0{i + 1}</span>
+                  <span className="text-[15px] leading-[1.6] text-[color:var(--bvt-ink-body)]">{x}</span>
+                </li>
+              ))}
             </ul>
           </div>
-          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-sm font-bold text-slate-200 mb-2">
-              What we can&apos;t do
-            </h2>
-            <ul className="text-sm text-slate-400 space-y-1.5 leading-relaxed">
-              <li>· Legal or tax advice — talk to a notaris</li>
-              <li>· Introduce you to agents (we&apos;re not brokers)</li>
-              <li>· Guarantee ROI — our numbers are estimates</li>
-              <li>· Respond to cold sales or SEO pitches</li>
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="h-px w-8 bg-[color:var(--bvt-warn)]" aria-hidden />
+              <span className="label-micro">What we can&apos;t do</span>
+            </div>
+            <ul className="divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)]">
+              {[
+                "Legal or tax advice — talk to a notaris",
+                "Introduce you to agents — we're not brokers",
+                "Guarantee ROI — our numbers are estimates",
+                "Respond to cold sales or SEO pitches",
+              ].map((x, i) => (
+                <li key={i} className="py-4 flex gap-4">
+                  <span className="font-mono text-[11px] text-[color:var(--bvt-warn)] tabular-nums mt-1">0{i + 1}</span>
+                  <span className="text-[15px] leading-[1.6] text-[color:var(--bvt-ink-body)]">{x}</span>
+                </li>
+              ))}
             </ul>
           </div>
-        </div>
+        </section>
 
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Our analysis is informational only and is not financial, legal, or
-          investment advice. Always consult an independent Indonesian notaris
-          and tax advisor before investing in Bali real estate.
-        </p>
-
-        <div className="mt-12 pt-8 border-t border-slate-800 text-xs text-slate-500">
-          <Link href="/" className="hover:text-slate-300">← Back to listings</Link>
-          <span className="mx-3 text-slate-700">|</span>
-          <Link href="/methodology" className="hover:text-slate-300">Methodology</Link>
-          <span className="mx-3 text-slate-700">|</span>
-          <Link href="/about" className="hover:text-slate-300">About</Link>
-        </div>
-      </div>
+        {/* Fine print */}
+        <section className="pt-8 border-t border-[color:var(--bvt-hairline)]">
+          <p className="text-[12px] leading-[1.65] text-[color:var(--bvt-ink-dim)] max-w-[70ch]">
+            Our analysis is informational only and is not financial, legal, or
+            investment advice. Always consult an independent Indonesian notaris
+            and tax advisor before investing in Bali real estate.
+          </p>
+        </section>
+      </article>
     </div>
   );
 }
