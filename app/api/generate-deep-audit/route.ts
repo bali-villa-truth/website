@@ -1,0 +1,1082 @@
+/**
+ * /api/generate-deep-audit?session_id=cs_xxx
+ *
+ * Called by the /deep-audit/success page after Stripe redirects back from
+ * hosted checkout. Flow:
+ *
+ *   1. Retrieve checkout session from Stripe; verify status='complete' and
+ *      payment_status='paid'. Reject if not.
+ *   2. Read villa_id + email from session.metadata.
+ *   3. Idempotency: check paid_audits table. If a row exists for this
+ *      session_id, return early with 'already_sent' so page refreshes
+ *      don't re-email.
+ *   4. Fetch villa row from listings_tracker.
+ *   5. Fetch comparables (same area + bedrooms, fall back to ±1 bed, then
+ *      to top-priced-in-area if still <5).
+ *   6. Compute core audit + stress-test matrix + exit-scenario table.
+ *   7. Generate 5-page Deep Audit PDF.
+ *   8. Email via Resend.
+ *   9. Insert paid_audits row.
+ *
+ * Required env vars:
+ *   STRIPE_SECRET_KEY
+ *   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ *   RESEND_API_KEY, RESEND_FROM_EMAIL, RESEND_FROM_NAME
+ */
+import { NextRequest, NextResponse } from "next/server";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
+import Stripe from "stripe";
+import PDFDocument from "pdfkit";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+// ------------------------------------------------------------------
+// Types
+// ------------------------------------------------------------------
+interface Villa {
+  id: number;
+  slug: string | null;
+  villa_name: string | null;
+  location: string | null;
+  last_price: number | null;
+  price_description: string | null;
+  bedrooms: number | null;
+  projected_roi: number | null;
+  est_nightly_rate: number | null;
+  est_occupancy: number | null;
+  flags: string | null;
+  lease_years: number | null;
+  url: string | null;
+  features: string | null;
+  occupancy_confidence: string | null;
+  occupancy_sample_size: number | null;
+  occupancy_source: string | null;
+  rate_source: string | null;
+  land_size: string | null;
+  building_size: string | null;
+  listing_type: string | null;
+}
+
+interface AuditNumbers {
+  price_usd: number;
+  price_desc: string;
+  nightly_rate: number;
+  occupancy: number;
+  bedrooms: number;
+  lease_type: string;
+  lease_years: number;
+  is_leasehold: boolean;
+  gross_revenue: number;
+  mgmt_fees: number;
+  ota_fees: number;
+  maintenance: number;
+  total_expenses: number;
+  lease_cost: number;
+  net_revenue: number;
+  gross_yield_pct: number;
+  net_yield_pct: number;
+}
+
+// ------------------------------------------------------------------
+// Brand palette — editorial navy / gold, matches the website
+// ------------------------------------------------------------------
+const COLORS = {
+  ink: "#0a0e16",
+  inkMuted: "#3d4656",
+  inkDim: "#6b7685",
+  accent: "#d4943a",
+  accentSoft: "#f5e7cf",
+  hairline: "#d9d1c2",
+  bg: "#fbf6ec",
+  bgSoft: "#f3ebd9",
+  good: "#1f6f47",
+  goodSoft: "#dbeed6",
+  warn: "#a86a16",
+  warnSoft: "#fbe7c9",
+  bad: "#a6342b",
+  badSoft: "#f7d7d3",
+  white: "#ffffff",
+};
+
+const USD_RATE_FALLBACK = 17109;
+
+// ------------------------------------------------------------------
+// Audit math (mirrors /api/unlock-audit so the two PDFs are consistent)
+// ------------------------------------------------------------------
+function computeAudit(villa: Villa, usdRate: number): AuditNumbers {
+  const priceLocal = villa.last_price || 0;
+  const priceDesc = villa.price_description || "";
+
+  let priceUsd = 0;
+  const usdMatch = priceDesc.match(/USD\s*([\d,]+)/i);
+  if (usdMatch) priceUsd = parseFloat(usdMatch[1].replace(/,/g, ""));
+  if (!priceUsd && priceLocal) priceUsd = priceLocal / usdRate;
+
+  const nightlyRate = villa.est_nightly_rate || 0;
+  const occupancy = villa.est_occupancy || 0.65;
+  const leaseYears = villa.lease_years || 0;
+  const bedrooms = villa.bedrooms || 0;
+  const featuresLower = (villa.features || "").toLowerCase();
+  const isLeasehold =
+    featuresLower.includes("leasehold") ||
+    (leaseYears > 0 && leaseYears < 99);
+
+  const grossRevenue = nightlyRate * 365 * occupancy;
+  const mgmtFees = grossRevenue * 0.15;
+  const otaFees = grossRevenue * 0.15;
+  const maintenance = grossRevenue * 0.1;
+  const totalExpenses = mgmtFees + otaFees + maintenance;
+  const netBeforeLease = grossRevenue - totalExpenses;
+
+  let leaseCost = 0;
+  if (isLeasehold && leaseYears > 0 && priceUsd > 0) {
+    leaseCost = priceUsd / leaseYears;
+  }
+  const netRevenue = netBeforeLease - leaseCost;
+  const grossYield = priceUsd > 0 ? (grossRevenue / priceUsd) * 100 : 0;
+  let netYield = priceUsd > 0 ? (netRevenue / priceUsd) * 100 : 0;
+  if (villa.projected_roi !== null && villa.projected_roi !== undefined) {
+    netYield = villa.projected_roi;
+  }
+
+  return {
+    price_usd: priceUsd,
+    price_desc: priceDesc,
+    nightly_rate: nightlyRate,
+    occupancy,
+    bedrooms,
+    lease_type: isLeasehold ? "Leasehold" : "Freehold",
+    lease_years: leaseYears,
+    is_leasehold: isLeasehold,
+    gross_revenue: grossRevenue,
+    mgmt_fees: mgmtFees,
+    ota_fees: otaFees,
+    maintenance,
+    total_expenses: totalExpenses,
+    lease_cost: leaseCost,
+    net_revenue: netRevenue,
+    gross_yield_pct: grossYield,
+    net_yield_pct: netYield,
+  };
+}
+
+function fmtCurrency(n: number): string {
+  if (!isFinite(n)) return "$0";
+  const sign = n < 0 ? "-" : "";
+  return `${sign}$${Math.round(Math.abs(n)).toLocaleString()}`;
+}
+function fmtPct(n: number, decimals = 1): string {
+  return `${n.toFixed(decimals)}%`;
+}
+function yieldTier(pct: number): { color: string; bg: string; label: string } {
+  if (pct >= 8) return { color: COLORS.good, bg: COLORS.goodSoft, label: "Strong" };
+  if (pct >= 5) return { color: COLORS.warn, bg: COLORS.warnSoft, label: "Moderate" };
+  if (pct >= 0) return { color: COLORS.bad, bg: COLORS.badSoft, label: "Weak" };
+  return { color: COLORS.bad, bg: COLORS.badSoft, label: "Negative" };
+}
+
+// ------------------------------------------------------------------
+// Comp selection with fallback ladder
+// ------------------------------------------------------------------
+interface Comp {
+  id: number;
+  slug: string | null;
+  villa_name: string | null;
+  location: string | null;
+  bedrooms: number | null;
+  last_price: number | null;
+  price_description: string | null;
+  projected_roi: number | null;
+  est_nightly_rate: number | null;
+  est_occupancy: number | null;
+  lease_years: number | null;
+}
+
+// Loose typing on purpose: SupabaseClient's generic inference doesn't line up
+// between a locally-created client and one passed as a param. We only use
+// .from(...).select(...).eq(...) here, which is stable across versions.
+async function fetchComps(
+  supabase: SupabaseClient,
+  villa: Villa,
+  targetN = 5
+): Promise<{ comps: Comp[]; fallback: string }> {
+  const area = villa.location || "";
+  const beds = villa.bedrooms || 0;
+
+  // Ladder 1: exact (area, bedrooms), excluding this villa
+  let res = await supabase
+    .from("listings_tracker")
+    .select(
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+    )
+    .eq("location", area)
+    .eq("bedrooms", beds)
+    .neq("id", villa.id)
+    .not("last_price", "is", null)
+    .not("projected_roi", "is", null)
+    .order("projected_roi", { ascending: false })
+    .limit(targetN * 2);
+  let rows = (res.data as Comp[] | null) || [];
+  if (rows.length >= targetN) {
+    return { comps: rows.slice(0, targetN), fallback: "exact" };
+  }
+
+  // Ladder 2: same area, ±1 bedroom
+  const bedsLo = Math.max(1, beds - 1);
+  const bedsHi = beds + 1;
+  res = await supabase
+    .from("listings_tracker")
+    .select(
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+    )
+    .eq("location", area)
+    .gte("bedrooms", bedsLo)
+    .lte("bedrooms", bedsHi)
+    .neq("id", villa.id)
+    .not("last_price", "is", null)
+    .not("projected_roi", "is", null)
+    .order("projected_roi", { ascending: false })
+    .limit(targetN * 3);
+  rows = (res.data as Comp[] | null) || [];
+  if (rows.length >= targetN) {
+    return { comps: rows.slice(0, targetN), fallback: "bed_tolerance" };
+  }
+
+  // Ladder 3: any area, exact bedrooms (wider radius)
+  res = await supabase
+    .from("listings_tracker")
+    .select(
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+    )
+    .eq("bedrooms", beds)
+    .neq("id", villa.id)
+    .not("last_price", "is", null)
+    .not("projected_roi", "is", null)
+    .order("projected_roi", { ascending: false })
+    .limit(targetN * 3);
+  rows = (res.data as Comp[] | null) || [];
+  return {
+    comps: rows.slice(0, targetN),
+    fallback: rows.length === 0 ? "none" : "any_area",
+  };
+}
+
+// ------------------------------------------------------------------
+// Stress-test scenarios
+// ------------------------------------------------------------------
+interface Scenario {
+  label: string;
+  rate_mult: number;
+  occ_delta: number;
+  opex_mult: number;
+  net_yield: number;
+  annual_cash: number;
+  description: string;
+}
+function buildScenarios(audit: AuditNumbers): Scenario[] {
+  const base = audit.nightly_rate;
+  const opex_base = 0.4; // 15+15+10
+  const specs: Omit<Scenario, "net_yield" | "annual_cash">[] = [
+    { label: "Base case (as published)", rate_mult: 1.0, occ_delta: 0, opex_mult: 1.0,
+      description: "The headline number from the free audit." },
+    { label: "Cyclical downturn (-15% occ)", rate_mult: 1.0, occ_delta: -0.15, opex_mult: 1.0,
+      description: "Modeled on Bali's 2015-16 oversupply + 2020 tourism shock blended." },
+    { label: "Competitive saturation", rate_mult: 0.88, occ_delta: -0.08, opex_mult: 1.0,
+      description: "If Canggu-style inventory growth hits your area: rates compress 12%, occupancy drifts 8pp." },
+    { label: "Operating-cost inflation", rate_mult: 1.0, occ_delta: 0, opex_mult: 1.2,
+      description: "Indonesia CPI + manager fees + maintenance re-bids at +20% — plausible over a 5yr hold." },
+    { label: "Double-shock", rate_mult: 0.88, occ_delta: -0.12, opex_mult: 1.15,
+      description: "Saturation + cost inflation stacked. Tests whether the villa is still cash-flow positive." },
+    { label: "Bull case (premium repositioning)", rate_mult: 1.15, occ_delta: 0.05, opex_mult: 1.0,
+      description: "What you'd need to hit to justify the asking price. Is this realistic?" },
+  ];
+  return specs.map((s) => {
+    const rate = base * s.rate_mult;
+    const occ = Math.max(0.15, Math.min(0.95, audit.occupancy + s.occ_delta));
+    const gross = rate * 365 * occ;
+    const opex = gross * opex_base * s.opex_mult;
+    const net = gross - opex - audit.lease_cost;
+    const ny = audit.price_usd > 0 ? (net / audit.price_usd) * 100 : 0;
+    return { ...s, net_yield: ny, annual_cash: net };
+  });
+}
+
+// ------------------------------------------------------------------
+// Negotiation memo — deterministic, property-specific
+// ------------------------------------------------------------------
+function buildNegotiationMemo(villa: Villa, audit: AuditNumbers, comps: Comp[]): string[] {
+  const lines: string[] = [];
+  const ny = audit.net_yield_pct;
+  const flags = (villa.flags || "").split(",").map((f) => f.trim()).filter(Boolean);
+  const compPrices = comps.map((c) => {
+    const d = c.price_description || "";
+    const m = d.match(/USD\s*([\d,]+)/i);
+    if (m) return parseFloat(m[1].replace(/,/g, ""));
+    return (c.last_price || 0) / USD_RATE_FALLBACK;
+  }).filter((p) => p > 0);
+  const compMed = compPrices.length
+    ? compPrices.sort((a, b) => a - b)[Math.floor(compPrices.length / 2)]
+    : 0;
+  const gapPct = compMed > 0 ? ((audit.price_usd - compMed) / compMed) * 100 : 0;
+
+  // Anchor
+  if (compMed > 0 && gapPct > 8) {
+    lines.push(
+      `Anchor the conversation on comps, not the asking price. This villa is priced ~${gapPct.toFixed(0)}% above the median ${villa.bedrooms || "?"}-bedroom in ${villa.location || "the area"} (median $${Math.round(compMed).toLocaleString()}, n=${compPrices.length}). Open with: "I've looked at ${compPrices.length} comparable listings in the same area and bedroom count. Your price is at the top of the range — what justifies that premium?"`
+    );
+  } else if (compMed > 0 && gapPct < -8) {
+    lines.push(
+      `The asking price is ~${Math.abs(gapPct).toFixed(0)}% below the ${villa.location} median for this bedroom tier. That's a signal — either the seller is motivated (offer fast and firm) or there's a defect you haven't found yet (lease, title, structure). Do not close until you've inspected and verified.`
+    );
+  } else {
+    lines.push(
+      `Pricing is in line with the ${villa.location} median for this bedroom tier. The negotiation lever is condition, not price — get a professional survey and use defect findings as your discount mechanism.`
+    );
+  }
+
+  // Walk-away anchor
+  const walkAwayYield = Math.max(5, ny - 1.5);
+  const walkAwayPrice =
+    audit.net_revenue > 0 && walkAwayYield > 0
+      ? audit.net_revenue / (walkAwayYield / 100)
+      : audit.price_usd * 0.85;
+  lines.push(
+    `Your walk-away number should be the price that delivers at least a ${walkAwayYield.toFixed(1)}% net yield — approximately ${fmtCurrency(walkAwayPrice)}. That's a ${(((audit.price_usd - walkAwayPrice) / audit.price_usd) * 100).toFixed(0)}% discount from asking. If the seller won't move at least halfway to that, walk. There are ${compPrices.length} comparable listings; you are not obligated to this one.`
+  );
+
+  // Opening offer
+  const openingOffer = audit.price_usd * 0.82;
+  lines.push(
+    `Recommended opening offer: ${fmtCurrency(openingOffer)} (~18% below asking). This is aggressive but defensible — if the net yield math at the asking price is ${fmtPct(ny)}, you have empirical justification for leaving room. Expect a counter at ~10-12% off. Meet at ~15% off asking if survey comes back clean.`
+  );
+
+  // Flag-specific leverage
+  if (flags.includes("SHORT_LEASE")) {
+    lines.push(
+      `**Short-lease leverage:** With <15 years remaining, every year you hold erodes 6-10% of value. Demand a 30-40% discount from a comparable fresh-lease price — not because you're being difficult, but because that's the math.`
+    );
+  }
+  if (flags.includes("OFF_PLAN")) {
+    lines.push(
+      `**Off-plan leverage:** Do NOT pay more than 30% before Pondok Wisata + PBG + SLF are issued. Insist on a construction guarantee tied to milestone payments. A seller who won't negotiate payment staging is either underfunded or hiding delays.`
+    );
+  }
+  if (flags.includes("BUDGET_VILLA") || flags.includes("EXTREME_BUDGET")) {
+    lines.push(
+      `**Budget-tier caution:** The "deal" is priced-in. Before negotiating further, verify why this villa is below the 25th percentile. Check land certificate (SHM vs HGB vs Hak Pakai), zoning compatibility, existing debt, and whether it's a nominee structure.`
+    );
+  }
+  if (audit.is_leasehold && audit.lease_years > 0 && audit.lease_years < 25) {
+    lines.push(
+      `**Lease extension:** Before making the final offer, get the landlord's written quote to extend the lease by 20-25 years. If extension is expensive/impossible, that changes the math — use it as a further discount lever.`
+    );
+  }
+
+  // Due diligence stop
+  lines.push(
+    `Do NOT transfer any funds before: (1) a Notaris/PPAT has verified the title chain, (2) a qualified surveyor has inspected the building, (3) Pondok Wisata + PBG + SLF documents are in your possession and validated, (4) a licensed Indonesian lawyer has reviewed the sale agreement. Budget $1,500-3,000 for this. It's cheap insurance.`
+  );
+
+  return lines;
+}
+
+// ------------------------------------------------------------------
+// Exit scenarios (leasehold linear decay)
+// ------------------------------------------------------------------
+interface ExitRow {
+  label: string;
+  year: number;
+  gross_collected: number;
+  ops_paid: number;
+  lease_paid: number;
+  net_collected: number;
+  resale_value: number;
+  total_return: number;
+  total_return_pct: number;
+  annualized_pct: number;
+}
+function buildExitScenarios(audit: AuditNumbers): ExitRow[] {
+  const rows: ExitRow[] = [];
+  const holds = audit.is_leasehold && audit.lease_years > 0 ? [3, 5, audit.lease_years] : [3, 5, 10];
+  for (const yr of holds) {
+    const gross = audit.gross_revenue * yr;
+    const ops = audit.total_expenses * yr;
+    const leasePaid = audit.lease_cost * yr;
+    const net = audit.net_revenue * yr;
+    let resale: number;
+    if (audit.is_leasehold && audit.lease_years > 0) {
+      const remaining = Math.max(0, audit.lease_years - yr);
+      resale = audit.price_usd * (remaining / audit.lease_years);
+    } else {
+      // Freehold — assume flat price in USD (conservative: ignore IDR inflation)
+      resale = audit.price_usd;
+    }
+    const totalReturn = net + resale - audit.price_usd;
+    const totalPct = audit.price_usd > 0 ? (totalReturn / audit.price_usd) * 100 : 0;
+    const annualized = yr > 0 ? Math.pow(1 + totalPct / 100, 1 / yr) - 1 : 0;
+    rows.push({
+      label: yr === audit.lease_years ? `Hold to end of lease (Year ${yr})` : `Exit at Year ${yr}`,
+      year: yr,
+      gross_collected: gross,
+      ops_paid: ops,
+      lease_paid: leasePaid,
+      net_collected: net,
+      resale_value: resale,
+      total_return: totalReturn,
+      total_return_pct: totalPct,
+      annualized_pct: annualized * 100,
+    });
+  }
+  return rows;
+}
+
+// ------------------------------------------------------------------
+// PDF generator — 5 pages
+// ------------------------------------------------------------------
+function generateDeepPdf(
+  villa: Villa,
+  audit: AuditNumbers,
+  comps: Comp[],
+  compFallback: string,
+  scenarios: Scenario[],
+  memo: string[],
+  exits: ExitRow[]
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({
+        size: "LETTER",
+        margins: { top: 56, bottom: 60, left: 50, right: 50 },
+        bufferPages: true,
+        info: {
+          Title: `BVT Deep Audit — ${villa.villa_name || "Villa"}`,
+          Author: "Bali Villa Truth",
+        },
+      });
+      const chunks: Buffer[] = [];
+      doc.on("data", (c) => chunks.push(c));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", reject);
+
+      const TOTAL = 5;
+
+      // PAGE 1 — Summary + stress-test headline
+      renderHeader(doc, villa, "Deep Audit");
+      renderStressHeadline(doc, audit, scenarios);
+      renderKeyStats(doc, villa, audit);
+      renderDataProvenance(doc, villa);
+      renderFooter(doc, 1, TOTAL);
+
+      // PAGE 2 — Comparables
+      doc.addPage();
+      renderHeader(doc, villa, "Area Comparables");
+      renderComps(doc, villa, comps, compFallback);
+      renderFooter(doc, 2, TOTAL);
+
+      // PAGE 3 — Stress-test matrix + ops sensitivity
+      doc.addPage();
+      renderHeader(doc, villa, "Stress Test");
+      renderScenarios(doc, scenarios);
+      renderOpsSensitivity(doc, audit);
+      renderFooter(doc, 3, TOTAL);
+
+      // PAGE 4 — Negotiation memo
+      doc.addPage();
+      renderHeader(doc, villa, "Negotiation Memo");
+      renderNegotiation(doc, memo);
+      renderFooter(doc, 4, TOTAL);
+
+      // PAGE 5 — Exit + DD checklist + legal red flags
+      doc.addPage();
+      renderHeader(doc, villa, "Exit Scenarios & Due Diligence");
+      renderExits(doc, exits);
+      renderDDChecklist(doc, villa, audit);
+      renderLegalRedFlags(doc, villa, audit);
+      renderFinalDisclaimer(doc);
+      renderFooter(doc, 5, TOTAL);
+
+      // Buffer-page no-op — kept for symmetry with unlock-audit.
+      const range = doc.bufferedPageRange();
+      for (let i = range.start; i < range.start + range.count; i++) {
+        doc.switchToPage(i);
+      }
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+function renderHeader(doc: PDFKit.PDFDocument, villa: Villa, section: string) {
+  // Wordmark
+  doc.fontSize(13).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text("Bali Villa ", 50, 50, { continued: true })
+    .fillColor(COLORS.accent).text("Truth", { continued: false });
+  // Section label
+  doc.fontSize(8.5).font("Helvetica-Bold").fillColor(COLORS.accent)
+    .text(`DEEP AUDIT · ${section.toUpperCase()}`, 50, 52, {
+      align: "right", width: 512, characterSpacing: 1.2,
+    });
+
+  doc.moveTo(50, 74).lineTo(562, 74).lineWidth(0.5).strokeColor(COLORS.hairline).stroke();
+
+  const name = (villa.villa_name || "Unnamed Villa").trim();
+  doc.fontSize(16).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text(name, 50, 86, { width: 512 });
+  const loc = villa.location || "Bali, Indonesia";
+  const beds = villa.bedrooms ? `· ${villa.bedrooms}-bed` : "";
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.inkDim)
+    .text(`${loc} ${beds}`, 50, doc.y + 2);
+  doc.y = Math.max(doc.y + 14, 132);
+}
+
+function renderStressHeadline(doc: PDFKit.PDFDocument, audit: AuditNumbers, scenarios: Scenario[]) {
+  const base = scenarios.find((s) => s.label.startsWith("Base")) || scenarios[0];
+  const worst = scenarios.reduce((a, b) => (a.net_yield < b.net_yield ? a : b));
+  const best = scenarios.reduce((a, b) => (a.net_yield > b.net_yield ? a : b));
+
+  const y = doc.y;
+  const cellW = (512 - 16) / 3;
+  const h = 110;
+  const boxes = [
+    { label: "WORST CASE", value: fmtPct(worst.net_yield), note: worst.label, tier: yieldTier(worst.net_yield) },
+    { label: "BASE CASE",  value: fmtPct(base.net_yield),  note: "As published", tier: yieldTier(base.net_yield) },
+    { label: "BULL CASE",  value: fmtPct(best.net_yield),  note: best.label, tier: yieldTier(best.net_yield) },
+  ];
+  boxes.forEach((b, i) => {
+    const x = 50 + i * (cellW + 8);
+    doc.rect(x, y, cellW, h).fill(b.tier.bg);
+    doc.rect(x, y, cellW, h).lineWidth(0.7).strokeColor(b.tier.color).stroke();
+    doc.fontSize(8.5).font("Helvetica-Bold").fillColor(COLORS.inkDim)
+      .text(b.label, x, y + 12, { width: cellW, align: "center", characterSpacing: 1.2 });
+    doc.fontSize(34).font("Helvetica-Bold").fillColor(b.tier.color)
+      .text(b.value, x, y + 28, { width: cellW, align: "center" });
+    doc.fontSize(8.5).font("Helvetica").fillColor(COLORS.inkMuted)
+      .text(b.note, x + 10, y + 76, { width: cellW - 20, align: "center", lineGap: 1 });
+  });
+  doc.y = y + h + 14;
+
+  doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text(
+      `The free audit shows one number — ${fmtPct(base.net_yield)}. That's a point estimate that assumes nothing changes. The Deep Audit tests the villa against six scenarios. Worst case is ${fmtPct(worst.net_yield)} (${worst.label.toLowerCase()}). Bull case is ${fmtPct(best.net_yield)} (${best.label.toLowerCase()}). The spread tells you how much risk sits in the headline number.`,
+      50, doc.y, { width: 512, lineGap: 3 }
+    );
+  doc.y += 8;
+}
+
+function renderKeyStats(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbers) {
+  sectionHeader(doc, "Villa Snapshot");
+  const leaseLabel = audit.is_leasehold && audit.lease_years
+    ? `${audit.lease_type} · ${audit.lease_years}yr remaining`
+    : audit.lease_type;
+  const rows: [string, string][] = [
+    ["Asking Price", fmtCurrency(audit.price_usd)],
+    ["Local Price", audit.price_desc || "—"],
+    ["Bedrooms", String(audit.bedrooms || "—")],
+    ["Ownership", leaseLabel],
+    ["Est. Nightly Rate", `${fmtCurrency(audit.nightly_rate)}/night`],
+    ["Est. Occupancy", fmtPct(audit.occupancy * 100, 0)],
+    ["Base Gross Yield", fmtPct(audit.gross_yield_pct)],
+    ["Base Net Yield",   fmtPct(audit.net_yield_pct)],
+  ];
+  twoColRows(doc, rows);
+}
+
+function renderDataProvenance(doc: PDFKit.PDFDocument, villa: Villa) {
+  sectionHeader(doc, "Data Provenance");
+  const rateSource = villa.rate_source || "bvt_auditor";
+  const occSource = villa.occupancy_source || "flat 65% assumption";
+  const occN = villa.occupancy_sample_size || 0;
+  const occConf = villa.occupancy_confidence || "—";
+  const rows: string[][] = [
+    ["Signal", "Value", "Confidence"],
+    ["Nightly rate", rateSource.replace(/_/g, " "), "BVT editorial estimate. We do not have a licensing agreement with AirDNA or Booking — treat as a considered guess, not a measurement."],
+    ["Occupancy", occSource, occN > 0 ? `${String(occConf).toUpperCase()} (n=${occN} reviews)` : "Flat assumption"],
+    ["Asking price", villa.price_description || "—", "Scraped from source listing; verify in-person."],
+    ["Lease years", villa.lease_years ? String(villa.lease_years) : "N/A", "From listing description; verify via Notaris."],
+  ];
+  dataTable(doc, rows, [90, 160, 262]);
+}
+
+function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallback: string) {
+  const fallbackText: Record<string, string> = {
+    exact: `Exact match — same ${villa.location}, ${villa.bedrooms}-bed.`,
+    bed_tolerance: `Not enough exact matches — expanded to ±1 bedroom in ${villa.location}.`,
+    any_area: `Not enough matches in ${villa.location} — expanded island-wide for ${villa.bedrooms}-bed only.`,
+    none: `No comparable listings found in our database. The comp-based conclusions below may be unreliable.`,
+  };
+
+  sectionHeader(doc, `Top ${comps.length} Comparable Listings`);
+  doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text(fallbackText[fallback] || "", 50, doc.y, { width: 512, lineGap: 2 });
+  doc.y += 6;
+
+  if (comps.length === 0) {
+    doc.fontSize(9.5).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
+      .text("No comparables available. Treat this property's yield in isolation.", 50, doc.y, { width: 512 });
+    doc.y += 12;
+    return;
+  }
+
+  const headerRow = ["Villa", "Area", "Beds", "Price", "Yield", "Lease"];
+  const rows: string[][] = [headerRow];
+  for (const c of comps) {
+    const nm = (c.villa_name || "—").slice(0, 40);
+    const price = (() => {
+      const d = c.price_description || "";
+      const m = d.match(/USD\s*([\d,]+)/i);
+      if (m) return `$${parseFloat(m[1].replace(/,/g, "")).toLocaleString()}`;
+      return c.last_price ? fmtCurrency(c.last_price / USD_RATE_FALLBACK) : "—";
+    })();
+    const lease = c.lease_years ? `${c.lease_years}yr` : "Free";
+    rows.push([
+      nm,
+      (c.location || "—").slice(0, 18),
+      String(c.bedrooms || "—"),
+      price,
+      c.projected_roi !== null && c.projected_roi !== undefined ? `${Number(c.projected_roi).toFixed(1)}%` : "—",
+      lease,
+    ]);
+  }
+  dataTable(doc, rows, [180, 112, 40, 80, 50, 50]);
+  doc.y += 10;
+
+  // Median line
+  const prices = comps.map((c) => {
+    const d = c.price_description || "";
+    const m = d.match(/USD\s*([\d,]+)/i);
+    if (m) return parseFloat(m[1].replace(/,/g, ""));
+    return (c.last_price || 0) / USD_RATE_FALLBACK;
+  }).filter((p) => p > 0).sort((a, b) => a - b);
+  const yields = comps.map((c) => c.projected_roi).filter((v): v is number => v !== null && v !== undefined).sort((a, b) => a - b);
+  if (prices.length && yields.length) {
+    const priceMed = prices[Math.floor(prices.length / 2)];
+    const yieldMed = yields[Math.floor(yields.length / 2)];
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.accent)
+      .text(
+        `Peer-group median: $${Math.round(priceMed).toLocaleString()} · ${yieldMed.toFixed(1)}% net yield (n=${comps.length})`,
+        50, doc.y, { width: 512 }
+      );
+    doc.y += 16;
+    doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
+      .text(
+        "Use this line in your negotiation. If your target villa is priced materially above the peer-group median without a defensible quality premium (oceanfront, fresh lease, recent renovation), that's unnegotiated margin — which belongs to you, not the seller.",
+        50, doc.y, { width: 512, lineGap: 2 }
+      );
+  }
+}
+
+function renderScenarios(doc: PDFKit.PDFDocument, scenarios: Scenario[]) {
+  sectionHeader(doc, "Six-Scenario Stress Test");
+  const rows: string[][] = [["Scenario", "Rate", "Occ", "Opex", "Net yield", "Cashflow"]];
+  for (const s of scenarios) {
+    rows.push([
+      s.label,
+      `${Math.round(s.rate_mult * 100)}%`,
+      s.occ_delta >= 0 ? `+${(s.occ_delta * 100).toFixed(0)}pp` : `${(s.occ_delta * 100).toFixed(0)}pp`,
+      `${Math.round(s.opex_mult * 100)}%`,
+      fmtPct(s.net_yield),
+      fmtCurrency(s.annual_cash),
+    ]);
+  }
+  dataTable(doc, rows, [228, 50, 50, 50, 62, 72]);
+  doc.y += 8;
+
+  doc.fontSize(8.5).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
+    .text("Rate = % of base nightly rate. Occ = delta from base occupancy. Opex = operating cost multiplier.", 50, doc.y, { width: 512 });
+  doc.y += 16;
+
+  // Narrative
+  const worst = scenarios.reduce((a, b) => (a.net_yield < b.net_yield ? a : b));
+  const base = scenarios.find((s) => s.label.startsWith("Base")) || scenarios[0];
+  const spread = base.net_yield - worst.net_yield;
+  let interpretation: string;
+  if (worst.net_yield < 0) {
+    interpretation = `Under a double-shock (${worst.label.toLowerCase()}) this villa goes cash-flow negative (${fmtPct(worst.net_yield)}). You would need external income to carry it. Budget the risk.`;
+  } else if (spread > 4) {
+    interpretation = `The yield range is wide (${fmtPct(worst.net_yield)}-${fmtPct(scenarios.find((s) => s.label.startsWith("Bull"))?.net_yield || 0)}). Performance depends heavily on the rate/occupancy assumptions holding. Model it against your own risk tolerance.`;
+  } else {
+    interpretation = `The yield range is tight across scenarios. This villa is relatively robust — worst case (${fmtPct(worst.net_yield)}) stays in acceptable territory.`;
+  }
+  doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text(interpretation, 50, doc.y, { width: 512, lineGap: 3 });
+  doc.y += 10;
+}
+
+function renderOpsSensitivity(doc: PDFKit.PDFDocument, audit: AuditNumbers) {
+  sectionHeader(doc, "Operating-Cost Sensitivity");
+  doc.fontSize(9).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text("How does net yield change if specific line items come in higher than our 15/15/10% assumptions? (Real-world Bali villa OpEx often runs 45-55% of gross once you include repairs, staff, and pool/garden.)",
+          50, doc.y, { width: 512, lineGap: 2 });
+  doc.y += 8;
+
+  const rows: string[][] = [["Total OpEx % of gross", "Net yield", "Vs base"]];
+  const bases = [0.35, 0.40, 0.45, 0.50, 0.55, 0.60];
+  const baseYield = audit.net_yield_pct;
+  for (const pct of bases) {
+    const gross = audit.gross_revenue;
+    const net = gross * (1 - pct) - audit.lease_cost;
+    const y = audit.price_usd > 0 ? (net / audit.price_usd) * 100 : 0;
+    const delta = y - baseYield;
+    rows.push([
+      `${(pct * 100).toFixed(0)}%`,
+      fmtPct(y),
+      delta >= 0 ? `+${fmtPct(delta)}` : fmtPct(delta),
+    ]);
+  }
+  dataTable(doc, rows, [200, 150, 162]);
+}
+
+function renderNegotiation(doc: PDFKit.PDFDocument, memo: string[]) {
+  sectionHeader(doc, "Your Negotiation Memo");
+  doc.fontSize(9).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
+    .text("Walk into the meeting with this printed out. Read it the night before. Don't paraphrase — the specific numbers matter.",
+          50, doc.y, { width: 512, lineGap: 2 });
+  doc.y += 10;
+
+  memo.forEach((line, i) => {
+    // Bold-marker support: **xxx** → bold header portion followed by rest.
+    const m = line.match(/^\*\*(.+?):\*\*\s*(.*)$/);
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.accent)
+      .text(`${i + 1}.  `, 50, doc.y, { continued: true });
+    if (m) {
+      doc.fontSize(9.5).font("Helvetica-Bold").fillColor(COLORS.ink)
+        .text(m[1] + ": ", { continued: true });
+      doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
+        .text(m[2], { width: 500, lineGap: 2 });
+    } else {
+      doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
+        .text(line, { width: 500, lineGap: 2 });
+    }
+    doc.y += 5;
+  });
+}
+
+function renderExits(doc: PDFKit.PDFDocument, exits: ExitRow[]) {
+  sectionHeader(doc, "Exit Scenarios");
+  const rows: string[][] = [["Hold period", "Cash collected", "Resale est.", "Total return", "Annualized"]];
+  for (const e of exits) {
+    rows.push([
+      e.label,
+      fmtCurrency(e.net_collected),
+      fmtCurrency(e.resale_value),
+      fmtCurrency(e.total_return),
+      `${e.annualized_pct.toFixed(1)}%`,
+    ]);
+  }
+  dataTable(doc, rows, [180, 100, 90, 90, 52]);
+  doc.y += 6;
+  doc.fontSize(8.5).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
+    .text("Leasehold resale estimated via linear lease-amortization (remaining years / total years × purchase price). Real resale depends on buyer demand at exit, which is the weakest point in Bali's market — short-lease resale can be illiquid. Freehold resale assumes flat USD price (a conservative floor).",
+          50, doc.y, { width: 512, lineGap: 2 });
+  doc.y += 12;
+}
+
+function renderDDChecklist(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbers) {
+  sectionHeader(doc, "Deep Due-Diligence Checklist");
+  const items = [
+    "Title certificate in Indonesian (SHM / HGB / Hak Pakai) — verified at BPN (Badan Pertanahan Nasional).",
+    "Chain of title — most recent three transfers traceable through Notaris/PPAT records.",
+    "IMB (old) or PBG (new post-2021) building permit — confirm exists and matches current structure footprint.",
+    "SLF (Sertifikat Laik Fungsi) — confirms the building meets occupancy code (critical for villas built 2021+).",
+    "Pondok Wisata or TDUP license for short-term rental — without this, Airbnb is technically illegal.",
+    "Zoning compliance — the land must be zoned for tourism/accommodation, not agriculture.",
+    "No active disputes, liens, or caveats against the title — ask the Notaris to run a full search.",
+    "Property tax (PBB) paid current year and prior three years — arrears are attached to the land.",
+    "If leasehold: original lease agreement notarized, endorsed by landlord and landlord's spouse if applicable.",
+    "If leasehold: landlord's underlying ownership of the land (the lessor must actually own it).",
+    "Electricity (PLN) meter in seller's name and paid current; no irregular consumption spikes.",
+    "Water source confirmed — borewell depth, licensing (SIPA), and water quality test results.",
+    "Septic / black-water handling — distance from borewell per Indonesian code (≥10m).",
+    "Structural survey by an independent engineer — foundation, walls, roof, and tropical-climate damage.",
+    "Pool: liner/tile age, pump condition, salt/chlorine system, last resurfacing date.",
+    "AC units — make, age, and servicing history (tropical AC lasts 5-7 years).",
+    "Waste management and drainage during monsoon — inspect during rainy season if possible.",
+    villa.features?.toLowerCase().includes("beach") ? "Beach-access setback — compliance with 30m coastal buffer under PP 64/2010." : "Road access — registered public road (not private easement).",
+    "Existing rental contracts with any current manager — termination clause, handover terms, deposit held.",
+    "Owner's books — 24 months of booking-by-booking revenue, not just a summary.",
+    "Utility cost history — electricity, pool, garden, staff — full 12 months.",
+    "Staff situation — who's employed, contract terms, severance obligations.",
+    "Insurance policies currently in force — public liability, fire, earthquake.",
+    "Neighbor disputes — walk the boundary with a local guide, ask direct neighbors.",
+    "Banjar (village council) standing — is the villa in good standing with the community? (Ask the kepala banjar directly.)",
+  ];
+  items.forEach((item, i) => {
+    doc.fontSize(8.5).font("Helvetica-Bold").fillColor(COLORS.accent)
+      .text(`☐  `, 50, doc.y, { continued: true });
+    doc.font("Helvetica").fillColor(COLORS.inkMuted)
+      .text(item, { width: 500, lineGap: 1.5 });
+    doc.y += 2;
+  });
+  doc.y += 6;
+}
+
+function renderLegalRedFlags(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbers) {
+  sectionHeader(doc, "Legal Red Flags for Foreign Buyers");
+  const flags: string[] = [
+    "Foreigners cannot own Hak Milik (SHM) freehold land. If someone offers you SHM in a foreigner's name, it is either (a) illegal via a nominee arrangement, or (b) fraud. Both expose you to total loss.",
+    "Legitimate foreign-buyer structures: (1) Leasehold in personal name, (2) Hak Pakai as a KITAS holder, (3) PT PMA owning Hak Guna Bangunan. Anything else requires extreme scrutiny.",
+    "Nominee arrangements (where an Indonesian national 'holds' the title for you) are void under Article 21 of the Agrarian Law. Indonesian courts have ruled them unenforceable. You have no legal recourse.",
+    "Construction financing: Indonesia has no reliable escrow system for real estate. If you're buying off-plan, milestone payments into the developer's account are effectively unsecured loans. Insist on staged payments tied to inspection sign-offs, and a third-party payment holder where possible.",
+  ];
+  if (audit.is_leasehold && audit.lease_years > 0 && audit.lease_years < 20) {
+    flags.push(
+      `**This villa has only ${audit.lease_years} years of lease remaining.** Foreign residents with KITAS can convert leasehold to Hak Pakai in some circumstances — worth exploring with a real-estate lawyer before closing, as it can extend usability.`
+    );
+  }
+  flags.forEach((text) => {
+    const m = text.match(/^\*\*(.+?)\*\*\s*(.*)$/);
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.bad)
+      .text("⚠  ", 50, doc.y, { continued: true });
+    if (m) {
+      doc.font("Helvetica-Bold").fillColor(COLORS.ink).text(m[1] + " ", { continued: true });
+      doc.font("Helvetica").fillColor(COLORS.inkMuted).text(m[2], { width: 500, lineGap: 2 });
+    } else {
+      doc.font("Helvetica").fillColor(COLORS.inkMuted).text(text, { width: 500, lineGap: 2 });
+    }
+    doc.y += 3;
+  });
+}
+
+function renderFinalDisclaimer(doc: PDFKit.PDFDocument) {
+  const y = doc.y + 4;
+  const h = 56;
+  doc.rect(50, y, 512, h).fill(COLORS.warnSoft);
+  doc.rect(50, y, 512, h).lineWidth(0.5).strokeColor(COLORS.warn).stroke();
+  doc.fontSize(8.5).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text("This is not financial or legal advice.  ", 62, y + 10, { continued: true });
+  doc.font("Helvetica").fillColor(COLORS.inkMuted)
+    .text("Bali Villa Truth publishes research derived from public listings and market modeling. We do not have access to this villa's owner books, title documents, or regulatory filings. Every number above is an estimate — verify with a licensed Notaris/PPAT, independent surveyor, and Indonesian real-estate lawyer before transferring any funds.",
+          { width: 488, lineGap: 2 });
+}
+
+function renderFooter(doc: PDFKit.PDFDocument, pageNum: number, total: number) {
+  const savedBottom = doc.page.margins.bottom;
+  doc.page.margins.bottom = 0;
+  const y = 755;
+  doc.fontSize(7).font("Helvetica").fillColor(COLORS.inkDim)
+    .text(
+      "BVT Deep Audit · Not financial or legal advice · Verify independently before investing · balivillatruth.com",
+      50, y, { width: 512, align: "center", lineBreak: false }
+    );
+  doc.fontSize(7).fillColor(COLORS.inkDim)
+    .text(`Page ${pageNum} of ${total}`, 50, y, { width: 512, align: "right", lineBreak: false });
+  doc.page.margins.bottom = savedBottom;
+}
+
+// ------------------------------------------------------------------
+// Table / section helpers
+// ------------------------------------------------------------------
+function sectionHeader(doc: PDFKit.PDFDocument, title: string) {
+  doc.y += 4;
+  doc.fontSize(12).font("Helvetica-Bold").fillColor(COLORS.accent)
+    .text(title.toUpperCase(), 50, doc.y, { width: 512, characterSpacing: 1 });
+  doc.moveTo(50, doc.y + 2).lineTo(562, doc.y + 2).lineWidth(0.5).strokeColor(COLORS.hairline).stroke();
+  doc.y += 6;
+}
+
+function twoColRows(doc: PDFKit.PDFDocument, rows: [string, string][]) {
+  const rowH = 20;
+  const labelW = 180;
+  let y = doc.y;
+  rows.forEach((row, i) => {
+    if (i % 2 === 0) doc.rect(50, y, 512, rowH).fill(COLORS.bgSoft);
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.inkDim)
+      .text(row[0], 60, y + 7, { width: labelW - 10 });
+    doc.fontSize(9).font("Helvetica").fillColor(COLORS.ink)
+      .text(row[1], 60 + labelW, y + 7, { width: 512 - labelW - 20 });
+    y += rowH;
+  });
+  doc.y = y + 10;
+}
+
+function dataTable(doc: PDFKit.PDFDocument, rows: string[][], widths: number[]) {
+  let y = doc.y;
+  const rowH = 20;
+  rows.forEach((row, i) => {
+    const isHeader = i === 0;
+    if (isHeader) doc.rect(50, y, 512, rowH).fill(COLORS.bgSoft);
+    let x = 50;
+    row.forEach((cell, j) => {
+      const align = j === 0 ? "left" : "right";
+      const color = isHeader ? COLORS.ink : COLORS.inkMuted;
+      const font = isHeader ? "Helvetica-Bold" : "Helvetica";
+      doc.fontSize(8.5).font(font).fillColor(color)
+        .text(cell, x + 8, y + 6, { width: widths[j] - 16, align });
+      x += widths[j];
+    });
+    doc.lineWidth(0.3).strokeColor(COLORS.hairline);
+    doc.moveTo(50, y + rowH).lineTo(562, y + rowH).stroke();
+    y += rowH;
+  });
+  doc.y = y;
+}
+
+// ------------------------------------------------------------------
+// Email
+// ------------------------------------------------------------------
+function buildEmailHtml(villa: Villa, audit: AuditNumbers): string {
+  const name = villa.villa_name || "this villa";
+  const tier = yieldTier(audit.net_yield_pct);
+  return `<!doctype html><html><body style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#fbf6ec;padding:24px;color:#0a0e16;">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #d9d1c2;">
+<div style="padding:24px 28px;border-bottom:1px solid #d9d1c2;"><div style="font-size:18px;font-weight:bold;">Bali Villa <span style="color:#d4943a;">Truth</span></div><div style="font-size:10px;color:#6b7685;letter-spacing:1.5px;margin-top:4px;">DEEP AUDIT · PAID TIER</div></div>
+<div style="padding:28px;">
+<h1 style="font-size:20px;margin:0 0 12px;line-height:1.3;">Your Deep Audit for ${escapeHtml(name)}</h1>
+<p style="color:#3d4656;line-height:1.6;margin:0 0 20px;">Attached: a 5-page PDF — stress-test matrix, area comparables, negotiation memo, exit scenarios, and a full due-diligence checklist.</p>
+<div style="background:${tier.bg};border:1px solid ${tier.color};border-radius:8px;padding:18px;text-align:center;margin:20px 0;">
+<div style="font-size:10px;font-weight:bold;color:#6b7685;letter-spacing:1px;">BASE-CASE NET YIELD</div>
+<div style="font-size:32px;font-weight:bold;color:${tier.color};margin:6px 0;">${fmtPct(audit.net_yield_pct)}</div>
+<div style="font-size:11px;color:${tier.color};font-weight:bold;">${tier.label} · Full stress-test inside</div></div>
+<p style="color:#3d4656;line-height:1.6;margin:16px 0;">Two requests:</p>
+<ol style="color:#3d4656;line-height:1.7;padding-left:20px;">
+<li><strong>Print it.</strong> Take it to the viewing. Read the negotiation memo the night before.</li>
+<li><strong>Don't wire anything yet.</strong> Work through the due-diligence checklist in section 5 first. The $49 you paid for this is cheap insurance — the Notaris/lawyer/surveyor fees ($1.5-3k) are the real insurance.</li>
+</ol>
+<div style="background:#fbe7c9;border:1px solid #a86a16;border-radius:6px;padding:14px;font-size:13px;color:#78350f;margin:20px 0;"><strong>Not financial or legal advice.</strong> Verify with a Notaris, independent surveyor, and Indonesian lawyer before transferring funds.</div>
+<p style="color:#6b7685;font-size:12px;line-height:1.5;margin-top:24px;">Questions? Just reply to this email — we read every message.</p>
+</div></div></body></html>`;
+}
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+// ------------------------------------------------------------------
+// Route handler — supports GET (success page) and POST (retry / admin)
+// ------------------------------------------------------------------
+async function handle(session_id: string) {
+  if (!session_id || !/^cs_[a-zA-Z0-9_]+$/.test(session_id)) {
+    return NextResponse.json({ error: "Invalid session_id" }, { status: 400 });
+  }
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const resendKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "audits@balivillatruth.com";
+  const fromName = process.env.RESEND_FROM_NAME || "Bali Villa Truth";
+
+  if (!stripeKey || !supabaseUrl || !supabaseKey || !resendKey) {
+    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+  }
+
+  const stripe = new Stripe(stripeKey);
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // 1. Verify Stripe session
+  let session: Stripe.Checkout.Session;
+  try {
+    session = await stripe.checkout.sessions.retrieve(session_id);
+  } catch {
+    return NextResponse.json({ error: "Could not find checkout session" }, { status: 404 });
+  }
+  if (session.status !== "complete" || session.payment_status !== "paid") {
+    return NextResponse.json(
+      {
+        error: "Payment not complete",
+        status: session.status,
+        payment_status: session.payment_status,
+      },
+      { status: 402 }
+    );
+  }
+
+  const meta = session.metadata || {};
+  const villa_id = Number(meta.villa_id);
+  const email = String(meta.email || session.customer_details?.email || "").trim();
+  if (!villa_id || !email) {
+    return NextResponse.json({ error: "Session metadata missing villa_id or email" }, { status: 400 });
+  }
+
+  // 2. Idempotency — if we've already sent for this session, skip.
+  const existing = await supabase
+    .from("paid_audits")
+    .select("id, sent_at")
+    .eq("stripe_session_id", session_id)
+    .maybeSingle();
+  if (existing.data?.sent_at) {
+    return NextResponse.json({
+      status: "already_sent",
+      message: "This audit has already been emailed.",
+      email,
+    });
+  }
+
+  // 3. Fetch villa
+  const { data: villa, error: villaErr } = await supabase
+    .from("listings_tracker")
+    .select("*")
+    .eq("id", villa_id)
+    .limit(1)
+    .single();
+  if (villaErr || !villa) {
+    return NextResponse.json({ error: "Villa not found" }, { status: 404 });
+  }
+
+  // 4. Fetch comps + run computations
+  const { comps, fallback } = await fetchComps(supabase, villa as Villa, 5);
+  const audit = computeAudit(villa as Villa, USD_RATE_FALLBACK);
+  const scenarios = buildScenarios(audit);
+  const memo = buildNegotiationMemo(villa as Villa, audit, comps);
+  const exits = buildExitScenarios(audit);
+
+  // 5. Generate PDF
+  const pdfBuffer = await generateDeepPdf(villa as Villa, audit, comps, fallback, scenarios, memo, exits);
+
+  // 6. Send email
+  const resend = new Resend(resendKey);
+  const safeName = ((villa.villa_name || "villa").slice(0, 40)).replace(/[^a-zA-Z0-9-_]/g, "_");
+  const { error: sendErr } = await resend.emails.send({
+    from: `${fromName} <${fromEmail}>`,
+    to: [email],
+    subject: `Your BVT Deep Audit — ${(villa.villa_name || "villa").slice(0, 60)}`,
+    html: buildEmailHtml(villa as Villa, audit),
+    attachments: [
+      {
+        filename: `BVT-DeepAudit-${safeName}.pdf`,
+        content: pdfBuffer,
+      },
+    ],
+  });
+  if (sendErr) {
+    console.error("Deep-audit send error:", sendErr);
+    return NextResponse.json({ error: "Failed to send audit email" }, { status: 500 });
+  }
+
+  // 7. Record in paid_audits
+  await supabase.from("paid_audits").upsert(
+    {
+      stripe_session_id: session_id,
+      email,
+      villa_id,
+      villa_name: villa.villa_name,
+      amount_cents: session.amount_total ?? null,
+      currency: session.currency ?? null,
+      sent_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_session_id" }
+  );
+
+  return NextResponse.json({
+    status: "sent",
+    message: "Deep audit emailed. Check your inbox.",
+    email,
+    villa_name: villa.villa_name,
+  });
+}
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const session_id = searchParams.get("session_id") || "";
+  return handle(session_id);
+}
+export async function POST(req: NextRequest) {
+  try {
+    const { session_id } = (await req.json()) as { session_id?: string };
+    return handle(session_id || "");
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+}
