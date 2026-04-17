@@ -1994,6 +1994,7 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
   const [mapLoaded, setMapLoaded] = useState(false);
   const mapInstance = useRef<any>(null);
   const markers = useRef<Record<string, any>>({});
+  const clusterGroup = useRef<any>(null);
   // Keep live refs to volatile state so the popup-click handler + popup-HTML code
   // can read current values without forcing effect re-subscriptions.
   const favoritesRef = useRef(favorites);
@@ -2010,10 +2011,18 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
   useEffect(() => { onUnlockVillaRef.current = onUnlockVilla; }, [onUnlockVilla]);
 
   useEffect(() => {
-    if (!document.querySelector('link[href*="leaflet"]')) {
+    if (!document.querySelector('link[data-bvt-leaflet]')) {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      link.setAttribute('data-bvt-leaflet', '1');
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('link[data-bvt-cluster]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css';
+      link.setAttribute('data-bvt-cluster', '1');
       document.head.appendChild(link);
     }
     if (!document.querySelector('style[data-bvt-popup]')) {
@@ -2076,6 +2085,46 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
         .bvt-price-marker--mid { --dot: #d4943a; }
         .bvt-price-marker--low { --dot: #6b7080; }
 
+        /* GPU-composite hint so pan/zoom transforms stay on the GPU */
+        .bvt-price-marker, .bvt-price-marker__pill { will-change: transform; }
+        /* Kill individual-marker transitions during map transforms */
+        .leaflet-zoom-anim .bvt-price-marker__pill,
+        .leaflet-pan-anim .bvt-price-marker__pill { transition: none !important; }
+
+        /* Editorial cluster marker */
+        .bvt-cluster {
+          background: transparent !important;
+          border: none !important;
+        }
+        .bvt-cluster__chip {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 34px; height: 34px; padding: 0 8px;
+          border-radius: 999px;
+          background: rgba(10, 14, 22, 0.94);
+          border: 1px solid #d4943a;
+          color: #f5f0e6;
+          font-family: var(--font-mono, ui-monospace, monospace);
+          font-size: 12px;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: 0.02em;
+          transform: translate(-50%, -50%);
+          box-shadow: 0 0 0 3px rgba(212, 148, 58, 0.12);
+          transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .bvt-cluster:hover .bvt-cluster__chip {
+          transform: translate(-50%, -50%) scale(1.08);
+          box-shadow: 0 0 0 5px rgba(212, 148, 58, 0.18);
+        }
+        .bvt-cluster--lg .bvt-cluster__chip { min-width: 42px; height: 42px; font-size: 13px; }
+        .bvt-cluster--xl .bvt-cluster__chip { min-width: 52px; height: 52px; font-size: 14px; border-width: 2px; }
+        /* markercluster default CSS overrides */
+        .marker-cluster, .marker-cluster div { background: transparent !important; }
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+          background-clip: padding-box; background: transparent !important;
+        }
+
         /* Dark editorial Leaflet chrome */
         .leaflet-container { background: #0a0e16 !important; font-family: inherit !important; }
         .leaflet-control-attribution {
@@ -2096,14 +2145,23 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
       `;
       document.head.appendChild(style);
     }
-    const loadLeaflet = () => new Promise<void>((resolve) => {
-      if ((window as any).L) { resolve(); return; }
+    const loadScript = (src: string) => new Promise<void>((resolve) => {
+      const existing = Array.from(document.scripts).find(s => s.src === src);
+      if (existing) { resolve(); return; }
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.src = src;
       script.onload = () => resolve();
       document.head.appendChild(script);
     });
-    loadLeaflet().then(() => setMapLoaded(true));
+    (async () => {
+      if (!(window as any).L) {
+        await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+      }
+      if (!(window as any).L?.markerClusterGroup) {
+        await loadScript('https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js');
+      }
+      setMapLoaded(true);
+    })();
   }, []);
 
   // Initialize map once
@@ -2141,12 +2199,38 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
       pane: 'shadowPane',
     }).addTo(map);
 
+    // Cluster group — only renders markers currently in view and collapses
+    // nearby markers into compact chips at lower zoom levels.
+    if (L.markerClusterGroup) {
+      const cg = L.markerClusterGroup({
+        chunkedLoading: true,
+        removeOutsideVisibleBounds: true,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        maxClusterRadius: (zoom: number) => zoom >= 14 ? 40 : zoom >= 12 ? 60 : 80,
+        disableClusteringAtZoom: 16,
+        iconCreateFunction: (cluster: any) => {
+          const n = cluster.getChildCount();
+          const size = n >= 50 ? 'xl' : n >= 15 ? 'lg' : 'sm';
+          return L.divIcon({
+            html: `<span class="bvt-cluster__chip">${n}</span>`,
+            className: `bvt-cluster bvt-cluster--${size}`,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0],
+          });
+        },
+      });
+      cg.addTo(map);
+      clusterGroup.current = cg;
+    }
+
     setTimeout(() => { map.invalidateSize(); }, 100);
 
     return () => {
       map.remove();
       mapInstance.current = null;
       markers.current = {};
+      clusterGroup.current = null;
       if (container) (container as any)._leafletMap = null;
     };
   }, [mapLoaded]);
@@ -2160,8 +2244,13 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
     const L = (window as any).L;
     if (!L) return;
 
-    // Clear existing markers
-    Object.values(markers.current).forEach((m: any) => { try { map.removeLayer(m); } catch {} });
+    // Clear existing markers from the cluster group (or directly from map if cluster unavailable)
+    const cg = clusterGroup.current;
+    if (cg) {
+      cg.clearLayers();
+    } else {
+      Object.values(markers.current).forEach((m: any) => { try { map.removeLayer(m); } catch {} });
+    }
 
     const newMarkers: Record<string, any> = {};
     const markerCluster: any[] = [];
@@ -2203,7 +2292,7 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
           iconSize: [0, 0],
           iconAnchor: [0, 0],
         }),
-      }).addTo(map);
+      });
 
       const isFav = favoritesRef.current.has(villa.id);
       const isCmp = compareSetRef.current.has(villa.id);
@@ -2249,6 +2338,14 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
       if (villa.url) newMarkers[villa.url] = marker;
       markerCluster.push(marker);
     });
+
+    // Bulk insert — dramatically faster than individual addTo calls (especially
+    // with markercluster, which does a single layout pass).
+    if (cg && markerCluster.length) {
+      cg.addLayers(markerCluster, { chunkedLoading: true });
+    } else if (!cg) {
+      markerCluster.forEach(m => m.addTo(map));
+    }
 
     markers.current = newMarkers;
   }, [mapLoaded, listings, displayCurrency, rates]);
