@@ -37,6 +37,232 @@ function GlossaryTip({ term }: { term: keyof typeof GLOSSARY }) {
   );
 }
 
+/**
+ * Paste-BHI-URL search box (#11).
+ * If the pasted URL matches an audited listing, jump straight there.
+ * Otherwise, scroll to the listings grid — less friction than hunting through filters.
+ */
+function PasteListingUrlBox({ listings }: { listings: any[] }) {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const normalize = (s: string) => s.trim().replace(/\/+$/, '').toLowerCase();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    const target = normalize(trimmed);
+    const match = listings.find(v => v.url && normalize(v.url) === target);
+    if (match && match.slug) {
+      window.location.href = `/listing/${match.slug}`;
+      return;
+    }
+    if (match) {
+      // Fallback when slug missing — scroll to grid and let filter show it
+      document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (listings.length === 0) {
+      document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    setError("We haven't audited that listing yet. Want us to? Email audits@balivillatruth.com");
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-xl mb-6 md:mb-8"
+      aria-label="Paste a Bali Home Immo listing URL"
+    >
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Paste any Bali Home Immo URL to see its audit..."
+          className="flex-1 bg-white/5 border border-white/10 focus:border-[#d4943a] rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors"
+        />
+        <button
+          type="submit"
+          className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-slate-100 text-sm font-semibold px-5 py-2.5 rounded-lg border border-white/10 transition-colors"
+        >
+          <Search size={14} />
+          Audit It
+        </button>
+      </div>
+      {error && (
+        <p className="text-[11px] text-amber-400 mt-1.5 text-left" role="alert">{error}</p>
+      )}
+    </form>
+  );
+}
+
+/**
+ * FAQ block (#14) — common buyer questions + FAQPage JSON-LD for rich snippets.
+ * Questions are informed by the real search intent: lease vs freehold, ROI skepticism,
+ * what makes BVT different from agents.
+ */
+function FAQSection() {
+  const faqs: Array<{ q: string; a: string }> = [
+    {
+      q: 'Is Bali Villa Truth affiliated with Bali Home Immo or any other agent?',
+      a: "No. We're an independent auditor. We don't sell villas, take commissions, or get paid by agents. The BHI link on each listing opens the original agent page — we earn nothing if you book.",
+    },
+    {
+      q: 'How is your ROI different from the one on the listing page?',
+      a: "Agent ROI is typically gross yield — rental revenue divided by purchase price. We strip out 40% for operating costs (management, OTA commissions, maintenance, utilities) and, for leasehold properties, subtract annual lease depreciation. The result is a cash-on-cash number that reflects what actually lands in your pocket.",
+    },
+    {
+      q: 'Can foreigners own property in Bali?',
+      a: "Not directly as Hak Milik (freehold). Foreigners typically hold property through (a) a long-term Hak Sewa lease, usually 25-30 years, or (b) a PT PMA (foreign-owned Indonesian company). Each has legal, tax and exit-liquidity trade-offs — talk to an independent notaris before signing anything.",
+    },
+    {
+      q: 'Why do so many listings have red flags?',
+      a: "Bali's market is brochure-driven — ROI claims of 15-25% are common but rarely survive expense modeling. Our flags aren't judgments; they surface assumptions we had to push back on (short lease, inflated nightly rate, missing data). A flagged villa can still be a good buy — you just go in with eyes open.",
+    },
+    {
+      q: 'How often is the data updated?',
+      a: 'We re-scrape Bali Home Immo weekly and re-run the audit whenever price or status changes. Every listing page shows its last re-audit date.',
+    },
+    {
+      q: 'Do you offer a paid deep audit?',
+      a: "A paid deep-dive service is in the pipeline for Q2 2026 — contract review, exit-scenario modeling, and a live walkthrough. Email audits@balivillatruth.com if you'd like to be first in line.",
+    },
+  ];
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(({ q, a }) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
+  };
+
+  return (
+    <section className="max-w-3xl mx-auto mt-16 mb-8 px-4">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+        Frequently asked questions
+      </h2>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+        The questions buyers actually ask us — answered honestly.
+      </p>
+      <div className="space-y-2">
+        {faqs.map((f, i) => (
+          <details
+            key={i}
+            className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 open:shadow-sm transition-shadow"
+          >
+            <summary className="flex cursor-pointer items-center justify-between gap-4 list-none">
+              <span className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100">
+                {f.q}
+              </span>
+              <ChevronDown
+                size={16}
+                className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
+              />
+            </summary>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              {f.a}
+            </p>
+          </details>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Weekly digest newsletter signup (#18). Low-pressure, no-spam copy.
+ * Posts to /api/subscribe which saves to leads table with lead_type='Newsletter'.
+ */
+function NewsletterBlock() {
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [ok, setOk] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'homepage' }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      setOk(true);
+    } catch {
+      setError("Couldn't subscribe — try again in a moment.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section className="max-w-3xl mx-auto mt-10 mb-4 px-4">
+      <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-[#d4943a]/10 border border-[#d4943a]/20 flex items-center justify-center text-xl shrink-0" aria-hidden>
+            ✉
+          </div>
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-100 leading-tight">
+              Get the Monday audit digest
+            </h2>
+            <p className="text-sm text-slate-400 mt-1 leading-relaxed">
+              One email a week. Notable price drops, new red flags, and a featured
+              deep-dive. No agent affiliates, no property pitches.
+            </p>
+          </div>
+        </div>
+
+        {ok ? (
+          <div className="text-sm text-emerald-400 font-semibold">
+            ✓ You&apos;re in — welcome email on its way.
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+              aria-label="Email address for newsletter"
+              className="flex-1 bg-slate-900 border border-slate-800 focus:border-[#d4943a] rounded-lg px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="bg-[#d4943a] hover:bg-[#e5a84d] text-white font-bold text-sm px-5 py-2.5 rounded-lg transition-all disabled:opacity-50"
+            >
+              {submitting ? 'Subscribing…' : 'Subscribe'}
+            </button>
+          </form>
+        )}
+        {error && (
+          <p className="text-xs text-red-400 mt-2" role="alert">{error}</p>
+        )}
+        <p className="text-[11px] text-slate-500 mt-3">
+          Unsubscribe with one click. We&apos;ll never sell your email.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export default function BaliVillaTruth() {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +283,9 @@ export default function BaliVillaTruth() {
   const [filterBaths, setFilterBaths] = useState(0);
   const [filterLeaseType, setFilterLeaseType] = useState('All');
   const [displayCurrency, setDisplayCurrency] = useState<string>('USD'); // Show all prices in this currency
-  const [sortOption, setSortOption] = useState('roi-desc');
+  // Default sort: price-asc. Previously 'roi-desc' surfaced HIGH_YIELD flagged listings first
+  // which hurt trust — cheapest-first is a neutral default that respects buyer intent.
+  const [sortOption, setSortOption] = useState('price-asc');
   const [showMap, setShowMap] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
@@ -66,12 +294,15 @@ export default function BaliVillaTruth() {
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
 
   // --- DARK MODE ---
-  const [darkMode, setDarkMode] = useState(false);
+  // Default to dark (#16 — unify theme: hero is already dark, so dark body
+  // removes the jarring light/dark handoff). Users can still toggle to light.
+  const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('bvt-dark-mode');
-      if (saved === 'true') setDarkMode(true);
+      if (saved === 'false') setDarkMode(false);
+      else if (saved === 'true') setDarkMode(true);
     } catch {}
   }, []);
 
@@ -603,17 +834,27 @@ export default function BaliVillaTruth() {
             Independent audits. Conservative assumptions. Every number decomposable.
           </p>
 
-          {/* Stats bar */}
+          {/* Stats bar — SSR-safe: show approximate floor until real data hydrates (#1) */}
           <div className="flex gap-12 md:gap-16 mb-8 md:mb-10">
             <div className="text-center">
-              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">{listings.length.toLocaleString()}<span className="text-[#d4943a]">+</span></div>
+              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">
+                {listings.length > 0 ? listings.length.toLocaleString() : '2,000'}
+                <span className="text-[#d4943a]">+</span>
+              </div>
               <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Villas Audited</div>
             </div>
             <div className="text-center">
-              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">{flaggedCount.toLocaleString()}</div>
+              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">
+                {flaggedCount > 0 ? flaggedCount.toLocaleString() : '400'}
+                <span className="text-[#d4943a]">+</span>
+              </div>
               <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Red Flags Detected</div>
             </div>
           </div>
+
+          {/* Paste-BHI-URL search box (#11) — power-user entry point */}
+          <PasteListingUrlBox listings={listings} />
+
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 items-center">
@@ -788,7 +1029,7 @@ export default function BaliVillaTruth() {
       {/* RESULTS BAR */}
       <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex flex-wrap justify-between items-center gap-2 px-2 transition-all`}>
          <div className="flex items-center gap-2">
-           <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden md:block">Showing {processedListings.length} Properties</p>
+           <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden md:block">{loading ? 'Loading audited villas…' : `Showing ${processedListings.length} Properties`}</p>
            <button
              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
              className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
@@ -848,10 +1089,28 @@ export default function BaliVillaTruth() {
       <main className={`${mobileView === 'list' ? 'block' : 'hidden'} md:hidden transition-all w-full`}>
         <div className="space-y-3 px-1">
           {processedListings.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center text-slate-400 dark:text-slate-500">
-              {showFavoritesOnly ? <Heart size={36} className="mx-auto mb-3 opacity-20" /> : <Filter size={36} className="mx-auto mb-3 opacity-20" />}
-              <p>{showFavoritesOnly ? 'No saved properties yet. Tap the heart icon to save listings.' : 'No properties match your filters.'}</p>
-            </div>
+            loading ? (
+              // Loading skeleton — replaces confusing "Showing 0 Properties" SSR state (#2)
+              <div className="space-y-3">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 animate-pulse">
+                    <div className="flex gap-3">
+                      <div className="w-20 h-16 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                      <div className="flex-1 space-y-2 py-1">
+                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center text-slate-400 dark:text-slate-500">
+                {showFavoritesOnly ? <Heart size={36} className="mx-auto mb-3 opacity-20" /> : <Filter size={36} className="mx-auto mb-3 opacity-20" />}
+                <p>{showFavoritesOnly ? 'No saved properties yet. Tap the heart icon to save listings.' : 'No properties match your filters.'}</p>
+              </div>
+            )
           ) : (
             processedListings.map((villa) => {
               const netRoi = Number(villa.projected_roi) || 0;
@@ -977,12 +1236,28 @@ export default function BaliVillaTruth() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {processedListings.length === 0 ? (
-                  <tr>
-                      <td colSpan={8} className="p-10 text-center text-slate-400 dark:text-slate-500">
-                          {showFavoritesOnly ? <Heart size={48} className="mx-auto mb-4 opacity-20" /> : <Filter size={48} className="mx-auto mb-4 opacity-20" />}
-                          {showFavoritesOnly ? 'No saved properties yet. Click the heart icon to save listings.' : 'No properties match your filters.'}
-                      </td>
-                  </tr>
+                  loading ? (
+                    // Loading skeleton rows — replaces confusing "0 properties" SSR state (#2)
+                    [0,1,2,3,4,5].map(i => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="p-5"><div className="w-14 h-10 bg-slate-200 dark:bg-slate-800 rounded" /></td>
+                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-32" /></td>
+                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" /></td>
+                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" /></td>
+                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" /></td>
+                        <td className="p-5"><div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-28 mx-auto" /></td>
+                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" /></td>
+                        <td className="p-5"><div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-24 ml-auto" /></td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                        <td colSpan={8} className="p-10 text-center text-slate-400 dark:text-slate-500">
+                            {showFavoritesOnly ? <Heart size={48} className="mx-auto mb-4 opacity-20" /> : <Filter size={48} className="mx-auto mb-4 opacity-20" />}
+                            {showFavoritesOnly ? 'No saved properties yet. Click the heart icon to save listings.' : 'No properties match your filters.'}
+                        </td>
+                    </tr>
+                  )
               ) : (
                 processedListings.map((villa) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
@@ -1586,11 +1861,17 @@ export default function BaliVillaTruth() {
         );
       })()}
 
+      {/* FAQ SECTION (#14) — answers top buyer questions + JSON-LD for rich results */}
+      <FAQSection />
+
+      {/* NEWSLETTER (#18) — weekly digest signup */}
+      <NewsletterBlock />
+
       {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200">
+      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
           <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
-          <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</a><span className="text-slate-300 dark:text-slate-600">|</span><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</a></div>
+          <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><Link href="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">About</Link><span className="text-slate-300 dark:text-slate-600">|</span><Link href="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</Link><span className="text-slate-300 dark:text-slate-600">|</span><Link href="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link></div>
         </div>
         <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
       </footer>
