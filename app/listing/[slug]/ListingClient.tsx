@@ -6,11 +6,16 @@ import { useState } from 'react';
  * Listing page CTA block.
  *
  * Philosophy (2026-04-14): the BHI "source" link is public info — gating it
- * is a dishonest trade. We now show it openly. The email trade is for the
- * PDF audit (a take-with-you artifact for agent meetings), which is a real
- * convenience the user opts into AFTER reading the on-page audit.
+ * is a dishonest trade. We show it openly. The email trade is for the free
+ * 3-page PDF audit (a take-with-you artifact for agent meetings).
  *
- * 2026-04-16: added share/copy link button (#19) and PDF preview (#10).
+ * 2026-04-17: added the Deep Audit upgrade — a paid $49 5-page PDF with
+ * area comps, stress-test matrix, property-specific negotiation memo, exit
+ * scenarios, and full DD checklist. Flow: POST email+villa_id to
+ * /api/create-deep-audit-checkout, receive a Stripe hosted-checkout URL,
+ * redirect. After payment, Stripe sends the user to /deep-audit/success
+ * which calls /api/generate-deep-audit with the session_id to generate +
+ * email the PDF (idempotent via Supabase paid_audits table).
  */
 export default function ListingClient({
   sourceUrl,
@@ -28,6 +33,11 @@ export default function ListingClient({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Deep-audit state — only becomes relevant after the user has already
+  // received the free audit. We reuse the email field.
+  const [deepSubmitting, setDeepSubmitting] = useState(false);
+  const [deepError, setDeepError] = useState<string | null>(null);
 
   const handleEmailAudit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +59,36 @@ export default function ListingClient({
     }
   };
 
+  const handleDeepAudit = async () => {
+    if (!email) {
+      setDeepError('Enter your email above first.');
+      return;
+    }
+    setDeepSubmitting(true);
+    setDeepError(null);
+    try {
+      const res = await fetch('/api/create-deep-audit-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          villa_id: listingId,
+          villa_name: villaName,
+          slug,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.url) {
+        throw new Error(json.error || 'Could not create checkout session');
+      }
+      window.location.href = json.url;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong.';
+      setDeepError(`${msg}. Email hello@balivillatruth.com if this persists.`);
+      setDeepSubmitting(false);
+    }
+  };
+
   const handleCopyLink = async () => {
     const url = `https://balivillatruth.com/listing/${slug}`;
     try {
@@ -56,7 +96,6 @@ export default function ListingClient({
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
     } catch {
-      // Fallback: select-prompt
       window.prompt('Copy this audit link:', url);
     }
   };
@@ -76,7 +115,7 @@ export default function ListingClient({
         Opens on Bali Home Immo. We don&apos;t earn anything if you book — we&apos;re just the auditor.
       </p>
 
-      {/* Share / copy link — helps word-of-mouth (#19) */}
+      {/* Share / copy link — helps word-of-mouth */}
       <button
         type="button"
         onClick={handleCopyLink}
@@ -94,7 +133,7 @@ export default function ListingClient({
         )}
       </button>
 
-      {/* Email-me-this-audit block */}
+      {/* Email-me-this-audit block (free tier) */}
       <div className="mt-6 pt-5 border-t border-slate-700">
         {sent ? (
           <div className="text-center py-2">
@@ -107,13 +146,12 @@ export default function ListingClient({
           </div>
         ) : (
           <form onSubmit={handleEmailAudit} className="space-y-3">
-            {/* PDF preview thumbnail (#10) — pure SVG, no network cost */}
+            {/* PDF preview thumbnail — pure SVG, no network cost */}
             <div className="flex items-center gap-3 bg-slate-900/60 border border-slate-800 rounded-lg p-3">
               <div
                 aria-hidden
                 className="shrink-0 w-14 h-[72px] bg-white rounded shadow-inner overflow-hidden relative"
               >
-                {/* Fake PDF page preview */}
                 <div className="absolute inset-0 p-1.5 flex flex-col gap-1">
                   <div className="h-1.5 w-8 bg-[#d4943a] rounded-sm" />
                   <div className="h-1 w-full bg-slate-300 rounded-sm" />
@@ -133,7 +171,7 @@ export default function ListingClient({
                   📧 Email me this audit as a PDF
                 </p>
                 <p className="text-[11px] text-slate-400 leading-snug mt-0.5">
-                  3 pages · full math · 5-yr cashflow · sensitivity · agent questions
+                  Free · 3 pages · full math · 5-yr cashflow · sensitivity · agent questions
                 </p>
               </div>
             </div>
@@ -152,7 +190,7 @@ export default function ListingClient({
               disabled={submitting}
               className="w-full bg-[#d4943a] hover:bg-[#e5a84d] text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
             >
-              {submitting ? 'Sending your audit...' : 'Email Me the PDF'}
+              {submitting ? 'Sending your audit...' : 'Email Me the Free Audit'}
             </button>
             {error && (
               <p className="text-xs text-red-400 text-center" role="alert">
@@ -164,6 +202,72 @@ export default function ListingClient({
             </p>
           </form>
         )}
+      </div>
+
+      {/* Deep Audit upgrade — always visible. Uses the same email field. */}
+      <div className="mt-4 pt-5 border-t border-slate-700">
+        <div className="rounded-lg border border-[#d4943a]/40 bg-gradient-to-br from-[#3a2a13]/40 to-slate-900/60 p-4">
+          <div className="flex items-start gap-3 mb-3">
+            <div
+              aria-hidden
+              className="shrink-0 w-14 h-[72px] bg-[#fbf6ec] rounded shadow-inner overflow-hidden relative"
+            >
+              <div className="absolute inset-0 p-1.5 flex flex-col gap-1">
+                <div className="h-1.5 w-10 bg-[#d4943a] rounded-sm" />
+                <div className="h-1 w-full bg-slate-400/60 rounded-sm" />
+                <div className="h-1 w-[85%] bg-slate-400/60 rounded-sm" />
+                <div className="mt-0.5 h-5 w-full bg-slate-200 rounded-sm grid grid-cols-6 gap-px p-0.5">
+                  <div className="bg-emerald-500/50 rounded-[1px]" />
+                  <div className="bg-amber-500/50 rounded-[1px]" />
+                  <div className="bg-amber-500/50 rounded-[1px]" />
+                  <div className="bg-rose-500/50 rounded-[1px]" />
+                  <div className="bg-rose-500/50 rounded-[1px]" />
+                  <div className="bg-emerald-500/50 rounded-[1px]" />
+                </div>
+                <div className="h-1 w-[90%] bg-slate-400/60 rounded-sm mt-0.5" />
+                <div className="h-1 w-[70%] bg-slate-400/60 rounded-sm" />
+                <div className="h-1 w-[60%] bg-slate-400/60 rounded-sm" />
+              </div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-[#f5e7cf] leading-tight">
+                  Deep Audit — $49
+                </p>
+                <span className="text-[10px] font-mono tracking-[1px] text-[#d4943a] uppercase border border-[#d4943a]/40 rounded px-1.5 py-0.5">
+                  Pro
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-snug mt-1">
+                5 pages. Real area comps · 6-scenario stress test · property-specific negotiation memo · exit scenarios · legal DD checklist.
+              </p>
+            </div>
+          </div>
+
+          <ul className="space-y-1.5 text-[12px] text-slate-300 mb-4 pl-1">
+            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>Top 5 comparable listings with actual names, prices, and yields</span></li>
+            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>Worst/base/bull case yield — including double-shock cost inflation</span></li>
+            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>Negotiation memo tailored to this property&apos;s flags and price gap</span></li>
+            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>25-item due diligence checklist (Notaris, surveyor, legal)</span></li>
+          </ul>
+
+          <button
+            type="button"
+            onClick={handleDeepAudit}
+            disabled={deepSubmitting}
+            className="w-full bg-[#d4943a] hover:bg-[#e5a84d] text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 text-sm"
+          >
+            {deepSubmitting ? 'Redirecting to secure checkout…' : 'Upgrade to Deep Audit — $49 →'}
+          </button>
+          {deepError && (
+            <p className="text-xs text-red-400 mt-2 text-center" role="alert">
+              {deepError}
+            </p>
+          )}
+          <p className="text-[10px] text-slate-500 text-center mt-2">
+            Payment by Stripe. Emailed within 30 seconds. Not financial advice.
+          </p>
+        </div>
       </div>
     </div>
   );
