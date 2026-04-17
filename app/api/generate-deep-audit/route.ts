@@ -951,12 +951,22 @@ async function handle(session_id: string) {
     return NextResponse.json({ error: "Invalid session_id" }, { status: 400 });
   }
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const resendKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.RESEND_FROM_EMAIL || "audits@balivillatruth.com";
-  const fromName = process.env.RESEND_FROM_NAME || "Bali Villa Truth";
+  // Defensive trim — Vercel's env editor sometimes records trailing
+  // newlines from pasted values, which break downstream API calls.
+  const stripeKey = (process.env.STRIPE_SECRET_KEY || "").trim();
+  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+  const supabaseKey = (
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    ""
+  ).trim();
+  const resendKey = (process.env.RESEND_API_KEY || "").trim();
+  const fromEmail = (
+    process.env.RESEND_FROM_EMAIL || "audits@balivillatruth.com"
+  ).trim();
+  const fromName = (
+    process.env.RESEND_FROM_NAME || "Bali Villa Truth"
+  ).trim();
 
   if (!stripeKey || !supabaseUrl || !supabaseKey || !resendKey) {
     return NextResponse.json({ error: "Server not configured" }, { status: 500 });
