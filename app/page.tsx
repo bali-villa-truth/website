@@ -144,37 +144,46 @@ function FAQSection() {
   };
 
   return (
-    <section className="max-w-3xl mx-auto mt-16 mb-8 px-4">
+    <section className="max-w-[1400px] mx-auto mt-24 md:mt-32 px-6 md:px-10" id="faq">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-        Frequently asked questions
-      </h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-        The questions buyers actually ask us — answered honestly.
-      </p>
-      <div className="space-y-2">
-        {faqs.map((f, i) => (
-          <details
-            key={i}
-            className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-3 open:shadow-sm transition-shadow"
-          >
-            <summary className="flex cursor-pointer items-center justify-between gap-4 list-none">
-              <span className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100">
-                {f.q}
-              </span>
-              <ChevronDown
-                size={16}
-                className="shrink-0 text-slate-400 transition-transform group-open:rotate-180"
-              />
-            </summary>
-            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              {f.a}
-            </p>
-          </details>
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+        <header className="lg:col-span-4">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+            <span className="label-micro">Field guide</span>
+          </div>
+          <h2 className="font-display text-[color:var(--bvt-ink)] text-[36px] md:text-[44px] lg:text-[52px] leading-[1.02] tracking-[-0.02em]">
+            The questions<br />buyers actually ask.
+          </h2>
+          <p className="mt-5 text-[15px] leading-relaxed text-[color:var(--bvt-ink-muted)] max-w-[36ch]">
+            No hedging, no brochure copy. If you&apos;re about to commit a seven-figure
+            sum, these are the things you should already know.
+          </p>
+        </header>
+
+        <div className="lg:col-span-8">
+          <div className="border-t border-[color:var(--bvt-hairline)]">
+            {faqs.map((f, i) => (
+              <details
+                key={i}
+                className="group border-b border-[color:var(--bvt-hairline)] py-5 md:py-6 px-1"
+              >
+                <summary className="flex cursor-pointer items-start justify-between gap-6 list-none">
+                  <span className="font-display text-[20px] md:text-[22px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)]">
+                    {f.q}
+                  </span>
+                  <span className="shrink-0 mt-1 text-[color:var(--bvt-accent)] transition-transform group-open:rotate-45 font-mono text-[20px] leading-none select-none" aria-hidden>+</span>
+                </summary>
+                <p className="mt-4 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[65ch]">
+                  {f.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -211,53 +220,82 @@ function NewsletterBlock() {
   };
 
   return (
-    <section className="max-w-3xl mx-auto mt-10 mb-4 px-4">
-      <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8">
-        <div className="flex items-start gap-4 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-[#d4943a]/10 border border-[#d4943a]/20 flex items-center justify-center text-xl shrink-0" aria-hidden>
-            ✉
-          </div>
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-100 leading-tight">
-              Get the Monday audit digest
+    <section className="max-w-[1400px] mx-auto mt-24 md:mt-32 px-6 md:px-10" id="newsletter">
+      <div className="relative overflow-hidden border-t border-b border-[color:var(--bvt-hairline)] py-16 md:py-20">
+        {/* Ambient gold halo — subtle, luxury */}
+        <div
+          aria-hidden
+          className="absolute -top-40 -right-40 w-[600px] h-[600px] pointer-events-none rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(212,148,58,0.08) 0%, transparent 60%)',
+            filter: 'blur(40px)',
+          }}
+        />
+
+        <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+          <div className="lg:col-span-7">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+              <span className="label-micro">The Monday dispatch</span>
+            </div>
+            <h2 className="font-display text-[color:var(--bvt-ink)] text-[36px] md:text-[48px] lg:text-[58px] leading-[1.02] tracking-[-0.02em]">
+              Price drops, new red flags,<br />
+              <span className="text-[color:var(--bvt-accent)]">one villa worth a closer look.</span>
             </h2>
-            <p className="text-sm text-slate-400 mt-1 leading-relaxed">
-              One email a week. Notable price drops, new red flags, and a featured
-              deep-dive. No agent affiliates, no property pitches.
+            <p className="mt-6 max-w-[52ch] text-[16px] leading-[1.6] text-[color:var(--bvt-ink-body)]">
+              Monday mornings, in your inbox. Notable price moves from the week,
+              the newest audits, and a featured deep-dive with the full math.
+              No agent affiliates. No property pitches.
+            </p>
+            <p className="mt-3 text-[12px] text-[color:var(--bvt-ink-dim)]">
+              Unsubscribe with one click. We&apos;ll never sell your email.
             </p>
           </div>
-        </div>
 
-        {ok ? (
-          <div className="text-sm text-emerald-400 font-semibold">
-            ✓ You&apos;re in — welcome email on its way.
+          <div className="lg:col-span-5">
+            {ok ? (
+              <div className="border border-[color:var(--bvt-accent)]/40 bg-[color:var(--bvt-accent)]/[0.04] rounded-md p-6">
+                <div className="label-micro text-[color:var(--bvt-accent)] mb-2">Subscribed</div>
+                <p className="font-display text-[22px] leading-tight text-[color:var(--bvt-ink)]">
+                  You&apos;re in. Welcome email on its way.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <label htmlFor="newsletter-email" className="label-micro block">
+                  Your email
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    id="newsletter-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@somewhere.com"
+                    required
+                    aria-label="Email address for newsletter"
+                    className="flex-1 bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] focus:border-[color:var(--bvt-accent)] rounded-md px-4 py-3 text-[15px] text-[color:var(--bvt-ink)] placeholder-[color:var(--bvt-ink-faint)] outline-none transition-colors"
+                  />
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center justify-center gap-1.5 bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] font-semibold text-[14px] px-5 py-3 rounded-md transition-colors disabled:opacity-50"
+                  >
+                    {submitting ? 'Subscribing…' : 'Subscribe'}
+                    {!submitting && (
+                      <svg width="12" height="12" viewBox="0 0 10 10" fill="none" aria-hidden>
+                        <path d="M1 5h8M5 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {error && (
+                  <p className="text-[12px] text-[color:var(--bvt-bad)] mt-1" role="alert">{error}</p>
+                )}
+              </form>
+            )}
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-              aria-label="Email address for newsletter"
-              className="flex-1 bg-slate-900 border border-slate-800 focus:border-[#d4943a] rounded-lg px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={submitting}
-              className="bg-[#d4943a] hover:bg-[#e5a84d] text-white font-bold text-sm px-5 py-2.5 rounded-lg transition-all disabled:opacity-50"
-            >
-              {submitting ? 'Subscribing…' : 'Subscribe'}
-            </button>
-          </form>
-        )}
-        {error && (
-          <p className="text-xs text-red-400 mt-2" role="alert">{error}</p>
-        )}
-        <p className="text-[11px] text-slate-500 mt-3">
-          Unsubscribe with one click. We&apos;ll never sell your email.
-        </p>
+        </div>
       </div>
     </section>
   );
@@ -777,115 +815,127 @@ export default function BaliVillaTruth() {
   const flaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans ${darkMode ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] font-sans ${darkMode ? 'dark' : ''}`}>
 
-      {/* HERO SECTION */}
-      <section className="relative min-h-[50vh] md:min-h-[70vh] w-full overflow-hidden bg-[#0a1120]">
-        {/* Subtle grid background */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'linear-gradient(rgba(148,163,184,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.3) 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
-        }} />
-        {/* Subtle amber glow */}
-        <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none" style={{
-          background: 'radial-gradient(circle, rgba(212,148,58,0.06) 0%, transparent 70%)'
-        }} />
-        {/* Bottom fade to page bg */}
-        <div className={`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t ${darkMode ? 'from-slate-950' : 'from-slate-50'} to-transparent`} />
+      {/* HERO — editorial, The Modern House + FT feature style.
+          Large serif display, calm supporting deck, factoids as prose not tiles. */}
+      <section className="relative overflow-hidden bg-[color:var(--bvt-bg)]">
+        {/* Layered ambient background: mesh-halo + ultra-fine noise for luxury "grain" */}
+        <div className="mesh-halo" aria-hidden />
+        <div className="noise" aria-hidden />
+        {/* Bottom fade into page body — FT-style visual break */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[color:var(--bvt-bg)] to-transparent pointer-events-none" aria-hidden />
 
-        {/* Dark mode toggle */}
-        <button onClick={() => setDarkMode(!darkMode)} className="absolute top-4 right-4 md:top-6 md:right-6 z-20 p-2.5 rounded-xl bg-white/10 backdrop-blur-md text-white/80 hover:bg-white/20 hover:text-white transition-all border border-white/10" title={darkMode ? 'Light mode' : 'Dark mode'}>
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
-        {/* Hero content */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-16 pb-12 md:pt-24 md:pb-16">
-
-          {/* Audit Seal */}
-          <div className="w-20 h-20 md:w-[120px] md:h-[120px] mb-5 md:mb-8" style={{ filter: 'drop-shadow(0 0 40px rgba(212,148,58,0.15))' }}>
-            <svg viewBox="0 0 400 400" className="w-full h-full">
-              <circle cx="200" cy="200" r="200" fill="#0a1120"/>
-              <circle cx="200" cy="200" r="178" fill="#1a2538"/>
-              <circle cx="200" cy="200" r="175" fill="none" stroke="#2a3a52" strokeWidth="1"/>
-              <circle cx="200" cy="200" r="145" fill="#0a1120"/>
-              <circle cx="200" cy="200" r="124" fill="#111c2e"/>
-              <circle cx="200" cy="200" r="124" fill="none" stroke="#d4943a" strokeWidth="3"/>
-              <text x="200" y="192" textAnchor="middle" fill="#f8fafc" fontFamily="system-ui, sans-serif" fontSize="68" fontWeight="700" letterSpacing="10">BVT</text>
-              <line x1="140" y1="208" x2="260" y2="208" stroke="#d4943a" strokeWidth="2"/>
-              <text x="200" y="236" textAnchor="middle" fill="#d4943a" fontFamily="system-ui, sans-serif" fontSize="22" fontWeight="500" letterSpacing="8">AUDIT</text>
-              <path id="heroSealTop" d="M 42,200 a 158,158 0 0,1 316,0" fill="none"/>
-              <text fill="#4a5a70" fontFamily="system-ui, sans-serif" fontSize="20" fontWeight="600" letterSpacing="6">
-                <textPath href="#heroSealTop" startOffset="50%" textAnchor="middle">BALI VILLA TRUTH</textPath>
-              </text>
-              <path id="heroSealBot" d="M 358,210 a 158,158 0 0,1 -316,0" fill="none"/>
-              <text fill="#4a5a70" fontFamily="system-ui, sans-serif" fontSize="16" fontWeight="500" letterSpacing="4">
-                <textPath href="#heroSealBot" startOffset="50%" textAnchor="middle">INDEPENDENT  ·  CONSERVATIVE</textPath>
-              </text>
-            </svg>
+        <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-10 pt-16 md:pt-28 pb-16 md:pb-24">
+          {/* Masthead label */}
+          <div className="flex items-center gap-3 mb-8 md:mb-10">
+            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+            <span className="label-micro">Independent audits · Est. 2026</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-3 md:mb-4">
-            Bali Villa <span className="text-[#d4943a]">Truth</span>
-          </h1>
-          <p className="text-slate-500 max-w-xl mx-auto text-sm md:text-base leading-relaxed mb-2">
-            We stress-test villa asking prices so you don&apos;t have to trust the agent&apos;s spreadsheet.
-          </p>
-          <p className="text-slate-400 max-w-lg mx-auto text-xs md:text-sm font-medium mb-8">
-            Independent audits. Conservative assumptions. Every number decomposable.
-          </p>
+          {/* Headline + deck — two-column on desktop for FT-style composition */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+            <div className="lg:col-span-8">
+              <h1 className="font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[44px] sm:text-[56px] md:text-[72px] lg:text-[88px]">
+                We don&apos;t sell villas.
+                <br />
+                <span className="text-[color:var(--bvt-accent)]">We check the math.</span>
+              </h1>
+              <p className="mt-8 md:mt-10 max-w-[52ch] text-[17px] md:text-[19px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
+                Bali Villa Truth is the independent audit bureau for villa investors.
+                We stress-test every asking price against real operating costs,
+                market-rate occupancy, and lease decay — then publish the net yield
+                that actually lands in your pocket.
+              </p>
+            </div>
 
-          {/* Stats bar — SSR-safe: show approximate floor until real data hydrates (#1) */}
-          <div className="flex gap-12 md:gap-16 mb-8 md:mb-10">
-            <div className="text-center">
-              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">
-                {listings.length > 0 ? listings.length.toLocaleString() : '2,000'}
-                <span className="text-[#d4943a]">+</span>
+            {/* Right column — factoid "ticker", Bloomberg dashboard feel */}
+            <aside className="lg:col-span-4 lg:pt-6">
+              <div className="border-t border-[color:var(--bvt-hairline)] pt-6 space-y-5">
+                <div>
+                  <div className="font-mono tabular-nums text-[28px] md:text-[32px] text-[color:var(--bvt-ink)] leading-none">
+                    {listings.length > 0 ? listings.length.toLocaleString() : '2,000'}
+                    <span className="text-[color:var(--bvt-accent)]">+</span>
+                  </div>
+                  <div className="label-micro mt-2">Villas audited</div>
+                </div>
+                <div className="h-px bg-[color:var(--bvt-hairline)]" />
+                <div>
+                  <div className="font-mono tabular-nums text-[28px] md:text-[32px] text-[color:var(--bvt-ink)] leading-none">
+                    {flaggedCount > 0 ? flaggedCount.toLocaleString() : '400'}
+                    <span className="text-[color:var(--bvt-accent)]">+</span>
+                  </div>
+                  <div className="label-micro mt-2">Red flags surfaced</div>
+                </div>
+                <div className="h-px bg-[color:var(--bvt-hairline)]" />
+                <div>
+                  <div className="font-mono tabular-nums text-[28px] md:text-[32px] text-[color:var(--bvt-ink)] leading-none">
+                    Weekly
+                  </div>
+                  <div className="label-micro mt-2">Re-audit cadence</div>
+                </div>
               </div>
-              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Villas Audited</div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl md:text-3xl font-bold text-white tabular-nums">
-                {flaggedCount > 0 ? flaggedCount.toLocaleString() : '400'}
-                <span className="text-[#d4943a]">+</span>
-              </div>
-              <div className="text-[10px] md:text-xs text-slate-600 uppercase tracking-widest mt-1">Red Flags Detected</div>
-            </div>
+            </aside>
           </div>
 
-          {/* Paste-BHI-URL search box (#11) — power-user entry point */}
-          <PasteListingUrlBox listings={listings} />
-
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
+          {/* CTA row — primary gold + editorial text link */}
+          <div className="mt-12 md:mt-16 flex flex-col sm:flex-row gap-5 sm:items-center">
             <button
               onClick={() => document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' })}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0a1120] bg-[#d4943a] hover:bg-[#e5a84d] px-6 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 text-[14px] font-semibold text-[color:var(--bvt-bg)] bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] px-5 py-3 rounded-md transition-colors"
             >
-              <ChevronDown size={16} />
-              Browse Audited Listings
+              Browse the audit ledger
+              <svg width="12" height="12" viewBox="0 0 10 10" fill="none" aria-hidden>
+                <path d="M1 5h8M5 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
-            <Link href="/methodology" className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-300 bg-white/[0.03] border border-slate-800 hover:border-slate-700 px-5 py-3 rounded-lg transition-all">
-              <BookOpen size={14} />
-              Our Methodology
+            <Link href="/methodology" className="link-editorial text-[14px]">
+              How we audit →
             </Link>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+              className="hidden md:inline-flex ml-auto items-center gap-2 text-[12px] text-[color:var(--bvt-ink-dim)] hover:text-[color:var(--bvt-ink)] transition-colors"
+            >
+              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
+              <span className="label-micro">{darkMode ? 'Dark' : 'Light'}</span>
+            </button>
+          </div>
+
+          {/* Paste-URL affordance — editorial framed, not a tile */}
+          <div className="mt-14 md:mt-20 pt-10 border-t border-[color:var(--bvt-hairline)]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-4">
+                <div className="label-micro">For buyers already shortlisting</div>
+                <h3 className="font-display text-[color:var(--bvt-ink)] text-[22px] md:text-[26px] leading-tight tracking-[-0.01em] mt-2">
+                  Paste any BHI URL.
+                  <br />We&apos;ll pull the audit.
+                </h3>
+              </div>
+              <div className="lg:col-span-8" id="paste-url">
+                <PasteListingUrlBox listings={listings} />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Trust strip */}
-        <div className={`relative z-10 border-t ${darkMode ? 'border-slate-800 bg-slate-950/80' : 'border-slate-200 bg-slate-50/80'} backdrop-blur-sm`}>
-          <div className="max-w-4xl mx-auto flex flex-wrap justify-center gap-x-8 gap-y-2 px-4 py-3">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <Shield size={13} className="text-slate-600" />
-              <span className="text-slate-400 font-medium">Not a broker</span> — we don&apos;t sell villas
+        {/* Trust strip — FT-style tiny-print positioning below the fold */}
+        <div className="relative z-10 border-t border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-elev)]/40">
+          <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-4 flex flex-wrap justify-between gap-x-8 gap-y-2">
+            <div className="flex items-center gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
+              <Shield size={13} className="text-[color:var(--bvt-accent)]" />
+              <span className="text-[color:var(--bvt-ink-body)]">Not a broker</span>
+              <span className="text-[color:var(--bvt-ink-dim)]">— we don&apos;t sell villas</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <Clock size={13} className="text-slate-600" />
-              Updated <span className="text-slate-400 font-medium">weekly</span> with fresh scrapes
+            <div className="flex items-center gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
+              <Clock size={13} className="text-[color:var(--bvt-accent)]" />
+              <span className="text-[color:var(--bvt-ink-body)]">Re-audited weekly</span>
+              <span className="text-[color:var(--bvt-ink-dim)]">with fresh scrapes</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <Globe size={13} className="text-slate-600" />
-              Booking.com + Airbnb <span className="text-slate-400 font-medium">blended rate model</span>
+            <div className="flex items-center gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
+              <Globe size={13} className="text-[color:var(--bvt-accent)]" />
+              <span className="text-[color:var(--bvt-ink-body)]">Booking.com + Airbnb</span>
+              <span className="text-[color:var(--bvt-ink-dim)]">blended rate model</span>
             </div>
           </div>
         </div>
@@ -1867,14 +1917,7 @@ export default function BaliVillaTruth() {
       {/* NEWSLETTER (#18) — weekly digest signup */}
       <NewsletterBlock />
 
-      {/* FOOTER */}
-      <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-          <div><span className="font-bold text-slate-700">Bali Villa Truth</span><span className="mx-2">•</span><span>Independent villa investment analysis</span></div>
-          <div className="flex items-center gap-4"><Link href="/methodology" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1"><BookOpen size={11} /> Methodology</Link><span className="text-slate-300 dark:text-slate-600">|</span><Link href="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">About</Link><span className="text-slate-300 dark:text-slate-600">|</span><Link href="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Contact</Link><span className="text-slate-300 dark:text-slate-600">|</span><Link href="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link></div>
-        </div>
-        <p className="text-center text-[10px] text-slate-400 mt-4">© 2026 Bali Villa Truth. This site provides informational analysis only.</p>
-      </footer>
+      {/* Footer is rendered globally via app/layout.tsx (SiteFooter) */}
       </div>{/* end listings-section */}
     </div>
   );
