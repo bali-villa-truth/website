@@ -7,37 +7,34 @@ export default function Methodology() {
   const [darkMode, setDarkMode] = useState(false);
 
   return (
-    <div className={`${darkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-gradient-to-b from-slate-50 to-white text-slate-900'} min-h-screen transition-colors duration-200`}>
-      <div className="max-w-3xl mx-auto px-4 py-8 md:py-16">
+    <div className={`${darkMode ? 'dark' : ''} bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] min-h-screen transition-colors duration-200`}>
+      <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-14 pb-16">
 
-        {/* NAV */}
-        <div className="flex items-center justify-between mb-10">
-          <Link href="/" className="flex items-center gap-2 text-sm text-[#d4943a] dark:text-[#d4943a] hover:text-[#e5a84d] dark:hover:text-[#e5a84d] font-medium transition-colors">
-            <ArrowLeft size={16} /> Back to listings
+        {/* Breadcrumb */}
+        <nav className="mb-10 text-[12px]" aria-label="Breadcrumb">
+          <Link href="/" className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] transition-colors">
+            Home
           </Link>
-          <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title={darkMode ? 'Light mode' : 'Dark mode'}>
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-        </div>
+          <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
+          <span className="text-[color:var(--bvt-ink)]">Methodology</span>
+        </nav>
 
-        {/* HEADER */}
-        <header className="mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-              <BookOpen size={20} className="text-[#d4943a] dark:text-[#d4943a]" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                Our <span className="text-[#d4943a] dark:text-[#d4943a]">Methodology</span>
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">How every number on Bali Villa Truth is calculated</p>
-            </div>
+        {/* HEADER — editorial masthead */}
+        <header className="mb-16 md:mb-20 max-w-[900px]">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+            <span className="label-micro">Editorial standards</span>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
-            <strong className="flex items-center gap-1.5 mb-1"><Shield size={14} /> Our commitment</strong>
-            We show you every assumption behind every number. No hidden floors, no inflated rates, no false precision.
-            If we don&apos;t have real data, we tell you — and we give you the tools to plug in your own.
-          </div>
+          <h1 className="font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[44px] sm:text-[56px] md:text-[72px]">
+            How every number
+            <br />
+            <span className="text-[color:var(--bvt-accent)]">is calculated.</span>
+          </h1>
+          <p className="mt-8 max-w-[62ch] text-[17px] md:text-[19px] leading-[1.6] text-[color:var(--bvt-ink-body)]">
+            We show you every assumption behind every number. No hidden floors,
+            no inflated rates, no false precision. If we don&apos;t have real
+            data, we tell you — and we give you the tools to plug in your own.
+          </p>
         </header>
 
         {/* === SECTION: Data Sources === */}
@@ -365,16 +362,7 @@ export default function Methodology() {
           </div>
         </section>
 
-        {/* FOOTER */}
-        <footer className="pt-8 border-t border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-            <div><span className="font-bold text-slate-700 dark:text-slate-300">Bali Villa Truth</span><span className="mx-2">&bull;</span><span>Independent villa investment analysis</span></div>
-            <Link href="/" className="text-[#d4943a] dark:text-[#d4943a] hover:text-[#e5a84d] dark:hover:text-[#e5a84d] font-medium transition-colors flex items-center gap-1">
-              <ArrowLeft size={12} /> Back to listings
-            </Link>
-          </div>
-          <p className="text-center text-[10px] text-slate-400 dark:text-slate-500 mt-4">&copy; 2026 Bali Villa Truth. This site provides informational analysis only.</p>
-        </footer>
+        {/* Global SiteFooter renders via app/layout.tsx */}
       </div>
     </div>
   );
@@ -384,8 +372,8 @@ export default function Methodology() {
 
 function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <h2 className="flex items-center gap-2.5 text-lg font-bold text-slate-900 dark:text-slate-50 mb-4">
-      <span className="text-[#d4943a] dark:text-[#d4943a]">{icon}</span>
+    <h2 className="flex items-center gap-3 font-display text-[26px] md:text-[30px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-5">
+      <span className="text-[color:var(--bvt-accent)]">{icon}</span>
       {title}
     </h2>
   );
