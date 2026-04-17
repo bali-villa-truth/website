@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BvtSeal } from "./BvtSeal";
 
 /**
  * SiteFooter — editorial multi-column footer.
@@ -67,12 +68,9 @@ export default function SiteFooter() {
             <Link
               href="/"
               aria-label="Bali Villa Truth home"
-              className="group inline-flex items-baseline gap-2.5"
+              className="group inline-flex items-center gap-3"
             >
-              <span
-                aria-hidden
-                className="h-1.5 w-1.5 rounded-full bg-[color:var(--bvt-accent)] translate-y-[-2px]"
-              />
+              <BvtSeal size={40} className="flex-shrink-0" />
               <span className="font-display text-[22px] tracking-tight text-[color:var(--bvt-ink)] leading-none">
                 Bali Villa Truth
               </span>
