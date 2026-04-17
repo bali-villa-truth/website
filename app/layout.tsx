@@ -1,18 +1,33 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import StickyNav from "./_components/StickyNav";
+import SiteFooter from "./_components/SiteFooter";
 
 const GA_MEASUREMENT_ID = "G-M9FF8B9Y9E";
 
+// Sans body type — precise, modern, warm (Stripe/Linear feel).
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
+// Mono for numbers — data-as-art (Bloomberg / Stripe dashboards).
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Serif display — editorial authority (The Modern House, FT, Aesop).
+// Optical sizing gives tight display at headline sizes, open shapes at body.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
+  axes: ["SOFT", "opsz"],
 });
 
 const SITE_URL = "https://balivillatruth.com";
@@ -159,7 +174,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <script
           type="application/ld+json"
@@ -167,9 +182,11 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} antialiased bg-[#0a0e16] text-[#e8e4dc] selection:bg-[#d4943a]/30 selection:text-[#f5f0e6]`}
       >
+        <StickyNav />
         {children}
+        <SiteFooter />
 
         {/* Google Analytics (GA4) — loads after page interactive, non-blocking */}
         <Script
