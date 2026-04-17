@@ -284,43 +284,33 @@ export default async function ListingPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
-        {/* NAV */}
-        <nav className="border-b border-slate-800 bg-slate-950/90 backdrop-blur-lg sticky top-0 z-30">
-          <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-            <Link href="/" className="text-lg font-extrabold tracking-tight">
-              Bali Villa <span className="text-[#d4943a]">Truth</span>
-            </Link>
-            <Link
-              href="/"
-              className="text-sm text-[#d4943a] hover:text-[#e5a84d] font-medium transition-colors"
-            >
-              ← Back to all listings
-            </Link>
-          </div>
-        </nav>
-
-        <main className="max-w-5xl mx-auto px-4 py-8">
-          {/* Breadcrumb trail (visible) */}
-          <nav aria-label="Breadcrumb" className="text-xs text-slate-500 mb-4">
-            <Link href="/" className="hover:text-[#d4943a]">Home</Link>
-            <span className="mx-2">›</span>
+      <div className="bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] font-sans">
+        {/* Global StickyNav + SiteFooter are rendered by app/layout.tsx */}
+        <main className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-14 pb-16">
+          {/* Breadcrumb trail */}
+          <nav aria-label="Breadcrumb" className="text-[12px] text-[color:var(--bvt-ink-muted)] mb-8">
+            <Link href="/" className="hover:text-[color:var(--bvt-ink)] transition-colors">Home</Link>
+            <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
             <Link
               href={`/${(listing.location || "bali").toLowerCase().replace(/\s+/g, "-")}`}
-              className="hover:text-[#d4943a]"
+              className="hover:text-[color:var(--bvt-ink)] transition-colors"
             >
-              {listing.location || "Bali"} Villa Investment
+              {listing.location || "Bali"}
             </Link>
-            <span className="mx-2">›</span>
-            <span className="text-slate-400">Audit</span>
+            <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
+            <span className="text-[color:var(--bvt-ink)]">Audit</span>
           </nav>
 
-          {/* HEADER */}
-          <header className="mb-8">
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">
+          {/* HEADER — editorial masthead */}
+          <header className="mb-10 md:mb-14">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+              <span className="label-micro">Audit dossier · {listing.location || "Bali"}</span>
+            </div>
+            <h1 className="font-display text-[color:var(--bvt-ink)] text-[34px] md:text-[46px] lg:text-[56px] leading-[1.02] tracking-[-0.02em] mb-5">
               {niceName}
             </h1>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[color:var(--bvt-ink-muted)]">
               <span className="flex items-center gap-1">
                 📍 {listing.location || "Bali"}
               </span>
@@ -390,7 +380,7 @@ export default async function ListingPage({ params }: Props) {
               {/* Price history (only if we have >1 observation) */}
               {priceHistSorted.length > 1 && firstPrice && currentPrice && (
                 <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <h2 className="text-lg font-bold mb-3">Price history</h2>
+                  <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-3">Price history</h2>
                   <div className="flex items-center gap-4 text-sm">
                     <div>
                       <div className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">First tracked</div>
@@ -421,7 +411,7 @@ export default async function ListingPage({ params }: Props) {
 
               {/* Property details */}
               <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                <h2 className="text-lg font-bold mb-4">Property Details</h2>
+                <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-4">Property Details</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Location</span>
@@ -460,7 +450,7 @@ export default async function ListingPage({ params }: Props) {
 
               {/* Yield Breakdown */}
               <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                <h2 className="text-lg font-bold mb-4">Net Yield Breakdown</h2>
+                <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-4">Net Yield Breakdown</h2>
                 <p className="text-xs text-slate-500 mb-4">
                   Our stress-test uses conservative assumptions applied uniformly to all {">"}2,000 listings.{" "}
                   <Link href="/methodology" className="text-[#d4943a] hover:text-[#e5a84d] underline">
@@ -512,7 +502,7 @@ export default async function ListingPage({ params }: Props) {
               {/* Sensitivity table */}
               {priceUsd && nightlyRate > 0 && (
                 <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <h2 className="text-lg font-bold mb-2">Sensitivity analysis</h2>
+                  <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-2">Sensitivity analysis</h2>
                   <p className="text-xs text-slate-500 mb-4">
                     What happens to the net yield if our nightly rate is off by ±15%, or occupancy is different from the area estimate of {occupancyPct}%?
                   </p>
@@ -558,7 +548,7 @@ export default async function ListingPage({ params }: Props) {
               {/* Comparable listings */}
               {comps.length > 0 && (
                 <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <h2 className="text-lg font-bold mb-2">Comparable {listing.location} {listing.bedrooms}-bed listings</h2>
+                  <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-2">Comparable {listing.location} {listing.bedrooms}-bed listings</h2>
                   <p className="text-xs text-slate-500 mb-4">
                     Same area, same bedroom count — a quick sanity check on price and yield.
                   </p>
@@ -664,28 +654,7 @@ export default async function ListingPage({ params }: Props) {
           </div>
         </main>
 
-        {/* FOOTER */}
-        <footer className="max-w-5xl mx-auto mt-16 pt-8 pb-6 border-t border-slate-800 px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-            <div>
-              <span className="font-bold text-slate-300 text-sm">Bali Villa Truth</span>
-              <span className="mx-2 text-slate-600">•</span>
-              <span>Independent villa investment analysis</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="/methodology" className="hover:text-[#d4943a] transition-colors">Methodology</Link>
-              <span className="text-slate-600">|</span>
-              <Link href="/about" className="hover:text-[#d4943a] transition-colors">About</Link>
-              <span className="text-slate-600">|</span>
-              <Link href="/contact" className="hover:text-[#d4943a] transition-colors">Contact</Link>
-              <span className="text-slate-600">|</span>
-              <Link href="/" className="hover:text-[#d4943a] transition-colors">All Listings</Link>
-            </div>
-          </div>
-          <p className="text-center text-[10px] text-slate-500 mt-4">
-            © 2026 Bali Villa Truth. All projections are estimates and not financial advice.
-          </p>
-        </footer>
+        {/* Global SiteFooter renders via app/layout.tsx */}
       </div>
     </>
   );
