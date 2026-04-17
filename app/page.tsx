@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransitio
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { MapPin, Ruler, Calendar, Lock, X, ShieldCheck, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
+import { BvtLockup } from './_components/BvtSeal';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -833,10 +834,9 @@ export default function BaliVillaTruth() {
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[color:var(--bvt-bg)] to-transparent pointer-events-none" aria-hidden />
 
         <div className="relative z-10 max-w-[1400px] mx-auto px-6 md:px-10 pt-16 md:pt-28 pb-16 md:pb-24">
-          {/* Masthead label */}
-          <div className="flex items-center gap-3 mb-8 md:mb-10">
-            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
-            <span className="label-micro">Independent audits · Est. 2026</span>
+          {/* Masthead — seal + wordmark lockup. The brand finally has a mark. */}
+          <div className="flex items-center mb-10 md:mb-14">
+            <BvtLockup size={56} />
           </div>
 
           {/* Headline + deck — two-column on desktop for FT-style composition */}
