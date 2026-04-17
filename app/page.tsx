@@ -942,153 +942,176 @@ export default function BaliVillaTruth() {
       </section>
 
       {/* FILTER + LISTINGS SECTION */}
-      <div id="listings-section" className="p-4 md:p-8">
-      <header className="relative max-w-7xl mx-auto mb-6">
+      <div id="listings-section" className="px-4 md:px-8 pt-16 md:pt-24 pb-8 bg-[color:var(--bvt-bg)]">
 
-        {/* FILTER DASHBOARD */}
-        <div className="bg-white dark:bg-slate-900 p-3 md:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 mb-6">
+      {/* EDITORIAL SECTION INTRO */}
+      <div className="max-w-[1400px] mx-auto mb-10 md:mb-14">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
+          <span className="label-micro">The ledger · {loading ? '…' : processedListings.length.toLocaleString()} audited dossiers</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-end">
+          <h2 className="md:col-span-8 font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[36px] sm:text-[48px] md:text-[64px]">
+            Every villa,{" "}
+            <span className="text-[color:var(--bvt-accent)]">audited.</span>
+          </h2>
+          <p className="md:col-span-4 text-[15px] leading-[1.7] text-[color:var(--bvt-ink-muted)]">
+            Filter by location, yield band, or lease structure. Every dossier is re-audited weekly against live Bali Home Immo data — prices, red flags, and ROI recomputed from scratch.
+          </p>
+        </div>
+      </div>
+
+      <header className="relative max-w-[1400px] mx-auto mb-6">
+
+        {/* FILTER DASHBOARD — editorial hairline */}
+        <div className="border-t border-b border-[color:var(--bvt-hairline)] py-4 md:py-5 mb-8">
 
             {/* Mobile filter toggle */}
-            <div className="flex md:hidden items-center justify-between mb-2">
-              <button onClick={() => setShowMobileFilters(!showMobileFilters)} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                <Filter size={14} /> Filters & Sort
-                <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400">{processedListings.length} results</span>
+            <div className="flex md:hidden items-center justify-between mb-3">
+              <button onClick={() => setShowMobileFilters(!showMobileFilters)} className="flex items-center gap-2 text-[color:var(--bvt-ink)]">
+                <Filter size={13} className="text-[color:var(--bvt-accent)]" />
+                <span className="label-micro !text-[color:var(--bvt-ink)]">Filter & sort</span>
+                <span className="font-mono text-[11px] tabular-nums text-[color:var(--bvt-ink-muted)]">· {processedListings.length}</span>
               </button>
-              <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="text-xs bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-medium rounded-lg px-2 py-1.5 outline-none">
-                <option value="roi-desc">ROI: High → Low</option>
-                <option value="roi-asc">ROI: Low → High</option>
-                <option value="price-asc">Price: Low → High</option>
-                <option value="price-desc">Price: High → Low</option>
+              <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="text-[12px] bg-transparent border border-[color:var(--bvt-hairline)] text-[color:var(--bvt-ink)] px-3 py-1.5 outline-none font-mono tabular-nums">
+                <option value="roi-desc" className="bg-[color:var(--bvt-bg)]">ROI: High → Low</option>
+                <option value="roi-asc" className="bg-[color:var(--bvt-bg)]">ROI: Low → High</option>
+                <option value="price-asc" className="bg-[color:var(--bvt-bg)]">Price: Low → High</option>
+                <option value="price-desc" className="bg-[color:var(--bvt-bg)]">Price: High → Low</option>
               </select>
             </div>
 
             {/* ROW 1: Core Filters (hidden on mobile unless toggled) */}
             <div className={`${showMobileFilters ? 'block' : 'hidden'} md:block`}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-3">
-                <div className="relative">
-                    <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hidden md:block" />
-                    <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full pl-3 md:pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors">
-                        <option value="All">All Locations</option>
-                        <option value="Canggu">Canggu</option>
-                        <option value="Pererenan">Pererenan</option>
-                        <option value="Berawa">Berawa</option>
-                        <option value="Uluwatu">Uluwatu</option>
-                        <option value="Bingin">Bingin</option>
-                        <option value="Sanur">Sanur</option>
-                        <option value="Seseh">Seseh</option>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-4 md:gap-y-3">
+                <div className="group">
+                    <label className="label-micro block mb-1.5">Location</label>
+                    <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] py-2 outline-none cursor-pointer transition-colors">
+                        <option value="All" className="bg-[color:var(--bvt-bg)]">All Bali</option>
+                        <option value="Canggu" className="bg-[color:var(--bvt-bg)]">Canggu</option>
+                        <option value="Pererenan" className="bg-[color:var(--bvt-bg)]">Pererenan</option>
+                        <option value="Berawa" className="bg-[color:var(--bvt-bg)]">Berawa</option>
+                        <option value="Uluwatu" className="bg-[color:var(--bvt-bg)]">Uluwatu</option>
+                        <option value="Bingin" className="bg-[color:var(--bvt-bg)]">Bingin</option>
+                        <option value="Sanur" className="bg-[color:var(--bvt-bg)]">Sanur</option>
+                        <option value="Seseh" className="bg-[color:var(--bvt-bg)]">Seseh</option>
                     </select>
                 </div>
-                <div className="relative">
-                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hidden md:block" />
-                    <select value={filterPrice} onChange={(e) => setFilterPrice(Number(e.target.value))} className="w-full pl-3 md:pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors">
-                        <option value={10000000}>Max Price</option>
-                        <option value={200000}>&lt; $200k USD</option>
-                        <option value={350000}>&lt; $350k USD</option>
-                        <option value={500000}>&lt; $500k USD</option>
-                        <option value={1000000}>&lt; $1M USD</option>
+                <div>
+                    <label className="label-micro block mb-1.5">Max Price</label>
+                    <select value={filterPrice} onChange={(e) => setFilterPrice(Number(e.target.value))} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-2 outline-none cursor-pointer transition-colors">
+                        <option value={10000000} className="bg-[color:var(--bvt-bg)]">Any</option>
+                        <option value={200000} className="bg-[color:var(--bvt-bg)]">&lt; $200k</option>
+                        <option value={350000} className="bg-[color:var(--bvt-bg)]">&lt; $350k</option>
+                        <option value={500000} className="bg-[color:var(--bvt-bg)]">&lt; $500k</option>
+                        <option value={1000000} className="bg-[color:var(--bvt-bg)]">&lt; $1M</option>
                     </select>
                 </div>
-                <div className="relative">
-                    <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hidden md:block" />
-                    <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full pl-3 md:pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors">
-                        <option value={-99}>All ROI</option>
-                        <option value={0}>0%+</option>
-                        <option value={5}>5%+</option>
-                        <option value={10}>10%+</option>
-                        <option value={15}>15%+</option>
-                        <option value={20}>20%+</option>
+                <div>
+                    <label className="label-micro block mb-1.5">Min Net Yield</label>
+                    <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-2 outline-none cursor-pointer transition-colors">
+                        <option value={-99} className="bg-[color:var(--bvt-bg)]">Any</option>
+                        <option value={0} className="bg-[color:var(--bvt-bg)]">0%+</option>
+                        <option value={5} className="bg-[color:var(--bvt-bg)]">5%+</option>
+                        <option value={10} className="bg-[color:var(--bvt-bg)]">10%+</option>
+                        <option value={15} className="bg-[color:var(--bvt-bg)]">15%+</option>
+                        <option value={20} className="bg-[color:var(--bvt-bg)]">20%+</option>
                     </select>
                 </div>
-                <div className="relative">
-                    <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hidden md:block" />
-                    <select value={filterLeaseType} onChange={(e) => setFilterLeaseType(e.target.value)} className="w-full pl-3 md:pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors">
-                        <option value="All">All Status</option>
-                        <option value="Freehold">Freehold (Hak Milik)</option>
-                        <option value="Leasehold">Leasehold (Hak Sewa)</option>
+                <div>
+                    <label className="label-micro block mb-1.5">Tenure</label>
+                    <select value={filterLeaseType} onChange={(e) => setFilterLeaseType(e.target.value)} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] py-2 outline-none cursor-pointer transition-colors">
+                        <option value="All" className="bg-[color:var(--bvt-bg)]">All</option>
+                        <option value="Freehold" className="bg-[color:var(--bvt-bg)]">Freehold</option>
+                        <option value="Leasehold" className="bg-[color:var(--bvt-bg)]">Leasehold</option>
                     </select>
                 </div>
-                <div className="relative">
-                    <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hidden md:block" />
-                    <select value={displayCurrency} onChange={(e) => setDisplayCurrency(e.target.value)} className="w-full pl-3 md:pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors" title="Show all prices in this currency">
-                        <option value="IDR">Show prices in IDR</option>
-                        <option value="USD">Show prices in USD</option>
-                        <option value="AUD">Show prices in AUD</option>
-                        <option value="EUR">Show prices in EUR</option>
-                        <option value="SGD">Show prices in SGD</option>
+                <div>
+                    <label className="label-micro block mb-1.5">Currency</label>
+                    <select value={displayCurrency} onChange={(e) => setDisplayCurrency(e.target.value)} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-2 outline-none cursor-pointer transition-colors" title="Show all prices in this currency">
+                        <option value="IDR" className="bg-[color:var(--bvt-bg)]">IDR</option>
+                        <option value="USD" className="bg-[color:var(--bvt-bg)]">USD</option>
+                        <option value="AUD" className="bg-[color:var(--bvt-bg)]">AUD</option>
+                        <option value="EUR" className="bg-[color:var(--bvt-bg)]">EUR</option>
+                        <option value="SGD" className="bg-[color:var(--bvt-bg)]">SGD</option>
                     </select>
                 </div>
-                {/* SORTING - Prominent */}
-                <div className="relative col-span-2 md:col-span-3 lg:col-span-1">
-                    <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 hidden md:block" />
-                    <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="w-full pl-3 md:pl-9 pr-3 py-2.5 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-medium rounded-lg text-sm outline-none cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors">
-                        <option value="roi-desc">ROI: High → Low</option>
-                        <option value="roi-asc">ROI: Low → High</option>
-                        <option value="price-asc">Price: Low → High</option>
-                        <option value="price-desc">Price: High → Low</option>
-                        <option value="psm-asc">Price/m²: Low → High</option>
-                        <option value="psm-desc">Price/m²: High → Low</option>
+                <div className="col-span-2 md:col-span-3 lg:col-span-1">
+                    <label className="label-micro block mb-1.5 !text-[color:var(--bvt-accent)]">Sort by</label>
+                    <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="w-full bg-transparent border-b border-[color:var(--bvt-accent-dim)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-accent)] text-[color:var(--bvt-ink)] text-[14px] py-2 outline-none cursor-pointer transition-colors">
+                        <option value="roi-desc" className="bg-[color:var(--bvt-bg)]">ROI: High → Low</option>
+                        <option value="roi-asc" className="bg-[color:var(--bvt-bg)]">ROI: Low → High</option>
+                        <option value="price-asc" className="bg-[color:var(--bvt-bg)]">Price: Low → High</option>
+                        <option value="price-desc" className="bg-[color:var(--bvt-bg)]">Price: High → Low</option>
+                        <option value="psm-asc" className="bg-[color:var(--bvt-bg)]">Price/m²: Low → High</option>
+                        <option value="psm-desc" className="bg-[color:var(--bvt-bg)]">Price/m²: High → Low</option>
                     </select>
                 </div>
             </div>
 
             {/* ROW 2: Detail Filters */}
-            <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 w-full sm:w-auto">
-                    <Bed size={14} className="text-slate-400 dark:text-slate-500" />
-                    <select value={filterBeds} onChange={(e) => setFilterBeds(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto dark:text-slate-200">
-                        <option value={0}>Any Beds</option>
-                        <option value={1}>1+ Beds</option>
-                        <option value={2}>2+ Beds</option>
-                        <option value={3}>3+ Beds</option>
-                        <option value={4}>4+ Beds</option>
-                        <option value={5}>5+ Beds</option>
-                    </select>
-                </div>
-                
-                <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 w-full sm:w-auto">
-                    <Bath size={14} className="text-slate-400 dark:text-slate-500" />
-                    <select value={filterBaths} onChange={(e) => setFilterBaths(Number(e.target.value))} className="bg-transparent text-sm outline-none w-full sm:w-auto dark:text-slate-200">
-                        <option value={0}>Any Baths</option>
-                        <option value={1}>1+ Baths</option>
-                        <option value={2}>2+ Baths</option>
-                        <option value={3}>3+ Baths</option>
+            <div className="flex flex-wrap items-end gap-x-8 gap-y-4 pt-5 mt-5 border-t border-[color:var(--bvt-hairline)]">
+                <div>
+                    <label className="label-micro block mb-1.5">Beds</label>
+                    <select value={filterBeds} onChange={(e) => setFilterBeds(Number(e.target.value))} className="bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-1.5 pr-4 outline-none cursor-pointer">
+                        <option value={0} className="bg-[color:var(--bvt-bg)]">Any</option>
+                        <option value={1} className="bg-[color:var(--bvt-bg)]">1+</option>
+                        <option value={2} className="bg-[color:var(--bvt-bg)]">2+</option>
+                        <option value={3} className="bg-[color:var(--bvt-bg)]">3+</option>
+                        <option value={4} className="bg-[color:var(--bvt-bg)]">4+</option>
+                        <option value={5} className="bg-[color:var(--bvt-bg)]">5+</option>
                     </select>
                 </div>
 
-                <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 w-full sm:w-auto">
-                    <Ruler size={14} className="text-slate-400 dark:text-slate-500" />
-                    <input type="number" placeholder="Min Land m²" value={filterLandSize === 0 ? '' : filterLandSize} onChange={(e) => setFilterLandSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500 dark:text-slate-200 dark:placeholder-slate-400" />
+                <div>
+                    <label className="label-micro block mb-1.5">Baths</label>
+                    <select value={filterBaths} onChange={(e) => setFilterBaths(Number(e.target.value))} className="bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-1.5 pr-4 outline-none cursor-pointer">
+                        <option value={0} className="bg-[color:var(--bvt-bg)]">Any</option>
+                        <option value={1} className="bg-[color:var(--bvt-bg)]">1+</option>
+                        <option value={2} className="bg-[color:var(--bvt-bg)]">2+</option>
+                        <option value={3} className="bg-[color:var(--bvt-bg)]">3+</option>
+                    </select>
                 </div>
 
-                <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 w-full sm:w-auto">
-                    <Layers size={14} className="text-slate-400 dark:text-slate-500" />
-                    <input type="number" placeholder="Min Build m²" value={filterBuildSize === 0 ? '' : filterBuildSize} onChange={(e) => setFilterBuildSize(Number(e.target.value))} className="bg-transparent text-sm outline-none w-24 placeholder-slate-500 dark:text-slate-200 dark:placeholder-slate-400" />
+                <div>
+                    <label className="label-micro block mb-1.5">Min Land m²</label>
+                    <input type="number" placeholder="—" value={filterLandSize === 0 ? '' : filterLandSize} onChange={(e) => setFilterLandSize(Number(e.target.value))} className="bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-1.5 w-24 outline-none placeholder:text-[color:var(--bvt-ink-faint)]" />
+                </div>
+
+                <div>
+                    <label className="label-micro block mb-1.5">Min Build m²</label>
+                    <input type="number" placeholder="—" value={filterBuildSize === 0 ? '' : filterBuildSize} onChange={(e) => setFilterBuildSize(Number(e.target.value))} className="bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-1.5 w-24 outline-none placeholder:text-[color:var(--bvt-ink-faint)]" />
                 </div>
 
                 <button
                     onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc'); setShowFavoritesOnly(false);}}
-                    className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium px-2 py-2"
+                    className="ml-auto label-micro !text-[color:var(--bvt-ink-muted)] hover:!text-[color:var(--bvt-accent)] transition-colors py-1.5"
                 >
-                    Reset All
+                    Reset all ↻
                 </button>
             </div>
             </div>{/* end mobile collapsible wrapper */}
         </div>
       </header>
 
-      {/* RESULTS BAR */}
-      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto mb-4 flex flex-wrap justify-between items-center gap-2 px-2 transition-all`}>
-         <div className="flex items-center gap-2">
-           <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden md:block">{loading ? 'Loading audited villas…' : `Showing ${processedListings.length} Properties`}</p>
+      {/* RESULTS BAR — editorial masthead strip */}
+      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-[1400px]'} mx-auto mb-6 md:mb-8 flex flex-wrap justify-between items-center gap-3 transition-all`}>
+         <div className="flex items-center gap-5">
+           <p className="hidden md:flex items-center gap-2">
+             <span className="label-micro">
+               {loading ? 'Loading dossiers' : `Showing ${processedListings.length.toLocaleString()} of ${listings.length.toLocaleString()}`}
+             </span>
+           </p>
            <button
              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-             className={`flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+             className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${
                showFavoritesOnly
-                 ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-900'
-                 : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-red-200 dark:hover:border-red-900 hover:text-red-500 dark:hover:text-red-400'
+                 ? 'text-[color:var(--bvt-accent)]'
+                 : 'text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)]'
              }`}
            >
-             <Heart size={10} className={showFavoritesOnly ? 'fill-red-500' : ''} /> Saved ({favorites.size})
+             <Heart size={11} className={showFavoritesOnly ? 'fill-[color:var(--bvt-accent)] text-[color:var(--bvt-accent)]' : ''} strokeWidth={1.5} />
+             <span className="font-mono tabular-nums">Saved · {favorites.size}</span>
            </button>
            {showFavoritesOnly && favorites.size > 0 && compareSet.size === 0 && !showCompare && (
              <button
@@ -1098,71 +1121,74 @@ export default function BaliVillaTruth() {
                  setShowCompare(true);
                  setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40);
                }}
-               className="flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+               className="flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] transition-colors"
              >
-               <SlidersHorizontal size={10} /> Compare Saved
+               <SlidersHorizontal size={11} strokeWidth={1.5} /> Compare saved →
              </button>
            )}
          </div>
-         <div className="flex gap-2 md:gap-4 items-center">
-            <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2 py-1 rounded border border-amber-200 dark:border-amber-900">
-                <ShieldAlert size={10}/> {flaggedCount} Flagged
+         <div className="flex gap-5 md:gap-6 items-center">
+            <div className="flex items-center gap-1.5">
+                <ShieldAlert size={11} className="text-[color:var(--bvt-warn)]" strokeWidth={1.5}/>
+                <span className="label-micro !text-[color:var(--bvt-warn)]">
+                  <span className="font-mono tabular-nums">{flaggedCount}</span> flagged
+                </span>
             </div>
-            <button onClick={() => setShowMap(!showMap)} className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showMap ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900' : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-slate-600 dark:hover:text-slate-400'}`}>
-              <Map size={12} /> {showMap ? 'Hide Map' : 'Show Map'}
+            <button onClick={() => setShowMap(!showMap)} className={`hidden md:flex items-center gap-1.5 text-[11px] font-medium transition-colors ${showMap ? 'text-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)]'}`}>
+              <Map size={12} strokeWidth={1.5} /> {showMap ? 'Hide map' : 'Show map'}
             </button>
          </div>
       </div>
 
       {/* MOBILE VIEW TOGGLE: List / Map */}
-      <div className="md:hidden max-w-7xl mx-auto mb-3 px-1">
-        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
-          <button onClick={() => setMobileView('list')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-md transition-colors ${mobileView === 'list' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}>
-            <LayoutList size={13} /> List
+      <div className="md:hidden max-w-[1400px] mx-auto mb-5">
+        <div className="flex border border-[color:var(--bvt-hairline)]">
+          <button onClick={() => setMobileView('list')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-medium tracking-wide uppercase transition-colors ${mobileView === 'list' ? 'bg-[color:var(--bvt-bg-soft)] text-[color:var(--bvt-ink)]' : 'text-[color:var(--bvt-ink-muted)]'}`}>
+            <LayoutList size={12} strokeWidth={1.5} /> Ledger
           </button>
-          <button onClick={() => setMobileView('map')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-md transition-colors ${mobileView === 'map' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}>
-            <Map size={13} /> Map
+          <button onClick={() => setMobileView('map')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[11px] font-medium tracking-wide uppercase border-l border-[color:var(--bvt-hairline)] transition-colors ${mobileView === 'map' ? 'bg-[color:var(--bvt-bg-soft)] text-[color:var(--bvt-ink)]' : 'text-[color:var(--bvt-ink-muted)]'}`}>
+            <Map size={12} strokeWidth={1.5} /> Map
           </button>
         </div>
       </div>
 
       {/* MOBILE MAP VIEW */}
       {mobileView === 'map' && (
-        <div className="md:hidden max-w-7xl mx-auto mb-4 px-1" style={{ height: 'calc(100vh - 12rem)' }}>
+        <div className="md:hidden max-w-[1400px] mx-auto mb-4" style={{ height: 'calc(100vh - 12rem)' }}>
           <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} onUnlockVilla={setSelectedVilla} darkMode={darkMode} />
         </div>
       )}
 
       {/* SPLIT LAYOUT: TABLE + MAP */}
-      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-7xl'} mx-auto flex gap-4 transition-all`}>
+      <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-[1400px]'} mx-auto flex gap-6 transition-all`}>
       {/* MOBILE CARD VIEW */}
       <main className={`${mobileView === 'list' ? 'block' : 'hidden'} md:hidden transition-all w-full`}>
-        <div className="space-y-3 px-1">
+        <div className="divide-y divide-[color:var(--bvt-hairline)] border-t border-b border-[color:var(--bvt-hairline)]">
           {processedListings.length === 0 ? (
             loading ? (
-              // Loading skeleton — replaces confusing "Showing 0 Properties" SSR state (#2)
-              <div className="space-y-3">
+              // Loading skeleton
+              <div>
                 {[0,1,2,3].map(i => (
-                  <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 animate-pulse">
-                    <div className="flex gap-3">
-                      <div className="w-20 h-16 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                  <div key={i} className="py-4 animate-pulse">
+                    <div className="flex gap-4">
+                      <div className="w-20 h-20 bg-[color:var(--bvt-bg-soft)]" />
                       <div className="flex-1 space-y-2 py-1">
-                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
-                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
-                        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
+                        <div className="h-3 bg-[color:var(--bvt-bg-soft)] w-3/4" />
+                        <div className="h-3 bg-[color:var(--bvt-bg-soft)] w-1/2" />
+                        <div className="h-2 bg-[color:var(--bvt-bg-soft)] w-1/4" />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center text-slate-400 dark:text-slate-500">
-                {showFavoritesOnly ? <Heart size={36} className="mx-auto mb-3 opacity-20" /> : <Filter size={36} className="mx-auto mb-3 opacity-20" />}
-                <p>{showFavoritesOnly ? 'No saved properties yet. Tap the heart icon to save listings.' : 'No properties match your filters.'}</p>
+              <div className="py-16 text-center">
+                {showFavoritesOnly ? <Heart size={28} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" /> : <Filter size={28} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" />}
+                <p className="text-[13px] text-[color:var(--bvt-ink-muted)]">{showFavoritesOnly ? 'No saved dossiers yet.' : 'No properties match your filters.'}</p>
               </div>
             )
           ) : (
-            processedListings.map((villa) => {
+            processedListings.map((villa, idx) => {
               const netRoi = Number(villa.projected_roi) || 0;
               const occupancy = villa.est_occupancy || 0.65;
               const nightly = getDisplayNightly(villa);
@@ -1175,92 +1201,90 @@ export default function BaliVillaTruth() {
               const hasWarning = redFlags.length > 0;
 
               return (
-                <div key={villa.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-                  {/* Card Header: Image + Name + Location */}
-                  <div className="flex items-start gap-3 p-3 pb-2">
+                <div key={villa.id} className="py-5 group">
+                  {/* Top: index, image, name, favorite */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <span className="font-mono text-[10px] tabular-nums text-[color:var(--bvt-accent)] mt-1 w-6">{String(idx + 1).padStart(2, '0')}</span>
                     {villa.thumbnail_url ? (
-                      <img src={villa.thumbnail_url} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0 bg-slate-100 dark:bg-slate-800" loading="lazy" />
+                      <img src={villa.thumbnail_url} alt="" className="w-20 h-20 object-cover flex-shrink-0 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
                     ) : (
-                      <div className="w-20 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg flex-shrink-0 flex items-center justify-center">
-                        <Home size={18} className="text-slate-300 dark:text-slate-600" />
+                      <div className="w-20 h-20 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex-shrink-0 flex items-center justify-center">
+                        <Home size={18} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight truncate">
+                      <div className="font-display text-[17px] leading-[1.15] text-[color:var(--bvt-ink)] tracking-[-0.005em] mb-1">
                         {villa.villa_name || 'Luxury Villa'}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        <MapPin size={10} className="text-blue-500 flex-shrink-0" /> {villa.location || "Bali"}
-                      </div>
+                      <div className="label-micro">{villa.location || "Bali"}</div>
                       {(hasDanger || hasWarning) && (
-                        <div className="flex gap-1 mt-1 flex-wrap">
-                          {hasDanger && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[8px] font-bold border border-red-200 flex items-center gap-0.5"><ShieldAlert size={8}/> VERIFY</span>}
-                          {!hasDanger && hasWarning && <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[8px] font-bold border border-amber-200 flex items-center gap-0.5"><AlertTriangle size={8}/> CAUTION</span>}
+                        <div className="flex gap-2 mt-2 flex-wrap">
+                          {hasDanger && <span className="inline-flex items-center gap-1 text-[10px] font-medium tracking-wide uppercase text-[color:var(--bvt-bad)]"><ShieldAlert size={9} strokeWidth={1.5}/> Verify</span>}
+                          {!hasDanger && hasWarning && <span className="inline-flex items-center gap-1 text-[10px] font-medium tracking-wide uppercase text-[color:var(--bvt-warn)]"><AlertTriangle size={9} strokeWidth={1.5}/> Caution</span>}
                         </div>
                       )}
                     </div>
                     <button onClick={() => toggleFavorite(villa.id)} className="flex-shrink-0 p-1">
-                      <Heart size={18} strokeWidth={2} className={`transition-all ${favorites.has(villa.id) ? 'text-red-500 fill-red-500' : 'text-slate-300 dark:text-slate-600'}`} />
+                      <Heart size={16} strokeWidth={1.5} className={`transition-all ${favorites.has(villa.id) ? 'text-[color:var(--bvt-accent)] fill-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink-faint)]'}`} />
                     </button>
                   </div>
 
-                  {/* Card Body: Key Metrics Grid */}
-                  <div className="grid grid-cols-3 gap-px bg-slate-100 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-800">
-                    {/* Price */}
-                    <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
-                      <div className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-0.5">Price</div>
-                      <div className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">{formatPriceInCurrency(villa)}</div>
+                  {/* Metrics row — hairline columns */}
+                  <div className="grid grid-cols-3 border-t border-[color:var(--bvt-hairline)] ml-10">
+                    <div className="py-3 pr-3">
+                      <div className="label-micro mb-1">Price</div>
+                      <div className="font-mono text-[13px] tabular-nums text-[color:var(--bvt-ink)]">{formatPriceInCurrency(villa)}</div>
                     </div>
-                    {/* ROI */}
-                    <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
-                      <div className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-0.5">Net ROI</div>
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
-                        netRoi >= 12 ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400' :
-                        netRoi >= 7 ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400' :
-                        netRoi >= 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' :
-                        'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400'
-                      }`}>{netRoi.toFixed(1)}%</span>
-                      <div className="text-[8px] text-slate-400 dark:text-slate-500 line-through mt-0.5">Gross: {grossRoi.toFixed(1)}%</div>
+                    <div className="py-3 px-3 border-l border-[color:var(--bvt-hairline)]">
+                      <div className="label-micro mb-1">Net Yield</div>
+                      <div className={`font-mono text-[15px] tabular-nums ${
+                        netRoi >= 12 ? 'text-[color:var(--bvt-good)]' :
+                        netRoi >= 7 ? 'text-[color:var(--bvt-ink)]' :
+                        netRoi >= 0 ? 'text-[color:var(--bvt-ink-muted)]' :
+                        'text-[color:var(--bvt-bad)]'
+                      }`}>{netRoi.toFixed(1)}<span className="text-[color:var(--bvt-ink-dim)] ml-0.5">%</span></div>
                     </div>
-                    {/* Specs */}
-                    <div className="bg-white dark:bg-slate-900 p-2.5 text-center">
-                      <div className="text-[9px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-0.5">Specs</div>
-                      <div className="text-xs font-medium text-slate-700 dark:text-slate-300">{villa.bedrooms || '?'} Bed</div>
-                      <div className="text-[9px] text-slate-500 dark:text-slate-400 inline-flex items-center justify-center">{isFreehold ? <>Freehold<GlossaryTip term="hak_milik" /></> : leaseYears > 0 ? <>{leaseYears}yr lease<GlossaryTip term="hak_sewa" /></> : <>Leasehold<GlossaryTip term="hak_sewa" /></>}</div>
+                    <div className="py-3 pl-3 border-l border-[color:var(--bvt-hairline)]">
+                      <div className="label-micro mb-1">Tenure</div>
+                      <div className="text-[12px] text-[color:var(--bvt-ink)] leading-tight">{villa.bedrooms || '?'}-bed · {isFreehold ? 'Freehold' : leaseYears > 0 ? `${leaseYears}yr` : 'Leasehold'}</div>
                     </div>
                   </div>
 
-                  {/* Card Footer: Compare + nightly rate + flags + action */}
-                  <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                  {/* Footer — compare / unlock */}
+                  <div className="flex items-center justify-between gap-3 ml-10 mt-3 pt-3 border-t border-[color:var(--bvt-hairline)]">
                     <button
                       onClick={() => toggleCompare(villa.id)}
                       disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
-                      className={`flex items-center gap-1 text-[9px] font-bold px-2 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
+                      className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${
                         compareSet.has(villa.id)
-                          ? 'bg-blue-600 dark:bg-blue-700 border-blue-600 dark:border-blue-700 text-white'
+                          ? 'text-[color:var(--bvt-accent)]'
                           : compareSet.size >= 5
-                            ? 'border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                            : 'border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-[color:var(--bvt-ink-faint)] cursor-not-allowed'
+                            : 'text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)]'
                       }`}
                     >
-                      <BarChart3 size={10} /> {compareSet.has(villa.id) ? 'Selected' : 'Compare'}
+                      <BarChart3 size={11} strokeWidth={1.5} /> {compareSet.has(villa.id) ? 'Selected' : 'Compare'}
                     </button>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono text-center flex-1 min-w-0">
-                      ~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ
-                      {redFlags.length > 0 && (
-                        <div className="flex gap-1 mt-0.5 flex-wrap justify-center">
-                          {redFlags.map((flag, idx) => (
-                            <span key={idx} className={`px-1 py-0.5 rounded text-[7px] font-bold ${flagBadgeClass(flag.level)}`}>
-                              {flag.label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <button onClick={() => setSelectedVilla(villa)} className="flex items-center gap-1 bg-slate-900 hover:bg-blue-600 text-white text-[9px] font-bold px-3 py-1.5 rounded-lg transition-all flex-shrink-0">
-                      <Lock size={10}/> UNLOCK
+                    <span className="font-mono text-[10px] tabular-nums text-[color:var(--bvt-ink-dim)] flex-1 text-center">
+                      ${getDisplayNightly(villa)}/nt · {Math.round(getDisplayOccupancy(villa))}% occ
+                    </span>
+                    <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] transition-colors">
+                      <Lock size={10} strokeWidth={1.5}/> Unlock →
                     </button>
                   </div>
+                  {redFlags.length > 0 && (
+                    <div className="ml-10 mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                      {redFlags.map((flag, idx) => (
+                        <span key={idx} className={`text-[10px] font-medium tracking-wide uppercase ${
+                          flag.level === 'danger' ? 'text-[color:var(--bvt-bad)]' :
+                          flag.level === 'assumed' ? 'text-[color:var(--bvt-ink-muted)]' :
+                          'text-[color:var(--bvt-warn)]'
+                        }`}>
+                          · {flag.label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -1268,43 +1292,42 @@ export default function BaliVillaTruth() {
         </div>
       </main>
 
-      {/* DESKTOP TABLE */}
-      <main className={`hidden md:block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
+      {/* DESKTOP TABLE — editorial ledger */}
+      <main className={`hidden md:block transition-all ${showMap ? 'w-[60%] flex-shrink-0' : 'w-full'}`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[11px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
-                <th className="p-3 w-10 text-center"><BarChart3 size={14} className="mx-auto text-slate-400 dark:text-slate-500" /></th>
-                <th className="p-3 w-10 text-center"><Heart size={14} className="mx-auto text-slate-300 dark:text-slate-600" /></th>
-                <th className="p-5">Asset & Location</th>
-                <th className="p-5">Price ({displayCurrency})</th>
-                <th className="p-5">Price/m²</th>
-                <th className="p-5 text-center">ROI Analysis</th>
-                <th className="p-5">Specs</th>
-                <th className="p-5 text-right">Action</th>
+              <tr className="border-t border-b border-[color:var(--bvt-hairline-2)] text-[10px] uppercase tracking-[0.18em] font-medium text-[color:var(--bvt-ink-dim)]">
+                <th className="py-3 w-10 text-center font-medium"><span className="sr-only">Compare</span></th>
+                <th className="py-3 w-10 text-center font-medium"><span className="sr-only">Save</span></th>
+                <th className="py-3 pr-5 font-medium">Asset</th>
+                <th className="py-3 px-5 font-medium">Price · {displayCurrency}</th>
+                <th className="py-3 px-5 font-medium">Price/m²</th>
+                <th className="py-3 px-5 text-center font-medium">Net Yield</th>
+                <th className="py-3 px-5 font-medium">Tenure · Specs</th>
+                <th className="py-3 pl-5 text-right font-medium">Source</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+            <tbody className="divide-y divide-[color:var(--bvt-hairline)]">
               {processedListings.length === 0 ? (
                   loading ? (
-                    // Loading skeleton rows — replaces confusing "0 properties" SSR state (#2)
                     [0,1,2,3,4,5].map(i => (
                       <tr key={i} className="animate-pulse">
-                        <td className="p-5"><div className="w-14 h-10 bg-slate-200 dark:bg-slate-800 rounded" /></td>
-                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-32" /></td>
-                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" /></td>
-                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" /></td>
-                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-16" /></td>
-                        <td className="p-5"><div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-28 mx-auto" /></td>
-                        <td className="p-5"><div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-20" /></td>
-                        <td className="p-5"><div className="h-8 bg-slate-200 dark:bg-slate-800 rounded w-24 ml-auto" /></td>
+                        <td className="py-6"><div className="w-4 h-4 bg-[color:var(--bvt-bg-soft)] mx-auto" /></td>
+                        <td className="py-6"><div className="w-4 h-4 bg-[color:var(--bvt-bg-soft)] mx-auto" /></td>
+                        <td className="py-6 pr-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-48" /></td>
+                        <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-24" /></td>
+                        <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-16" /></td>
+                        <td className="py-6 px-5"><div className="h-4 bg-[color:var(--bvt-bg-soft)] w-14 mx-auto" /></td>
+                        <td className="py-6 px-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-24" /></td>
+                        <td className="py-6 pl-5"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-16 ml-auto" /></td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                        <td colSpan={8} className="p-10 text-center text-slate-400 dark:text-slate-500">
-                            {showFavoritesOnly ? <Heart size={48} className="mx-auto mb-4 opacity-20" /> : <Filter size={48} className="mx-auto mb-4 opacity-20" />}
-                            {showFavoritesOnly ? 'No saved properties yet. Click the heart icon to save listings.' : 'No properties match your filters.'}
+                        <td colSpan={8} className="py-20 text-center">
+                            {showFavoritesOnly ? <Heart size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" /> : <Filter size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" />}
+                            <p className="text-[14px] text-[color:var(--bvt-ink-muted)]">{showFavoritesOnly ? 'No saved dossiers yet. Click the heart to save one.' : 'No properties match your filters.'}</p>
                         </td>
                     </tr>
                   )
@@ -1327,69 +1350,69 @@ export default function BaliVillaTruth() {
                     const hasWarning = redFlags.length > 0;
 
                     return (
-                    <tr key={villa.id} className={`hover:bg-blue-50/50 dark:hover:bg-blue-950/40 transition-colors group ${hoveredListingUrl === villa.url ? 'bg-blue-50/70 dark:bg-blue-950/50' : ''}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
-                        <td className="p-3 text-center">
+                    <tr key={villa.id} className={`transition-colors group ${hoveredListingUrl === villa.url ? 'bg-[color:var(--bvt-ink)]/[0.04]' : 'hover:bg-[color:var(--bvt-ink)]/[0.025]'}`} onMouseEnter={() => setHoveredListingUrl(villa.url)} onMouseLeave={() => setHoveredListingUrl(null)}>
+                        <td className="py-6 text-center align-middle">
                           <button
                             onClick={() => toggleCompare(villa.id)}
                             disabled={!compareSet.has(villa.id) && compareSet.size >= 5}
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                            className={`w-4 h-4 border flex items-center justify-center transition-all ${
                               compareSet.has(villa.id)
-                                ? 'bg-blue-600 dark:bg-blue-700 border-blue-600 dark:border-blue-700 text-white'
+                                ? 'bg-[color:var(--bvt-accent)] border-[color:var(--bvt-accent)] text-[color:var(--bvt-bg)]'
                                 : compareSet.size >= 5
-                                  ? 'border-slate-200 dark:border-slate-700 text-slate-200 dark:text-slate-600 cursor-not-allowed'
-                                  : 'border-slate-300 dark:border-slate-600 hover:border-blue-400 dark:hover:border-blue-600 text-transparent hover:text-blue-400 dark:hover:text-blue-400'
+                                  ? 'border-[color:var(--bvt-hairline)] text-transparent cursor-not-allowed'
+                                  : 'border-[color:var(--bvt-hairline-2)] hover:border-[color:var(--bvt-accent)] text-transparent'
                             }`}
                             title={compareSet.has(villa.id) ? 'Remove from compare' : compareSet.size >= 5 ? 'Max 5 villas' : 'Add to compare'}
                           >
-                            <Check size={12} strokeWidth={3} />
+                            <Check size={10} strokeWidth={3} />
                           </button>
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="py-6 text-center align-middle">
                           <button
                             onClick={() => toggleFavorite(villa.id)}
-                            className="transition-all hover:scale-110"
+                            className="transition-all"
                             title={favorites.has(villa.id) ? 'Remove from saved' : 'Save listing'}
                           >
-                            <Heart size={16} strokeWidth={2} className={favorites.has(villa.id) ? 'text-red-500 fill-red-500' : 'text-slate-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400'} />
+                            <Heart size={14} strokeWidth={1.5} className={favorites.has(villa.id) ? 'text-[color:var(--bvt-accent)] fill-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink-faint)] hover:text-[color:var(--bvt-accent)]'} />
                           </button>
                         </td>
-                        <td className="p-5">
-                        <div className="flex items-center gap-3">
+                        <td className="py-6 pr-5 align-middle">
+                        <div className="flex items-center gap-4">
                           {villa.thumbnail_url ? (
-                            <img src={villa.thumbnail_url} alt="" className="w-16 h-12 object-cover rounded-lg flex-shrink-0 bg-slate-100 dark:bg-slate-800" loading="lazy" />
+                            <img src={villa.thumbnail_url} alt="" className="w-20 h-14 object-cover flex-shrink-0 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
                           ) : (
-                            <div className="w-16 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex-shrink-0 flex items-center justify-center">
-                              <Home size={16} className="text-slate-300 dark:text-slate-600" />
+                            <div className="w-20 h-14 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex-shrink-0 flex items-center justify-center">
+                              <Home size={16} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
                             </div>
                           )}
-                          <div>
-                            <div className="font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                {villa.villa_name || 'Luxury Villa'}
-                                {hasDanger && <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 rounded text-[9px] font-bold border border-red-200 dark:border-red-900 flex items-center gap-0.5"><ShieldAlert size={9}/> VERIFY</span>}
-                                {!hasDanger && hasWarning && <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 rounded text-[9px] font-bold border border-amber-200 dark:border-amber-900 flex items-center gap-0.5"><AlertTriangle size={9}/> CAUTION</span>}
+                          <div className="min-w-0">
+                            <div className="font-display text-[17px] leading-[1.15] tracking-[-0.005em] text-[color:var(--bvt-ink)] group-hover:text-[color:var(--bvt-accent)] transition-colors flex items-center gap-2.5">
+                                <span className="truncate">{villa.villa_name || 'Luxury Villa'}</span>
+                                {hasDanger && <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.12em] uppercase text-[color:var(--bvt-bad)]"><ShieldAlert size={9} strokeWidth={1.5}/> Verify</span>}
+                                {!hasDanger && hasWarning && <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium tracking-[0.12em] uppercase text-[color:var(--bvt-warn)]"><AlertTriangle size={9} strokeWidth={1.5}/> Caution</span>}
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                <MapPin size={12} className="text-blue-500" /> {villa.location || "Bali"}
+                            <div className="mt-1 label-micro">
+                                {villa.location || "Bali"}
                             </div>
                           </div>
                         </div>
                         </td>
-                        <td className="p-5 font-mono text-slate-600 font-semibold text-sm">
+                        <td className="py-6 px-5 align-middle">
                          <div className="flex items-center gap-2">
-                           {formatPriceInCurrency(villa)}
+                           <span className="font-mono tabular-nums text-[14px] text-[color:var(--bvt-ink)]">{formatPriceInCurrency(villa)}</span>
                            {(() => {
                              const badge = getPriceChangeBadge(villa);
                              if (!badge.direction) return null;
                              const hasHistory = priceHistory[villa.url] && priceHistory[villa.url].length >= 1;
                              return (
-                               <span className={`relative px-1.5 py-0.5 rounded text-[9px] font-bold cursor-help ${
+                               <span className={`relative font-mono tabular-nums text-[10px] cursor-help ${
                                  badge.direction === 'down'
-                                   ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900'
-                                   : 'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900'
+                                   ? 'text-[color:var(--bvt-good)]'
+                                   : 'text-[color:var(--bvt-bad)]'
                                }`}
                                onMouseEnter={() => setHoveredPriceBadge(villa.id)}
                                onMouseLeave={() => setHoveredPriceBadge(null)}>
-                                 {badge.text}
+                                 {badge.direction === 'down' ? '▾' : '▴'} {badge.text}
                                  {hasHistory && hoveredPriceBadge === villa.id && (
                                    <PriceSparkline url={villa.url} currentPriceUsd={getPriceUSD(villa)} />
                                  )}
@@ -1398,34 +1421,41 @@ export default function BaliVillaTruth() {
                            })()}
                          </div>
                         </td>
-                        <td className="p-5 font-mono text-slate-500 dark:text-slate-400 text-xs">
+                        <td className="py-6 px-5 align-middle font-mono tabular-nums text-[12px] text-[color:var(--bvt-ink-muted)]">
                          {getPricePerSqm(villa)}
                         </td>
-                        <td className="p-5">
+                        <td className="py-6 px-5 align-middle">
                         <div className="flex flex-col items-center relative">
                             <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
-                            {/* BVT Adjusted ROI - the real number */}
-                            <span className={`px-3 py-1 rounded-full text-sm font-bold border flex items-center gap-1 justify-center w-fit mx-auto ${
-                              netRoi >= 12 ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900' :
-                              netRoi >= 7 ? 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-900' :
-                              netRoi >= 0 ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700' :
-                              'bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 border-red-200 dark:border-red-900'
+                            {/* BVT Adjusted ROI — prominent numeric */}
+                            <div className={`font-mono tabular-nums text-[22px] leading-none ${
+                              netRoi >= 12 ? 'text-[color:var(--bvt-good)]' :
+                              netRoi >= 7 ? 'text-[color:var(--bvt-ink)]' :
+                              netRoi >= 0 ? 'text-[color:var(--bvt-ink-muted)]' :
+                              'text-[color:var(--bvt-bad)]'
                             }`}>
-                                Est. {netRoi.toFixed(1)}% <Eye size={10} className="opacity-50" />
-                            </span>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 line-through opacity-60 font-mono">Gross: {grossRoi.toFixed(1)}%</p>
-                            <p className="text-[9px] text-slate-500 dark:text-slate-400 font-mono">~${getDisplayNightly(villa)}/nt • {Math.round(getDisplayOccupancy(villa))}% occ</p>
+                                {netRoi.toFixed(1)}<span className="text-[14px] text-[color:var(--bvt-ink-dim)] ml-0.5">%</span>
+                            </div>
+                            <p className="text-[10px] text-[color:var(--bvt-ink-dim)] mt-1.5 font-mono tabular-nums">
+                              <span className="line-through opacity-60">{grossRoi.toFixed(1)}%</span>
+                              <span className="mx-1.5 text-[color:var(--bvt-ink-faint)]">·</span>
+                              ${getDisplayNightly(villa)}/nt
+                            </p>
 
                             {/* Pre-depreciation yield for leaseholds */}
                             {!isFreehold && leaseDepreciation > 0 && (
-                              <p className="text-[9px] text-amber-500 dark:text-amber-400 font-mono mt-0.5">Before lease exp: {preDepreciationNet.toFixed(1)}%</p>
+                              <p className="text-[10px] text-[color:var(--bvt-warn)] font-mono tabular-nums mt-1">Pre-exp: {preDepreciationNet.toFixed(1)}%</p>
                             )}
 
-                            {/* Red flag badges under ROI */}
+                            {/* Red flag markers under ROI */}
                             {redFlags.length > 0 && (
-                              <div className="flex flex-wrap justify-center gap-1 mt-1.5">
+                              <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 mt-1.5">
                                 {redFlags.map((flag, idx) => (
-                                  <span key={idx} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flagBadgeClass(flag.level, 'bordered')}`}>
+                                  <span key={idx} className={`text-[9px] font-medium tracking-[0.1em] uppercase ${
+                                    flag.level === 'danger' ? 'text-[color:var(--bvt-bad)]' :
+                                    flag.level === 'assumed' ? 'text-[color:var(--bvt-ink-muted)]' :
+                                    'text-[color:var(--bvt-warn)]'
+                                  }`}>
                                     {flag.label}
                                   </span>
                                 ))}
@@ -1504,51 +1534,44 @@ export default function BaliVillaTruth() {
                             </div>
                         </div>
                         </td>
-                        <td className="p-5 text-xs text-slate-600 dark:text-slate-400 space-y-1.5">
-                            {/* Beds */}
-                            <div className="flex items-center gap-2">
-                                <Home size={12} className="text-slate-400 dark:text-slate-500"/>
-                                <span className="font-medium text-slate-900 dark:text-slate-100">
-                                    {villa.bedrooms ? `${villa.bedrooms} Bed` : '? Bed'}
-                                    {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1]?.trim().split(' ')[0] || '?'} Bath`}
-                                </span>
-                            </div>
-                            
-                            {/* Lease Type / Years - SMART DISPLAY: use features first, then lease_years, show years remaining for leasehold */}
-                            <div className="flex items-center gap-2">
-                                <Calendar size={12} className="text-slate-400 dark:text-slate-500"/>
+                        <td className="py-6 px-5 align-middle text-[12px] text-[color:var(--bvt-ink-muted)] space-y-1">
+                            {/* Tenure — lead with the most important fact */}
+                            <div>
                                 {(() => {
                                     const f = (villa.features || "").trim();
                                     const years = Number(villa.lease_years) || 0;
                                     const isFreehold = f.includes("Freehold") || f.includes("Hak Milik") || years === 999;
                                     const isLeasehold = f.includes("Leasehold") || f.includes("Hak Sewa") || (years > 0 && years < 999);
-                                    if (isFreehold) return <span className="font-bold text-green-600 dark:text-green-400 inline-flex items-center">Freehold (Hak Milik)<GlossaryTip term="hak_milik" /></span>;
+                                    if (isFreehold) return <span className="text-[color:var(--bvt-good)] inline-flex items-center gap-1 font-medium"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-good)] rounded-full" />Freehold<GlossaryTip term="hak_milik" /></span>;
                                     if (isLeasehold) {
-                                        const label = f ? "Leasehold (Hak Sewa)" : "Leasehold";
-                                        const yearsLabel = years > 0 && years < 999 ? ` – ${years} years remaining` : " – years not stated";
-                                        return <span className="text-slate-700 dark:text-slate-300 inline-flex items-center">{label}<GlossaryTip term="hak_sewa" />{yearsLabel}</span>;
+                                        const yearsLabel = years > 0 && years < 999 ? <><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> remaining</> : <>years unstated</>;
+                                        return <span className="text-[color:var(--bvt-ink-body)] inline-flex items-center gap-1"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-ink-dim)] rounded-full" />Leasehold<GlossaryTip term="hak_sewa" /> · {yearsLabel}</span>;
                                     }
-                                    if (years > 0 && years < 999) return <span className="text-slate-700 dark:text-slate-300">{years} years remaining</span>;
-                                    if (years === 999) return <span className="font-bold text-green-600 dark:text-green-400">Freehold</span>;
-                                    return <span className="text-slate-400 dark:text-slate-500">Unverified Status</span>;
+                                    if (years > 0 && years < 999) return <span className="text-[color:var(--bvt-ink-body)]"><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> remaining</span>;
+                                    if (years === 999) return <span className="text-[color:var(--bvt-good)] font-medium">Freehold</span>;
+                                    return <span className="text-[color:var(--bvt-ink-faint)] italic">Unverified</span>;
                                 })()}
                             </div>
 
-                            {/* Land Size */}
-                            <div className="flex items-center gap-2">
-                                <Ruler size={12} className="text-slate-400 dark:text-slate-500"/>
-                                <span>Land: <span className="font-medium">{villa.land_size || '?'}</span> m²</span>
-                            </div>
-
-                            {/* Building Size - always show row; use — when missing */}
-                            <div className="flex items-center gap-2">
-                                <Layers size={12} className="text-slate-400 dark:text-slate-500"/>
-                                <span>Build: <span className="font-medium">{villa.building_size > 0 ? `${villa.building_size} m²` : '—'}</span></span>
+                            {/* Beds · baths · land · build — compact editorial row */}
+                            <div className="font-mono tabular-nums text-[11px] text-[color:var(--bvt-ink-dim)] pt-0.5">
+                                {villa.bedrooms ? `${villa.bedrooms}bd` : '?bd'}
+                                {villa.beds_baths && ` / ${villa.beds_baths.split('/')[1]?.trim().split(' ')[0] || '?'}ba`}
+                                <span className="mx-1.5 text-[color:var(--bvt-ink-faint)]">·</span>
+                                {villa.land_size || '?'}m² land
+                                {villa.building_size > 0 && (
+                                  <>
+                                    <span className="mx-1.5 text-[color:var(--bvt-ink-faint)]">·</span>
+                                    {villa.building_size}m² build
+                                  </>
+                                )}
                             </div>
                         </td>
-                        <td className="p-5 text-right">
-                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-2 bg-slate-900 hover:bg-blue-600 text-white text-[10px] font-bold px-4 py-2 rounded-lg transition-all">
-                            <Lock size={12}/> UNLOCK SOURCE
+                        <td className="py-6 pl-5 text-right align-middle">
+                        <button onClick={() => setSelectedVilla(villa)} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] transition-colors group/btn">
+                            <Lock size={11} strokeWidth={1.5}/>
+                            <span className="border-b border-[color:var(--bvt-accent-dim)] group-hover/btn:border-[color:var(--bvt-accent)] pb-px transition-colors">Unlock dossier</span>
+                            <span aria-hidden className="text-[color:var(--bvt-accent)]">→</span>
                         </button>
                         </td>
                     </tr>
