@@ -25,7 +25,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: `${SITE_URL}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/contact`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+    {
+      url: `${SITE_URL}/privacy`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
   ];
+
+  // Location pages (#13) — high priority for SEO
+  const areas = ["canggu", "uluwatu", "seminyak", "ungasan", "sanur"];
+  for (const area of areas) {
+    routes.push({
+      url: `${SITE_URL}/${area}`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.9,
+    });
+  }
 
   // Dynamic listing pages — fetch all slugs from Supabase
   try {
