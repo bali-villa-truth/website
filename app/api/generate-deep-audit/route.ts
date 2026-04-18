@@ -384,14 +384,27 @@ function buildNegotiationMemo(villa: Villa, audit: AuditNumbers, comps: Comp[]):
   }
 
   // Walk-away anchor
+  // walkAwayPrice is the price at which net yield equals the buyer's minimum
+  // acceptable yield. Since yield FALLS as price rises, walkAwayPrice is
+  // really a CEILING — the most you should pay. When asking < walkAwayPrice
+  // the villa already clears the hurdle, so the "walk-away discipline" flips
+  // from "push for a discount to reach yield" to "don't bid above asking,
+  // use condition/comps for discount."
   const walkAwayYield = Math.max(5, ny - 1.5);
   const walkAwayPrice =
     audit.net_revenue > 0 && walkAwayYield > 0
       ? audit.net_revenue / (walkAwayYield / 100)
       : audit.price_usd * 0.85;
-  lines.push(
-    `Your walk-away number should be the price that delivers at least a ${walkAwayYield.toFixed(1)}% net yield — approximately ${fmtCurrency(walkAwayPrice)}. That's a ${(((audit.price_usd - walkAwayPrice) / audit.price_usd) * 100).toFixed(0)}% discount from asking. If the seller won't move at least halfway to that, walk. There are ${compPrices.length} comparable listings; you are not obligated to this one.`
-  );
+  if (walkAwayPrice < audit.price_usd) {
+    const discountPct = ((audit.price_usd - walkAwayPrice) / audit.price_usd) * 100;
+    lines.push(
+      `Your walk-away number should be the price that delivers at least a ${walkAwayYield.toFixed(1)}% net yield — approximately ${fmtCurrency(walkAwayPrice)}. That's a ${discountPct.toFixed(0)}% discount from asking. If the seller won't move at least halfway to that, walk. There are ${compPrices.length} comparable listings; you are not obligated to this one.`
+    );
+  } else {
+    lines.push(
+      `At asking, this villa already clears your ${walkAwayYield.toFixed(1)}% minimum yield hurdle — it runs at ${fmtPct(ny)}. Yield is not the negotiation lever here. Push on condition and comps instead: commission a survey, and use defect findings plus any gap versus the ${compPrices.length} comparable listings as your discount mechanism. Don't bid above ${fmtCurrency(audit.price_usd)} regardless of how the seller frames demand.`
+    );
+  }
 
   // Opening offer
   const openingOffer = audit.price_usd * 0.82;
@@ -790,16 +803,21 @@ function renderScenarios(doc: PDFKit.PDFDocument, scenarios: Scenario[]) {
   doc.y += 16;
 
   // Narrative
+  // Branch ordering matters: check absolute worst-case yield BEFORE spread,
+  // because a tight spread from an already-low base is still fragile, not robust.
   const worst = scenarios.reduce((a, b) => (a.net_yield < b.net_yield ? a : b));
   const base = scenarios.find((s) => s.label.startsWith("Base")) || scenarios[0];
+  const bull = scenarios.find((s) => s.label.startsWith("Bull"));
   const spread = base.net_yield - worst.net_yield;
   let interpretation: string;
   if (worst.net_yield < 0) {
     interpretation = `Under a double-shock (${worst.label.toLowerCase()}) this villa goes cash-flow negative (${fmtPct(worst.net_yield)}). You would need external income to carry it. Budget the risk.`;
+  } else if (worst.net_yield < 3) {
+    interpretation = `Under a double-shock (${worst.label.toLowerCase()}) net yield collapses to ${fmtPct(worst.net_yield)} — below the ~3% risk-free alternative. The villa stays positive on paper but loses its investment rationale in that scenario. If you think simultaneous rate, occupancy, and cost pressure is plausible, you need a bigger discount at purchase to compensate.`;
   } else if (spread > 4) {
-    interpretation = `The yield range is wide (${fmtPct(worst.net_yield)}-${fmtPct(scenarios.find((s) => s.label.startsWith("Bull"))?.net_yield || 0)}). Performance depends heavily on the rate/occupancy assumptions holding. Model it against your own risk tolerance.`;
+    interpretation = `The yield range is wide (${fmtPct(worst.net_yield)}-${fmtPct(bull?.net_yield || 0)}). Performance depends heavily on the rate/occupancy assumptions holding. Model it against your own risk tolerance.`;
   } else {
-    interpretation = `The yield range is tight across scenarios. This villa is relatively robust — worst case (${fmtPct(worst.net_yield)}) stays in acceptable territory.`;
+    interpretation = `The yield range is tight across scenarios and the worst case (${fmtPct(worst.net_yield)}) stays above the risk-free floor. This villa is relatively robust to the shocks modeled here.`;
   }
   doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
     .text(interpretation, 50, doc.y, { width: 512, lineGap: 3 });
