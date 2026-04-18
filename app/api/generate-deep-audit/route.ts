@@ -460,47 +460,50 @@ function generateDeepPdf(
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
-      const TOTAL = 5;
-
       // PAGE 1 — Summary + stress-test headline
-      renderHeader(doc, villa, "Deep Audit");
+      renderHeader(doc, villa, "Overview");
       renderStressHeadline(doc, audit, scenarios);
       renderKeyStats(doc, villa, audit);
       renderDataProvenance(doc, villa);
-      renderFooter(doc, 1, TOTAL);
 
       // PAGE 2 — Comparables
       doc.addPage();
       renderHeader(doc, villa, "Area Comparables");
       renderComps(doc, villa, comps, compFallback);
-      renderFooter(doc, 2, TOTAL);
 
       // PAGE 3 — Stress-test matrix + ops sensitivity
       doc.addPage();
       renderHeader(doc, villa, "Stress Test");
       renderScenarios(doc, scenarios);
       renderOpsSensitivity(doc, audit);
-      renderFooter(doc, 3, TOTAL);
 
       // PAGE 4 — Negotiation memo
       doc.addPage();
       renderHeader(doc, villa, "Negotiation Memo");
       renderNegotiation(doc, memo);
-      renderFooter(doc, 4, TOTAL);
 
-      // PAGE 5 — Exit + DD checklist + legal red flags
+      // PAGE 5 — Exit scenarios + DD checklist
       doc.addPage();
       renderHeader(doc, villa, "Exit Scenarios & Due Diligence");
       renderExits(doc, exits);
       renderDDChecklist(doc, villa, audit);
-      renderLegalRedFlags(doc, villa, audit);
-      renderFinalDisclaimer(doc);
-      renderFooter(doc, 5, TOTAL);
 
-      // Buffer-page no-op — kept for symmetry with unlock-audit.
+      // PAGE 6 — Legal red flags (own page — content-dense enough to warrant it)
+      doc.addPage();
+      renderHeader(doc, villa, "Legal Red Flags");
+      renderLegalRedFlags(doc, villa, audit);
+
+      // PAGE 7 — Closing / contact info
+      doc.addPage();
+      renderClosing(doc);
+
+      // Dynamic footer pass: count actual pages and stamp "Page X of Y" on each.
+      // Robust to overflow — if any section wraps, footer still correct.
       const range = doc.bufferedPageRange();
-      for (let i = range.start; i < range.start + range.count; i++) {
-        doc.switchToPage(i);
+      const totalPages = range.count;
+      for (let i = 0; i < totalPages; i++) {
+        doc.switchToPage(range.start + i);
+        renderFooter(doc, i + 1, totalPages);
       }
       doc.end();
     } catch (err) {
@@ -597,7 +600,7 @@ function renderDataProvenance(doc: PDFKit.PDFDocument, villa: Villa) {
     ["Asking price", villa.price_description || "—", "Scraped from source listing; verify in-person."],
     ["Lease years", villa.lease_years ? String(villa.lease_years) : "N/A", "From listing description; verify via Notaris."],
   ];
-  dataTable(doc, rows, [90, 160, 262]);
+  dataTable(doc, rows, [100, 140, 272]);
 }
 
 function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallback: string) {
@@ -608,12 +611,15 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
     none: `No comparable listings found in our database. The comp-based conclusions below may be unreliable.`,
   };
 
-  sectionHeader(doc, `Top ${comps.length} Comparable Listings`);
+  // Defensive: ensure no comp matches the subject villa's ID (paranoia check)
+  const filteredComps = comps.filter(c => c.id !== villa.id);
+
+  sectionHeader(doc, `Top ${filteredComps.length} Comparable Listings`);
   doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
     .text(fallbackText[fallback] || "", 50, doc.y, { width: 512, lineGap: 2 });
   doc.y += 6;
 
-  if (comps.length === 0) {
+  if (filteredComps.length === 0) {
     doc.fontSize(9.5).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
       .text("No comparables available. Treat this property's yield in isolation.", 50, doc.y, { width: 512 });
     doc.y += 12;
@@ -622,8 +628,8 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
 
   const headerRow = ["Villa", "Area", "Beds", "Price", "Yield", "Lease"];
   const rows: string[][] = [headerRow];
-  for (const c of comps) {
-    const nm = (c.villa_name || "—").slice(0, 40);
+  for (const c of filteredComps) {
+    const nm = (c.villa_name || "—").slice(0, 60);
     const price = (() => {
       const d = c.price_description || "";
       const m = d.match(/USD\s*([\d,]+)/i);
@@ -640,23 +646,23 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
       lease,
     ]);
   }
-  dataTable(doc, rows, [180, 112, 40, 80, 50, 50]);
+  dataTable(doc, rows, [240, 90, 35, 70, 45, 42]);
   doc.y += 10;
 
   // Median line
-  const prices = comps.map((c) => {
+  const prices = filteredComps.map((c) => {
     const d = c.price_description || "";
     const m = d.match(/USD\s*([\d,]+)/i);
     if (m) return parseFloat(m[1].replace(/,/g, ""));
     return (c.last_price || 0) / USD_RATE_FALLBACK;
   }).filter((p) => p > 0).sort((a, b) => a - b);
-  const yields = comps.map((c) => c.projected_roi).filter((v): v is number => v !== null && v !== undefined).sort((a, b) => a - b);
+  const yields = filteredComps.map((c) => c.projected_roi).filter((v): v is number => v !== null && v !== undefined).sort((a, b) => a - b);
   if (prices.length && yields.length) {
     const priceMed = prices[Math.floor(prices.length / 2)];
     const yieldMed = yields[Math.floor(yields.length / 2)];
     doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.accent)
       .text(
-        `Peer-group median: $${Math.round(priceMed).toLocaleString()} · ${yieldMed.toFixed(1)}% net yield (n=${comps.length})`,
+        `Peer-group median: $${Math.round(priceMed).toLocaleString()} · ${yieldMed.toFixed(1)}% net yield (n=${filteredComps.length})`,
         50, doc.y, { width: 512 }
       );
     doc.y += 16;
@@ -664,6 +670,12 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
       .text(
         "Use this line in your negotiation. If your target villa is priced materially above the peer-group median without a defensible quality premium (oceanfront, fresh lease, recent renovation), that's unnegotiated margin — which belongs to you, not the seller.",
         50, doc.y, { width: 512, lineGap: 2 }
+      );
+    doc.y += 6;
+    doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
+      .text(
+        "Note: Comps at identical prices may show different yields due to lease-decay adjustments — shorter remaining lease terms result in lower effective yields.",
+        50, doc.y, { width: 512, lineGap: 1.5 }
       );
   }
 }
@@ -756,7 +768,7 @@ function renderNegotiation(doc: PDFKit.PDFDocument, memo: string[]) {
 
 function renderExits(doc: PDFKit.PDFDocument, exits: ExitRow[]) {
   sectionHeader(doc, "Exit Scenarios");
-  const rows: string[][] = [["Hold period", "Cash collected", "Resale est.", "Total return", "Annualized"]];
+  const rows: string[][] = [["Hold period", "Cash collected", "Resale est.", "Total return", "Annual %"]];
   for (const e of exits) {
     rows.push([
       e.label,
@@ -768,6 +780,10 @@ function renderExits(doc: PDFKit.PDFDocument, exits: ExitRow[]) {
   }
   dataTable(doc, rows, [180, 100, 90, 90, 52]);
   doc.y += 6;
+  doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
+    .text("Net profit = (Cash collected + Resale estimate) − Purchase price.",
+          50, doc.y, { width: 512, lineGap: 1 });
+  doc.y += 8;
   doc.fontSize(8.5).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
     .text("Leasehold resale estimated via linear lease-amortization (remaining years / total years × purchase price). Real resale depends on buyer demand at exit, which is the weakest point in Bali's market — short-lease resale can be illiquid. Freehold resale assumes flat USD price (a conservative floor).",
           50, doc.y, { width: 512, lineGap: 2 });
@@ -789,7 +805,7 @@ function renderDDChecklist(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNu
     "If leasehold: landlord's underlying ownership of the land (the lessor must actually own it).",
     "Electricity (PLN) meter in seller's name and paid current; no irregular consumption spikes.",
     "Water source confirmed — borewell depth, licensing (SIPA), and water quality test results.",
-    "Septic / black-water handling — distance from borewell per Indonesian code (≥10m).",
+    "Septic / black-water handling — distance from borewell per Indonesian code (>=10m).",
     "Structural survey by an independent engineer — foundation, walls, roof, and tropical-climate damage.",
     "Pool: liner/tile age, pump condition, salt/chlorine system, last resurfacing date.",
     "AC units — make, age, and servicing history (tropical AC lasts 5-7 years).",
@@ -805,7 +821,7 @@ function renderDDChecklist(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNu
   ];
   items.forEach((item, i) => {
     doc.fontSize(8.5).font("Helvetica-Bold").fillColor(COLORS.accent)
-      .text(`☐  `, 50, doc.y, { continued: true });
+      .text(`[ ]  `, 50, doc.y, { continued: true });
     doc.font("Helvetica").fillColor(COLORS.inkMuted)
       .text(item, { width: 500, lineGap: 1.5 });
     doc.y += 2;
@@ -829,7 +845,7 @@ function renderLegalRedFlags(doc: PDFKit.PDFDocument, villa: Villa, audit: Audit
   flags.forEach((text) => {
     const m = text.match(/^\*\*(.+?)\*\*\s*(.*)$/);
     doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.bad)
-      .text("⚠  ", 50, doc.y, { continued: true });
+      .text("[!]  ", 50, doc.y, { continued: true });
     if (m) {
       doc.font("Helvetica-Bold").fillColor(COLORS.ink).text(m[1] + " ", { continued: true });
       doc.font("Helvetica").fillColor(COLORS.inkMuted).text(m[2], { width: 500, lineGap: 2 });
@@ -838,6 +854,33 @@ function renderLegalRedFlags(doc: PDFKit.PDFDocument, villa: Villa, audit: Audit
     }
     doc.y += 3;
   });
+}
+
+function renderClosing(doc: PDFKit.PDFDocument) {
+  doc.y = 140;
+  doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.accent)
+    .text("Questions?", 50, doc.y);
+  doc.y += 20;
+  doc.fontSize(11).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text("Email us anytime:", 50, doc.y);
+  doc.y += 8;
+  doc.fontSize(12).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text("hello@balivillatruth.com", 50, doc.y);
+  doc.y += 28;
+
+  doc.fontSize(11).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text("30-Day Refund Policy:", 50, doc.y);
+  doc.y += 8;
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text("Email us within 30 days for a full refund, no questions asked.", 50, doc.y, { width: 512, lineGap: 2 });
+  doc.y += 16;
+
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text("Want a deeper bespoke audit with a call? Reply to your audit email and let's set something up.", 50, doc.y, { width: 512, lineGap: 2 });
+  doc.y += 32;
+
+  doc.fontSize(9).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
+    .text("Thank you for choosing Bali Villa Truth.", 50, doc.y, { width: 512 });
 }
 
 function renderFinalDisclaimer(doc: PDFKit.PDFDocument) {
