@@ -100,7 +100,11 @@ const COLORS = {
   white: "#ffffff",
 };
 
-const USD_RATE_FALLBACK = 17109;
+// Fallback IDR→USD rate. MUST stay in sync with:
+//   - app/_lib/AreaPage.tsx (USD_RATE_FALLBACK)
+//   - app/listing/[slug]/page.tsx (FALLBACK_RATES.IDR)
+// If this drifts, identical listings display different USD prices across pages.
+const USD_RATE_FALLBACK = 16782;
 
 // ------------------------------------------------------------------
 // Audit math (mirrors /api/unlock-audit so the two PDFs are consistent)
