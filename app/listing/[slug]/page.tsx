@@ -3,6 +3,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ListingClient from "./ListingClient";
+import ThumbImg from "@/app/_components/ThumbImg";
 
 // Server-side Supabase client (uses service key for SSR, falls back to anon)
 const supabase = createClient(
@@ -378,11 +379,11 @@ export default async function ListingPage({ params }: Props) {
               {/* Thumbnail */}
               {listing.thumbnail_url && (
                 <div className="rounded-xl overflow-hidden border border-slate-800">
-                  <img
+                  <ThumbImg
                     src={listing.thumbnail_url}
                     alt={niceName}
-                    className="w-full h-64 md:h-80 object-cover"
-                    loading="eager"
+                    className="w-full h-64 md:h-80 object-cover bg-[color:var(--bvt-bg-soft)]"
+                    eager
                   />
                 </div>
               )}
@@ -574,7 +575,7 @@ export default async function ListingPage({ params }: Props) {
                           className="block rounded-lg border border-slate-800 hover:border-[#d4943a] bg-slate-950/40 overflow-hidden transition-colors"
                         >
                           {c.thumbnail_url && (
-                            <img src={c.thumbnail_url} alt={cName} className="w-full h-28 object-cover" loading="lazy" />
+                            <ThumbImg src={c.thumbnail_url} alt={cName} className="w-full h-28 object-cover bg-[color:var(--bvt-bg-soft)]" />
                           )}
                           <div className="p-3">
                             <div className="text-[11px] text-slate-500 uppercase tracking-wider mb-1">
