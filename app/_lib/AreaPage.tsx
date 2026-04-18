@@ -34,11 +34,25 @@ export type AreaConfig = {
 
 const SITE_URL = "https://balivillatruth.com";
 
-function formatUsd(n: number): string {
-  if (!n) return "—";
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 2)}M`;
-  if (n >= 1_000) return `$${Math.round(n / 1000)}k`;
-  return `$${Math.round(n)}`;
+// IDR/USD fallback rate — kept in sync with USD_RATE_FALLBACK in
+// app/api/generate-deep-audit/route.ts so the grid card and Deep Audit PDF
+// report the same USD figures.
+const USD_RATE_FALLBACK = 17109;
+
+// last_price is stored in IDR (billions for a typical villa). Prefer the
+// scraped USD figure from price_description (most listings carry "USD 123,456"),
+// fall back to IDR → USD conversion so the card never shows raw rupiah.
+function formatUsd(last_price_idr: number, price_description?: string | null): string {
+  let usd = 0;
+  if (price_description) {
+    const m = price_description.match(/USD\s*([\d,]+)/i);
+    if (m) usd = parseFloat(m[1].replace(/,/g, ""));
+  }
+  if (!usd) usd = (last_price_idr || 0) / USD_RATE_FALLBACK;
+  if (!usd || usd <= 0) return "—";
+  if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(usd >= 10_000_000 ? 0 : 2)}M`;
+  if (usd >= 1_000) return `$${Math.round(usd / 1000)}k`;
+  return `$${Math.round(usd)}`;
 }
 
 async function getAreaListings(cfg: AreaConfig, max = 12) {
@@ -215,7 +229,6 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((v: any) => {
-                const price = Number(v.last_price) || 0;
                 const roi = Number(v.projected_roi) || 0;
                 const roiColor =
                   roi >= 8
@@ -261,7 +274,7 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
                       <div className="flex items-baseline justify-between border-t border-[color:var(--bvt-hairline)] pt-3">
                         <div>
                           <div className="font-mono tabular-nums text-[18px] text-[color:var(--bvt-ink)] leading-none">
-                            {formatUsd(price)}
+                            {formatUsd(v.last_price, v.price_description)}
                           </div>
                           <div className="text-[11px] text-[color:var(--bvt-ink-dim)] mt-1.5">
                             {v.bedrooms || "?"} bed · {v.location}
