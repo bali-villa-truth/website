@@ -1394,8 +1394,271 @@ async function handle(session_id: string) {
   });
 }
 
+// ==================================================================
+// TEST HARNESS — synthetic villa profiles for narrative QA
+// ------------------------------------------------------------------
+// These profiles span the parameter space that drives the prose
+// branches (yield tier × price vs comps × flag set × walkAway vs
+// asking). Running all 6 before promoting the $49 tier surfaces
+// any remaining math-vs-narrative contradictions.
+//
+// Usage: GET /api/generate-deep-audit?test=<1-6>&key=<DEEP_AUDIT_TEST_KEY>
+// Returns the PDF inline. Does NOT send email, hit Stripe, or write DB.
+// ==================================================================
+interface TestProfile {
+  name: string;
+  expect: string; // what the narrative should do
+  villa: Villa;
+  comps: Comp[];
+}
+
+function makeSyntheticComps(villa: Villa, priceDeltas: number[]): Comp[] {
+  // Builds 5 comps around the villa's price, using the given pct deltas
+  // (relative to villa.last_price). Each comp has the same bedrooms/location.
+  return priceDeltas.map((delta, i) => {
+    const compPriceUsd = Math.round((villa.last_price || 100000) * (1 + delta));
+    return {
+      id: 9000 + i,
+      slug: `synthetic-comp-${i + 1}`,
+      villa_name: `Villa Comp ${String.fromCharCode(65 + i)}`,
+      location: villa.location,
+      bedrooms: villa.bedrooms,
+      last_price: compPriceUsd * USD_RATE_FALLBACK, // store in IDR-equivalent like real rows
+      price_description: `USD ${compPriceUsd.toLocaleString()}`,
+      projected_roi: (villa.projected_roi || 6) + (Math.random() - 0.5) * 2,
+      est_nightly_rate: (villa.est_nightly_rate || 100) * (1 + (Math.random() - 0.5) * 0.15),
+      est_occupancy: villa.est_occupancy || 0.72,
+      lease_years: villa.lease_years,
+    };
+  });
+}
+
+function buildTestProfile(n: number): TestProfile | null {
+  // Profile templates. Each constructs a synthetic Villa + 5 synthetic comps.
+  const base = (overrides: Partial<Villa>): Villa => ({
+    id: 99000 + n,
+    slug: `test-profile-${n}`,
+    villa_name: "Test Villa",
+    location: "Canggu",
+    last_price: 180000,
+    price_description: "USD 180,000",
+    bedrooms: 3,
+    projected_roi: 8,
+    est_nightly_rate: 165,
+    est_occupancy: 0.78,
+    flags: null,
+    lease_years: null,
+    url: "https://balivillatruth.com",
+    features: "Private pool, garden, parking",
+    occupancy_confidence: "medium",
+    occupancy_sample_size: 24,
+    occupancy_source: "airdna",
+    rate_source: "auditor",
+    land_size: "250 m2",
+    building_size: "180 m2",
+    listing_type: "freehold",
+    beds_baths: "3 beds, 3 baths",
+    price_per_room: 60000,
+    ...overrides,
+  });
+
+  switch (n) {
+    case 1: {
+      // Gold-standard: high yield, priced at median, freehold, clean flags.
+      // Expect: new robust narrative; walk-away memo fires "clears hurdle" branch.
+      const villa = base({
+        villa_name: "P1 Gold Standard Canggu",
+        location: "Canggu",
+        last_price: 180000,
+        price_description: "USD 180,000",
+        projected_roi: 10.5,
+        est_nightly_rate: 175,
+        est_occupancy: 0.82,
+        listing_type: "freehold",
+      });
+      return {
+        name: "P1 — gold-standard Canggu (high yield, priced at median, freehold, clean)",
+        expect: "Robust stress narrative. Walk-away memo fires 'clears hurdle' branch (walkAwayPrice > asking).",
+        villa,
+        comps: makeSyntheticComps(villa, [-0.04, -0.01, 0.02, 0.05, 0.08]),
+      };
+    }
+    case 2: {
+      // Overpriced: low yield, 25% above comps, freehold, clean flags.
+      // Expect: anchor-on-comps premium narrative; walk-away memo pushes for discount.
+      const villa = base({
+        villa_name: "P2 Overpriced Seminyak",
+        location: "Seminyak",
+        last_price: 520000,
+        price_description: "USD 520,000",
+        projected_roi: 4.2,
+        est_nightly_rate: 220,
+        est_occupancy: 0.70,
+        listing_type: "freehold",
+        bedrooms: 3,
+      });
+      return {
+        name: "P2 — overpriced Seminyak (low yield, 25% over comps, clean)",
+        expect: "Premium anchor narrative. Walk-away memo fires discount-required branch.",
+        villa,
+        comps: makeSyntheticComps(villa, [-0.30, -0.25, -0.20, -0.18, -0.14]),
+      };
+    }
+    case 3: {
+      // Fragile leasehold: med yield, median-priced, 20y lease.
+      // Expect: lease-extension bullet in memo; mid-range stress narrative.
+      const villa = base({
+        villa_name: "P3 Fragile Sanur Leasehold",
+        location: "Sanur",
+        last_price: 107258,
+        price_description: "IDR 1,800,000,000",
+        projected_roi: 5.9,
+        est_nightly_rate: 72,
+        est_occupancy: 0.80,
+        listing_type: "leasehold",
+        lease_years: 20,
+        bedrooms: 2,
+      });
+      return {
+        name: "P3 — Sanur leasehold (med yield, median-priced, 20y lease)",
+        expect: "Fragility narrative (worst < 3%). Lease-extension bullet in memo.",
+        villa,
+        comps: makeSyntheticComps(villa, [-0.06, -0.02, 0.01, 0.04, 0.08]),
+      };
+    }
+    case 4: {
+      // Budget red flag: high yield, priced below comps, BUDGET_VILLA + SHORT_LEASE.
+      // Expect: contradictory signals — yield is strong but flags warn you off.
+      // This is the profile most likely to surface narrative inconsistency.
+      const villa = base({
+        villa_name: "P4 Budget Red-Flag Ungasan",
+        location: "Ungasan",
+        last_price: 95000,
+        price_description: "USD 95,000",
+        projected_roi: 9.3,
+        est_nightly_rate: 110,
+        est_occupancy: 0.72,
+        listing_type: "leasehold",
+        lease_years: 18,
+        flags: "BUDGET_VILLA,SHORT_LEASE",
+        bedrooms: 2,
+      });
+      return {
+        name: "P4 — budget red-flag Ungasan (high yield + BUDGET + SHORT_LEASE)",
+        expect: "Yield looks strong, flags warn. Test narrative coherence on contradictory signals.",
+        villa,
+        comps: makeSyntheticComps(villa, [0.10, 0.15, 0.22, 0.28, 0.35]),
+      };
+    }
+    case 5: {
+      // Stress-able: very low yield, big villa, opex/occ pressure pushes worst negative.
+      // Expect: cash-flow-negative branch fires in stress narrative.
+      const villa = base({
+        villa_name: "P5 Stress-Fragile Uluwatu",
+        location: "Uluwatu",
+        last_price: 650000,
+        price_description: "USD 650,000",
+        projected_roi: 3.1,
+        est_nightly_rate: 240,
+        est_occupancy: 0.58,
+        listing_type: "freehold",
+        bedrooms: 4,
+      });
+      return {
+        name: "P5 — stress-fragile Uluwatu (3.1% yield, large villa)",
+        expect: "Double-shock may push net yield negative → cash-flow-negative branch.",
+        villa,
+        comps: makeSyntheticComps(villa, [-0.10, -0.05, 0.02, 0.08, 0.14]),
+      };
+    }
+    case 6: {
+      // Flag stack: OFF_PLAN + SHORT_LEASE, med yield.
+      // Expect: both flag bullets fire in memo; stress narrative middling.
+      const villa = base({
+        villa_name: "P6 Off-Plan Short-Lease Canggu",
+        location: "Canggu",
+        last_price: 245000,
+        price_description: "USD 245,000",
+        projected_roi: 6.8,
+        est_nightly_rate: 195,
+        est_occupancy: 0.75,
+        listing_type: "leasehold",
+        lease_years: 22,
+        flags: "OFF_PLAN,SHORT_LEASE",
+        bedrooms: 3,
+      });
+      return {
+        name: "P6 — off-plan + short-lease Canggu (med yield, flags stack)",
+        expect: "Both OFF_PLAN and SHORT_LEASE bullets render in memo.",
+        villa,
+        comps: makeSyntheticComps(villa, [-0.08, -0.03, 0.02, 0.08, 0.15]),
+      };
+    }
+    default:
+      return null;
+  }
+}
+
+async function handleTest(profileNum: number, key: string): Promise<Response> {
+  // Secret gate. Without DEEP_AUDIT_TEST_KEY set in Vercel env, the test
+  // endpoint is inert. With it set, the caller must supply the matching
+  // key query param. This keeps the endpoint out of search-engine reach
+  // while still being a one-curl test.
+  const expectedKey = (process.env.DEEP_AUDIT_TEST_KEY || "").trim();
+  if (!expectedKey) {
+    return NextResponse.json(
+      { error: "Test mode disabled. Set DEEP_AUDIT_TEST_KEY in the env to enable." },
+      { status: 503 }
+    );
+  }
+  if (key !== expectedKey) {
+    return NextResponse.json({ error: "Invalid test key" }, { status: 403 });
+  }
+  if (!Number.isInteger(profileNum) || profileNum < 1 || profileNum > 6) {
+    return NextResponse.json(
+      { error: "profile must be an integer 1-6" },
+      { status: 400 }
+    );
+  }
+
+  const profile = buildTestProfile(profileNum);
+  if (!profile) {
+    return NextResponse.json({ error: "Unknown profile" }, { status: 400 });
+  }
+
+  const audit = computeAudit(profile.villa, USD_RATE_FALLBACK);
+  const scenarios = buildScenarios(audit);
+  const memo = buildNegotiationMemo(profile.villa, audit, profile.comps);
+  const exits = buildExitScenarios(audit);
+  const pdfBuffer = await generateDeepPdf(
+    profile.villa,
+    audit,
+    profile.comps,
+    "exact",
+    scenarios,
+    memo,
+    exits
+  );
+
+  return new Response(new Uint8Array(pdfBuffer), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="BVT-TestProfile-${profileNum}.pdf"`,
+      "X-Test-Profile": profile.name,
+      "X-Test-Expectation": profile.expect,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  const testParam = searchParams.get("test");
+  if (testParam) {
+    const key = searchParams.get("key") || "";
+    return handleTest(parseInt(testParam, 10), key);
+  }
   const session_id = searchParams.get("session_id") || "";
   return handle(session_id);
 }
