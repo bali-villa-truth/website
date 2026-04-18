@@ -994,6 +994,8 @@ function dataTable(doc: PDFKit.PDFDocument, rows: string[][], widths: number[]) 
   let y = doc.y;
   const pad = 6;
   const minRowH = 20;
+  // Bottom margin for page-break: 70pt keeps content above the footer stamp.
+  const pageBottom = doc.page.height - 70;
   rows.forEach((row, i) => {
     const isHeader = i === 0;
     const font = isHeader ? "Helvetica-Bold" : "Helvetica";
@@ -1008,6 +1010,14 @@ function dataTable(doc: PDFKit.PDFDocument, rows: string[][], widths: number[]) 
       if (h > maxH) maxH = h;
     });
     const rowH = Math.max(minRowH, Math.ceil(maxH) + pad * 2);
+
+    // Page-break guard: if this row won't fit, start a new page BEFORE
+    // drawing any of its cells. Otherwise pdfkit's per-text() auto-paginate
+    // kicks in per-cell and blows each cell onto its own blank page.
+    if (y + rowH > pageBottom) {
+      doc.addPage();
+      y = doc.y;
+    }
 
     if (isHeader) doc.rect(50, y, 512, rowH).fill(COLORS.bgSoft);
 
