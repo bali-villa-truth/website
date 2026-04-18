@@ -646,7 +646,7 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
       lease,
     ]);
   }
-  dataTable(doc, rows, [230, 85, 42, 70, 45, 40]);
+  dataTable(doc, rows, [225, 85, 42, 70, 45, 45]);
   doc.y += 10;
 
   // Median line
@@ -835,7 +835,7 @@ function renderLegalRedFlags(doc: PDFKit.PDFDocument, villa: Villa, audit: Audit
     "Foreigners cannot own Hak Milik (SHM) freehold land. If someone offers you SHM in a foreigner's name, it is either (a) illegal via a nominee arrangement, or (b) fraud. Both expose you to total loss.",
     "Legitimate foreign-buyer structures: (1) Leasehold in personal name, (2) Hak Pakai as a KITAS holder, (3) PT PMA owning Hak Guna Bangunan. Anything else requires extreme scrutiny.",
     "Nominee arrangements (where an Indonesian national 'holds' the title for you) are void under Article 21 of the Agrarian Law. Indonesian courts have ruled them unenforceable. You have no legal recourse.",
-    "Construction financing: Indonesia has no reliable escrow system for real estate. If you're buying off-plan, milestone payments into the developer's account are effectively unsecured loans. Insist on staged payments tied to inspection sign-offs, and a third-party payment holder where possible.",
+    "Construction financing: Indonesia has no reliable escrow system for real estate. If you're buying off-plan, milestone payments into the developer's account are effectively unsecured loans. Insist on staged payments tied to inspection sign-offs, and a third party payment holder where possible.",
   ];
   if (audit.is_leasehold && audit.lease_years > 0 && audit.lease_years < 20) {
     flags.push(
