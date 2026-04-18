@@ -1094,16 +1094,22 @@ function renderCoverPage(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumb
       { width: cardW, align: "center" });
 
   // --- Bottom disclaimer + URL ---
-  const bottomY = H - 110;
+  // NB: all fixed-position text on this page must stay at y <= page.height -
+  // page.margins.bottom (732 at Letter with bottom=60). Writing past the
+  // margin triggers pdfkit auto-pagination and injects a blank page 2
+  // between cover and Overview. `lineBreak: false` is extra insurance — it
+  // prevents pdfkit from issuing a newline that would push y past the
+  // margin and kick off a fresh page mid-stream.
+  const bottomY = H - 150;  // ~642; gives the 4-line disclaimer (~50pt) room
   doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLORS.inkMuted)
     .text(
       "This report synthesizes public listing data, local market comparables, and conservative stress-test modeling. It is not financial, legal, or tax advice. Verify every number independently with a licensed Notaris/PPAT, qualified surveyor, and Indonesian real-estate lawyer before transferring funds.",
       80, bottomY, { width: 452, align: "center", lineGap: 3 });
 
-  doc.moveTo(260, H - 56).lineTo(352, H - 56).lineWidth(0.5).strokeColor(COLORS.accent).stroke();
+  doc.moveTo(260, H - 92).lineTo(352, H - 92).lineWidth(0.5).strokeColor(COLORS.accent).stroke();
   doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.ink)
-    .text("balivillatruth.com", 50, H - 46,
-      { width: 512, align: "center", characterSpacing: 1 });
+    .text("balivillatruth.com", 50, H - 82,
+      { width: 512, align: "center", characterSpacing: 1, lineBreak: false });
 }
 
 // ------------------------------------------------------------------
