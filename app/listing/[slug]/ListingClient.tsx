@@ -101,76 +101,76 @@ export default function ListingClient({
   };
 
   return (
-    <div className="mt-6 space-y-5">
-      {/* Always-visible source link — no email gate */}
+    <div className="mt-6 space-y-4">
+      {/* Always-visible source link — editorial ghost button */}
       <a
         href={sourceUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center w-full bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold py-3 rounded-lg transition-colors"
+        className="inline-flex items-center justify-center w-full bg-transparent border border-[color:var(--bvt-hairline-2)] hover:border-[color:var(--bvt-accent)]/60 hover:bg-[color:var(--bvt-accent)]/5 text-[color:var(--bvt-ink)] text-[12px] font-semibold tracking-[0.14em] uppercase py-3.5 transition-colors"
       >
         View Original Listing →
       </a>
-      <p className="text-xs text-slate-500 text-center -mt-3">
+      <p className="text-[11px] text-[color:var(--bvt-ink-muted)] text-center leading-relaxed -mt-2">
         Opens on Bali Home Immo. We don&apos;t earn anything if you book — we&apos;re just the auditor.
       </p>
 
-      {/* Share / copy link — helps word-of-mouth */}
+      {/* Share / copy link */}
       <button
         type="button"
         onClick={handleCopyLink}
-        className="inline-flex items-center justify-center gap-2 w-full bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-slate-100 text-sm font-medium py-2.5 rounded-lg transition-colors"
+        className="inline-flex items-center justify-center gap-2 w-full bg-transparent border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] text-[11px] font-medium tracking-[0.12em] uppercase py-2.5 transition-colors"
         aria-live="polite"
       >
         {copied ? (
           <>
-            <span className="text-emerald-400">✓</span> Link copied
+            <span className="text-[color:var(--bvt-good)]">✓</span> Link copied
           </>
         ) : (
           <>
-            <span aria-hidden>🔗</span> Copy audit link to share
+            <span aria-hidden className="text-[color:var(--bvt-ink-faint)]">⎘</span> Copy audit link to share
           </>
         )}
       </button>
 
       {/* Email-me-this-audit block (free tier) */}
-      <div className="mt-6 pt-5 border-t border-slate-700">
+      <div className="mt-6 pt-6 border-t border-[color:var(--bvt-hairline)]">
         {sent ? (
           <div className="text-center py-2">
-            <div className="text-emerald-400 text-sm font-semibold mb-1">
+            <div className="text-[color:var(--bvt-good)] text-[13px] font-medium mb-1 tracking-wide">
               ✓ Audit on its way to {email}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-[11px] text-[color:var(--bvt-ink-muted)] leading-relaxed">
               Check your inbox (and spam folder the first time). Arrives in under a minute.
             </p>
           </div>
         ) : (
           <form onSubmit={handleEmailAudit} className="space-y-3">
             {/* PDF preview thumbnail — pure SVG, no network cost */}
-            <div className="flex items-center gap-3 bg-slate-900/60 border border-slate-800 rounded-lg p-3">
+            <div className="flex items-center gap-3 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] p-3">
               <div
                 aria-hidden
-                className="shrink-0 w-14 h-[72px] bg-white rounded shadow-inner overflow-hidden relative"
+                className="shrink-0 w-14 h-[72px] bg-[#faf6ee] shadow-inner overflow-hidden relative"
               >
                 <div className="absolute inset-0 p-1.5 flex flex-col gap-1">
-                  <div className="h-1.5 w-8 bg-[#d4943a] rounded-sm" />
-                  <div className="h-1 w-full bg-slate-300 rounded-sm" />
-                  <div className="h-1 w-[85%] bg-slate-300 rounded-sm" />
-                  <div className="h-1 w-[70%] bg-slate-300 rounded-sm" />
-                  <div className="mt-0.5 h-3 w-full bg-slate-200 rounded-sm grid grid-cols-3 gap-px p-0.5">
-                    <div className="bg-emerald-400/60 rounded-[1px]" />
-                    <div className="bg-amber-400/60 rounded-[1px]" />
-                    <div className="bg-rose-400/60 rounded-[1px]" />
+                  <div className="h-1.5 w-8 bg-[color:var(--bvt-accent)] rounded-sm" />
+                  <div className="h-1 w-full bg-[#c9c1b0] rounded-sm" />
+                  <div className="h-1 w-[85%] bg-[#c9c1b0] rounded-sm" />
+                  <div className="h-1 w-[70%] bg-[#c9c1b0] rounded-sm" />
+                  <div className="mt-0.5 h-3 w-full bg-[#e2dccb] rounded-sm grid grid-cols-3 gap-px p-0.5">
+                    <div className="bg-[color:var(--bvt-good)]/60 rounded-[1px]" />
+                    <div className="bg-[color:var(--bvt-warn)]/60 rounded-[1px]" />
+                    <div className="bg-[color:var(--bvt-bad)]/60 rounded-[1px]" />
                   </div>
-                  <div className="h-1 w-[90%] bg-slate-300 rounded-sm mt-0.5" />
-                  <div className="h-1 w-[60%] bg-slate-300 rounded-sm" />
+                  <div className="h-1 w-[90%] bg-[#c9c1b0] rounded-sm mt-0.5" />
+                  <div className="h-1 w-[60%] bg-[#c9c1b0] rounded-sm" />
                 </div>
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-200 leading-tight">
-                  📧 Email me this audit as a PDF
+                <p className="font-serif text-[15px] text-[color:var(--bvt-ink)] leading-tight tracking-tight">
+                  Email me this audit as a PDF
                 </p>
-                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">
+                <p className="text-[10px] text-[color:var(--bvt-ink-muted)] leading-snug mt-1 tracking-wide">
                   Free · 3 pages · full math · 5-yr cashflow · sensitivity · agent questions
                 </p>
               </div>
@@ -183,21 +183,21 @@ export default function ListingClient({
               placeholder="your@email.com"
               required
               aria-label={`Email address for ${villaName} audit PDF`}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-[#d4943a] transition-colors"
+              className="w-full bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] px-3 py-3 text-[13px] text-[color:var(--bvt-ink)] placeholder:text-[color:var(--bvt-ink-faint)] outline-none focus:border-[color:var(--bvt-accent)] transition-colors"
             />
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-[#d4943a] hover:bg-[#e5a84d] text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
+              className="w-full bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[12px] font-semibold tracking-[0.14em] uppercase py-3.5 transition-colors disabled:opacity-50"
             >
-              {submitting ? 'Sending your audit...' : 'Email Me the Free Audit'}
+              {submitting ? 'Sending your audit…' : 'Email Me the Free Audit'}
             </button>
             {error && (
-              <p className="text-xs text-red-400 text-center" role="alert">
+              <p className="text-[11px] text-[color:var(--bvt-bad)] text-center" role="alert">
                 {error}
               </p>
             )}
-            <p className="text-[10px] text-slate-500 text-center">
+            <p className="text-[10px] text-[color:var(--bvt-ink-muted)] text-center tracking-wide">
               One email. No newsletter spam.
             </p>
           </form>
@@ -205,66 +205,66 @@ export default function ListingClient({
       </div>
 
       {/* Deep Audit upgrade — always visible. Uses the same email field. */}
-      <div className="mt-4 pt-5 border-t border-slate-700">
-        <div className="rounded-lg border border-[#d4943a]/40 bg-gradient-to-br from-[#3a2a13]/40 to-slate-900/60 p-4">
-          <div className="flex items-start gap-3 mb-3">
+      <div className="mt-4 pt-6 border-t border-[color:var(--bvt-hairline)]">
+        <div className="border border-[color:var(--bvt-accent)]/35 bg-[color:var(--bvt-accent)]/[0.04] p-5">
+          <div className="flex items-start gap-3 mb-4">
             <div
               aria-hidden
-              className="shrink-0 w-14 h-[72px] bg-[#fbf6ec] rounded shadow-inner overflow-hidden relative"
+              className="shrink-0 w-14 h-[72px] bg-[#faf6ee] shadow-inner overflow-hidden relative"
             >
               <div className="absolute inset-0 p-1.5 flex flex-col gap-1">
-                <div className="h-1.5 w-10 bg-[#d4943a] rounded-sm" />
-                <div className="h-1 w-full bg-slate-400/60 rounded-sm" />
-                <div className="h-1 w-[85%] bg-slate-400/60 rounded-sm" />
-                <div className="mt-0.5 h-5 w-full bg-slate-200 rounded-sm grid grid-cols-6 gap-px p-0.5">
-                  <div className="bg-emerald-500/50 rounded-[1px]" />
-                  <div className="bg-amber-500/50 rounded-[1px]" />
-                  <div className="bg-amber-500/50 rounded-[1px]" />
-                  <div className="bg-rose-500/50 rounded-[1px]" />
-                  <div className="bg-rose-500/50 rounded-[1px]" />
-                  <div className="bg-emerald-500/50 rounded-[1px]" />
+                <div className="h-1.5 w-10 bg-[color:var(--bvt-accent)] rounded-sm" />
+                <div className="h-1 w-full bg-[#c9c1b0] rounded-sm" />
+                <div className="h-1 w-[85%] bg-[#c9c1b0] rounded-sm" />
+                <div className="mt-0.5 h-5 w-full bg-[#e2dccb] rounded-sm grid grid-cols-6 gap-px p-0.5">
+                  <div className="bg-[color:var(--bvt-good)]/50 rounded-[1px]" />
+                  <div className="bg-[color:var(--bvt-warn)]/50 rounded-[1px]" />
+                  <div className="bg-[color:var(--bvt-warn)]/50 rounded-[1px]" />
+                  <div className="bg-[color:var(--bvt-bad)]/50 rounded-[1px]" />
+                  <div className="bg-[color:var(--bvt-bad)]/50 rounded-[1px]" />
+                  <div className="bg-[color:var(--bvt-good)]/50 rounded-[1px]" />
                 </div>
-                <div className="h-1 w-[90%] bg-slate-400/60 rounded-sm mt-0.5" />
-                <div className="h-1 w-[70%] bg-slate-400/60 rounded-sm" />
-                <div className="h-1 w-[60%] bg-slate-400/60 rounded-sm" />
+                <div className="h-1 w-[90%] bg-[#c9c1b0] rounded-sm mt-0.5" />
+                <div className="h-1 w-[70%] bg-[#c9c1b0] rounded-sm" />
+                <div className="h-1 w-[60%] bg-[#c9c1b0] rounded-sm" />
               </div>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-[#f5e7cf] leading-tight">
+              <div className="flex items-center gap-2.5">
+                <p className="font-serif text-[17px] text-[color:var(--bvt-ink)] leading-tight tracking-tight">
                   Deep Audit — $49
                 </p>
-                <span className="text-[10px] font-mono tracking-[1px] text-[#d4943a] uppercase border border-[#d4943a]/40 rounded px-1.5 py-0.5">
+                <span className="text-[9px] font-medium tracking-[0.18em] text-[color:var(--bvt-accent)] uppercase border border-[color:var(--bvt-accent)]/40 px-1.5 py-0.5">
                   Pro
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug mt-1">
+              <p className="text-[11px] text-[color:var(--bvt-ink-muted)] leading-snug mt-1.5">
                 5 pages. Real area comps · 6-scenario stress test · property-specific negotiation memo · exit scenarios · legal DD checklist.
               </p>
             </div>
           </div>
 
-          <ul className="space-y-1.5 text-[12px] text-slate-300 mb-4 pl-1">
-            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>Top 5 comparable listings with actual names, prices, and yields</span></li>
-            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>Worst/base/bull case yield — including double-shock cost inflation</span></li>
-            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>Negotiation memo tailored to this property&apos;s flags and price gap</span></li>
-            <li className="flex gap-2"><span className="text-[#d4943a]">▸</span><span>25-item due diligence checklist (Notaris, surveyor, legal)</span></li>
+          <ul className="space-y-2 text-[12px] text-[color:var(--bvt-ink-body)] mb-5 pl-1 leading-relaxed">
+            <li className="flex gap-2.5"><span className="text-[color:var(--bvt-accent)] mt-px">▸</span><span>Top 5 comparable listings with actual names, prices, and yields</span></li>
+            <li className="flex gap-2.5"><span className="text-[color:var(--bvt-accent)] mt-px">▸</span><span>Worst/base/bull case yield — including double-shock cost inflation</span></li>
+            <li className="flex gap-2.5"><span className="text-[color:var(--bvt-accent)] mt-px">▸</span><span>Negotiation memo tailored to this property&apos;s flags and price gap</span></li>
+            <li className="flex gap-2.5"><span className="text-[color:var(--bvt-accent)] mt-px">▸</span><span>25-item due diligence checklist (Notaris, surveyor, legal)</span></li>
           </ul>
 
           <button
             type="button"
             onClick={handleDeepAudit}
             disabled={deepSubmitting}
-            className="w-full bg-[#d4943a] hover:bg-[#e5a84d] text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 text-sm"
+            className="w-full bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[12px] font-semibold tracking-[0.14em] uppercase py-3.5 transition-colors disabled:opacity-50"
           >
             {deepSubmitting ? 'Redirecting to secure checkout…' : 'Upgrade to Deep Audit — $49 →'}
           </button>
           {deepError && (
-            <p className="text-xs text-red-400 mt-2 text-center" role="alert">
+            <p className="text-[11px] text-[color:var(--bvt-bad)] mt-2 text-center" role="alert">
               {deepError}
             </p>
           )}
-          <p className="text-[10px] text-slate-500 text-center mt-2">
+          <p className="text-[10px] text-[color:var(--bvt-ink-muted)] text-center mt-3 tracking-wide">
             Payment by Stripe. Emailed within 30 seconds. Not financial advice.
           </p>
         </div>
