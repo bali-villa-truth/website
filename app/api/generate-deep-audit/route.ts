@@ -197,6 +197,23 @@ interface Comp {
 // Loose typing on purpose: SupabaseClient's generic inference doesn't line up
 // between a locally-created client and one passed as a param. We only use
 // .from(...).select(...).eq(...) here, which is stable across versions.
+// Dedupe by lowercased villa_name so visually-identical titles collapse into
+// one row (real-world: scrapers sometimes emit the same generic title for
+// different listings in the same development — showing them as separate rows
+// makes the report look buggy even though the underlying IDs differ).
+function dedupByName(rows: Comp[], targetN: number): Comp[] {
+  const seen = new Set<string>();
+  const out: Comp[] = [];
+  for (const c of rows) {
+    const key = (c.villa_name || "").trim().toLowerCase();
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    out.push(c);
+    if (out.length >= targetN) break;
+  }
+  return out;
+}
+
 async function fetchComps(
   supabase: SupabaseClient,
   villa: Villa,
@@ -206,6 +223,7 @@ async function fetchComps(
   const beds = villa.bedrooms || 0;
 
   // Ladder 1: exact (area, bedrooms), excluding this villa
+  // Overfetch (5x) so dedupByName has room to drop identical-titled duplicates.
   let res = await supabase
     .from("listings_tracker")
     .select(
@@ -217,10 +235,10 @@ async function fetchComps(
     .not("last_price", "is", null)
     .not("projected_roi", "is", null)
     .order("projected_roi", { ascending: false })
-    .limit(targetN * 2);
-  let rows = (res.data as Comp[] | null) || [];
+    .limit(targetN * 5);
+  let rows = dedupByName((res.data as Comp[] | null) || [], targetN);
   if (rows.length >= targetN) {
-    return { comps: rows.slice(0, targetN), fallback: "exact" };
+    return { comps: rows, fallback: "exact" };
   }
 
   // Ladder 2: same area, ±1 bedroom
@@ -238,10 +256,10 @@ async function fetchComps(
     .not("last_price", "is", null)
     .not("projected_roi", "is", null)
     .order("projected_roi", { ascending: false })
-    .limit(targetN * 3);
-  rows = (res.data as Comp[] | null) || [];
+    .limit(targetN * 5);
+  rows = dedupByName((res.data as Comp[] | null) || [], targetN);
   if (rows.length >= targetN) {
-    return { comps: rows.slice(0, targetN), fallback: "bed_tolerance" };
+    return { comps: rows, fallback: "bed_tolerance" };
   }
 
   // Ladder 3: any area, exact bedrooms (wider radius)
@@ -255,10 +273,10 @@ async function fetchComps(
     .not("last_price", "is", null)
     .not("projected_roi", "is", null)
     .order("projected_roi", { ascending: false })
-    .limit(targetN * 3);
-  rows = (res.data as Comp[] | null) || [];
+    .limit(targetN * 5);
+  rows = dedupByName((res.data as Comp[] | null) || [], targetN);
   return {
-    comps: rows.slice(0, targetN),
+    comps: rows,
     fallback: rows.length === 0 ? "none" : "any_area",
   };
 }
@@ -629,7 +647,7 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
   const headerRow = ["Villa", "Area", "Beds", "Price", "Yield", "Lease"];
   const rows: string[][] = [headerRow];
   for (const c of filteredComps) {
-    const nm = (c.villa_name || "—").slice(0, 60);
+    const nm = (c.villa_name || "—").slice(0, 100);
     const price = (() => {
       const d = c.price_description || "";
       const m = d.match(/USD\s*([\d,]+)/i);
