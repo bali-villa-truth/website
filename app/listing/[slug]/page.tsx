@@ -155,7 +155,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : "Freehold";
   const niceName = toTitleCase(listing.villa_name || "");
 
-  const title = `${beds}-Bed ${location} Villa — ${priceUsd} | ${roi} Net Yield`;
+  // Title puts the villa name first so branded queries (people Googling the
+  // listing's exact name the way BHI titles it) can match us. The differentiator
+  // (audit · yield) lives in the tail; the "| Bali Villa Truth" brand suffix is
+  // added automatically by the root layout's title template.
+  const title = listing.projected_roi
+    ? `${niceName} — Audit · ${roi} Net Yield`
+    : `${niceName} — Bali Villa Audit`;
   const description = `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location} listed at ${priceUsd}. Stress-tested net yield: ${roi} after 40% expenses. Full breakdown, comparable listings, sensitivity analysis.`;
 
   return {
