@@ -1643,16 +1643,12 @@ async function handleTest(profileNum: number, key: string): Promise<Response> {
       exits
     );
 
-    // Convert Node Buffer → ArrayBuffer slice for the Web Response body.
-    // Passing a raw Buffer works on most Next runtimes but is flaky on edge
-    // and inconsistent across Vercel regions. An explicit ArrayBuffer is
-    // portable. The slice copy keeps the underlying pool buffer from leaking.
-    const arrayBuffer = pdfBuffer.buffer.slice(
-      pdfBuffer.byteOffset,
-      pdfBuffer.byteOffset + pdfBuffer.byteLength
-    );
+    // Wrap the Node Buffer in a Uint8Array view (shares memory, no copy).
+    // Uint8Array is a valid BodyInit and compiles cleanly under Next's types —
+    // Buffer.buffer / .slice() return ArrayBufferLike which TS rejects.
+    const body = new Uint8Array(pdfBuffer);
 
-    return new NextResponse(arrayBuffer, {
+    return new NextResponse(body, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
