@@ -646,7 +646,7 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
       lease,
     ]);
   }
-  dataTable(doc, rows, [240, 90, 35, 70, 45, 42]);
+  dataTable(doc, rows, [230, 85, 42, 70, 45, 40]);
   doc.y += 10;
 
   // Median line
@@ -781,7 +781,7 @@ function renderExits(doc: PDFKit.PDFDocument, exits: ExitRow[]) {
   dataTable(doc, rows, [180, 100, 90, 90, 52]);
   doc.y += 6;
   doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
-    .text("Net profit = (Cash collected + Resale estimate) − Purchase price.",
+    .text("Net profit = (Cash collected + Resale estimate) - Purchase price.",
           50, doc.y, { width: 512, lineGap: 1 });
   doc.y += 8;
   doc.fontSize(8.5).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
@@ -937,17 +937,30 @@ function twoColRows(doc: PDFKit.PDFDocument, rows: [string, string][]) {
 
 function dataTable(doc: PDFKit.PDFDocument, rows: string[][], widths: number[]) {
   let y = doc.y;
-  const rowH = 20;
+  const pad = 6;
+  const minRowH = 20;
   rows.forEach((row, i) => {
     const isHeader = i === 0;
+    const font = isHeader ? "Helvetica-Bold" : "Helvetica";
+    const color = isHeader ? COLORS.ink : COLORS.inkMuted;
+
+    // Measure the tallest wrapped cell so no row's text overlaps the next one.
+    doc.fontSize(8.5).font(font);
+    let maxH = 0;
+    row.forEach((cell, j) => {
+      const align = j === 0 ? "left" : "right";
+      const h = doc.heightOfString(cell || "", { width: widths[j] - 16, align });
+      if (h > maxH) maxH = h;
+    });
+    const rowH = Math.max(minRowH, Math.ceil(maxH) + pad * 2);
+
     if (isHeader) doc.rect(50, y, 512, rowH).fill(COLORS.bgSoft);
+
     let x = 50;
     row.forEach((cell, j) => {
       const align = j === 0 ? "left" : "right";
-      const color = isHeader ? COLORS.ink : COLORS.inkMuted;
-      const font = isHeader ? "Helvetica-Bold" : "Helvetica";
       doc.fontSize(8.5).font(font).fillColor(color)
-        .text(cell, x + 8, y + 6, { width: widths[j] - 16, align });
+        .text(cell || "", x + 8, y + pad, { width: widths[j] - 16, align });
       x += widths[j];
     });
     doc.lineWidth(0.3).strokeColor(COLORS.hairline);
