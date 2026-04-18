@@ -612,21 +612,25 @@ function renderKeyStats(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbe
     ? Math.round(audit.price_usd / landSize)
     : 0;
 
+  // Order matters: twoColRows splits via ceil(N/2). First half fills the LEFT
+  // column (physical property), second half fills the RIGHT column (financial).
   const rows: [string, string][] = [
-    ["Asking Price", fmtCurrency(audit.price_usd)],
-    ["Local Price", audit.price_desc || "—"],
+    // --- LEFT column: the property itself ---
     ["Property Type", villa.listing_type ? toTitleCase(villa.listing_type) : "—"],
     ["Bedrooms", String(audit.bedrooms || "—")],
     ["Bathrooms", bathrooms || "—"],
     ["Land Size", landSize > 0 ? `${landSize.toLocaleString()} m²` : "—"],
     ["Building Size", buildingSize > 0 ? `${buildingSize.toLocaleString()} m²` : "—"],
+    ["Ownership", leaseLabel],
+    ["Location", villa.location || "—"],
+    // --- RIGHT column: pricing + yield ---
+    ["Asking Price", fmtCurrency(audit.price_usd)],
+    ["Local Price", audit.price_desc || "—"],
     ["Price / m² (land)", pricePerSqm > 0 ? fmtCurrency(pricePerSqm) : "—"],
     ["Price / Bedroom", villa.price_per_room && villa.price_per_room > 0
       ? fmtCurrency(villa.price_per_room) : "—"],
-    ["Ownership", leaseLabel],
     ["Est. Nightly Rate", `${fmtCurrency(audit.nightly_rate)}/night`],
     ["Est. Occupancy", fmtPct(audit.occupancy * 100, 0)],
-    ["Base Gross Yield", fmtPct(audit.gross_yield_pct)],
     ["Base Net Yield",   fmtPct(audit.net_yield_pct)],
   ];
   twoColRows(doc, rows);
@@ -969,24 +973,48 @@ function sectionHeader(doc: PDFKit.PDFDocument, title: string) {
   doc.y += 6;
 }
 
+// Side-by-side 2-column label→value table. Halves the vertical footprint so
+// a 14-row Villa Snapshot fits on page 1 with room for the next section.
+// Bottom margin for page-break: 70pt keeps content above the footer stamp.
 function twoColRows(doc: PDFKit.PDFDocument, rows: [string, string][]) {
   const rowH = 20;
-  const labelW = 180;
-  // Bottom margin for page-break: 70pt keeps content above the footer stamp.
+  const colW = 256;           // 512 total content width / 2
+  const labelW = 118;         // label portion of each column
+  const valuePad = 8;         // gap between label and value
   const pageBottom = doc.page.height - 70;
+
+  const half = Math.ceil(rows.length / 2);
+  const left = rows.slice(0, half);
+  const right = rows.slice(half);
+  const maxRows = Math.max(left.length, right.length);
+
   let y = doc.y;
-  rows.forEach((row, i) => {
+  for (let i = 0; i < maxRows; i++) {
     if (y + rowH > pageBottom) {
       doc.addPage();
       y = doc.y;
     }
+    // Zebra stripe — span both columns as one band so it reads as a single table.
     if (i % 2 === 0) doc.rect(50, y, 512, rowH).fill(COLORS.bgSoft);
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.inkDim)
-      .text(row[0], 60, y + 7, { width: labelW - 10 });
-    doc.fontSize(9).font("Helvetica").fillColor(COLORS.ink)
-      .text(row[1], 60 + labelW, y + 7, { width: 512 - labelW - 20 });
+
+    // Left column
+    if (left[i]) {
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.inkDim)
+        .text(left[i][0], 60, y + 7, { width: labelW });
+      doc.fontSize(9).font("Helvetica").fillColor(COLORS.ink)
+        .text(left[i][1], 60 + labelW + valuePad, y + 7,
+          { width: colW - labelW - valuePad - 20 });
+    }
+    // Right column (starts at x = 50 + 256 = 306)
+    if (right[i]) {
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.inkDim)
+        .text(right[i][0], 60 + colW, y + 7, { width: labelW });
+      doc.fontSize(9).font("Helvetica").fillColor(COLORS.ink)
+        .text(right[i][1], 60 + colW + labelW + valuePad, y + 7,
+          { width: colW - labelW - valuePad - 20 });
+    }
     y += rowH;
-  });
+  }
   doc.y = y + 10;
 }
 
