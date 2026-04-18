@@ -1626,30 +1626,54 @@ async function handleTest(profileNum: number, key: string): Promise<Response> {
     return NextResponse.json({ error: "Unknown profile" }, { status: 400 });
   }
 
-  const audit = computeAudit(profile.villa, USD_RATE_FALLBACK);
-  const scenarios = buildScenarios(audit);
-  const memo = buildNegotiationMemo(profile.villa, audit, profile.comps);
-  const exits = buildExitScenarios(audit);
-  const pdfBuffer = await generateDeepPdf(
-    profile.villa,
-    audit,
-    profile.comps,
-    "exact",
-    scenarios,
-    memo,
-    exits
-  );
+  // Run the full pipeline inside a single try so any failure surfaces the
+  // actual stack to the caller (stripped but useful) instead of a blank 500.
+  try {
+    const audit = computeAudit(profile.villa, USD_RATE_FALLBACK);
+    const scenarios = buildScenarios(audit);
+    const memo = buildNegotiationMemo(profile.villa, audit, profile.comps);
+    const exits = buildExitScenarios(audit);
+    const pdfBuffer = await generateDeepPdf(
+      profile.villa,
+      audit,
+      profile.comps,
+      "exact",
+      scenarios,
+      memo,
+      exits
+    );
 
-  return new Response(new Uint8Array(pdfBuffer), {
-    status: 200,
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="BVT-TestProfile-${profileNum}.pdf"`,
-      "X-Test-Profile": profile.name,
-      "X-Test-Expectation": profile.expect,
-      "Cache-Control": "no-store",
-    },
-  });
+    // Convert Node Buffer → ArrayBuffer slice for the Web Response body.
+    // Passing a raw Buffer works on most Next runtimes but is flaky on edge
+    // and inconsistent across Vercel regions. An explicit ArrayBuffer is
+    // portable. The slice copy keeps the underlying pool buffer from leaking.
+    const arrayBuffer = pdfBuffer.buffer.slice(
+      pdfBuffer.byteOffset,
+      pdfBuffer.byteOffset + pdfBuffer.byteLength
+    );
+
+    return new NextResponse(arrayBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="BVT-TestProfile-${profileNum}.pdf"`,
+        "X-Test-Profile": profile.name,
+        "X-Test-Expectation": profile.expect,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (err) {
+    // Surface the error to the caller so the test harness isn't blind.
+    // In prod this function is only reachable with the test key, so leaking
+    // the message is acceptable (low blast radius).
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? (err.stack || "").split("\n").slice(0, 6).join("\n") : "";
+    console.error(`[test pdf] profile ${profileNum} failed:`, err);
+    return NextResponse.json(
+      { error: "Test PDF generation failed", message: msg, stack, profile: profile.name },
+      { status: 500 }
+    );
+  }
 }
 
 export async function GET(req: NextRequest) {
