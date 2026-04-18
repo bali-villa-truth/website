@@ -566,6 +566,33 @@ export default function BaliVillaTruth() {
     return baseFilteredListings.filter(v => favorites.has(v.id));
   }, [baseFilteredListings, showFavoritesOnly, favorites]);
 
+  // --- HOMEPAGE CURATION ---
+  // The full corpus (~2,000+ listings) is overwhelming on first paint AND heavy
+  // for the browser to render. By default, surface a curated top-25 (sorted by
+  // whichever sort the user picked — cheapest-first by default). Once the user
+  // applies any *content* filter (location, price, ROI, beds, etc., or
+  // favorites), expand to the full filtered set so they see everything that
+  // matches their query. Sort changes alone don't expand the set — sort just
+  // reorders the curated 25.
+  // Map view (BaliMapView) keeps using the full processedListings so all
+  // filtered properties are pinned on the map.
+  const HOMEPAGE_CURATION_LIMIT = 25;
+  const filtersActive =
+    filterLocation !== 'All' ||
+    filterPrice < 10000000 ||
+    filterRoi > -99 ||
+    filterLandSize > 0 ||
+    filterBuildSize > 0 ||
+    filterBeds > 0 ||
+    filterBaths > 0 ||
+    filterLeaseType !== 'All' ||
+    showFavoritesOnly;
+
+  const displayListings = useMemo(() => {
+    if (filtersActive) return processedListings;
+    return processedListings.slice(0, HOMEPAGE_CURATION_LIMIT);
+  }, [processedListings, filtersActive]);
+
   const parseRateFactors = (factorsStr: string | null): string[] => {
     if (!factorsStr) return [];
     return factorsStr.split(' | ').filter(f => f.trim());
@@ -994,7 +1021,11 @@ export default function BaliVillaTruth() {
          <div className="flex items-center gap-5">
            <p className="hidden md:flex items-center gap-2">
              <span className="label-micro">
-               {loading ? 'Loading dossiers' : `Showing ${processedListings.length.toLocaleString()} of ${listings.length.toLocaleString()}`}
+               {loading
+                 ? 'Loading dossiers'
+                 : filtersActive
+                   ? `Showing ${processedListings.length.toLocaleString()} of ${listings.length.toLocaleString()} matching`
+                   : `Top ${displayListings.length.toLocaleString()} of ${listings.length.toLocaleString()} audited · Filter to see all`}
              </span>
            </p>
            <button
@@ -1059,7 +1090,7 @@ export default function BaliVillaTruth() {
       {/* MOBILE CARD VIEW */}
       <main className={`${mobileView === 'list' ? 'block' : 'hidden'} md:hidden transition-all w-full`}>
         <div className="divide-y divide-[color:var(--bvt-hairline)] border-t border-b border-[color:var(--bvt-hairline)]">
-          {processedListings.length === 0 ? (
+          {displayListings.length === 0 ? (
             loading ? (
               // Loading skeleton
               <div>
@@ -1083,7 +1114,7 @@ export default function BaliVillaTruth() {
               </div>
             )
           ) : (
-            processedListings.map((villa, idx) => {
+            displayListings.map((villa, idx) => {
               const netRoi = Number(villa.projected_roi) || 0;
               const occupancy = villa.est_occupancy || 0.65;
               const nightly = getDisplayNightly(villa);
@@ -1196,6 +1227,17 @@ export default function BaliVillaTruth() {
             })
           )}
         </div>
+        {/* CURATION HINT — only when showing top-25 default and more exist */}
+        {!loading && !filtersActive && processedListings.length > displayListings.length && (
+          <div className="mt-5 border-t border-b border-[color:var(--bvt-hairline)] py-5 px-4 text-center">
+            <p className="label-micro !text-[color:var(--bvt-ink-muted)]">
+              Showing the top <span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{displayListings.length}</span> of <span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{processedListings.length.toLocaleString()}</span> audited dossiers.
+            </p>
+            <p className="mt-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
+              Apply any filter above to see the full set.
+            </p>
+          </div>
+        )}
       </main>
 
       {/* DESKTOP TABLE — editorial ledger */}
@@ -1221,7 +1263,7 @@ export default function BaliVillaTruth() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[color:var(--bvt-hairline)]">
-              {processedListings.length === 0 ? (
+              {displayListings.length === 0 ? (
                   loading ? (
                     [0,1,2,3,4,5].map(i => (
                       <tr key={i} className="animate-pulse">
@@ -1242,7 +1284,7 @@ export default function BaliVillaTruth() {
                     </tr>
                   )
               ) : (
-                processedListings.map((villa, idx) => {
+                displayListings.map((villa, idx) => {
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
                     const netRoi = Number(villa.projected_roi) || 0;
@@ -1500,6 +1542,17 @@ export default function BaliVillaTruth() {
               )}
             </tbody>
           </table>
+          {/* CURATION HINT — only when showing top-25 default and more exist */}
+          {!loading && !filtersActive && processedListings.length > displayListings.length && (
+            <div className="border-b border-[color:var(--bvt-hairline)] py-8 px-6 text-center">
+              <p className="label-micro !text-[color:var(--bvt-ink-muted)]">
+                Showing the top <span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{displayListings.length}</span> of <span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{processedListings.length.toLocaleString()}</span> audited dossiers.
+              </p>
+              <p className="mt-2 text-[13px] text-[color:var(--bvt-ink-muted)]">
+                Apply any filter above — location, price, beds, tenure — to see the full set.
+              </p>
+            </div>
+          )}
         </div>
       </main>
 
