@@ -130,21 +130,38 @@ function computeAudit(villa: Villa, usdRate: number): AuditNumbers {
     (leaseYears > 0 && leaseYears < 99);
 
   const grossRevenue = nightlyRate * 365 * occupancy;
-  const mgmtFees = grossRevenue * 0.15;
-  const otaFees = grossRevenue * 0.15;
-  const maintenance = grossRevenue * 0.1;
-  const totalExpenses = mgmtFees + otaFees + maintenance;
-  const netBeforeLease = grossRevenue - totalExpenses;
+  let mgmtFees = grossRevenue * 0.15;
+  let otaFees = grossRevenue * 0.15;
+  let maintenance = grossRevenue * 0.1;
+  let totalExpenses = mgmtFees + otaFees + maintenance;
 
   let leaseCost = 0;
   if (isLeasehold && leaseYears > 0 && priceUsd > 0) {
     leaseCost = priceUsd / leaseYears;
   }
-  const netRevenue = netBeforeLease - leaseCost;
+  let netRevenue = grossRevenue - totalExpenses - leaseCost;
   const grossYield = priceUsd > 0 ? (grossRevenue / priceUsd) * 100 : 0;
   let netYield = priceUsd > 0 ? (netRevenue / priceUsd) * 100 : 0;
-  if (villa.projected_roi !== null && villa.projected_roi !== undefined) {
+
+  // Pipeline-authoritative net yield override. When the scraper/pipeline has
+  // stored a projected_roi for the villa, it beats our locally-computed
+  // 40%-opex assumption. To keep ALL downstream numbers consistent (Villa
+  // Snapshot, cover-page headline, stress-test base case, exit scenarios),
+  // we back-derive expenses from the overridden yield — effectively solving
+  // for the opex ratio the pipeline implicitly used. Without this, the
+  // snapshot and the "Base case (as published)" stress row show different
+  // "base" yields, which is a legitimate bug the user caught.
+  if (villa.projected_roi !== null && villa.projected_roi !== undefined && priceUsd > 0) {
     netYield = villa.projected_roi;
+    netRevenue = (netYield / 100) * priceUsd;
+    const derivedOpex = grossRevenue - netRevenue - leaseCost;
+    // Preserve mgmt/ota/maintenance weighting (40/40/20 of opex == 15/15/10 of gross).
+    if (grossRevenue > 0 && derivedOpex >= 0) {
+      totalExpenses = derivedOpex;
+      mgmtFees = derivedOpex * 0.375;
+      otaFees = derivedOpex * 0.375;
+      maintenance = derivedOpex * 0.25;
+    }
   }
 
   return {
@@ -301,7 +318,13 @@ interface Scenario {
 }
 function buildScenarios(audit: AuditNumbers): Scenario[] {
   const base = audit.nightly_rate;
-  const opex_base = 0.4; // 15+15+10
+  // Derive opex ratio from the audit itself so the "Base case (as published)"
+  // scenario lines up with audit.net_yield_pct. Hardcoding 0.4 here used to
+  // collide with projected_roi-overridden yields and produce two different
+  // "base" numbers in the same PDF.
+  const opex_base = audit.gross_revenue > 0
+    ? audit.total_expenses / audit.gross_revenue
+    : 0.4;
   const specs: Omit<Scenario, "net_yield" | "annual_cash">[] = [
     { label: "Base case (as published)", rate_mult: 1.0, occ_delta: 0, opex_mult: 1.0,
       description: "The headline number from the free audit." },
