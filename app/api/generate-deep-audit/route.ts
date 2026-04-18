@@ -57,6 +57,8 @@ interface Villa {
   land_size: string | null;
   building_size: string | null;
   listing_type: string | null;
+  beds_baths: string | null;
+  price_per_room: number | null;
 }
 
 interface AuditNumbers {
@@ -596,10 +598,31 @@ function renderKeyStats(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbe
   const leaseLabel = audit.is_leasehold && audit.lease_years
     ? `${audit.lease_type} · ${audit.lease_years}yr remaining`
     : audit.lease_type;
+
+  // Bathrooms — prefer the formatted "2 Bed / 2 Bath" string from scrape,
+  // fall back to just bedroom count if beds_baths wasn't captured.
+  const bedsBaths = (villa.beds_baths || "").trim();
+  const bathsMatch = bedsBaths.match(/(\d+(?:\.\d+)?)\s*Bath/i);
+  const bathrooms = bathsMatch ? bathsMatch[1] : null;
+
+  // Size + derived price per m² (uses land size as denominator, matching site).
+  const landSize = villa.land_size ? Number(villa.land_size) : 0;
+  const buildingSize = villa.building_size ? Number(villa.building_size) : 0;
+  const pricePerSqm = landSize > 0 && audit.price_usd > 0
+    ? Math.round(audit.price_usd / landSize)
+    : 0;
+
   const rows: [string, string][] = [
     ["Asking Price", fmtCurrency(audit.price_usd)],
     ["Local Price", audit.price_desc || "—"],
+    ["Property Type", villa.listing_type ? toTitleCase(villa.listing_type) : "—"],
     ["Bedrooms", String(audit.bedrooms || "—")],
+    ["Bathrooms", bathrooms || "—"],
+    ["Land Size", landSize > 0 ? `${landSize.toLocaleString()} m²` : "—"],
+    ["Building Size", buildingSize > 0 ? `${buildingSize.toLocaleString()} m²` : "—"],
+    ["Price / m² (land)", pricePerSqm > 0 ? fmtCurrency(pricePerSqm) : "—"],
+    ["Price / Bedroom", villa.price_per_room && villa.price_per_room > 0
+      ? fmtCurrency(villa.price_per_room) : "—"],
     ["Ownership", leaseLabel],
     ["Est. Nightly Rate", `${fmtCurrency(audit.nightly_rate)}/night`],
     ["Est. Occupancy", fmtPct(audit.occupancy * 100, 0)],
@@ -607,6 +630,10 @@ function renderKeyStats(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbe
     ["Base Net Yield",   fmtPct(audit.net_yield_pct)],
   ];
   twoColRows(doc, rows);
+}
+
+function toTitleCase(s: string): string {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function renderDataProvenance(doc: PDFKit.PDFDocument, villa: Villa) {
@@ -945,8 +972,14 @@ function sectionHeader(doc: PDFKit.PDFDocument, title: string) {
 function twoColRows(doc: PDFKit.PDFDocument, rows: [string, string][]) {
   const rowH = 20;
   const labelW = 180;
+  // Bottom margin for page-break: 70pt keeps content above the footer stamp.
+  const pageBottom = doc.page.height - 70;
   let y = doc.y;
   rows.forEach((row, i) => {
+    if (y + rowH > pageBottom) {
+      doc.addPage();
+      y = doc.y;
+    }
     if (i % 2 === 0) doc.rect(50, y, 512, rowH).fill(COLORS.bgSoft);
     doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.inkDim)
       .text(row[0], 60, y + 7, { width: labelW - 10 });
