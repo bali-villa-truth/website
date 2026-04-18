@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
 import { BvtLockup } from './_components/BvtSeal';
 
 const supabase = createClient(
@@ -265,22 +265,11 @@ export default function BaliVillaTruth() {
   const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
   const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
 
-  // --- DARK MODE ---
-  // Default to dark (#16 — unify theme: hero is already dark, so dark body
-  // removes the jarring light/dark handoff). Users can still toggle to light.
-  const [darkMode, setDarkMode] = useState(true);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('bvt-dark-mode');
-      if (saved === 'false') setDarkMode(false);
-      else if (saved === 'true') setDarkMode(true);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try { localStorage.setItem('bvt-dark-mode', String(darkMode)); } catch {}
-  }, [darkMode]);
+  // --- THEME ---
+  // The 2026-04-16 redesign committed fully to a cream-on-dark editorial
+  // aesthetic. The light variant was never re-skinned for the new tokens, so
+  // the toggle was a half-broken affordance. Removed entirely 2026-04-18.
+  // The map basemap stays dark (it's the only consumer of this flag now).
 
   // --- FAVORITES STATES ---
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
@@ -751,7 +740,7 @@ export default function BaliVillaTruth() {
   const flaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
 
   return (
-    <div className={`min-h-screen bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] font-sans ${darkMode ? 'dark' : ''}`}>
+    <div className="min-h-screen bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] font-sans dark">
 
       {/* HERO — editorial, The Modern House + FT feature style.
           Large serif display, calm supporting deck, factoids as prose not tiles. */}
@@ -827,14 +816,6 @@ export default function BaliVillaTruth() {
             <Link href="/methodology" className="link-editorial text-[14px]">
               How we audit →
             </Link>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              aria-label={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="hidden md:inline-flex ml-auto items-center gap-2 text-[12px] text-[color:var(--bvt-ink-dim)] hover:text-[color:var(--bvt-ink)] transition-colors"
-            >
-              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
-              <span className="label-micro">{darkMode ? 'Dark' : 'Light'}</span>
-            </button>
           </div>
 
         </div>
@@ -1079,7 +1060,7 @@ export default function BaliVillaTruth() {
       {/* MOBILE MAP VIEW */}
       {mobileView === 'map' && (
         <div className="md:hidden max-w-[1400px] mx-auto mb-4" style={{ height: 'calc(100vh - 12rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} darkMode={true} />
         </div>
       )}
 
@@ -1131,7 +1112,19 @@ export default function BaliVillaTruth() {
                     <span className="font-mono text-[10px] tabular-nums text-[color:var(--bvt-accent)] mt-1 w-6">{String(idx + 1).padStart(2, '0')}</span>
                     <div className="relative w-20 h-20 flex-shrink-0">
                       {villa.thumbnail_url ? (
-                        <img src={villa.thumbnail_url} alt="" className="w-20 h-20 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
+                        <img
+                          src={villa.thumbnail_url}
+                          alt=""
+                          className="w-20 h-20 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]"
+                          loading="lazy"
+                          onError={(e) => {
+                            const t = e.currentTarget;
+                            if (!t.dataset.fellback) {
+                              t.dataset.fellback = '1';
+                              t.src = '/villa-placeholder.svg';
+                            }
+                          }}
+                        />
                       ) : (
                         <div className="w-20 h-20 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex items-center justify-center">
                           <Home size={18} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
@@ -1309,7 +1302,19 @@ export default function BaliVillaTruth() {
                           {/* Thumbnail with overlaid compare / favorite controls */}
                           <div className="relative w-20 h-14 flex-shrink-0 group/thumb">
                             {villa.thumbnail_url ? (
-                              <img src={villa.thumbnail_url} alt="" className="w-20 h-14 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]" loading="lazy" />
+                              <img
+                                src={villa.thumbnail_url}
+                                alt=""
+                                className="w-20 h-14 object-cover bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)]"
+                                loading="lazy"
+                                onError={(e) => {
+                                  const t = e.currentTarget;
+                                  if (!t.dataset.fellback) {
+                                    t.dataset.fellback = '1';
+                                    t.src = '/villa-placeholder.svg';
+                                  }
+                                }}
+                              />
                             ) : (
                               <div className="w-20 h-14 bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] flex items-center justify-center">
                                 <Home size={16} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]" />
@@ -1558,7 +1563,7 @@ export default function BaliVillaTruth() {
       {/* MAP PANEL (sticky alongside table) */}
       {showMap && (
         <div className="w-[40%] flex-shrink-0 sticky top-4 self-start" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
-          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} darkMode={darkMode} />
+          <BaliMapView listings={processedListings} displayCurrency={displayCurrency} rates={rates} hoveredListingUrl={hoveredListingUrl} favorites={favorites} compareSet={compareSet} onToggleFavorite={toggleFavorite} onToggleCompare={toggleCompare} darkMode={true} />
         </div>
       )}
       </div>{/* end split layout flex */}
