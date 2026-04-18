@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, X, Info, TrendingUp, Search, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, Sun, Moon, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
 import { BvtLockup } from './_components/BvtSeal';
 
 const supabase = createClient(
@@ -39,69 +39,6 @@ function GlossaryTip({ term }: { term: keyof typeof GLOSSARY }) {
 }
 
 /**
- * Paste-BHI-URL search box (#11).
- * If the pasted URL matches an audited listing, jump straight there.
- * Otherwise, scroll to the listings grid — less friction than hunting through filters.
- */
-function PasteListingUrlBox({ listings }: { listings: any[] }) {
-  const [url, setUrl] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const normalize = (s: string) => s.trim().replace(/\/+$/, '').toLowerCase();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const trimmed = url.trim();
-    if (!trimmed) return;
-    const target = normalize(trimmed);
-    const match = listings.find(v => v.url && normalize(v.url) === target);
-    if (match && match.slug) {
-      window.location.href = `/listing/${match.slug}`;
-      return;
-    }
-    if (match) {
-      // Fallback when slug missing — scroll to grid and let filter show it
-      document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-    if (listings.length === 0) {
-      document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-    setError("We haven't audited that listing yet. Want us to? Email audits@balivillatruth.com");
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-xl mb-6 md:mb-8"
-      aria-label="Paste a Bali Home Immo listing URL"
-    >
-      <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste any Bali Home Immo URL to see its audit..."
-          className="flex-1 bg-white/5 border border-white/10 focus:border-[#d4943a] rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors"
-        />
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-slate-100 text-sm font-semibold px-5 py-2.5 rounded-lg border border-white/10 transition-colors"
-        >
-          <Search size={14} />
-          Audit It
-        </button>
-      </div>
-      {error && (
-        <p className="text-[11px] text-amber-400 mt-1.5 text-left" role="alert">{error}</p>
-      )}
-    </form>
-  );
-}
-
-/**
  * FAQ block (#14) — common buyer questions + FAQPage JSON-LD for rich snippets.
  * Questions are informed by the real search intent: lease vs freehold, ROI skepticism,
  * what makes BVT different from agents.
@@ -109,8 +46,8 @@ function PasteListingUrlBox({ listings }: { listings: any[] }) {
 function FAQSection() {
   const faqs: Array<{ q: string; a: string }> = [
     {
-      q: 'Is Bali Villa Truth affiliated with Bali Home Immo or any other agent?',
-      a: "No. We're an independent auditor. We don't sell villas, take commissions, or get paid by agents. The BHI link on each listing opens the original agent page — we earn nothing if you book.",
+      q: 'Is Bali Villa Truth affiliated with any agent or broker?',
+      a: "No. We're an independent auditor. We don't sell villas, take commissions, or get paid by agents. The source link on each listing opens the original agent page — we earn nothing if you book.",
     },
     {
       q: 'How is your ROI different from the one on the listing page?',
@@ -126,7 +63,7 @@ function FAQSection() {
     },
     {
       q: 'How often is the data updated?',
-      a: 'We re-scrape Bali Home Immo weekly and re-run the audit whenever price or status changes. Every listing page shows its last re-audit date.',
+      a: 'We re-scrape our source agents weekly and re-run the audit whenever price or status changes. Every listing page shows its last re-audit date.',
     },
     {
       q: 'Do you offer a paid deep audit?',
@@ -875,21 +812,6 @@ export default function BaliVillaTruth() {
             </button>
           </div>
 
-          {/* Paste-URL affordance — editorial framed, not a tile */}
-          <div className="mt-14 md:mt-20 pt-10 border-t border-[color:var(--bvt-hairline)]">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-4">
-                <div className="label-micro">For buyers already shortlisting</div>
-                <h3 className="font-display text-[color:var(--bvt-ink)] text-[22px] md:text-[26px] leading-tight tracking-[-0.01em] mt-2">
-                  Paste any BHI URL.
-                  <br />We&apos;ll pull the audit.
-                </h3>
-              </div>
-              <div className="lg:col-span-8" id="paste-url">
-                <PasteListingUrlBox listings={listings} />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Trust strip — FT-style tiny-print positioning below the fold */}
@@ -929,7 +851,7 @@ export default function BaliVillaTruth() {
             <span className="text-[color:var(--bvt-accent)]">audited.</span>
           </h2>
           <p className="md:col-span-4 text-[15px] leading-[1.7] text-[color:var(--bvt-ink-muted)]">
-            Filter by location, yield band, or lease structure. Every dossier is re-audited weekly against live Bali Home Immo data — prices, red flags, and ROI recomputed from scratch.
+            Filter by location, yield band, or lease structure. Every dossier is re-audited weekly against live agent data — prices, red flags, and ROI recomputed from scratch.
           </p>
         </div>
       </div>
