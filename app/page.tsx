@@ -28,11 +28,10 @@ function GlossaryTip({ term }: { term: keyof typeof GLOSSARY }) {
   if (!g) return null;
   return (
     <span className="relative group/glossary inline-flex items-center">
-      <Info size={11} className="text-slate-400 group-hover/glossary:text-blue-500 cursor-help ml-1 flex-shrink-0" />
-      <span className="invisible group-hover/glossary:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none">
-        <span className="font-bold text-blue-300">{g.label}</span>
-        <span className="block mt-1 text-slate-300">{g.tip}</span>
-        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></span>
+      <Info size={11} className="text-[color:var(--bvt-ink-faint)] group-hover/glossary:text-[color:var(--bvt-accent)] cursor-help ml-1 flex-shrink-0 transition-colors" />
+      <span className="invisible group-hover/glossary:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[10px] leading-relaxed px-3 py-2.5 shadow-xl z-50 pointer-events-none">
+        <span className="font-medium text-[color:var(--bvt-accent)] tracking-[0.1em] uppercase text-[9px]">{g.label}</span>
+        <span className="block mt-1 text-[color:var(--bvt-ink-body)] normal-case tracking-normal">{g.tip}</span>
       </span>
     </span>
   );
@@ -487,24 +486,23 @@ export default function BaliVillaTruth() {
     const linePath = `M ${pathPoints.join(' L ')}`;
 
     const isDown = prices[prices.length - 1] < prices[0];
-    const color = isDown ? '#16a34a' : '#dc2626';
+    const color = isDown ? '#8fb89c' : '#c07b5c'; // BVT good / bad tokens
 
     return (
-      <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 bg-slate-900 rounded-lg shadow-xl p-3 border border-slate-700" style={{ width: w + 24 }}>
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-slate-900" />
-        <p className="text-[9px] text-slate-400 mb-1 font-medium">Price History</p>
+      <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] shadow-xl p-3" style={{ width: w + 24 }}>
+        <p className="text-[9px] text-[color:var(--bvt-ink-muted)] mb-1.5 tracking-[0.14em] uppercase font-medium">Price History</p>
         <svg width={w} height={h} className="block">
-          <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           {points.map((p, i) => (
-            <circle key={i} cx={pad + i * stepX} cy={pad + (1 - (p.price - minP) / range) * (h - pad * 2)} r={i === points.length - 1 ? 3.5 : 2} fill={i === points.length - 1 ? color : '#94a3b8'} stroke={i === points.length - 1 ? 'white' : 'none'} strokeWidth={1} />
+            <circle key={i} cx={pad + i * stepX} cy={pad + (1 - (p.price - minP) / range) * (h - pad * 2)} r={i === points.length - 1 ? 3 : 1.8} fill={i === points.length - 1 ? color : '#6a7585'} stroke={i === points.length - 1 ? '#0a0e16' : 'none'} strokeWidth={1} />
           ))}
         </svg>
-        <div className="flex justify-between text-[8px] text-slate-500 mt-1">
+        <div className="flex justify-between text-[8px] text-[color:var(--bvt-ink-faint)] mt-1 font-mono tabular-nums tracking-wide">
           <span>{points[0].date}</span>
           <span>{points[points.length - 1].date}</span>
         </div>
-        <div className="flex justify-between text-[9px] mt-0.5">
-          <span className="text-slate-400">${Math.round(prices[0]).toLocaleString()}</span>
+        <div className="flex justify-between text-[10px] mt-0.5 font-mono tabular-nums">
+          <span className="text-[color:var(--bvt-ink-muted)]">${Math.round(prices[0]).toLocaleString()}</span>
           <span style={{ color }}>${Math.round(prices[prices.length - 1]).toLocaleString()}</span>
         </div>
       </div>
@@ -736,18 +734,18 @@ export default function BaliVillaTruth() {
     return flags;
   };
 
-  // Badge styling helper for the three flag levels
+  // Badge styling helper for the three flag levels — editorial BVT tokens
   const flagBadgeClass = (level: RedFlag['level'], variant: 'compact' | 'bordered' = 'compact') => {
     const base = variant === 'bordered' ? 'border ' : '';
-    if (level === 'danger') return base + 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400' + (variant === 'bordered' ? ' border-red-200 dark:border-red-900' : '');
-    if (level === 'assumed') return base + 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' + (variant === 'bordered' ? ' border-blue-200 dark:border-blue-900' : '');
-    return base + 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400' + (variant === 'bordered' ? ' border-amber-200 dark:border-amber-900' : '');
+    if (level === 'danger') return base + 'bg-[color:var(--bvt-bad)]/10 text-[color:var(--bvt-bad)]' + (variant === 'bordered' ? ' border-[color:var(--bvt-bad)]/30' : '');
+    if (level === 'assumed') return base + 'bg-[color:var(--bvt-ink-muted)]/10 text-[color:var(--bvt-ink-muted)]' + (variant === 'bordered' ? ' border-[color:var(--bvt-hairline-2)]' : '');
+    return base + 'bg-[color:var(--bvt-warn)]/10 text-[color:var(--bvt-warn)]' + (variant === 'bordered' ? ' border-[color:var(--bvt-warn)]/30' : '');
   };
 
   const flagTextClass = (level: RedFlag['level']) => {
-    if (level === 'danger') return 'text-red-400';
-    if (level === 'assumed') return 'text-blue-400';
-    return 'text-amber-400';
+    if (level === 'danger') return 'text-[color:var(--bvt-bad)]';
+    if (level === 'assumed') return 'text-[color:var(--bvt-ink-muted)]';
+    return 'text-[color:var(--bvt-warn)]';
   };
 
   const flaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
@@ -1422,49 +1420,50 @@ export default function BaliVillaTruth() {
                               </div>
                             )}
 
-                            {/* Simplified tooltip with pipeline-sourced values */}
+                            {/* Simplified tooltip with pipeline-sourced values — BVT editorial */}
                             {hoveredRoi === villa.id && (
-                                <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-slate-900 text-white text-[10px] rounded-lg p-3 shadow-xl pointer-events-none">
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-8 border-transparent border-b-slate-900"></div>
-                                <div className="font-bold mb-1 text-blue-400 flex items-center gap-1"><Eye size={11}/> BVT Yield Breakdown</div>
+                                <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[10px] p-3 shadow-xl pointer-events-none">
+                                <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)] flex items-center gap-1.5 text-[color:var(--bvt-accent)] tracking-[0.14em] uppercase text-[9px] font-medium">
+                                  <Eye size={10} strokeWidth={1.75}/> BVT Yield Breakdown
+                                </div>
 
                                 {/* Gross vs Net comparison */}
-                                <div className="mb-2 pb-2 border-b border-slate-700 flex gap-4">
+                                <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)] flex gap-4">
                                   <div className="flex-1 text-center">
-                                    <div className="text-slate-500 text-[9px] mb-0.5">Gross Yield</div>
-                                    <div className="text-lg font-bold text-slate-400 line-through">{grossRoi.toFixed(1)}%</div>
+                                    <div className="text-[color:var(--bvt-ink-muted)] text-[9px] mb-0.5 tracking-[0.12em] uppercase">Gross</div>
+                                    <div className="text-[17px] font-mono tabular-nums text-[color:var(--bvt-ink-faint)] line-through">{grossRoi.toFixed(1)}%</div>
                                   </div>
                                   <div className="flex-1 text-center">
-                                    <div className="text-blue-400 text-[9px] mb-0.5 font-bold">Net Yield</div>
-                                    <div className={`text-lg font-bold ${netRoi >= 7 ? 'text-emerald-400' : netRoi >= 0 ? 'text-amber-400' : 'text-red-400'}`}>{netRoi.toFixed(1)}%</div>
+                                    <div className="text-[color:var(--bvt-accent)] text-[9px] mb-0.5 tracking-[0.12em] uppercase font-medium">Net</div>
+                                    <div className={`text-[17px] font-mono tabular-nums font-medium ${netRoi >= 7 ? 'text-[color:var(--bvt-good)]' : netRoi >= 0 ? 'text-[color:var(--bvt-warn)]' : 'text-[color:var(--bvt-bad)]'}`}>{netRoi.toFixed(1)}%</div>
                                   </div>
                                 </div>
 
                                 {/* Transparent assumptions */}
-                                <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-slate-500 font-bold mb-1">Computed using</div>
-                                    <div className="text-slate-300 text-[9px] space-y-1">
-                                      <div><span className="text-emerald-400 font-bold">${nightly}/night</span> <span className="text-slate-500">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
-                                      <div><span className="text-emerald-400 font-bold">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-slate-400">(65% occ)</span> <span className="text-slate-500">— assumed, we don't have occupancy data for this area</span></div>
-                                      <div><span className="text-emerald-400 font-bold">40% to operating costs</span> <span className="text-slate-500">(mgmt 15%, OTA fees 15%, maintenance 10%)</span></div>
+                                <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)]">
+                                    <div className="text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase text-[9px] mb-1 font-medium">Computed using</div>
+                                    <div className="text-[color:var(--bvt-ink-body)] text-[9px] space-y-1 leading-relaxed">
+                                      <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">${nightly}/night</span> <span className="text-[color:var(--bvt-ink-muted)]">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
+                                      <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-[color:var(--bvt-ink-muted)]">(65% occ) — assumed, no occupancy data for this area</span></div>
+                                      <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">40% operating costs</span> <span className="text-[color:var(--bvt-ink-muted)]">(mgmt 15% · OTA 15% · maintenance 10%)</span></div>
                                     </div>
-                                    <p className="text-slate-500 text-[9px] flex items-center gap-1 mt-1.5"><SlidersHorizontal size={9} className="text-slate-600"/> Select villas with the checkbox to compare and adjust these assumptions</p>
+                                    <p className="text-[color:var(--bvt-ink-muted)] text-[9px] flex items-center gap-1.5 mt-2"><SlidersHorizontal size={9} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]"/> Select villas with the checkbox to adjust these assumptions</p>
                                 </div>
 
                                 {/* Capital depreciation for leaseholds */}
                                 {!isFreehold && leaseDepreciation > 0 && (
-                                <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <div className="text-orange-400 font-bold mb-1">Lease Depreciation</div>
+                                <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)]">
+                                    <div className="text-[color:var(--bvt-warn)] tracking-[0.12em] uppercase text-[9px] mb-1 font-medium">Lease Depreciation</div>
                                     {(() => {
                                       const depCostAnnual = leaseYears > 0 ? Math.round(priceUSD / leaseYears) : 0;
                                       return (
                                         <>
                                           <div className="flex justify-between">
-                                            <span className="text-slate-400">Lease expiry ({leaseYears}yr)</span>
-                                            <span className="text-orange-400 font-mono">-{leaseDepreciation.toFixed(1)}%/yr</span>
+                                            <span className="text-[color:var(--bvt-ink-body)]">Lease expiry ({leaseYears}yr)</span>
+                                            <span className="text-[color:var(--bvt-warn)] font-mono tabular-nums">-{leaseDepreciation.toFixed(1)}%/yr</span>
                                           </div>
                                           {depCostAnnual > 0 && (
-                                            <div className="text-orange-300 text-[8px] mt-0.5">≈ ${depCostAnnual.toLocaleString()}/yr in capital loss — your asset heads to $0</div>
+                                            <div className="text-[color:var(--bvt-ink-muted)] text-[9px] mt-0.5">≈ ${depCostAnnual.toLocaleString()}/yr in capital loss — asset heads to $0</div>
                                           )}
                                         </>
                                       );
@@ -1474,19 +1473,19 @@ export default function BaliVillaTruth() {
 
                                 {/* Red flags in tooltip */}
                                 {redFlags.length > 0 && (
-                                  <div className="mb-2 pb-2 border-b border-slate-700">
+                                  <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)] space-y-1">
                                     {redFlags.map((flag, idx) => (
-                                      <div key={idx} className={`flex items-start gap-1.5 mb-1 ${flagTextClass(flag.level)}`}>
-                                        {flag.level === 'assumed' ? <Info size={10} className="mt-0.5 flex-shrink-0" /> : <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" />}
-                                        <span>{flag.detail}</span>
+                                      <div key={idx} className={`flex items-start gap-1.5 ${flagTextClass(flag.level)}`}>
+                                        {flag.level === 'assumed' ? <Info size={10} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" /> : <AlertTriangle size={10} strokeWidth={1.75} className="mt-0.5 flex-shrink-0" />}
+                                        <span className="text-[9px] leading-relaxed">{flag.detail}</span>
                                       </div>
                                     ))}
                                   </div>
                                 )}
 
                                 {!isFreehold && leaseDepreciation > 0 && (
-                                  <div className="mb-2 pb-2 border-b border-slate-700">
-                                    <p className="text-slate-400 text-[9px]"><span className="text-emerald-400 font-bold">Cash Flow ({preDepreciationNet.toFixed(1)}%)</span> = money hitting your account each year. <span className="text-blue-400 font-bold">Net Yield ({netRoi.toFixed(1)}%)</span> = true return after accounting for your asset depreciating to $0.</p>
+                                  <div>
+                                    <p className="text-[color:var(--bvt-ink-muted)] text-[9px] leading-relaxed"><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">Cash Flow {preDepreciationNet.toFixed(1)}%</span> = money hitting your account each year. <span className="text-[color:var(--bvt-accent)] font-mono tabular-nums">Net Yield {netRoi.toFixed(1)}%</span> = true return after the asset depreciates to $0.</p>
                                   </div>
                                 )}
                                 </div>
@@ -1564,22 +1563,25 @@ export default function BaliVillaTruth() {
       )}
       </div>{/* end split layout flex */}
 
-      {/* FLOATING COMPARE BAR */}
+      {/* FLOATING COMPARE BAR — editorial, BVT tokens */}
       {compareSet.size > 0 && !showCompare && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 dark:bg-slate-950 text-white rounded-2xl shadow-2xl px-4 md:px-6 py-3 flex items-center gap-2 md:gap-4 animate-in slide-in-from-bottom duration-300 max-w-[95vw]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] shadow-2xl px-4 md:px-6 py-3 flex items-center gap-4 md:gap-5 animate-in slide-in-from-bottom duration-300 max-w-[95vw]">
           <div className="flex items-center gap-2">
-            <BarChart3 size={16} className="text-blue-400" />
-            <span className="font-bold text-sm">{compareSet.size} villa{compareSet.size !== 1 ? 's' : ''} selected</span>
+            <BarChart3 size={13} className="text-[color:var(--bvt-accent)]" strokeWidth={1.75} />
+            <span className="text-[12px] text-[color:var(--bvt-ink)]">
+              <span className="font-mono tabular-nums text-[color:var(--bvt-accent)]">{compareSet.size}</span>
+              <span className="ml-1.5 tracking-wide uppercase text-[11px] text-[color:var(--bvt-ink-muted)]">villa{compareSet.size !== 1 ? 's' : ''} selected</span>
+            </span>
           </div>
           <button
             onClick={() => { setShowCompare(true); setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2 rounded-xl transition-colors flex items-center gap-2"
+            className="bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[11px] font-semibold tracking-[0.14em] uppercase px-5 py-2 transition-colors flex items-center gap-2"
           >
-            <SlidersHorizontal size={14} /> Compare Now
+            <SlidersHorizontal size={12} strokeWidth={2} /> Compare Now
           </button>
           <button
             onClick={() => setCompareSet(new Set())}
-            className="text-slate-400 hover:text-white text-sm font-medium px-2 py-1 transition-colors"
+            className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] text-[11px] font-medium tracking-wide uppercase px-2 py-1 transition-colors"
           >
             Clear
           </button>
@@ -1592,163 +1594,174 @@ export default function BaliVillaTruth() {
         const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
         return (
-          <div className="fixed inset-0 dark:bg-black/80 bg-slate-900/70 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-6xl my-8 relative">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="fixed inset-0 bg-[#05080e]/85 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
+            <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] shadow-2xl w-full max-w-6xl my-8 relative">
+              {/* Header — editorial masthead */}
+              <div className="flex items-start justify-between p-6 md:p-8 border-b border-[color:var(--bvt-hairline)]">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <SlidersHorizontal size={20} className="text-blue-600 dark:text-blue-400" /> Villa ROI Calculator
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <SlidersHorizontal size={14} className="text-[color:var(--bvt-accent)]" strokeWidth={1.75} />
+                    <span className="label-micro">Sensitivity · Sliders</span>
+                  </div>
+                  <h2 className="font-serif text-[22px] md:text-[26px] font-medium text-[color:var(--bvt-ink)] tracking-tight leading-tight">
+                    Villa ROI Calculator
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Adjust assumptions to see how yields change across your selection</p>
+                  <p className="text-[13px] text-[color:var(--bvt-ink-muted)] mt-1.5">
+                    Adjust assumptions to see how yields change across your selection.
+                  </p>
                 </div>
-                <button onClick={() => setShowCompare(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 p-2"><X size={24}/></button>
+                <button
+                  onClick={() => setShowCompare(false)}
+                  className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] p-2 -m-2 transition-colors"
+                  aria-label="Close calculator"
+                >
+                  <X size={20} strokeWidth={1.5}/>
+                </button>
               </div>
 
               {/* Sliders */}
-              <div className="p-6 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-6 md:p-8 bg-[color:var(--bvt-bg-soft)] border-b border-[color:var(--bvt-hairline)]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                   {/* Nightly Rate Multiplier */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Nightly Rate</label>
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderNightly.toFixed(1)}x</span>
+                    <div className="flex justify-between items-baseline mb-3">
+                      <label className="label-micro">Nightly Rate</label>
+                      <span className="font-mono tabular-nums text-[15px] font-medium text-[color:var(--bvt-accent)]">{sliderNightly.toFixed(1)}x</span>
                     </div>
                     <input
                       type="range" min="0.5" max="2.0" step="0.1"
                       value={sliderNightly}
                       onChange={(e) => setSliderNightly(parseFloat(e.target.value))}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-[3px] bg-[color:var(--bvt-hairline-2)] appearance-none cursor-pointer accent-[color:var(--bvt-accent)]"
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                    <div className="flex justify-between text-[10px] font-mono tabular-nums text-[color:var(--bvt-ink-faint)] mt-2 tracking-wider">
                       <span>0.5x</span>
-                      <span className="text-blue-500 dark:text-blue-400 font-bold">BVT: {BVT_DEFAULTS.nightly}x</span>
+                      <span className="text-[color:var(--bvt-ink-muted)] uppercase tracking-[0.14em] font-medium">BVT · {BVT_DEFAULTS.nightly}x</span>
                       <span>2.0x</span>
                     </div>
                   </div>
 
                   {/* Occupancy */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Occupancy</label>
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderOccupancy}%</span>
+                    <div className="flex justify-between items-baseline mb-3">
+                      <label className="label-micro">Occupancy</label>
+                      <span className="font-mono tabular-nums text-[15px] font-medium text-[color:var(--bvt-accent)]">{sliderOccupancy}%</span>
                     </div>
                     <input
                       type="range" min="20" max="95" step="1"
                       value={sliderOccupancy}
                       onChange={(e) => setSliderOccupancy(parseInt(e.target.value))}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-[3px] bg-[color:var(--bvt-hairline-2)] appearance-none cursor-pointer accent-[color:var(--bvt-accent)]"
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                    <div className="flex justify-between text-[10px] font-mono tabular-nums text-[color:var(--bvt-ink-faint)] mt-2 tracking-wider">
                       <span>20%</span>
-                      <span className="text-blue-500 dark:text-blue-400 font-bold">BVT: {BVT_DEFAULTS.occupancy}%</span>
+                      <span className="text-[color:var(--bvt-ink-muted)] uppercase tracking-[0.14em] font-medium">BVT · {BVT_DEFAULTS.occupancy}%</span>
                       <span>95%</span>
                     </div>
                   </div>
 
                   {/* Expense Load */}
                   <div>
-                    <div className="flex justify-between items-baseline mb-2">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide relative group/expense inline-flex items-center gap-1">
+                    <div className="flex justify-between items-baseline mb-3">
+                      <label className="label-micro relative group/expense inline-flex items-center gap-1.5">
                         Expense Load
-                        <Info size={12} className="text-slate-400 group-hover/expense:text-blue-500 cursor-help" />
-                        <span className="invisible group-hover/expense:visible absolute top-full left-0 mt-2 w-56 bg-slate-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2.5 shadow-xl z-50 pointer-events-none font-normal normal-case tracking-normal">
-                          <span className="font-bold text-blue-300 block mb-1">What&apos;s included:</span>
+                        <Info size={11} className="text-[color:var(--bvt-ink-faint)] group-hover/expense:text-[color:var(--bvt-accent)] cursor-help transition-colors" />
+                        <span className="invisible group-hover/expense:visible absolute top-full left-0 mt-2 w-64 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[11px] leading-relaxed px-3 py-2.5 shadow-xl z-50 pointer-events-none font-normal normal-case tracking-normal">
+                          <span className="font-medium text-[color:var(--bvt-accent)] block mb-1.5 tracking-[0.1em] uppercase text-[10px]">What&apos;s included</span>
                           {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
-                            <span key={key} className="flex justify-between"><span className="text-slate-300">{cost.label}</span><span className="text-red-400 font-mono">{(cost.rate * 100).toFixed(0)}%</span></span>
+                            <span key={key} className="flex justify-between py-0.5"><span className="text-[color:var(--bvt-ink-body)]">{cost.label}</span><span className="text-[color:var(--bvt-bad)] font-mono tabular-nums">{(cost.rate * 100).toFixed(0)}%</span></span>
                           ))}
-                          <span className="block mt-1.5 pt-1.5 border-t border-slate-700 text-slate-500">Mgmt, OTA commissions, pool, garden, AC, wifi, repairs</span>
-                          <span className="absolute bottom-full left-4 border-4 border-transparent border-b-slate-900"></span>
+                          <span className="block mt-1.5 pt-1.5 border-t border-[color:var(--bvt-hairline)] text-[color:var(--bvt-ink-muted)]">Mgmt, OTA commissions, pool, garden, AC, wifi, repairs.</span>
                         </span>
                       </label>
-                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{sliderExpense}%</span>
+                      <span className="font-mono tabular-nums text-[15px] font-medium text-[color:var(--bvt-accent)]">{sliderExpense}%</span>
                     </div>
                     <input
                       type="range" min="20" max="60" step="1"
                       value={sliderExpense}
                       onChange={(e) => setSliderExpense(parseInt(e.target.value))}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                      className="w-full h-[3px] bg-[color:var(--bvt-hairline-2)] appearance-none cursor-pointer accent-[color:var(--bvt-accent)]"
                     />
-                    <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                    <div className="flex justify-between text-[10px] font-mono tabular-nums text-[color:var(--bvt-ink-faint)] mt-2 tracking-wider">
                       <span>20%</span>
-                      <span className="text-blue-500 dark:text-blue-400 font-bold">BVT: {BVT_DEFAULTS.expense}%</span>
+                      <span className="text-[color:var(--bvt-ink-muted)] uppercase tracking-[0.14em] font-medium">BVT · {BVT_DEFAULTS.expense}%</span>
                       <span>60%</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Reset to BVT defaults */}
-                <div className="flex justify-end mt-3">
+                <div className="flex justify-end mt-5">
                   <button
                     onClick={() => { setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                    className="label-micro !text-[color:var(--bvt-ink-muted)] hover:!text-[color:var(--bvt-accent)] transition-colors"
                   >
-                    Reset to BVT Defaults
+                    Reset to BVT defaults ↻
                   </button>
                 </div>
               </div>
 
               {/* Comparison Table */}
-              <div className="p-6 overflow-x-auto">
+              <div className="p-6 md:p-8 overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
-                    <tr className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                      <th className="text-left py-3 pr-4 w-36">Metric</th>
+                    <tr className="text-[10px] uppercase tracking-[0.18em] font-medium text-[color:var(--bvt-ink-dim)] border-b border-[color:var(--bvt-hairline-2)]">
+                      <th className="text-left py-3 pr-4 w-36 font-medium">Metric</th>
                       {compareVillas.map(v => (
-                        <th key={v.id} className="text-center py-3 px-3 min-w-[140px]">
-                          <div className="text-slate-700 dark:text-slate-300 text-[11px] normal-case font-bold truncate max-w-[160px]">{v.villa_name}</div>
-                          <div className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{v.location}</div>
+                        <th key={v.id} className="text-center py-3 px-3 min-w-[140px] font-medium">
+                          <div className="text-[color:var(--bvt-ink)] text-[11px] normal-case font-medium truncate max-w-[160px]">{v.villa_name}</div>
+                          <div className="text-[9px] text-[color:var(--bvt-ink-muted)] font-normal tracking-wide mt-0.5">{v.location}</div>
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="text-xs">
                     {/* Price */}
-                    <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Price</td>
+                    <tr className="border-b border-[color:var(--bvt-hairline)]">
+                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Price</td>
                       {compareVillas.map(v => (
-                        <td key={v.id} className="text-center py-2.5 px-3 font-mono font-semibold text-slate-700 dark:text-slate-300">{formatPriceInCurrency(v)}</td>
+                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink)]">{formatPriceInCurrency(v)}</td>
                       ))}
                     </tr>
                     {/* Lease */}
-                    <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Lease</td>
+                    <tr className="border-b border-[color:var(--bvt-hairline)]">
+                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Lease</td>
                       {compareVillas.map(v => {
                         const f = (v.features || '').toLowerCase();
                         const yrs = Number(v.lease_years) || 0;
                         const isFH = f.includes('freehold') || f.includes('hak milik') || yrs === 999;
                         return (
-                          <td key={v.id} className={`text-center py-2.5 px-3 ${isFH ? 'text-green-600 dark:text-green-400 font-bold' : 'text-slate-600 dark:text-slate-400'}`}>
+                          <td key={v.id} className={`text-center py-3 px-3 font-mono tabular-nums ${isFH ? 'text-[color:var(--bvt-good)]' : 'text-[color:var(--bvt-ink-body)]'}`}>
                             <span className="inline-flex items-center justify-center">{isFH ? <>Freehold<GlossaryTip term="hak_milik" /></> : yrs > 0 ? <>{yrs}yr lease<GlossaryTip term="hak_sewa" /></> : 'Unknown'}</span>
                           </td>
                         );
                       })}
                     </tr>
                     {/* Nightly Rate */}
-                    <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Nightly Rate</td>
+                    <tr className="border-b border-[color:var(--bvt-hairline)]">
+                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Nightly Rate</td>
                       {compareVillas.map(v => {
                         const base = v.est_nightly_rate || getDisplayNightly(v);
                         const adjusted = Math.round(base * sliderNightly);
                         return (
-                          <td key={v.id} className="text-center py-2.5 px-3 font-mono">
-                            <span className="text-slate-700 dark:text-slate-300 font-semibold">${adjusted}</span>
-                            {sliderNightly !== 1.0 && <span className="text-slate-400 dark:text-slate-500 text-[10px] ml-1">(base ${base})</span>}
+                          <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums">
+                            <span className="text-[color:var(--bvt-ink)]">${adjusted}</span>
+                            {sliderNightly !== 1.0 && <span className="text-[color:var(--bvt-ink-faint)] text-[10px] ml-1">(base ${base})</span>}
                           </td>
                         );
                       })}
                     </tr>
                     {/* Occupancy & Expense (shared) */}
-                    <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Occupancy</td>
+                    <tr className="border-b border-[color:var(--bvt-hairline)]">
+                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Occupancy</td>
                       {compareVillas.map(v => (
-                        <td key={v.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{sliderOccupancy}%</td>
+                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{sliderOccupancy}%</td>
                       ))}
                     </tr>
-                    <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Expense Load</td>
+                    <tr className="border-b border-[color:var(--bvt-hairline)]">
+                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Expense Load</td>
                       {compareVillas.map(v => (
-                        <td key={v.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">{sliderExpense}%</td>
+                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{sliderExpense}%</td>
                       ))}
                     </tr>
                     {/* Dynamic calculations */}
@@ -1761,96 +1774,99 @@ export default function BaliVillaTruth() {
 
                       return (
                         <>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Gross Revenue</td>
+                          <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
+                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Gross Revenue</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">${r.annualRevenue.toLocaleString()}/yr</td>
+                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">${r.annualRevenue.toLocaleString()}/yr</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-400 dark:text-slate-500 font-medium">Gross Yield</td>
+                          <tr className="border-b border-[color:var(--bvt-hairline)]">
+                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-faint)] label-micro !text-[color:var(--bvt-ink-faint)] !tracking-[0.14em]">Gross Yield</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-slate-400 dark:text-slate-500 line-through">{r.grossYield.toFixed(1)}%</td>
+                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-faint)] line-through">{r.grossYield.toFixed(1)}%</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Expenses</td>
+                          <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
+                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Expenses</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono text-red-500 dark:text-red-400">-${r.annualExpenses.toLocaleString()}/yr</td>
+                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-bad)]">-${r.annualExpenses.toLocaleString()}/yr</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-2.5 pr-4 text-slate-700 dark:text-slate-300 font-bold">Net Revenue</td>
+                          <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
+                            <td className="py-3 pr-4 text-[color:var(--bvt-ink)] label-micro !text-[color:var(--bvt-ink)] !tracking-[0.14em]">Net Revenue</td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-slate-100">${r.netRevenue.toLocaleString()}/yr</td>
+                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink)]">${r.netRevenue.toLocaleString()}/yr</td>
                             ))}
                           </tr>
-                          <tr className="border-b border-slate-200 dark:border-slate-700 bg-emerald-50/40 dark:bg-emerald-950/20">
-                            <td className="py-2.5 pr-4 text-emerald-700 dark:text-emerald-400 font-bold text-sm">
-                              Cash Flow Yield
-                              <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-normal">Cash-on-cash return</span>
+                          <tr className="border-b border-[color:var(--bvt-hairline-2)] bg-[color:var(--bvt-good)]/[0.06]">
+                            <td className="py-3 pr-4 text-[color:var(--bvt-good)] text-[13px]">
+                              <span className="font-serif italic">Cash Flow Yield</span>
+                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">Cash-on-cash return</span>
                             </td>
                             {results.map(r => {
                               const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
                               const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
                               return (
-                                <td key={r.id} className="text-center py-2.5 px-3 font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base">
+                                <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums font-medium text-[color:var(--bvt-good)] text-[16px]">
                                   {cashFlowYield.toFixed(1)}%
                                 </td>
                               );
                             })}
                           </tr>
-                          <tr className="border-b border-slate-100 dark:border-slate-700 bg-amber-50/40 dark:bg-amber-950/30">
-                            <td className="py-2.5 pr-4 text-amber-700 dark:text-amber-400 font-medium text-sm">
-                              Lease Depreciation
-                              <span className="block text-[9px] text-amber-500 dark:text-amber-400 font-normal">Asset value loss/yr</span>
+                          <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-warn)]/[0.06]">
+                            <td className="py-3 pr-4 text-[color:var(--bvt-warn)] text-[13px]">
+                              <span className="font-serif italic">Lease Depreciation</span>
+                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">Asset value loss/yr</span>
                             </td>
                             {results.map(r => (
-                              <td key={r.id} className="text-center py-2.5 px-3 font-mono">
+                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums">
                                 {r.isFreehold ? (
-                                  <span className="text-green-600 dark:text-green-400 text-xs font-medium">Freehold — N/A</span>
+                                  <span className="text-[color:var(--bvt-good)] text-[11px]">Freehold — N/A</span>
                                 ) : r.leaseDepreciation > 0 ? (
                                   <div>
-                                    <span className="text-amber-600 dark:text-amber-400 font-bold">-${r.leaseDepreciation.toLocaleString()}/yr</span>
-                                    <span className="block text-[9px] text-amber-500 dark:text-amber-400">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
+                                    <span className="text-[color:var(--bvt-warn)]">-${r.leaseDepreciation.toLocaleString()}/yr</span>
+                                    <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-0.5">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
                                   </div>
                                 ) : (
-                                  <span className="text-slate-400 dark:text-slate-500 text-xs">Unknown tenure</span>
+                                  <span className="text-[color:var(--bvt-ink-faint)] text-[11px]">Unknown tenure</span>
                                 )}
                               </td>
                             ))}
                           </tr>
-                          <tr className="bg-blue-50/50 dark:bg-blue-950/30">
-                            <td className="py-3 pr-4 text-blue-700 dark:text-blue-400 font-bold text-sm">
-                              Net Yield
-                              <span className="block text-[9px] text-blue-400 dark:text-blue-400 font-normal">After depreciation</span>
+                          <tr className="bg-[color:var(--bvt-accent)]/[0.08] border-t border-[color:var(--bvt-accent)]/25">
+                            <td className="py-4 pr-4 text-[color:var(--bvt-accent)] text-[14px]">
+                              <span className="font-serif italic">Net Yield</span>
+                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">After depreciation</span>
                             </td>
-                            {results.map(r => (
-                              <td key={r.id} className={`text-center py-3 px-3 font-mono font-bold text-lg ${
-                                r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1
-                                  ? 'text-emerald-600 dark:text-emerald-400'
-                                  : r.netYield >= 7 ? 'text-blue-600 dark:text-blue-400' : r.netYield >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-red-600 dark:text-red-400'
-                              }`}>
-                                {r.netYield.toFixed(1)}%
-                                {r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1 && (
-                                  <span className="block text-[9px] text-emerald-500 dark:text-emerald-400 font-bold mt-0.5">BEST</span>
-                                )}
-                              </td>
-                            ))}
+                            {results.map(r => {
+                              const isBest = r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1;
+                              return (
+                                <td key={r.id} className={`text-center py-4 px-3 font-mono tabular-nums font-medium text-[20px] ${
+                                  isBest
+                                    ? 'text-[color:var(--bvt-good)]'
+                                    : r.netYield >= 7 ? 'text-[color:var(--bvt-accent)]' : r.netYield >= 0 ? 'text-[color:var(--bvt-ink)]' : 'text-[color:var(--bvt-bad)]'
+                                }`}>
+                                  {r.netYield.toFixed(1)}%
+                                  {isBest && (
+                                    <span className="block text-[9px] text-[color:var(--bvt-good)] tracking-[0.2em] uppercase font-sans mt-1">Best</span>
+                                  )}
+                                </td>
+                              );
+                            })}
                           </tr>
                           {/* Red Flags row */}
-                          <tr className="border-b border-slate-100 dark:border-slate-700">
-                            <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400 font-medium">Flags</td>
+                          <tr className="border-b border-[color:var(--bvt-hairline)]">
+                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Flags</td>
                             {compareVillas.map(v => {
                               const flags = getRedFlags(v);
                               return (
-                                <td key={v.id} className="text-center py-2.5 px-3">
+                                <td key={v.id} className="text-center py-3 px-3">
                                   {flags.length === 0 ? (
-                                    <span className="text-green-500 dark:text-green-400 text-[10px] font-medium">Clean</span>
+                                    <span className="text-[color:var(--bvt-good)] text-[10px] tracking-[0.14em] uppercase">Clean</span>
                                   ) : (
                                     <div className="flex flex-wrap justify-center gap-1">
                                       {flags.map((f, i) => (
-                                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${flagBadgeClass(f.level)}`}>{f.label}</span>
+                                        <span key={i} className={`px-1.5 py-0.5 text-[9px] font-medium tracking-wide uppercase ${flagBadgeClass(f.level)}`}>{f.label}</span>
                                       ))}
                                     </div>
                                   )}
@@ -1859,19 +1875,19 @@ export default function BaliVillaTruth() {
                             })}
                           </tr>
                           {/* Full audit row — routes to the dedicated listing page */}
-                          <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                            <td className="py-3 pr-4 text-slate-500 dark:text-slate-400 font-medium">Full audit</td>
+                          <tr className="bg-[color:var(--bvt-bg-soft)]/50">
+                            <td className="py-4 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Full audit</td>
                             {compareVillas.map(v => (
-                              <td key={v.id} className="text-center py-3 px-3">
+                              <td key={v.id} className="text-center py-4 px-3">
                                 {v.slug ? (
                                   <Link
                                     href={`/listing/${v.slug}`}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-xs font-bold rounded-lg transition-colors shadow-sm"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[11px] font-semibold tracking-[0.14em] uppercase transition-colors"
                                   >
                                     Open audit →
                                   </Link>
                                 ) : (
-                                  <span className="text-[11px] text-slate-400">pending</span>
+                                  <span className="text-[11px] text-[color:var(--bvt-ink-faint)] italic">pending</span>
                                 )}
                               </td>
                             ))}
@@ -1884,7 +1900,7 @@ export default function BaliVillaTruth() {
               </div>
 
               {/* Footer note */}
-              <div className="px-6 pb-6 text-[10px] text-slate-400 italic">
+              <div className="px-6 md:px-8 pb-6 md:pb-8 text-[11px] text-[color:var(--bvt-ink-muted)] italic leading-relaxed">
                 These projections are estimates based on your inputs. Actual returns depend on management quality, market conditions, and property-specific factors. BVT does not provide financial advice.
               </div>
             </div>
