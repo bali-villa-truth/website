@@ -100,6 +100,18 @@ export default function ListingClient({
     }
   };
 
+  // Mobile bottom-bar tap → scroll user to the CTA section + focus email.
+  // On mobile the sidebar stacks at the very bottom of a long scroll, so the
+  // Deep Audit was effectively hidden. The bottom bar is the entry point;
+  // it doesn't try to be a self-contained form.
+  const scrollToAuditCTA = () => {
+    const el = document.getElementById('audit-email');
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Slight delay so the focus ring lands after the smooth-scroll completes.
+    setTimeout(() => el.focus({ preventScroll: true }), 650);
+  };
+
   return (
     <div className="mt-4 space-y-2.5">
       {/* Always-visible source link — editorial ghost button */}
@@ -153,6 +165,7 @@ export default function ListingClient({
             </div>
 
             <input
+              id="audit-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -211,6 +224,32 @@ export default function ListingClient({
           <p className="text-[10px] text-[color:var(--bvt-ink-muted)] text-center mt-2 tracking-wide">
             Stripe · Emailed in 30s · Not financial advice
           </p>
+        </div>
+      </div>
+
+      {/* Mobile-only sticky bottom CTA bar. On mobile (<md) the sidebar stacks
+          at the bottom of a long scroll, so the Deep Audit upgrade is hidden
+          until the user scrolls past all audit content + comps + disclaimer.
+          This bar follows the user. Tapping scrolls to the inline CTA and
+          focuses the email field — keeps a single source of truth for state. */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[color:var(--bvt-bg-elev)]/95 backdrop-blur-md border-t border-[color:var(--bvt-hairline-2)] shadow-[0_-6px_24px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center gap-3 px-4 py-3 max-w-md mx-auto">
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] tracking-[0.18em] uppercase text-[color:var(--bvt-accent)] font-semibold leading-none">
+              Deep Audit · Pro
+            </p>
+            <p className="font-serif text-[15px] text-[color:var(--bvt-ink)] leading-tight mt-1 tracking-tight truncate">
+              $49 · Full report in 30s
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={scrollToAuditCTA}
+            className="shrink-0 bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[11px] font-semibold tracking-[0.14em] uppercase py-3 px-5 transition-colors"
+            aria-label="Scroll to audit upgrade form"
+          >
+            Get it →
+          </button>
         </div>
       </div>
     </div>
