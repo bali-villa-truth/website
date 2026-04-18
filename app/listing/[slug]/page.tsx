@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ListingClient from "./ListingClient";
 import ThumbImg from "@/app/_components/ThumbImg";
+import MobileAuditBar from "@/app/_components/MobileAuditBar";
 
 // Server-side Supabase client (uses service key for SSR, falls back to anon)
 const supabase = createClient(
@@ -670,6 +671,13 @@ export default async function ListingPage({ params }: Props) {
             </div>
           </div>
         </main>
+
+        {/* Mobile-only sticky bottom CTA bar — rendered at page root, OUTSIDE
+            <main>'s sidebar subtree, because iOS Safari traps position:fixed
+            inside any overflow:auto ancestor (the desktop sticky sidebar uses
+            overflow-y-auto). Hidden at md+ where the sticky sidebar already
+            keeps the Deep Audit visible. */}
+        <MobileAuditBar />
 
         {/* Global SiteFooter renders via app/layout.tsx */}
       </div>
