@@ -34,10 +34,11 @@ export type AreaConfig = {
 
 const SITE_URL = "https://balivillatruth.com";
 
-// IDR/USD fallback rate — kept in sync with USD_RATE_FALLBACK in
-// app/api/generate-deep-audit/route.ts so the grid card and Deep Audit PDF
-// report the same USD figures.
-const USD_RATE_FALLBACK = 17109;
+// Fallback IDR→USD rate. MUST stay in sync with:
+//   - app/api/generate-deep-audit/route.ts (USD_RATE_FALLBACK)
+//   - app/listing/[slug]/page.tsx (FALLBACK_RATES.IDR)
+// If this drifts, identical listings display different USD prices across pages.
+const USD_RATE_FALLBACK = 16782;
 
 // last_price is stored in IDR (billions for a typical villa). Prefer the
 // scraped USD figure from price_description (most listings carry "USD 123,456"),
