@@ -616,9 +616,15 @@ export default async function ListingPage({ params }: Props) {
               </div>
             </div>
 
-            {/* RIGHT: Price card + CTA */}
+            {/* RIGHT: Price card + CTA
+                The card is taller than a typical viewport (price + yield +
+                actions + email form + Deep Audit). We keep the whole block
+                visible as the user scrolls the main column by pinning it
+                (sticky top-[4.5rem]) and giving it an internal scroll when it
+                exceeds the viewport (max-h + overflow-y-auto). `sidebar-scroll`
+                is a hairline-styled scrollbar defined in globals.css. */}
             <div className="space-y-4">
-              <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 sticky top-16">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 sticky top-[4.5rem] max-h-[calc(100vh-5.5rem)] overflow-y-auto sidebar-scroll">
                 <div className="text-center mb-4">
                   <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Asking Price</p>
                   <p className="text-3xl font-extrabold">
