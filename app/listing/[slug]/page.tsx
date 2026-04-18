@@ -105,6 +105,10 @@ async function getPriceHistory(listingId: number) {
 }
 
 // Price stored in `last_price` may be in IDR (when >= 1M) or USD. Convert to USD.
+// Fallback IDR rate MUST stay in sync with:
+//   - app/api/generate-deep-audit/route.ts (USD_RATE_FALLBACK)
+//   - app/_lib/AreaPage.tsx (USD_RATE_FALLBACK)
+// If this drifts, identical listings display different USD prices across pages.
 const FALLBACK_RATES: Record<string, number> = {
   USD: 1, IDR: 16782, AUD: 1.53, EUR: 0.92, SGD: 1.34,
 };
