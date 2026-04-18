@@ -1,13 +1,10 @@
 'use client';
-import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Sun, Moon, BookOpen, TrendingUp, Home, Calendar, DollarSign, Percent, AlertTriangle, ExternalLink, BarChart3, Shield } from 'lucide-react';
+import { BookOpen, TrendingUp, Home, Calendar, DollarSign, AlertTriangle, ExternalLink, BarChart3, Shield } from 'lucide-react';
 
 export default function Methodology() {
-  const [darkMode, setDarkMode] = useState(false);
-
   return (
-    <div className={`${darkMode ? 'dark' : ''} bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] min-h-screen transition-colors duration-200`}>
+    <div className="bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] min-h-screen">
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-14 pb-16">
 
         {/* Breadcrumb */}
@@ -38,16 +35,16 @@ export default function Methodology() {
         </header>
 
         {/* === SECTION: Data Sources === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<ExternalLink size={18} />} title="Where the data comes from" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-4 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              Every listing on Bali Villa Truth is sourced from <strong>Bali Home Immo (BHI)</strong>,
+              Every listing on Bali Villa Truth is sourced from <strong className="text-[color:var(--bvt-ink)]">Bali Home Immo (BHI)</strong>,
               one of the largest real estate aggregators in Bali. We scrape their public listings to capture asking prices,
               locations, bedroom counts, land size, lease terms, and property details.
             </p>
             <p>
-              Nightly rental rates are derived from a <strong>50/50 blend of Booking.com and Airbnb market data</strong>.
+              Nightly rental rates are derived from a <strong className="text-[color:var(--bvt-ink)]">50/50 blend of Booking.com and Airbnb market data</strong>.
               We scrape actual villa listings across 12 areas and 5 bedroom tiers on both platforms to build our rate model
               — Booking.com gave us 2,499 data points and Airbnb added 415 more. Blending both platforms gives us a more
               honest market rate: Booking.com skews toward established properties, Airbnb toward newer and boutique stays.
@@ -56,7 +53,7 @@ export default function Methodology() {
               density data to estimate area-specific occupancy — more details in the occupancy section below.
             </p>
             <p>
-              Exchange rates are fetched from <strong>ExchangeRate-API</strong> at the start of each pipeline run
+              Exchange rates are fetched from <strong className="text-[color:var(--bvt-ink)]">ExchangeRate-API</strong> at the start of each pipeline run
               and used consistently throughout processing. The frontend also fetches live rates for display-time
               currency conversion.
             </p>
@@ -64,9 +61,9 @@ export default function Methodology() {
         </section>
 
         {/* === SECTION: Nightly Rate === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<Home size={18} />} title="Nightly rate" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
               Every listing gets an estimated nightly rental rate based on its area and bedroom count.
               Here&apos;s how we arrive at it:
@@ -82,7 +79,7 @@ export default function Methodology() {
             </Step>
 
             <Step num={2} title="Budget property discount">
-              If a villa&apos;s asking price falls below the <strong>25th percentile</strong> for its area and bedroom tier,
+              If a villa&apos;s asking price falls below the <strong className="text-[color:var(--bvt-ink)]">25th percentile</strong> for its area and bedroom tier,
               we apply a flat 30% discount to the nightly rate. A $107K villa in Nusa Dua almost certainly can&apos;t
               command the same $170/night as a $500K property with an infinity pool and ocean view — even though
               they&apos;re in the same area with the same bedroom count. The discount acknowledges this reality
@@ -99,7 +96,7 @@ export default function Methodology() {
             </Step>
 
             <InfoBox>
-              <strong>What we deliberately removed:</strong> Earlier versions of BVT applied two manipulations
+              <strong className="text-[color:var(--bvt-ink)]">What we deliberately removed:</strong> Earlier versions of BVT applied two manipulations
               that undermined trust. First, a price-based rate adjustment that scaled nightly rates up or
               down based on the villa&apos;s sale price — this created circular math where yields converged to
               the same number regardless of price. Second, a yield cap and floor that artificially compressed
@@ -111,11 +108,11 @@ export default function Methodology() {
         </section>
 
         {/* === SECTION: Occupancy === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<Calendar size={18} />} title="Occupancy rate" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              We estimate area-specific occupancy rates ranging from <strong>40% to 80%</strong> based on
+              We estimate area-specific occupancy rates ranging from <strong className="text-[color:var(--bvt-ink)]">40% to 80%</strong> based on
               Booking.com review density. Areas with more reviews per property indicate higher demand,
               which we use as a proxy for occupancy. This replaced our earlier flat 65% assumption.
             </p>
@@ -140,35 +137,18 @@ export default function Methodology() {
               properties we sampled per area:
             </Step>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <div className="flex items-baseline justify-between mb-1">
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-xs">High confidence</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">n &ge; 15</span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Large sample size. Reliable estimate for the area.</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <div className="flex items-baseline justify-between mb-1">
-                  <span className="font-semibold text-emerald-500/70 dark:text-emerald-500/70 text-xs">Medium confidence</span>
-                  <span className="text-emerald-500/70 dark:text-emerald-500/70 font-bold text-sm">n = 8–14</span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Moderate sample. Reasonable estimate, but more data would help.</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                <div className="flex items-baseline justify-between mb-1">
-                  <span className="font-semibold text-yellow-500 dark:text-yellow-400 text-xs">Low confidence</span>
-                  <span className="text-yellow-500 dark:text-yellow-400 font-bold text-sm">n &lt; 8</span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">Small sample. Treat as a rough estimate — the area may not be well-represented.</p>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 not-prose">
+              <ConfidenceCard level="High confidence" count="n ≥ 15" desc="Large sample size. Reliable estimate for the area." tone="strong" />
+              <ConfidenceCard level="Medium confidence" count="n = 8–14" desc="Moderate sample. Reasonable estimate, but more data would help." tone="medium" />
+              <ConfidenceCard level="Low confidence" count="n < 8" desc="Small sample. Treat as a rough estimate — the area may not be well-represented." tone="weak" />
             </div>
 
-            <div className="bg-slate-100 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-1.5">
-                <AlertTriangle size={14} className="text-amber-500" /> What this is not
+            <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-5">
+              <p className="font-semibold text-[color:var(--bvt-ink)] mb-2 flex items-center gap-2 text-[13px]">
+                <AlertTriangle size={14} className="text-[color:var(--bvt-accent)]" />
+                <span className="label-micro">What this is not</span>
               </p>
-              <p className="text-slate-600 dark:text-slate-400">
+              <p className="text-[14px] leading-[1.65] text-[color:var(--bvt-ink-body)]">
                 This is not actual occupancy data. It&apos;s an estimate derived from a proxy (review density)
                 for a proxy (demand). It&apos;s better than a flat guess — it captures the real difference
                 between a bustling Seminyak and a quiet Tabanan — but it&apos;s still an approximation.
@@ -186,24 +166,24 @@ export default function Methodology() {
         </section>
 
         {/* === SECTION: Net Yield (ROI) === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<TrendingUp size={18} />} title="Net yield (the badge number)" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              The green, amber, or red badge on every listing shows the <strong>estimated net yield</strong> —
+              The green, amber, or red badge on every listing shows the <strong className="text-[color:var(--bvt-ink)]">estimated net yield</strong> —
               what percentage of the purchase price you&apos;d earn annually after all operating costs.
               Here&apos;s the formula:
             </p>
 
-            <div className="bg-slate-900 dark:bg-slate-800 text-slate-100 rounded-xl p-5 font-mono text-xs leading-loose overflow-x-auto">
-              <div className="text-slate-500 mb-2">{`// The full calculation`}</div>
+            <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-5 font-mono text-[12px] leading-[1.9] tabular-nums overflow-x-auto text-[color:var(--bvt-ink)]">
+              <div className="text-[color:var(--bvt-ink-faint)] mb-2">{`// The full calculation`}</div>
               <div>gross_revenue = nightly_rate × 365 × occupancy</div>
               <div>expenses = gross_revenue × 40%</div>
               <div>net_revenue = gross_revenue − expenses</div>
-              <div className="mt-2 text-amber-400">{`// For leaseholds only:`}</div>
+              <div className="mt-3 text-[color:var(--bvt-accent)]">{`// For leaseholds only:`}</div>
               <div>lease_cost = asking_price / remaining_years</div>
               <div>adjusted_revenue = net_revenue − lease_cost</div>
-              <div className="mt-2 text-emerald-400 font-bold">net_yield = (adjusted_revenue / asking_price) × 100</div>
+              <div className="mt-3 text-[color:var(--bvt-accent)] font-bold">net_yield = (adjusted_revenue / asking_price) × 100</div>
             </div>
 
             <p>
@@ -215,9 +195,9 @@ export default function Methodology() {
         </section>
 
         {/* === SECTION: Operating Costs === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<DollarSign size={18} />} title="Operating costs (40%)" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
               We deduct 40% of gross rental revenue for operating expenses. This breaks down as:
             </p>
@@ -237,19 +217,19 @@ export default function Methodology() {
         </section>
 
         {/* === SECTION: Lease Depreciation === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<Calendar size={18} />} title="Lease depreciation" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
               Most Bali properties available to foreign buyers are leaseholds — you&apos;re buying the right
               to use the land for a fixed number of years. When that lease expires, the asset reverts to the landowner.
             </p>
             <p>
-              We deduct an annual lease cost from net revenue for <strong>all leasehold properties</strong>,
+              We deduct an annual lease cost from net revenue for <strong className="text-[color:var(--bvt-ink)]">all leasehold properties</strong>,
               calculated as:
             </p>
 
-            <div className="bg-slate-900 dark:bg-slate-800 text-slate-100 rounded-xl p-4 font-mono text-xs">
+            <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-4 font-mono text-[12px] tabular-nums text-[color:var(--bvt-ink)]">
               annual_lease_cost = asking_price / remaining_lease_years
             </div>
 
@@ -261,35 +241,35 @@ export default function Methodology() {
 
             <p>
               Freehold properties (rare for foreign buyers in Bali) don&apos;t have this deduction.
-              Properties with fewer than 15 years remaining are additionally flagged with a
-              <span className="inline-flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">SHORT LEASE</span>
+              Properties with fewer than 15 years remaining are additionally flagged with a{' '}
+              <span className="inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-sm text-[10px] font-semibold tracking-wider bg-[color:var(--bvt-accent)]/15 text-[color:var(--bvt-accent)] border border-[color:var(--bvt-accent)]/30 uppercase">Short Lease</span>{' '}
               warning badge.
             </p>
           </div>
         </section>
 
         {/* === SECTION: Red Flags === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<AlertTriangle size={18} />} title="Red flags" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
               We automatically flag listings that warrant extra scrutiny. These aren&apos;t deal-breakers —
               they&apos;re signals to investigate further.
             </p>
 
             <div className="space-y-3">
-              <FlagRow name="SHORT LEASE" desc="Less than 15 years remaining on the lease. Lease depreciation significantly impacts returns." />
-              <FlagRow name="BUDGET VILLA" desc="Asking price is below the 25th percentile for its area and bedroom tier. Nightly rate is discounted 30% from the area median to reflect that budget properties typically can't command median rates. Tooltip shows the exact discount." />
-              <FlagRow name="HIGH YIELD" desc="Gross yield exceeds 20%. This could mean it's genuinely underpriced, or that the asking price doesn't reflect reality. Investigate the property directly." />
-              <FlagRow name="OPTIMISTIC CLAIM" desc="Gross yield is 15-20%. The gap between gross and net yield (after expenses and depreciation) is where investors lose money." />
+              <FlagRow name="Short Lease" desc="Less than 15 years remaining on the lease. Lease depreciation significantly impacts returns." />
+              <FlagRow name="Budget Villa" desc="Asking price is below the 25th percentile for its area and bedroom tier. Nightly rate is discounted 30% from the area median to reflect that budget properties typically can't command median rates. Tooltip shows the exact discount." />
+              <FlagRow name="High Yield" desc="Gross yield exceeds 20%. This could mean it's genuinely underpriced, or that the asking price doesn't reflect reality. Investigate the property directly." />
+              <FlagRow name="Optimistic Claim" desc="Gross yield is 15–20%. The gap between gross and net yield (after expenses and depreciation) is where investors lose money." />
             </div>
           </div>
         </section>
 
         {/* === SECTION: Compare Panel === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<BarChart3 size={18} />} title="The compare panel (your sandbox)" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
               The badge shows our best estimate using the assumptions above. But those are <em>our</em> assumptions —
               they might not match your reality.
@@ -313,11 +293,11 @@ export default function Methodology() {
         </section>
 
         {/* === SECTION: What We Don't Know === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<Shield size={18} />} title="What we don't know" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>We believe in being upfront about the limits of our analysis:</p>
-            <ul className="space-y-3 list-none">
+            <ul className="space-y-4 list-none pl-0">
               <LimitItem title="Actual occupancy rates">
                 Our occupancy estimates are derived from Booking.com review density — a proxy for demand,
                 not a direct measure of bookings. Review counts don&apos;t account for seasonality,
@@ -344,9 +324,9 @@ export default function Methodology() {
         </section>
 
         {/* === SECTION: Updates === */}
-        <section className="mb-10">
+        <section className="mb-12 md:mb-16">
           <SectionHeading icon={<BookOpen size={18} />} title="How we keep it current" />
-          <div className="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
               Our pipeline runs periodically to capture new listings and price changes. Booking.com rate data
               is refreshed approximately monthly. Occupancy estimates are refreshed quarterly — review
@@ -372,7 +352,7 @@ export default function Methodology() {
 
 function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <h2 className="flex items-center gap-3 font-display text-[26px] md:text-[30px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-5">
+    <h2 className="flex items-center gap-3 font-display text-[26px] md:text-[30px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-6 pb-4 border-b border-[color:var(--bvt-hairline)]">
       <span className="text-[color:var(--bvt-accent)]">{icon}</span>
       {title}
     </h2>
@@ -381,13 +361,13 @@ function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string 
 
 function Step({ num, title, children }: { num: number; title: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-3">
-      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-xs font-bold text-[#d4943a] dark:text-[#d4943a] mt-0.5">
+    <div className="flex gap-4">
+      <div className="flex-shrink-0 w-7 h-7 rounded-full border border-[color:var(--bvt-accent)]/40 bg-[color:var(--bvt-accent)]/10 flex items-center justify-center text-[12px] font-mono tabular-nums font-semibold text-[color:var(--bvt-accent)] mt-0.5">
         {num}
       </div>
-      <div>
-        <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">{title}</p>
-        <p className="text-slate-600 dark:text-slate-400">{children}</p>
+      <div className="flex-1">
+        <p className="font-semibold text-[color:var(--bvt-ink)] mb-1 text-[15px]">{title}</p>
+        <p className="text-[color:var(--bvt-ink-body)] leading-[1.65]">{children}</p>
       </div>
     </div>
   );
@@ -395,42 +375,58 @@ function Step({ num, title, children }: { num: number; title: string; children: 
 
 function InfoBox({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-amber-800 dark:text-amber-200">
+    <div className="border-l-2 border-[color:var(--bvt-accent)] bg-[color:var(--bvt-bg-elev)]/60 pl-5 pr-5 py-4 text-[14px] leading-[1.65] text-[color:var(--bvt-ink-body)]">
       {children}
+    </div>
+  );
+}
+
+function ConfidenceCard({ level, count, desc, tone }: { level: string; count: string; desc: string; tone: 'strong' | 'medium' | 'weak' }) {
+  const accentClass =
+    tone === 'strong' ? 'text-[color:var(--bvt-accent)]' :
+    tone === 'medium' ? 'text-[color:var(--bvt-accent)]/70' :
+    'text-[color:var(--bvt-ink-muted)]';
+  return (
+    <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-4">
+      <div className="flex items-baseline justify-between mb-2 gap-2">
+        <span className={`label-micro ${accentClass}`}>{level}</span>
+        <span className={`font-mono tabular-nums text-[13px] font-semibold ${accentClass}`}>{count}</span>
+      </div>
+      <p className="text-[12px] leading-[1.55] text-[color:var(--bvt-ink-muted)]">{desc}</p>
     </div>
   );
 }
 
 function CostCard({ title, pct, desc }: { title: string; pct: string; desc: string }) {
   return (
-    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-      <div className="flex items-baseline justify-between mb-1">
-        <span className="font-semibold text-slate-900 dark:text-slate-100 text-xs">{title}</span>
-        <span className="text-[#d4943a] dark:text-[#d4943a] font-bold text-lg">{pct}</span>
+    <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-4">
+      <div className="flex items-baseline justify-between mb-2 gap-2">
+        <span className="label-micro text-[color:var(--bvt-ink)]">{title}</span>
+        <span className="text-[color:var(--bvt-accent)] font-mono tabular-nums font-bold text-[20px] leading-none">{pct}</span>
       </div>
-      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{desc}</p>
+      <p className="text-[12px] leading-[1.55] text-[color:var(--bvt-ink-muted)]">{desc}</p>
     </div>
   );
 }
 
 function FlagRow({ name, desc }: { name: string; desc: string }) {
   return (
-    <div className="flex gap-3 items-start bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-      <span className="flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 mt-0.5">
+    <div className="flex gap-4 items-start border-b border-[color:var(--bvt-hairline)] pb-4 last:border-b-0">
+      <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-semibold tracking-wider uppercase bg-[color:var(--bvt-accent)]/15 text-[color:var(--bvt-accent)] border border-[color:var(--bvt-accent)]/30 mt-0.5 whitespace-nowrap">
         {name}
       </span>
-      <p className="text-xs text-slate-600 dark:text-slate-400">{desc}</p>
+      <p className="text-[14px] leading-[1.65] text-[color:var(--bvt-ink-body)]">{desc}</p>
     </div>
   );
 }
 
 function SliderRow({ label, range, desc }: { label: string; range: string; desc: string }) {
   return (
-    <div className="flex gap-3 items-start">
-      <span className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-mono px-2 py-1 rounded mt-0.5">{range}</span>
-      <div>
-        <p className="font-semibold text-slate-900 dark:text-slate-100 text-xs">{label}</p>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">{desc}</p>
+    <div className="flex gap-4 items-start py-2">
+      <span className="flex-shrink-0 bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] text-[color:var(--bvt-ink-muted)] text-[11px] font-mono tabular-nums px-2 py-1 rounded-sm mt-0.5 whitespace-nowrap">{range}</span>
+      <div className="flex-1">
+        <p className="font-semibold text-[color:var(--bvt-ink)] text-[14px] mb-0.5">{label}</p>
+        <p className="text-[13px] leading-[1.55] text-[color:var(--bvt-ink-muted)]">{desc}</p>
       </div>
     </div>
   );
@@ -438,11 +434,11 @@ function SliderRow({ label, range, desc }: { label: string; range: string; desc:
 
 function LimitItem({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <li className="flex gap-3 items-start">
-      <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-amber-400 dark:bg-amber-500 mt-2"></span>
-      <div>
-        <p className="font-semibold text-slate-900 dark:text-slate-100 mb-0.5">{title}</p>
-        <p className="text-slate-600 dark:text-slate-400">{children}</p>
+    <li className="flex gap-4 items-start">
+      <span className="flex-shrink-0 w-1 h-1 rounded-full bg-[color:var(--bvt-accent)] mt-[0.65rem]" aria-hidden></span>
+      <div className="flex-1">
+        <p className="font-semibold text-[color:var(--bvt-ink)] mb-1">{title}</p>
+        <p className="text-[color:var(--bvt-ink-body)] leading-[1.65]">{children}</p>
       </div>
     </li>
   );
