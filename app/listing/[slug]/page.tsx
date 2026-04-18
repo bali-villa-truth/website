@@ -297,7 +297,7 @@ export default async function ListingPage({ params }: Props) {
 
       <div className="bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] font-sans">
         {/* Global StickyNav + SiteFooter are rendered by app/layout.tsx */}
-        <main className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-14 pb-16">
+        <main className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-14 pb-28 md:pb-16">
           {/* Breadcrumb trail */}
           <nav aria-label="Breadcrumb" className="text-[12px] text-[color:var(--bvt-ink-muted)] mb-8">
             <Link href="/" className="hover:text-[color:var(--bvt-ink)] transition-colors">Home</Link>
