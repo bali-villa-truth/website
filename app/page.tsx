@@ -344,7 +344,31 @@ export default function BaliVillaTruth() {
       else {
         const raw = data || [];
         const real = raw.filter((v: any) => (v.last_price || 0) > 0 && (v.villa_name || '').length > 2);
-        setListings(real);
+
+        // Defensive dedupe — the scraper occasionally imports the same BHI
+        // listing twice (e.g. when BHI relists under a new slug). Primary key
+        // is the source URL; fallback is a composite of name+location+size so
+        // we still collapse dupes when url is null or differs by query string.
+        // Root cause should be fixed upstream in the scraper, but this keeps
+        // the homepage clean in the meantime.
+        const seen = new Set<string>();
+        const deduped: any[] = [];
+        for (const v of real) {
+          const urlKey = (v.url || '').split('?')[0].trim().toLowerCase();
+          const compositeKey = [
+            (v.villa_name || '').trim().toLowerCase(),
+            (v.location || '').trim().toLowerCase(),
+            v.land_size || 0,
+            v.building_size || 0,
+            v.bedrooms || 0,
+            v.lease_years || 0,
+          ].join('|');
+          const key = urlKey || compositeKey;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          deduped.push(v);
+        }
+        setListings(deduped);
       }
       
       // Fetch price history for listings with price changes
