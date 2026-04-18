@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import ThumbImg from "@/app/_components/ThumbImg";
 
 /**
  * Shared server component for location pages: /canggu, /uluwatu, etc.
@@ -250,12 +251,10 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
                   >
                     {v.thumbnail_url ? (
                       <div className="aspect-[4/3] bg-[color:var(--bvt-bg-soft)] overflow-hidden">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <ThumbImg
                           src={v.thumbnail_url}
                           alt={v.villa_name}
                           className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
-                          loading="lazy"
                         />
                       </div>
                     ) : (
