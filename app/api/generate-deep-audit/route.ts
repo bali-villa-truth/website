@@ -484,13 +484,23 @@ function generateDeepPdf(
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
-      // PAGE 1 — Summary + stress-test headline
+      // Report identifiers shown on the cover page
+      const reportId = `BVT-${String(villa.id).padStart(5, "0")}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+      const issued = new Date().toLocaleDateString("en-US", {
+        year: "numeric", month: "long", day: "numeric",
+      });
+
+      // PAGE 1 — Cover page (editorial, unnumbered, no watermark)
+      renderCoverPage(doc, villa, audit, reportId, issued);
+
+      // PAGE 2 — Summary + stress-test headline
+      doc.addPage();
       renderHeader(doc, villa, "Overview");
       renderStressHeadline(doc, audit, scenarios);
       renderKeyStats(doc, villa, audit);
       renderDataProvenance(doc, villa);
 
-      // PAGE 2 — Comparables
+      // PAGE 3 — Comparables
       doc.addPage();
       renderHeader(doc, villa, "Area Comparables");
       renderComps(doc, villa, comps, compFallback);
@@ -521,12 +531,15 @@ function generateDeepPdf(
       doc.addPage();
       renderClosing(doc);
 
-      // Dynamic footer pass: count actual pages and stamp "Page X of Y" on each.
-      // Robust to overflow — if any section wraps, footer still correct.
+      // Dynamic footer + watermark pass: count actual pages, stamp
+      // "Page X of Y" and the diagonal wordmark on every content page.
+      // The cover (page 0) stays clean — no footer, no watermark.
       const range = doc.bufferedPageRange();
       const totalPages = range.count;
       for (let i = 0; i < totalPages; i++) {
         doc.switchToPage(range.start + i);
+        if (i === 0) continue;  // cover page: unadorned by design
+        renderWatermark(doc);
         renderFooter(doc, i + 1, totalPages);
       }
       doc.end();
@@ -960,6 +973,114 @@ function renderFooter(doc: PDFKit.PDFDocument, pageNum: number, total: number) {
   doc.fontSize(7).fillColor(COLORS.inkDim)
     .text(`Page ${pageNum} of ${total}`, 50, y, { width: 512, align: "right", lineBreak: false });
   doc.page.margins.bottom = savedBottom;
+}
+
+// Subtle diagonal wordmark across the page. Drawn with low fill opacity so
+// it reads as a paper/document watermark without fighting the content.
+// Stamped in the buffered-pages pass, so cover page can opt out.
+function renderWatermark(doc: PDFKit.PDFDocument) {
+  doc.save();
+  const cx = doc.page.width / 2;
+  const cy = doc.page.height / 2;
+  doc.rotate(-28, { origin: [cx, cy] });
+  doc.fillOpacity(0.04);
+  doc.fontSize(78).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text("BALI VILLA TRUTH",
+      0, cy - 48,
+      { width: doc.page.width, align: "center", lineBreak: false, characterSpacing: 4 });
+  doc.fillOpacity(1);
+  doc.restore();
+}
+
+// Editorial cover page — wordmark band, property title, meta grid, disclaimer.
+// No header/footer/watermark; signals "this is a report, not a dashboard."
+function renderCoverPage(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbers, reportId: string, issued: string) {
+  const W = doc.page.width;   // 612
+  const H = doc.page.height;  // 792
+
+  // --- Top wordmark band (full-bleed, thin) ---
+  doc.rect(0, 0, W, 6).fill(COLORS.accent);
+  doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text("Bali Villa ", 50, 32, { continued: true })
+    .fillColor(COLORS.accent).text("Truth", { continued: false });
+  doc.fontSize(8.5).font("Helvetica-Bold").fillColor(COLORS.inkDim)
+    .text("PROPERTY INVESTMENT AUDIT", 50, 34, {
+      align: "right", width: 512, characterSpacing: 1.5,
+    });
+  doc.moveTo(50, 60).lineTo(562, 60).lineWidth(0.5).strokeColor(COLORS.hairline).stroke();
+
+  // --- Centered title block ---
+  const titleY = 220;
+  doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.accent)
+    .text("DEEP AUDIT REPORT", 50, titleY, {
+      width: 512, align: "center", characterSpacing: 3,
+    });
+
+  // Property title — large, editorial
+  const name = (villa.villa_name || "Unnamed Villa").trim();
+  doc.fontSize(28).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text(name, 50, titleY + 26, {
+      width: 512, align: "center", lineGap: 4,
+    });
+
+  // Location subtitle
+  const loc = villa.location || "Bali, Indonesia";
+  const beds = villa.bedrooms ? ` · ${villa.bedrooms}-bedroom` : "";
+  const leaseTag = audit.is_leasehold && audit.lease_years
+    ? ` · ${audit.lease_type}, ${audit.lease_years}yr`
+    : audit.lease_type ? ` · ${audit.lease_type}` : "";
+  doc.fontSize(12).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text(`${loc}${beds}${leaseTag}`, 50, doc.y + 6, {
+      width: 512, align: "center",
+    });
+
+  // Gold hairline separator
+  const sepY = doc.y + 24;
+  doc.moveTo(230, sepY).lineTo(382, sepY).lineWidth(1).strokeColor(COLORS.accent).stroke();
+
+  // --- Three-column meta strip ---
+  const metaY = sepY + 32;
+  const colW = 512 / 3;
+  const drawMeta = (label: string, value: string, col: number) => {
+    const x = 50 + col * colW;
+    doc.fontSize(7.5).font("Helvetica-Bold").fillColor(COLORS.inkDim)
+      .text(label.toUpperCase(), x, metaY, { width: colW, align: "center", characterSpacing: 1.5 });
+    doc.fontSize(11).font("Helvetica").fillColor(COLORS.ink)
+      .text(value, x, metaY + 14, { width: colW, align: "center" });
+  };
+  drawMeta("Report ID", reportId, 0);
+  drawMeta("Issued", issued, 1);
+  drawMeta("Prepared by", "BVT Audit Desk", 2);
+
+  // --- Headline metric card — centered, mid-page ---
+  const cardY = metaY + 70;
+  const cardH = 90;
+  const cardW = 280;
+  const cardX = (W - cardW) / 2;
+  doc.rect(cardX, cardY, cardW, cardH).fill(COLORS.bgSoft);
+  doc.rect(cardX, cardY, cardW, cardH).lineWidth(0.5).strokeColor(COLORS.hairline).stroke();
+  doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.inkDim)
+    .text("STRESS-TESTED NET YIELD", cardX, cardY + 14,
+      { width: cardW, align: "center", characterSpacing: 2 });
+  const tier = yieldTier(audit.net_yield_pct);
+  doc.fontSize(36).font("Helvetica-Bold").fillColor(tier.color)
+    .text(fmtPct(audit.net_yield_pct), cardX, cardY + 30,
+      { width: cardW, align: "center" });
+  doc.fontSize(9).font("Helvetica").fillColor(COLORS.inkMuted)
+    .text(`Base case · ${tier.label.toLowerCase()}`, cardX, cardY + 72,
+      { width: cardW, align: "center" });
+
+  // --- Bottom disclaimer + URL ---
+  const bottomY = H - 110;
+  doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLORS.inkMuted)
+    .text(
+      "This report synthesizes public listing data, local market comparables, and conservative stress-test modeling. It is not financial, legal, or tax advice. Verify every number independently with a licensed Notaris/PPAT, qualified surveyor, and Indonesian real-estate lawyer before transferring funds.",
+      80, bottomY, { width: 452, align: "center", lineGap: 3 });
+
+  doc.moveTo(260, H - 56).lineTo(352, H - 56).lineWidth(0.5).strokeColor(COLORS.accent).stroke();
+  doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.ink)
+    .text("balivillatruth.com", 50, H - 46,
+      { width: 512, align: "center", characterSpacing: 1 });
 }
 
 // ------------------------------------------------------------------
