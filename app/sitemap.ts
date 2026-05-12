@@ -46,7 +46,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Location pages (#13) — high priority for SEO
-  const areas = ["canggu", "uluwatu", "seminyak", "ungasan", "sanur"];
+  const areas = [
+    "canggu",
+    "berawa",
+    "pererenan",
+    "uluwatu",
+    "bingin",
+    "seminyak",
+    "ubud",
+    "sanur",
+    "ungasan",
+    "nusa-dua",
+  ];
   for (const area of areas) {
     routes.push({
       url: `${SITE_URL}/${area}`,
