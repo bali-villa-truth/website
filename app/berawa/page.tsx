@@ -21,7 +21,8 @@ const cfg: AreaConfig = {
   ],
   priceBand: "$250k - $1.5M USD",
   nightlyBand: "$140 - $400 / night",
-  matchLocations: ["Berawa"],
+  // BHI stores Berawa-area listings under the broader "Canggu" label.
+  matchLocations: ["Canggu"],
   neighbors: [
     { slug: "canggu", name: "Canggu" },
     { slug: "pererenan", name: "Pererenan" },
