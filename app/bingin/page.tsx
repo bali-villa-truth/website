@@ -21,7 +21,8 @@ const cfg: AreaConfig = {
   ],
   priceBand: "$220k - $1.4M USD",
   nightlyBand: "$130 - $450 / night",
-  matchLocations: ["Bingin", "Pecatu"],
+  // BHI stores Bingin-area inventory under broader Bukit labels.
+  matchLocations: ["Uluwatu", "Ungasan", "Pandawa"],
   neighbors: [
     { slug: "uluwatu", name: "Uluwatu" },
     { slug: "ungasan", name: "Ungasan" },
