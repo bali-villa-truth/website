@@ -1,10 +1,84 @@
-'use client';
 import Link from 'next/link';
 import { BookOpen, TrendingUp, Home, Calendar, DollarSign, AlertTriangle, ExternalLink, BarChart3, Shield } from 'lucide-react';
+
+const SITE_URL = 'https://balivillatruth.com';
+
+const METHOD_FAQS = [
+  {
+    q: 'What is a good ROI for a Bali villa?',
+    a: 'After operating costs and lease depreciation, a credible Bali villa net yield is usually in the mid-single digits. Anything above 10% can be real, but it deserves extra diligence on build quality, lease years, occupancy, and nightly-rate assumptions.',
+  },
+  {
+    q: 'How does Bali Villa Truth calculate net yield?',
+    a: 'We estimate annual gross revenue from nightly rate, occupancy, and 365 nights, subtract a 40% operating expense load, then subtract annual lease depreciation for leasehold properties. Net yield is adjusted annual revenue divided by asking price.',
+  },
+  {
+    q: 'Why is leasehold depreciation included?',
+    a: 'A leasehold villa is a wasting asset. If a villa costs $300,000 and has 20 lease years left, roughly $15,000 of value decays each year before rental income is considered. Ignoring that cost makes short leases look artificially profitable.',
+  },
+  {
+    q: 'Are the occupancy rates actual booking data?',
+    a: 'No. Occupancy is estimated from Booking.com review density by area. It is a demand proxy, not property-level booking history, so every listing should still be verified with local managers and actual channel data where possible.',
+  },
+  {
+    q: 'Why do agent ROI numbers differ from BVT yields?',
+    a: 'Agent numbers often quote gross yield and may omit management fees, OTA commissions, maintenance, utilities, vacancy, and lease decay. BVT publishes a standardized net-yield model so villas can be compared on the same assumptions.',
+  },
+];
+
+const HOWTO_STEPS = [
+  'Estimate a market nightly rate from the villa area and bedroom count.',
+  'Adjust budget properties where the asking price falls below the area and bedroom benchmark.',
+  'Estimate area occupancy from Booking.com review-density signals.',
+  'Calculate gross annual rental revenue from nightly rate, occupancy, and 365 nights.',
+  'Subtract a 40% operating expense load for management, booking fees, utilities, and maintenance.',
+  'Subtract annual lease depreciation for leasehold villas.',
+  'Divide the adjusted annual revenue by asking price to produce estimated net yield.',
+];
+
+const methodologyJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'Methodology', item: `${SITE_URL}/methodology` },
+      ],
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: METHOD_FAQS.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.a,
+        },
+      })),
+    },
+    {
+      '@type': 'HowTo',
+      name: 'How Bali Villa Truth calculates Bali villa net yield',
+      description: 'The standardized method used to turn Bali villa asking prices, market rental rates, occupancy assumptions, expenses, and lease terms into a stress-tested net yield.',
+      totalTime: 'PT5M',
+      step: HOWTO_STEPS.map((text, index) => ({
+        '@type': 'HowToStep',
+        position: index + 1,
+        name: text.split('.')[0],
+        text,
+      })),
+    },
+  ],
+};
 
 export default function Methodology() {
   return (
     <div className="bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(methodologyJsonLd) }}
+      />
       <div className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-14 pb-16">
 
         {/* Breadcrumb */}
@@ -320,6 +394,28 @@ export default function Methodology() {
                 Indonesian property law, tax rules, and visa regulations change. Our analysis reflects current conditions.
               </LimitItem>
             </ul>
+          </div>
+        </section>
+
+        {/* === SECTION: FAQ === */}
+        <section className="mb-12 md:mb-16">
+          <SectionHeading icon={<BookOpen size={18} />} title="Investor FAQ" />
+          <div className="divide-y divide-[color:var(--bvt-hairline)] border-t border-b border-[color:var(--bvt-hairline)] max-w-[68ch]">
+            {METHOD_FAQS.map((item) => (
+              <details key={item.q} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-5">
+                  <span className="font-display text-[20px] leading-tight tracking-[-0.01em] text-[color:var(--bvt-ink)]">
+                    {item.q}
+                  </span>
+                  <span className="shrink-0 text-[color:var(--bvt-accent)] transition-transform group-open:rotate-45 font-mono text-[20px] leading-none" aria-hidden>
+                    +
+                  </span>
+                </summary>
+                <p className="mt-4 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)]">
+                  {item.a}
+                </p>
+              </details>
+            ))}
           </div>
         </section>
 
