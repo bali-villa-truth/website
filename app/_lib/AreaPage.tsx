@@ -57,25 +57,25 @@ function formatUsd(last_price_idr: number, price_description?: string | null): s
   return `$${Math.round(usd)}`;
 }
 
-async function getAreaListings(cfg: AreaConfig, max = 12) {
+async function getAreaListings(cfg: AreaConfig, max = 20) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
+  if (!url || !key) return { listings: [], totalCount: 0 };
   const supabase = createClient(url, key);
-  const { data } = await supabase
+  const { data, count } = await supabase
     .from("listings_tracker")
-    .select("id, slug, villa_name, location, last_price, bedrooms, projected_roi, thumbnail_url, flags, price_description")
+    .select("id, slug, villa_name, location, last_price, bedrooms, projected_roi, thumbnail_url, flags, price_description", { count: "exact" })
     .eq("status", "audited")
     .gt("last_price", 0)
     .in("location", cfg.matchLocations)
     .order("projected_roi", { ascending: false })
     .limit(max);
-  return data || [];
+  return { listings: data || [], totalCount: count || data?.length || 0 };
 }
 
 export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
-  const listings = await getAreaListings(cfg);
-  const count = listings.length;
+  const { listings, totalCount } = await getAreaListings(cfg);
+  const count = totalCount || listings.length;
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
