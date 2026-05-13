@@ -17,6 +17,7 @@ export default function StickyNav() {
     { href: "/uluwatu", label: "Uluwatu" },
     { href: "/seminyak", label: "Seminyak" },
     { href: "/guides/bali-villa-roi", label: "ROI Guide" },
+    { href: "/guides/bali-villa-due-diligence-checklist", label: "Checklist" },
     { href: "/methodology", label: "Methodology" },
     { href: "/about", label: "About" },
   ];
