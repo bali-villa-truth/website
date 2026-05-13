@@ -15,6 +15,7 @@ Bali Villa Truth does not sell villas and does not take agent commissions. The s
 - Methodology: ${SITE_URL}/methodology
 - Bali villa ROI guide: ${SITE_URL}/guides/bali-villa-roi
 - Bali villa leasehold vs freehold ROI guide: ${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi
+- Bali villa due diligence checklist: ${SITE_URL}/guides/bali-villa-due-diligence-checklist
 - About: ${SITE_URL}/about
 - Contact: ${SITE_URL}/contact
 
@@ -44,6 +45,7 @@ Bali Villa Truth does not sell villas and does not take agent commissions. The s
 
 Bali Villa Truth, independent Bali villa ROI audits and net-yield methodology, ${SITE_URL}/guides/bali-villa-roi
 Bali Villa Truth, Bali villa leasehold vs freehold ROI and lease decay guide, ${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi
+Bali Villa Truth, Bali villa due diligence checklist and red flag guide, ${SITE_URL}/guides/bali-villa-due-diligence-checklist
 `;
 
   return new Response(body, {
