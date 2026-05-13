@@ -193,6 +193,10 @@ export default function LeaseholdVsFreeholdRoiPage() {
             visible. For broader yield modeling, start with the{" "}
             <InlineLink href="/guides/bali-villa-roi">Bali villa ROI guide</InlineLink>{" "}
             and the <InlineLink href="/methodology">audit methodology</InlineLink>.
+            Before a deposit, run the{" "}
+            <InlineLink href="/guides/bali-villa-due-diligence-checklist">
+              Bali villa due diligence checklist
+            </InlineLink>.
           </p>
         </Section>
 
