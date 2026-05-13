@@ -6,7 +6,7 @@ const cfg: AreaConfig = {
   name: "Ubud",
   tagline: "Wellness demand with distance and access trade-offs",
   intro:
-    "Ubud villas can produce strong guest demand when the product matches the market: privacy, jungle outlooks, wellness positioning, and thoughtful design. The risk is that Ubud is not one market. A villa near restaurants and retreats underwrites differently from a remote jungle property with difficult access. Our Ubud audits stress-test nightly rates, occupancy, operating costs, and lease depreciation so buyers can compare the income case across very different micro-locations.",
+    "Ubud villas can produce strong guest demand when the product matches the market: privacy, jungle outlooks, wellness positioning, and thoughtful design. The risk is that Ubud is not one market. A villa near restaurants and retreats underwrites differently from a remote jungle property with difficult access. Our Ubud audits stress-test Bali villa ROI through nightly rates, occupancy, operating costs, and lease depreciation so buyers can compare the income case across very different micro-locations.",
   pros: [
     "Global wellness and retreat demand supports differentiated villas",
     "Privacy, views, and larger land parcels can justify premium rates",
@@ -32,7 +32,7 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Ubud Villa Investment ROI — Independent Yield Audits",
   description:
-    "Independent Ubud villa investment audits. Compare stress-tested net yields, occupancy assumptions, management costs, lease decay, and red flags.",
+    "Independent Ubud villa investment audits for Bali villa ROI buyers. Compare stress-tested net yields, occupancy assumptions, management costs, lease decay, and red flags.",
   alternates: { canonical: "https://balivillatruth.com/ubud" },
   openGraph: {
     title: "Ubud Villa Investment ROI — Independent Yield Audits",
