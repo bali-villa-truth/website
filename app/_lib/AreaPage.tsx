@@ -199,6 +199,38 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
           </div>
         </section>
 
+        {/* ROI method — contextual link back to the pillar guide */}
+        <section className="mb-20 md:mb-28 border-y border-[color:var(--bvt-hairline)] py-8 md:py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
+            <div className="lg:col-span-4">
+              <div className="label-micro mb-3">Bali villa ROI method</div>
+              <h2 className="font-display text-[28px] md:text-[36px] leading-tight tracking-[-0.02em] text-[color:var(--bvt-ink)]">
+                How {cfg.name} ROI is stress-tested
+              </h2>
+            </div>
+            <div className="lg:col-span-8 space-y-4 text-[15px] md:text-[16px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
+              <p>
+                Every {cfg.name} villa audit uses the same Bali villa ROI model:
+                estimated nightly rate, area occupancy, a 40% operating-cost load,
+                and lease depreciation for leasehold villas. That keeps {cfg.name}
+                yields comparable with Canggu, Uluwatu, Seminyak, Sanur, and the
+                rest of the BVT ledger.
+              </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
+                <Link href="/guides/bali-villa-roi" className="link-editorial text-[14px]">
+                  Read the Bali villa ROI guide
+                </Link>
+                <Link href="/guides/bali-villa-leasehold-vs-freehold-roi" className="link-editorial text-[14px]">
+                  Leasehold vs freehold ROI
+                </Link>
+                <Link href="/methodology" className="link-editorial text-[14px]">
+                  See the audit methodology
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Listings grid — editorial card style */}
         <section className="mb-20 md:mb-28">
           <div className="flex items-end justify-between mb-8 md:mb-10 border-b border-[color:var(--bvt-hairline)] pb-5">
