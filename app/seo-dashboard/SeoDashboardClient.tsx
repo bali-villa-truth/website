@@ -87,6 +87,11 @@ export default function SeoDashboardClient() {
     }
   }
 
+  async function signOut() {
+    await fetch("/api/seo-dashboard/login", { method: "DELETE" }).catch(() => {});
+    window.location.reload();
+  }
+
   useEffect(() => {
     load();
     const id = window.setInterval(load, 60000);
@@ -137,6 +142,12 @@ export default function SeoDashboardClient() {
             >
               <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
               Refresh
+            </button>
+            <button
+              onClick={signOut}
+              className="inline-flex items-center gap-2 rounded-md border border-[color:var(--bvt-hairline)] px-3.5 py-2 text-[13px] font-semibold text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] transition-colors"
+            >
+              Sign out
             </button>
           </div>
         </div>
