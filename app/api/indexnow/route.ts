@@ -7,6 +7,7 @@ const DEFAULT_URLS = [
   `${SITE_URL}/methodology`,
   `${SITE_URL}/guides/bali-villa-roi`,
   `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
+  `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
   `${SITE_URL}/about`,
   `${SITE_URL}/contact`,
   `${SITE_URL}/canggu`,
