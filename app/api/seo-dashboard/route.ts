@@ -1,3 +1,6 @@
+import { cookies } from "next/headers";
+import { COOKIE_NAME, isDashboardToken } from "@/app/_lib/seoDashboardAuth";
+
 const SITE_URL = "https://balivillatruth.com";
 
 export const dynamic = "force-dynamic";
@@ -189,6 +192,15 @@ async function fetchText(pathOrUrl: string) {
 }
 
 export async function GET() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!isDashboardToken(token)) {
+    return Response.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401, headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
+  }
+
   const [
     home,
     roiGuide,
