@@ -310,6 +310,10 @@ export default function BaliVillaRoiGuidePage() {
             This is one of BVT's clearest advantages over generic Bali villa ROI
             calculators. Lease decay is not cosmetic. It is central to the buyer's
             exit, refinancing options, resale value, and actual annual return.
+            For the full tenure breakdown, read the{" "}
+            <InlineLink href="/guides/bali-villa-leasehold-vs-freehold-roi">
+              Bali villa leasehold vs freehold ROI guide
+            </InlineLink>.
           </p>
         </Section>
 
