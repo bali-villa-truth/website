@@ -53,6 +53,21 @@ function formatRelativeDate(iso?: string | null): string | null {
   return `${Math.round(days / 365)} years ago`;
 }
 
+function cleanSourceLabel(value?: string | null, fallback = "BVT model estimate"): string {
+  const raw = (value || "").trim();
+  if (!raw) return fallback;
+  if (raw.toLowerCase() === "auditor") return "BVT audited market estimate";
+  return raw
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^review-based/i, "Review-density model");
+}
+
+function money(value: number | null | undefined): string {
+  if (!value || !Number.isFinite(value)) return "Not available";
+  return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
 // Human-readable labels + tooltips for flags (aligns with /methodology page)
 const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slate"; tip: string }> = {
   SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "Less than 15 years remaining — lease depreciation significantly impacts returns." },
@@ -261,12 +276,17 @@ export default async function ListingPage({ params }: Props) {
   const leaseType = listing.lease_years && listing.lease_years > 0 ? "Leasehold" : "Freehold";
   const leaseYears = listing.lease_years || 0;
   const nightlyRate = listing.est_nightly_rate || 0;
+  const hasNightlyRate = nightlyRate > 0;
   const occupancy = listing.est_occupancy || 0.65;
   const occupancyPct = Math.round(occupancy * 100);
   const grossRevenue = nightlyRate * 365 * occupancy;
   const expenses = grossRevenue * 0.4;
   const netRevenue = grossRevenue - expenses;
   const leaseDepreciation = leaseYears > 0 && priceUsd ? priceUsd / leaseYears : 0;
+  const grossYield = priceUsd && grossRevenue > 0 ? (grossRevenue / priceUsd) * 100 : null;
+  const roiDisplay = roi ? `${roi}%` : "N/A";
+  const rateSource = cleanSourceLabel(listing.rate_source, "BVT market-rate model");
+  const occupancySource = cleanSourceLabel(listing.occupancy_source, "Area occupancy estimate");
 
   // Sensitivity grid: rows = nightly rate multiplier, cols = occupancy points
   const rateMultipliers = [0.85, 1.0, 1.15];
@@ -460,6 +480,76 @@ export default async function ListingPage({ params }: Props) {
                 </div>
               </section>
 
+              {/* Investor assumption notes */}
+              <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
+                <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-3">How to read this audit</h2>
+                <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+                  BVT treats the ROI number as a stress-tested estimate, not a promise.
+                  The important question is whether the assumptions are strong enough
+                  to survive negotiation, lower occupancy, and lease decay.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Gross yield</div>
+                    <div className="font-mono text-lg text-[color:var(--bvt-ink)]">
+                      {grossYield !== null ? `${grossYield.toFixed(1)}%` : "Not available"}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      Revenue before management, OTA fees, maintenance, utilities, vacancy, and lease decay.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Net yield</div>
+                    <div className={`font-mono text-lg ${
+                      Number(roi) >= 5 ? "text-emerald-400" : Number(roi) >= 0 ? "text-amber-400" : "text-red-400"
+                    }`}>
+                      {roiDisplay}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      After the standard 40% operating-cost load{leaseDepreciation > 0 ? " and annual lease depreciation" : ""}.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Nightly rate</div>
+                    <div className="font-mono text-lg text-[color:var(--bvt-ink)]">
+                      {hasNightlyRate ? `$${nightlyRate}/night` : "Not available"}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      {rateSource}. Verify property-level booking history before relying on it.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Occupancy</div>
+                    <div className="font-mono text-lg text-[color:var(--bvt-ink)]">{occupancyPct}%</div>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      {occupancySource}. Treat this as an area/tier assumption unless the seller provides verified channel-manager data.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Lease decay</div>
+                    <div className="font-mono text-lg text-[color:var(--bvt-ink)]">
+                      {leaseDepreciation > 0 ? `${money(leaseDepreciation)}/yr` : "No modeled decay"}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      {leaseDepreciation > 0
+                        ? `${leaseYears} years remaining. Extension claims should be written, priced, and legally reviewed.`
+                        : "Modeled as freehold/no finite lease term in the source data."}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Red flags</div>
+                    <div className="font-mono text-lg text-[color:var(--bvt-ink)]">
+                      {flags.length > 0 ? `${flags.length} flagged` : "None surfaced"}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      {flags.length > 0
+                        ? "Flags are prompts for diligence, not automatic rejections."
+                        : "No material pipeline flags surfaced, but legal, title, permit, and condition checks still matter."}
+                    </p>
+                  </div>
+                </div>
+              </section>
+
               {/* Yield Breakdown */}
               <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
                 <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-4">Net Yield Breakdown</h2>
@@ -472,23 +562,29 @@ export default async function ListingPage({ params }: Props) {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between py-2 border-b border-slate-800">
                     <span className="text-slate-400">Estimated Nightly Rate</span>
-                    <span className="font-medium">${nightlyRate}/night</span>
+                    <span className="font-medium">{hasNightlyRate ? `$${nightlyRate}/night` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
                     <span className="text-slate-400">Occupancy (area estimate)</span>
                     <span className="font-medium">{occupancyPct}%</span>
                   </div>
+                  {grossYield !== null && (
+                    <div className="flex justify-between py-2 border-b border-slate-800">
+                      <span className="text-slate-400">Gross Yield (before costs)</span>
+                      <span className="font-medium text-slate-300">{grossYield.toFixed(1)}%</span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-2 border-b border-slate-800">
                     <span className="text-slate-400">Gross Revenue (annual)</span>
-                    <span className="font-medium">${Math.round(grossRevenue).toLocaleString("en-US")}</span>
+                    <span className="font-medium">{hasNightlyRate ? `$${Math.round(grossRevenue).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
                     <span className="text-slate-400">Standard Expenses (40%)</span>
-                    <span className="font-medium text-red-400">−${Math.round(expenses).toLocaleString("en-US")}</span>
+                    <span className="font-medium text-red-400">{hasNightlyRate ? `−$${Math.round(expenses).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
                     <span className="text-slate-400">Net Revenue</span>
-                    <span className="font-medium">${Math.round(netRevenue).toLocaleString("en-US")}</span>
+                    <span className="font-medium">{hasNightlyRate ? `$${Math.round(netRevenue).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   {leaseDepreciation > 0 && (
                     <div className="flex justify-between py-2 border-b border-slate-800">
@@ -505,7 +601,7 @@ export default async function ListingPage({ params }: Props) {
                     <span className={`font-bold text-lg ${
                       Number(roi) >= 5 ? "text-emerald-400" : Number(roi) >= 0 ? "text-amber-400" : "text-red-400"
                     }`}>
-                      {roi}%
+                      {roiDisplay}
                     </span>
                   </div>
                 </div>
@@ -639,7 +735,7 @@ export default async function ListingPage({ params }: Props) {
                   <p className={`text-4xl font-extrabold ${
                     Number(roi) >= 5 ? "text-emerald-400" : Number(roi) >= 0 ? "text-amber-400" : "text-red-400"
                   }`}>
-                    {roi}%
+                    {roiDisplay}
                   </p>
                 </div>
 
