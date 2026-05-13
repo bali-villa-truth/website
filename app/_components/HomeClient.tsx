@@ -267,6 +267,7 @@ export default function HomeClient({
   const [filterBeds, setFilterBeds] = useState(0);
   const [filterBaths, setFilterBaths] = useState(0);
   const [filterLeaseType, setFilterLeaseType] = useState('All');
+  const [riskFilter, setRiskFilter] = useState('All');
   const [displayCurrency, setDisplayCurrency] = useState<string>('USD'); // Show all prices in this currency
   // Default sort: price-asc. Previously 'roi-desc' surfaced HIGH_YIELD flagged listings first
   // which hurt trust — cheapest-first is a neutral default that respects buyer intent.
@@ -482,6 +483,22 @@ export default function HomeClient({
     return { text: `${symbol} ${Math.abs(pctChange).toFixed(0)}%`, direction };
   };
 
+  const getPipelineFlags = (villa: any): string[] =>
+    (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
+
+  const highRiskPipelineFlags = new Set(['SHORT_LEASE', 'OFF_PLAN', 'EXTREME_BUDGET']);
+  const materialPipelineFlags = new Set([
+    'SHORT_LEASE',
+    'OFF_PLAN',
+    'EXTREME_BUDGET',
+    'BUDGET_VILLA',
+    'OPTIMISTIC_ROI',
+    'INFLATED_ROI',
+    'RATE_PRICE_GAP',
+    'MISSING_DATA',
+    'MULTI_UNIT',
+  ]);
+
   // --- Mini sparkline SVG for price history ---
   const PriceSparkline = ({ url, currentPriceUsd }: { url: string; currentPriceUsd: number }) => {
     const history = priceHistory[url];
@@ -562,7 +579,15 @@ export default function HomeClient({
         if (filterLeaseType === 'Freehold') matchLease = features.includes('freehold') || features.includes('hak milik') || years === 999;
         else if (filterLeaseType === 'Leasehold') matchLease = features.includes('leasehold') || features.includes('hak sewa') || (years > 0 && years < 999);
       }
-      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease;
+      const pipelineFlags = getPipelineFlags(villa);
+      const hasMaterialFlag = pipelineFlags.some((flag) => materialPipelineFlags.has(flag));
+      const hasHighRiskFlag = pipelineFlags.some((flag) => highRiskPipelineFlags.has(flag));
+      const matchRisk =
+        riskFilter === 'All' ||
+        (riskFilter === 'Clear' && !hasMaterialFlag) ||
+        (riskFilter === 'Flagged' && hasMaterialFlag) ||
+        (riskFilter === 'HighRisk' && hasHighRiskFlag);
+      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease && matchRisk;
     });
 
     return filtered.sort((a, b) => {
@@ -584,7 +609,7 @@ export default function HomeClient({
         default: return 0;
       }
     });
-  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, sortOption, rates]);
+  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, riskFilter, sortOption, rates]);
 
   const processedListings = useMemo(() => {
     if (!showFavoritesOnly) return baseFilteredListings;
@@ -611,6 +636,7 @@ export default function HomeClient({
     filterBeds > 0 ||
     filterBaths > 0 ||
     filterLeaseType !== 'All' ||
+    riskFilter !== 'All' ||
     showFavoritesOnly;
 
   const displayListings = useMemo(() => {
@@ -779,6 +805,48 @@ export default function HomeClient({
   const auditedCount = hasFullDataset ? listings.length : (initialTotalCount || listings.length);
   const flaggedCount = hasFullDataset ? computedFlaggedCount : (initialFlaggedCount || computedFlaggedCount);
 
+  const jumpToLedger = () => {
+    document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const applyInvestorShortcut = (kind: 'bestYield' | 'safer' | 'highRisk' | 'leasehold') => {
+    setShowFavoritesOnly(false);
+    setShowMobileFilters(true);
+    setFilterLocation('All');
+    setFilterPrice(10000000);
+    setFilterLandSize(0);
+    setFilterBuildSize(0);
+    setFilterBeds(0);
+    setFilterBaths(0);
+
+    if (kind === 'bestYield') {
+      setFilterRoi(8);
+      setFilterLeaseType('All');
+      setRiskFilter('All');
+      setSortOption('roi-desc');
+    }
+    if (kind === 'safer') {
+      setFilterRoi(3);
+      setFilterLeaseType('All');
+      setRiskFilter('Clear');
+      setSortOption('roi-desc');
+    }
+    if (kind === 'highRisk') {
+      setFilterRoi(-99);
+      setFilterLeaseType('All');
+      setRiskFilter('HighRisk');
+      setSortOption('roi-desc');
+    }
+    if (kind === 'leasehold') {
+      setFilterRoi(-99);
+      setFilterLeaseType('Leasehold');
+      setRiskFilter('All');
+      setSortOption('roi-desc');
+    }
+
+    window.setTimeout(jumpToLedger, 0);
+  };
+
   return (
     <div className="min-h-screen bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)] font-sans dark">
 
@@ -882,6 +950,78 @@ export default function HomeClient({
         </div>
       </section>
 
+      <section className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-elev)]/25">
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-8 md:py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
+            <div className="lg:col-span-4">
+              <div className="label-micro mb-3">Investor starting points</div>
+              <h2 className="font-display text-[28px] md:text-[36px] leading-tight tracking-[-0.02em] text-[color:var(--bvt-ink)]">
+                Find the right audit path before the spreadsheet fog rolls in.
+              </h2>
+              <p className="mt-4 text-[14px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                Start with yield, risk, lease structure, or the buyer checklist. Each shortcut keeps the assumptions visible instead of hiding the trade-offs.
+              </p>
+            </div>
+            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+              <button
+                type="button"
+                onClick={() => applyInvestorShortcut('bestYield')}
+                className="group text-left border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-accent)]/60 bg-[color:var(--bvt-bg-elev)] rounded-md p-4 transition-colors"
+              >
+                <TrendingUp size={16} className="text-[color:var(--bvt-accent)] mb-4" />
+                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Best net yield</div>
+                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  Sort for 8%+ stress-tested returns, then inspect the expense and lease assumptions.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => applyInvestorShortcut('safer')}
+                className="group text-left border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-accent)]/60 bg-[color:var(--bvt-bg-elev)] rounded-md p-4 transition-colors"
+              >
+                <Shield size={16} className="text-[color:var(--bvt-good)] mb-4" />
+                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Safer-looking</div>
+                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  Hide material flags and keep only dossiers with a positive modeled yield.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => applyInvestorShortcut('highRisk')}
+                className="group text-left border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-warn)]/70 bg-[color:var(--bvt-bg-elev)] rounded-md p-4 transition-colors"
+              >
+                <ShieldAlert size={16} className="text-[color:var(--bvt-warn)] mb-4" />
+                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">High-risk review</div>
+                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  Surface short leases, off-plan assets, and extreme budget flags first.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => applyInvestorShortcut('leasehold')}
+                className="group text-left border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-accent)]/60 bg-[color:var(--bvt-bg-elev)] rounded-md p-4 transition-colors"
+              >
+                <Calendar size={16} className="text-[color:var(--bvt-accent)] mb-4" />
+                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Leasehold math</div>
+                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  Show leasehold villas first so the remaining years and decay are impossible to miss.
+                </p>
+              </button>
+              <Link
+                href="/guides/bali-villa-due-diligence-checklist"
+                className="group text-left border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-accent)]/60 bg-[color:var(--bvt-bg-elev)] rounded-md p-4 transition-colors"
+              >
+                <BookOpen size={16} className="text-[color:var(--bvt-accent)] mb-4" />
+                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Due diligence checklist</div>
+                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  The verification list to run before deposits, legal review, and agent negotiation.
+                </p>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FILTER + LISTINGS SECTION */}
       <div id="listings-section" className="px-4 md:px-8 pt-16 md:pt-24 pb-8 bg-[color:var(--bvt-bg)]">
 
@@ -924,7 +1064,7 @@ export default function HomeClient({
 
             {/* ROW 1: Core Filters (hidden on mobile unless toggled) */}
             <div className={`${showMobileFilters ? 'block' : 'hidden'} md:block`}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-4 md:gap-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-6 gap-y-4 md:gap-y-3">
                 <div className="group">
                     <label className="label-micro block mb-1.5">Location</label>
                     <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] py-2 outline-none cursor-pointer transition-colors">
@@ -965,6 +1105,15 @@ export default function HomeClient({
                         <option value="All" className="bg-[color:var(--bvt-bg)]">All</option>
                         <option value="Freehold" className="bg-[color:var(--bvt-bg)]">Freehold</option>
                         <option value="Leasehold" className="bg-[color:var(--bvt-bg)]">Leasehold</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="label-micro block mb-1.5">Risk View</label>
+                    <select value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] py-2 outline-none cursor-pointer transition-colors">
+                        <option value="All" className="bg-[color:var(--bvt-bg)]">All</option>
+                        <option value="Clear" className="bg-[color:var(--bvt-bg)]">No material flags</option>
+                        <option value="Flagged" className="bg-[color:var(--bvt-bg)]">Flagged only</option>
+                        <option value="HighRisk" className="bg-[color:var(--bvt-bg)]">High risk only</option>
                     </select>
                 </div>
                 <div>
@@ -1025,7 +1174,7 @@ export default function HomeClient({
                 </div>
 
                 <button
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setSortOption('roi-desc'); setShowFavoritesOnly(false);}}
+                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setRiskFilter('All'); setSortOption('price-asc'); setShowFavoritesOnly(false);}}
                     className="ml-auto label-micro !text-[color:var(--bvt-ink-muted)] hover:!text-[color:var(--bvt-accent)] transition-colors py-1.5"
                 >
                     Reset all ↻
