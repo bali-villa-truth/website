@@ -97,6 +97,17 @@ const KEYWORDS = [
     source: "Same Google screenshot showed the Ubud hub for the broader ROI query.",
     nextAction: "Keep Ubud linked to ROI guides and request indexing.",
   },
+  {
+    keyword: "bali villa due diligence checklist",
+    intent: "Buyer risk and verification keyword",
+    status: "Prepared",
+    bestObservedPage: null,
+    bestObservedRange: null,
+    bestObservedUrl: `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
+    bestObservedTitle: "Bali Villa Due Diligence Checklist: 25 Red Flags",
+    source: "Guide shipped 2026-05-13; awaiting indexation.",
+    nextAction: "Submit guide in GSC and link from ROI, listing, and homepage investor paths.",
+  },
 ];
 
 const JOBS = [
@@ -142,6 +153,7 @@ const GSC_QUEUE = [
   `${SITE_URL}/nusa-dua`,
   `${SITE_URL}/guides/bali-villa-roi`,
   `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
+  `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
   `${SITE_URL}/ubud`,
   `${SITE_URL}/listing/2-units-villa-with-total-5-bedrooms-for-sale-freehold-in-pandawa-near-pandawa-beach-rf6636`,
   `${SITE_URL}/listing/cozy-3-bedroom-villa-for-sale-leasehold-and-yearly-rent-in-kutuh-rf6460`,
@@ -205,6 +217,7 @@ export async function GET() {
     home,
     roiGuide,
     leaseGuide,
+    dueDiligenceGuide,
     sitemap,
     robots,
     llms,
@@ -213,6 +226,7 @@ export async function GET() {
     fetchText("/"),
     fetchText("/guides/bali-villa-roi"),
     fetchText("/guides/bali-villa-leasehold-vs-freehold-roi"),
+    fetchText("/guides/bali-villa-due-diligence-checklist"),
     fetchText("/sitemap.xml"),
     fetchText("/robots.txt"),
     fetchText("/llms.txt"),
@@ -255,6 +269,14 @@ export async function GET() {
       status: leaseGuide.status,
       ms: leaseGuide.ms,
       detail: leaseGuide.title,
+    },
+    {
+      name: "Due diligence guide",
+      url: dueDiligenceGuide.url,
+      ok: dueDiligenceGuide.ok && count(/Article|FAQPage|BreadcrumbList/g, dueDiligenceGuide.text) >= 3,
+      status: dueDiligenceGuide.status,
+      ms: dueDiligenceGuide.ms,
+      detail: dueDiligenceGuide.title,
     },
     {
       name: "Sitemap",
