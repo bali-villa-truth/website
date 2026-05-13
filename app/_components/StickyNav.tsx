@@ -16,6 +16,7 @@ export default function StickyNav() {
     { href: "/canggu", label: "Canggu" },
     { href: "/uluwatu", label: "Uluwatu" },
     { href: "/seminyak", label: "Seminyak" },
+    { href: "/guides/bali-villa-roi", label: "ROI Guide" },
     { href: "/methodology", label: "Methodology" },
     { href: "/about", label: "About" },
   ];
