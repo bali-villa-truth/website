@@ -261,7 +261,11 @@ export default function BaliVillaRoiGuidePage() {
             The full model is documented in the <InlineLink href="/methodology">BVT methodology</InlineLink>.
             The important thing is consistency: every listing is compared through
             the same lens, so a buyer can see which villas are genuinely attractive
-            and which only look attractive because the inputs were soft.
+            and which only look attractive because the inputs were soft. Before
+            moving from model to offer, run the{" "}
+            <InlineLink href="/guides/bali-villa-due-diligence-checklist">
+              Bali villa due diligence checklist
+            </InlineLink>.
           </p>
         </Section>
 
