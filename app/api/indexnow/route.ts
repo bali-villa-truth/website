@@ -5,6 +5,7 @@ const INDEXNOW_KEY = "bvt-idx-20260512-4e2a8c9f7d1b43a2";
 const DEFAULT_URLS = [
   SITE_URL,
   `${SITE_URL}/methodology`,
+  `${SITE_URL}/guides/bali-villa-roi`,
   `${SITE_URL}/about`,
   `${SITE_URL}/contact`,
   `${SITE_URL}/canggu`,
