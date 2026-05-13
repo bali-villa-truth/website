@@ -54,6 +54,7 @@ export default function SiteFooter() {
       links: [
         { href: "/guides/bali-villa-roi", label: "Bali villa ROI guide" },
         { href: "/guides/bali-villa-leasehold-vs-freehold-roi", label: "Leasehold vs freehold ROI" },
+        { href: "/guides/bali-villa-due-diligence-checklist", label: "Due diligence checklist" },
         { href: "/#paste-url", label: "Audit a specific listing" },
         { href: "/#newsletter", label: "Weekly best-yields email" },
         { href: "/contact", label: "Request a custom review" },
