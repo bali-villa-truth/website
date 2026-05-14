@@ -15,6 +15,7 @@ const CORE_PATHS = [
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage"] },
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
+  { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap: https://balivillatruth.com/sitemap.xml"] },
@@ -22,6 +23,15 @@ const CORE_PATHS = [
 ];
 
 const completedImprovements = [
+  {
+    date: "2026-05-14",
+    area: "Investor education",
+    title: "Bali villa management-fees and operating-cost guide",
+    status: "Deployed this session",
+    why: "Buyers now have a plain-English explanation of management fees, OTA costs, maintenance reserve, utilities, gross vs net ROI, and why BVT uses a conservative 40% operating-cost load.",
+    url: `${SITE_URL}/guides/bali-villa-management-fees`,
+    progressFile: ".tmp/website_progress_2026-05-14.md",
+  },
   {
     date: "2026-05-13",
     area: "Investor navigation",
@@ -91,8 +101,8 @@ const pendingImprovements = [
   {
     priority: "Medium",
     owner: "Content",
-    title: "Publish management-fee and occupancy guides",
-    nextAction: "Build SSR guides only from documented assumptions and public/source-backed market context.",
+    title: "Publish occupancy-rate guide",
+    nextAction: "Build SSR guide from documented BVT occupancy modeling and verifiable public/source-backed market context.",
   },
 ];
 
@@ -157,11 +167,12 @@ const contentPages = [
   { title: "Bali Villa ROI: 2026 Net Yield Guide for Buyers", url: `${SITE_URL}/guides/bali-villa-roi`, status: "Live" },
   { title: "Bali Villa Leasehold vs Freehold ROI", url: `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`, status: "Live" },
   { title: "Bali Villa Due Diligence Checklist", url: `${SITE_URL}/guides/bali-villa-due-diligence-checklist`, status: "Live" },
+  { title: "Bali Villa Management Fees and Operating Costs", url: `${SITE_URL}/guides/bali-villa-management-fees`, status: "Live" },
 ];
 
 const nextActions = [
-  "Verify the new due diligence guide is indexed or queued in GSC when access is available.",
-  "Create management-fee and occupancy guides using only documented assumptions and verifiable sources.",
+  "Verify the due diligence and management-fees guides are indexed or queued in GSC when access is available.",
+  "Create an occupancy-rate guide using only documented assumptions and verifiable sources.",
   "Move rate/occupancy provenance cleanup upstream into execution scripts and PDF templates.",
   "Add shareable comparison or saved-list workflow after confirming lead/user data model.",
   "Rotate dashboard fallback passwords into Vercel environment variables.",
@@ -270,6 +281,7 @@ export async function GET() {
         "Risk shortcuts help users find best ROI, safer-looking, high-risk, and leasehold-only paths.",
         "Listing pages separate gross yield from net yield and show assumption provenance.",
         "New due diligence guide gives buyers a plain-English pre-offer checklist.",
+        "New management-fees guide explains the 40% operating-cost load and the gap between brochure ROI and owner net yield.",
       ],
       mobileUsabilityChecks: [
         "Mobile filter panel remains collapsible and now includes risk view.",
@@ -290,6 +302,7 @@ export async function GET() {
       nextActions,
       progressFiles: [
         ".tmp/website_progress_2026-05-13.md",
+        ".tmp/website_progress_2026-05-14.md",
         ".tmp/seo_progress_2026-05-13.md",
         ".tmp/gsc_indexing_results_2026-05-13.md",
       ],
