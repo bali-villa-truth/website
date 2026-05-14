@@ -290,7 +290,11 @@ export default function BaliVillaRoiGuidePage() {
             This is also why agent ROI and buyer ROI often disagree. Sales material
             is usually optimized to show upside. Buyer diligence has to model what
             happens after OTA fees, owner statements, maintenance calls, and low-season
-            discounting hit the account.
+            discounting hit the account. For a deeper operating-cost breakdown, read
+            the{" "}
+            <InlineLink href="/guides/bali-villa-management-fees">
+              Bali villa management fees guide
+            </InlineLink>.
           </p>
         </Section>
 
