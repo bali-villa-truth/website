@@ -108,6 +108,17 @@ const KEYWORDS = [
     source: "Guide shipped 2026-05-13; awaiting indexation.",
     nextAction: "Submit guide in GSC and link from ROI, listing, and homepage investor paths.",
   },
+  {
+    keyword: "bali villa management fees",
+    intent: "Operating-cost and net-yield validation keyword",
+    status: "Prepared",
+    bestObservedPage: null,
+    bestObservedRange: null,
+    bestObservedUrl: `${SITE_URL}/guides/bali-villa-management-fees`,
+    bestObservedTitle: "Bali Villa Management Fees and Operating Costs",
+    source: "Guide shipped 2026-05-14; awaiting indexation.",
+    nextAction: "Submit guide in GSC and keep linked from ROI guide, due diligence guide, footer, llms.txt, and sitemap.",
+  },
 ];
 
 const JOBS = [
@@ -154,6 +165,7 @@ const GSC_QUEUE = [
   `${SITE_URL}/guides/bali-villa-roi`,
   `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
   `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
+  `${SITE_URL}/guides/bali-villa-management-fees`,
   `${SITE_URL}/ubud`,
   `${SITE_URL}/listing/2-units-villa-with-total-5-bedrooms-for-sale-freehold-in-pandawa-near-pandawa-beach-rf6636`,
   `${SITE_URL}/listing/cozy-3-bedroom-villa-for-sale-leasehold-and-yearly-rent-in-kutuh-rf6460`,
@@ -218,6 +230,7 @@ export async function GET() {
     roiGuide,
     leaseGuide,
     dueDiligenceGuide,
+    managementGuide,
     sitemap,
     robots,
     llms,
@@ -227,6 +240,7 @@ export async function GET() {
     fetchText("/guides/bali-villa-roi"),
     fetchText("/guides/bali-villa-leasehold-vs-freehold-roi"),
     fetchText("/guides/bali-villa-due-diligence-checklist"),
+    fetchText("/guides/bali-villa-management-fees"),
     fetchText("/sitemap.xml"),
     fetchText("/robots.txt"),
     fetchText("/llms.txt"),
@@ -277,6 +291,14 @@ export async function GET() {
       status: dueDiligenceGuide.status,
       ms: dueDiligenceGuide.ms,
       detail: dueDiligenceGuide.title,
+    },
+    {
+      name: "Management fees guide",
+      url: managementGuide.url,
+      ok: managementGuide.ok && count(/Article|FAQPage|BreadcrumbList/g, managementGuide.text) >= 3,
+      status: managementGuide.status,
+      ms: managementGuide.ms,
+      detail: managementGuide.title,
     },
     {
       name: "Sitemap",
