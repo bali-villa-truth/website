@@ -213,8 +213,21 @@ export default function BaliVillaManagementFeesPage() {
             invoice. The point is to stop an optimistic brochure from pretending the
             villa has no friction.
           </p>
-          <div className="overflow-x-auto border border-[color:var(--bvt-hairline)] rounded-md">
-            <table className="w-full min-w-[720px] text-left text-[14px]">
+          <div className="md:hidden space-y-3">
+            {costRows.map((row) => (
+              <div key={row.label} className="border border-[color:var(--bvt-hairline)] rounded-md bg-[color:var(--bvt-bg-elev)] p-4">
+                <div className="label-micro mb-3">{row.label}</div>
+                <div className="font-mono text-[14px] leading-relaxed text-[color:var(--bvt-accent)]">
+                  {row.bvtModel}
+                </div>
+                <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  {row.why}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="hidden md:block overflow-x-auto border border-[color:var(--bvt-hairline)] rounded-md">
+            <table className="w-full text-left text-[14px]">
               <thead className="bg-[color:var(--bvt-bg-elev)] text-[color:var(--bvt-ink-muted)]">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Cost bucket</th>
