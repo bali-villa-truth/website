@@ -31,7 +31,7 @@ const completedImprovements = [
     area: "Investor data / model scope",
     title: "Removed Bali ROI estimates from 32 outside-Bali listings",
     status: "Live data corrected; public explanation deployed",
-    why: "BHI normalized Lombok, Gili, and other off-island locations to Other Indonesian Islands. That label bypassed the older island-name scope check, so some listings inherited Bali fallback rates. The scope check and independent live-data verifier now recognize the normalized label. The quality-gated no-scrape correction published 32 NON_BALI_LOCATION rows with zero modeled ROI, nightly rate, and occupancy. Listing pages now explain why the model is not applied, and their structured data no longer labels these assets as Bali.",
+    why: "BHI normalized Lombok, Gili, and other off-island locations to Other Indonesian Islands. That label bypassed the older island-name scope check, so some listings inherited Bali fallback rates. The scope check and independent live-data verifier now recognize the normalized label. The quality-gated no-scrape correction published 32 NON_BALI_LOCATION rows with zero modeled ROI, nightly rate, and occupancy. Listing pages now explain why the model is not applied, remove paid/free ROI-report offers, and no longer label these assets as Bali in structured data. Direct PDF and checkout requests are also rejected before sending email or creating a payment session.",
     url: `${SITE_URL}/listing/off-plan-premium-1-bedroom-mezzanine-villa-for-sale-in-kuta-lombok-rf11302`,
     progressFile: ".tmp/website_progress_2026-09-25.md",
   },

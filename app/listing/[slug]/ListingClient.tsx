@@ -22,11 +22,13 @@ export default function ListingClient({
   villaName,
   listingId,
   slug,
+  modeled,
 }: {
   sourceUrl: string;
   villaName: string;
   listingId: number;
   slug: string;
+  modeled: boolean;
 }) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -130,6 +132,13 @@ export default function ListingClient({
         )}
       </button>
 
+      {!modeled && (
+        <p className="border-t border-[color:var(--bvt-hairline)] pt-4 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+          ROI reports are unavailable for this listing because BVT has not applied its villa model. Check the source and request property-level rental evidence before estimating returns.
+        </p>
+      )}
+
+      {modeled && <>
       {/* Email-me-this-audit block (free tier) */}
       <div className="mt-4 pt-4 border-t border-[color:var(--bvt-hairline)]">
         {sent ? (
@@ -214,6 +223,7 @@ export default function ListingClient({
           </p>
         </div>
       </div>
+      </>}
     </div>
   );
 }

@@ -779,8 +779,8 @@ export default async function ListingPage({ params }: Props) {
                     })}
                   </div>
                   <p className="text-[11px] text-slate-500 mt-3">
-                    <Link href={`/${(listing.location || "bali").toLowerCase().replace(/\s+/g, "-")}`} className="text-[#d4943a] underline hover:text-[#e5a84d]">
-                      See all {listing.location} {listing.bedrooms}-bed listings →
+                    <Link href={hub.href} className="text-[#d4943a] underline hover:text-[#e5a84d]">
+                      {hub.label === "Browse audits" ? "Browse all listing reviews →" : `See more ${listing.location} listings →`}
                     </Link>
                   </p>
                 </section>
@@ -788,9 +788,10 @@ export default async function ListingPage({ params }: Props) {
 
               {/* Disclaimer */}
               <div className="bg-amber-950/30 border border-amber-800/40 rounded-lg px-4 py-3 text-xs text-amber-400 leading-relaxed">
-                <strong>Not financial advice.</strong> This is an automated stress-test using area-average nightly rates
-                and estimated occupancy — not actual rental data for this specific property. All assumptions are shown above.
-                Verify independently before investing.{" "}
+                <strong>Not financial advice.</strong>{" "}
+                {hasNightlyRate
+                  ? "This is an automated stress-test using modeled nightly rates and estimated occupancy, not actual rental data for this property. Verify every assumption independently. "
+                  : "BVT has not modeled rental yield for this asset. The source details and flags are for screening only; request verified rental, title, and lease evidence before investing. "}
                 <Link href="/methodology" className="underline hover:text-amber-300">
                   Read our full methodology →
                 </Link>
@@ -837,6 +838,7 @@ export default async function ListingPage({ params }: Props) {
                   villaName={niceName}
                   listingId={listing.id}
                   slug={slug}
+                  modeled={hasNightlyRate}
                 />
               </div>
 
@@ -857,7 +859,7 @@ export default async function ListingPage({ params }: Props) {
             inside any overflow:auto ancestor (the desktop sticky sidebar uses
             overflow-y-auto). Hidden at md+ where the sticky sidebar already
             keeps the Deep Audit visible. */}
-        <MobileAuditBar />
+        {hasNightlyRate && <MobileAuditBar />}
 
         {/* Global SiteFooter renders via app/layout.tsx */}
       </div>

@@ -13,6 +13,7 @@
  *   NEXT_PUBLIC_SITE_URL       — https://balivillatruth.com (used for redirects)
  */
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -35,6 +36,27 @@ export async function POST(req: NextRequest) {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: "Listing data not configured" }, { status: 500 });
+    }
+    const { data: listing, error: listingError } = await createClient(supabaseUrl, supabaseKey)
+      .from("listings_tracker")
+      .select("id, slug, villa_name, status, rate_source, projected_roi, est_nightly_rate")
+      .eq("id", villa_id)
+      .eq("status", "audited")
+      .maybeSingle();
+    if (listingError || !listing) {
+      return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+    }
+    if (String(listing.rate_source || "").startsWith("unmodeled_") || Number(listing.est_nightly_rate) <= 0) {
+      return NextResponse.json(
+        { error: "Deep Audit is unavailable because ROI is not modeled for this listing" },
+        { status: 409 }
+      );
     }
 
     // Defensive: trim whitespace/newlines from env values. Vercel's
@@ -64,8 +86,8 @@ export async function POST(req: NextRequest) {
       metadata: {
         villa_id: String(villa_id),
         email,
-        villa_name: (villa_name || "").slice(0, 120),
-        slug: (slug || "").slice(0, 120),
+        villa_name: String(listing.villa_name || villa_name || "").slice(0, 120),
+        slug: String(listing.slug || slug || "").slice(0, 120),
         product: "deep_audit_v1",
       },
       // payment_intent metadata mirrors session metadata — useful for
@@ -77,8 +99,8 @@ export async function POST(req: NextRequest) {
         },
       },
       success_url: `${siteUrl}/deep-audit/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: slug
-        ? `${siteUrl}/listing/${slug}?deep_audit=canceled`
+      cancel_url: listing.slug
+        ? `${siteUrl}/listing/${listing.slug}?deep_audit=canceled`
         : `${siteUrl}/?deep_audit=canceled`,
       allow_promotion_codes: true,
     });

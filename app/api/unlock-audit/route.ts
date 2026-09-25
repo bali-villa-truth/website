@@ -817,6 +817,12 @@ export async function POST(req: NextRequest) {
     if (villaErr || !villa) {
       return NextResponse.json({ error: "Villa not found" }, { status: 404 });
     }
+    if (String(villa.rate_source || "").startsWith("unmodeled_") || Number(villa.est_nightly_rate) <= 0) {
+      return NextResponse.json(
+        { error: "Audit PDF is unavailable because ROI is not modeled for this listing" },
+        { status: 409 }
+      );
+    }
 
     // 2. Insert lead (don't block on error — non-critical)
     await supabase.from("leads").insert([{
