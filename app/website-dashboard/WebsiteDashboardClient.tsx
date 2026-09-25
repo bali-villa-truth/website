@@ -67,11 +67,16 @@ function ListPanel({
   title,
   icon,
   items,
+  initialCount,
 }: {
   title: string;
   icon: React.ReactNode;
   items: string[];
+  initialCount?: number;
 }) {
+  const visibleItems = initialCount ? items.slice(0, initialCount) : items;
+  const olderItems = initialCount ? items.slice(initialCount) : [];
+
   return (
     <div className="border border-[color:var(--bvt-hairline)] rounded-md overflow-hidden">
       <div className="bg-[color:var(--bvt-bg-elev)] px-4 py-3 flex items-center gap-2">
@@ -79,11 +84,23 @@ function ListPanel({
         <h2 className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">{title}</h2>
       </div>
       <div className="divide-y divide-[color:var(--bvt-hairline)]">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <div key={item} className="p-4 text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
             {item}
           </div>
         ))}
+        {olderItems.length > 0 && (
+          <details className="text-[13px] text-[color:var(--bvt-ink-muted)]">
+            <summary className="cursor-pointer px-4 py-3 font-semibold text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)]">
+              Show {olderItems.length} earlier records
+            </summary>
+            <div className="divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)]">
+              {olderItems.map((item) => (
+                <div key={item} className="p-4 leading-relaxed">{item}</div>
+              ))}
+            </div>
+          </details>
+        )}
       </div>
     </div>
   );
@@ -94,6 +111,7 @@ export default function WebsiteDashboardClient() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("overview");
+  const [showAllCompleted, setShowAllCompleted] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -116,8 +134,17 @@ export default function WebsiteDashboardClient() {
 
   useEffect(() => {
     load();
-    const id = window.setInterval(load, 60000);
-    return () => window.clearInterval(id);
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 300000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   const healthSummary = useMemo(() => {
@@ -133,6 +160,43 @@ export default function WebsiteDashboardClient() {
     { id: "quality", label: "Quality" },
   ];
 
+  const deploymentEvidence = data?.deploymentGate && (
+    <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div>
+        <div className="label-micro mb-2">Affected live paths</div>
+        <div className="space-y-2">
+          {data.deploymentGate.affectedUrls.map((url: string) => (
+            <a key={url} href={url} className="block text-[12px] text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] break-all">
+              {url}
+            </a>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="label-micro mb-2">Recent verification</div>
+        <div className="space-y-2">
+          {data.deploymentGate.latestVerification.slice(0, 6).map((file: string, index: number) => (
+            <div key={`${file}-${index}`} className="font-mono text-[12px] text-[color:var(--bvt-ink-dim)] break-all">
+              {file}
+            </div>
+          ))}
+          {data.deploymentGate.latestVerification.length > 6 && (
+            <details className="text-[12px] text-[color:var(--bvt-ink-dim)]">
+              <summary className="cursor-pointer font-semibold text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)]">
+                Show {data.deploymentGate.latestVerification.length - 6} earlier files
+              </summary>
+              <div className="mt-2 space-y-2">
+                {data.deploymentGate.latestVerification.slice(6).map((file: string, index: number) => (
+                  <div key={`${file}-${index}`} className="font-mono break-all">{file}</div>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)]">
       <main className="max-w-[1400px] mx-auto px-6 md:px-10 py-8 md:py-10">
@@ -142,18 +206,14 @@ export default function WebsiteDashboardClient() {
               <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
               <span className="label-micro">Private website operations</span>
             </div>
-            <h1 className="font-display text-[36px] md:text-[48px] leading-tight tracking-[-0.02em] text-[color:var(--bvt-ink)]">
+            <h1 className="font-display text-[30px] md:text-[36px] leading-tight text-[color:var(--bvt-ink)]">
               Bali Villa Truth website dashboard
             </h1>
-            <p className="mt-3 max-w-[82ch] text-[14px] md:text-[15px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
-              Tracks investor-value improvements, deployed changes, live health,
-              data quality issues, blockers, scheduled jobs, and next actions.
-            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Pill tone="border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]">
               <span className="mr-1.5 h-2 w-2 rounded-full bg-[color:var(--bvt-good)]" />
-              Auto-refresh 60s
+              Auto-refresh 5m
             </Pill>
             <button
               onClick={load}
@@ -178,12 +238,12 @@ export default function WebsiteDashboardClient() {
         )}
 
         {data?.deploymentGate && (
-          <section className="mt-6 border border-[color:var(--bvt-warn)]/45 bg-[color:var(--bvt-bg-elev)] rounded-md p-5">
+          <section className={`mt-6 border bg-[color:var(--bvt-bg-elev)] rounded-md p-5 ${data.deploymentGate.status === "Live" ? "border-[color:var(--bvt-good)]/45" : "border-[color:var(--bvt-warn)]/45"}`}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <div className="flex items-center gap-2 text-[color:var(--bvt-warn)]">
-                  <AlertTriangle size={18} />
-                  <span className="label-micro text-[color:var(--bvt-warn)]">Deploy gate</span>
+                <div className={`flex items-center gap-2 ${data.deploymentGate.status === "Live" ? "text-[color:var(--bvt-good)]" : "text-[color:var(--bvt-warn)]"}`}>
+                  {data.deploymentGate.status === "Live" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+                  <span className="label-micro">Deployment status</span>
                 </div>
                 <h2 className="mt-3 font-display text-[24px] leading-tight text-[color:var(--bvt-ink)]">
                   {data.deploymentGate.title}
@@ -197,28 +257,14 @@ export default function WebsiteDashboardClient() {
               </div>
               <Pill tone={data.deploymentGate.status === "Live" ? statusTone.Live : statusTone.Blocked}>{data.deploymentGate.status}</Pill>
             </div>
-            <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div>
-                <div className="label-micro mb-2">Affected live paths</div>
-                <div className="space-y-2">
-                  {data.deploymentGate.affectedUrls.map((url: string) => (
-                    <a key={url} href={url} className="block text-[12px] text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] break-all">
-                      {url}
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <div className="label-micro mb-2">Latest local proof</div>
-                <div className="space-y-2">
-                  {data.deploymentGate.latestVerification.map((file: string) => (
-                    <div key={file} className="font-mono text-[12px] text-[color:var(--bvt-ink-dim)] break-all">
-                      {file}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {data.deploymentGate.status === "Live" ? (
+              <details className="mt-4 text-[12px] text-[color:var(--bvt-ink-muted)]">
+                <summary className="cursor-pointer font-semibold text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)]">
+                  View deployment details
+                </summary>
+                {deploymentEvidence}
+              </details>
+            ) : deploymentEvidence}
           </section>
         )}
 
@@ -324,7 +370,7 @@ export default function WebsiteDashboardClient() {
 
         {tab === "completed" && (
           <section className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {(data?.completedImprovements || []).map((item: any) => (
+            {(showAllCompleted ? data?.completedImprovements || [] : (data?.completedImprovements || []).slice(0, 8)).map((item: any) => (
               <div key={`${item.date}-${item.title}`} className="border border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-elev)] rounded-md p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -341,6 +387,14 @@ export default function WebsiteDashboardClient() {
                 </div>
               </div>
             ))}
+            {(data?.completedImprovements || []).length > 8 && (
+              <button
+                onClick={() => setShowAllCompleted(!showAllCompleted)}
+                className="xl:col-span-2 justify-self-start text-[13px] font-semibold text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)]"
+              >
+                {showAllCompleted ? "Show recent improvements" : `Show ${(data?.completedImprovements || []).length - 8} earlier improvements`}
+              </button>
+            )}
           </section>
         )}
 
@@ -437,10 +491,10 @@ export default function WebsiteDashboardClient() {
 
         {tab === "quality" && (
           <section className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <ListPanel title="Data quality issues" icon={<Database size={16} />} items={data?.dataQualityIssues || []} />
+            <ListPanel title="Data quality issues" icon={<Database size={16} />} items={data?.dataQualityIssues || []} initialCount={5} />
             <ListPanel title="Model assumption watchlist" icon={<AlertTriangle size={16} />} items={data?.modelAssumptionWatchlist || []} />
             <ListPanel title="Investor evidence checklist" icon={<ClipboardCheck size={16} />} items={data?.investorEvidenceChecklist || []} />
-            <ListPanel title="Pipeline guardrails" icon={<Database size={16} />} items={data?.pipelineGuardrails || []} />
+            <ListPanel title="Pipeline guardrails" icon={<Database size={16} />} items={data?.pipelineGuardrails || []} initialCount={8} />
             <ListPanel title="UX and navigation issues" icon={<LayoutDashboard size={16} />} items={data?.uxIssues || []} />
             <ListPanel title="Investor-value improvements" icon={<ShieldCheck size={16} />} items={data?.investorValueImprovements || []} />
             <ListPanel title="Mobile checks" icon={<Smartphone size={16} />} items={data?.mobileUsabilityChecks || []} />

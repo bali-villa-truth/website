@@ -16,20 +16,14 @@ const CORE_PATHS = [
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
   { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage"] },
+  { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap: https://balivillatruth.com/sitemap.xml"] },
   { name: "LLMs text", path: "/llms.txt", expect: ["Bali Villa Truth", "due diligence checklist"] },
 ];
 
-const PREPARED_PATHS = [
-  {
-    name: "Occupancy rates guide",
-    path: "/guides/bali-villa-occupancy-rates",
-    expect: ["Bali villa occupancy rates", "FAQPage"],
-    blockedDetail: "Unexpected 404 after the 2026-09-25 successful deployment; investigate the current production route.",
-  },
-];
+const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
   {
@@ -576,8 +570,8 @@ const completedImprovements = [
     date: "2026-05-14",
     area: "Investor education",
     title: "Bali villa occupancy-rates guide",
-    status: "Prepared locally, deploy blocked",
-    why: "The guide is ready to give buyers a dedicated way to stress-test occupancy assumptions, area demand, nightly-rate tradeoffs, and the records needed before trusting rental-yield claims, but it is not live until GitHub deploy access is restored.",
+    status: "Live since 2026-09-25",
+    why: "Prepared in May and deployed on September 25. The guide helps buyers stress-test occupancy assumptions, area demand, nightly-rate tradeoffs, and the records needed before trusting rental-yield claims.",
     url: `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     progressFile: ".tmp/website_progress_2026-05-18.md",
   },
@@ -696,11 +690,6 @@ const blockers = [
     status: "Blocked by expired OAuth token",
     note: "The September 25 recovery run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
   },
-  {
-    blocker: "BHI daily scrape",
-    status: "Recovered 2026-09-25; monitor next scheduled run",
-    note: "BHI moved listing data into an Inertia payload. The repaired scraper parsed all 84 pages and the September 25 quality-gated pipeline completed, upserting 2,455 audited rows. Matched physical-field carry-forward kept PHYSICAL_DATA_INCOMPLETE at 31. Keep the challenge, incomplete-page, and physical-data gates; verify the next scheduled run before calling the source stable.",
-  },
 ];
 
 const dataQualityIssues = [
@@ -775,12 +764,12 @@ const investorEvidenceChecklist = [
 ];
 
 const pipelineGuardrails = [
-  "execution/verify_automation_freshness.py now checks disk headroom, daily-pipeline log freshness, and launchd load state. daily_pipeline.sh runs it as a preflight before scrape/write work, skipping only stale-log detection from inside the running pipeline.",
+  "execution/verify_automation_freshness.py checks disk headroom, daily-pipeline log freshness, successful completion, and launchd load state. Inside the running pipeline, its preflight skips previous-log age and completion checks so a prior failed run does not prevent a safe retry.",
   "BVT_MIN_FREE_DISK_MB defaults to 1024 MB for automation preflight. Keep that threshold unless a small manual test is intentionally documented; low disk can prevent verifier JSON, scrape summaries, and logs from being written.",
   "BHI scrape output is no longer allowed to overwrite .tmp/scraped_listings.json when fewer than the configured minimum listings are parsed.",
   "scrape_bhi.py now writes .tmp/scrape_safety_failure.json when a low-count scrape is blocked, including scraped count, configured minimum, preserved previous count, sample refs, and a plain-English preservation message.",
-  "scrape_bhi.py now fetches page 2 before choosing all-page depth because BHI serves a large first SSR page and six-card ?page=N load-more pages; the May 25 fixed validation reached 387 pages and 2,287 unique listings.",
-  "The May 27 scheduled scrape calibrated to 78 pages while still recovering 2,288 unique listings, so future checks should judge source health by the validated row count and coverage gates rather than assuming the May 25 page count is permanent.",
+  "As of September 25, BHI index listings are in an Inertia Property/Index payload with explicit pagination; the complete recovery parsed 84 pages and 2,455 sale listings. The scraper still supports legacy cards and rejects genuine challenge pages and incomplete pagination.",
+  "Judge each source run by complete pagination and field-coverage gates, not an assumed fixed page count. Preserve the last verified dataset when the source format or inventory changes unexpectedly.",
   "scrape_bhi.py now falls back to the new BHI article-card markup and estimates all-page scrape depth from the visible property count when classic pagination is absent.",
   "scrape_bhi.py supports --output for non-destructive validation files, so parser tests can avoid touching .tmp/scraped_listings.json.",
   "scrape_bhi.py automatically writes an output-adjacent _summary.json file with field coverage, failed pages, missing critical fields, areas, lease types, bedroom counts, price range, and detail-enrichment results.",
@@ -1364,51 +1353,17 @@ const contentPages = [
   { title: "Bali Villa Leasehold vs Freehold ROI", url: `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`, status: "Live" },
   { title: "Bali Villa Due Diligence Checklist", url: `${SITE_URL}/guides/bali-villa-due-diligence-checklist`, status: "Live" },
   { title: "Bali Villa Management Fees and Operating Costs", url: `${SITE_URL}/guides/bali-villa-management-fees`, status: "Live" },
-  { title: "Bali Villa Occupancy Rates", url: `${SITE_URL}/guides/bali-villa-occupancy-rates`, status: "Prepared locally, deploy blocked" },
+  { title: "Bali Villa Occupancy Rates", url: `${SITE_URL}/guides/bali-villa-occupancy-rates`, status: "Live" },
 ];
 
 const nextActions = [
-  "Monitor the next scheduled launchd run after the 2026-07-09 12:39 UTC recovery refresh; PHYSICAL_DATA_INCOMPLETE is back at 36/50 after recovering 7 physical-gap listings from BHI detail pages.",
-  "Keep targeted detail recovery in the post-run playbook when PHYSICAL_DATA_INCOMPLETE rises near the 50-row guardrail; the July 9 recovery attempted 43 targets, failed 0 pages, recovered 7, and left 36 honest unavailable rows.",
-  "Review .tmp/detail_physical_recovery_2026-07-09_1234_report.json, .tmp/supabase_data_quality_verification_2026-07-09_1239.json, .tmp/live_verification_2026-07-09_1239.json, .tmp/listing_page_verification_2026-07-09_1239.json, .tmp/sitemap_coverage_2026-07-09_1239.json, and .tmp/automation_freshness_2026-07-09_1240.json as the latest post-run recovery verification set.",
-  "Refresh or replace GITHUB_TOKEN in .env, then rerun python3 push_to_github.py so the prepared occupancy-rates guide and dashboard truth-state updates can go live.",
-  "Use python3 execution/verify_supabase_data_quality.py after meaningful Supabase pushes or data-model changes so live table quality is checked before relying on investor-facing rows.",
-  "Use python3 execution/verify_live_site.py after every deploy or production data push so canonical health, sitemap, dashboard privacy, and redirect evidence are recorded consistently.",
-  "Use python3 execution/verify_listing_pages.py after deploys and Supabase refreshes to sample live listing pages across modeled, unmodeled, lease-term, physical-incomplete, non-Bali, multi-unit, and fallback-rate cases; keep it warn-only until the staged listing-page fixes ship.",
-  "Use python3 execution/verify_sitemap_coverage.py after deploys and Supabase refreshes to compare live sitemap listing URLs against audited Supabase slugs; keep it warn-only until the prepared paginated sitemap ships.",
-  "Use python3 push_to_github.py --check-artifacts-only after any future .tmp deploy artifact edit to confirm the prepared queue is complete before spending a GitHub deploy attempt.",
-  "Deploy the prepared paginated sitemap route so /sitemap.xml can include all audited listing URLs instead of stopping at the Supabase REST row cap.",
-  "Watch the next scheduled scrape to confirm the page-2 calibration continues to recover roughly 2,200+ listings with strong coverage; do not assume the May 25 387-page count or May 27 78-page count is permanent.",
-  "Review .tmp/scrape_safety_failure.json after any future low-count scrape block and preserve the verified dataset unless a source inventory shrink is deliberately confirmed.",
-  "Deploy the prepared listing-page tenure fix so leasehold rows with unstated source terms never render as Freehold in metadata, schema, detail panels, or similar-listing cards.",
-  "Deploy the prepared homepage/listing-page flag-label updates so BEDROOM_COUNT_NOT_STATED and PHYSICAL_DATA_INCOMPLETE get explanatory copy instead of only generic badge text.",
-  "Deploy the prepared NON_BALI_LOCATION UI labels so outside-Bali rows explain that they are visible source inventory, not Bali-modeled ROI opportunities.",
-  "Deploy the prepared unmodeled apartment/multi-unit UI so apartment, penthouse, hotel, resort, and portfolio rows show MODEL NOT APPLIED and the homepage/compare/map surfaces stop backfilling synthetic rates for rows marked unmodeled.",
-  "Keep the 25 BEDROOM_COUNT_NOT_STATED rows unmodeled until BHI or owner records provide a safe bedroom/unit count; do not reuse the rejected uniform 5-bedroom detail-recovery output.",
-  "Keep the current 34 NON_BALI_LOCATION rows unmodeled unless BVT adds a verified non-Bali rate/occupancy model; do not let them inherit default Bali fallback rates.",
-  "Keep the 232 MULTI_UNIT_MODEL_UNSUPPORTED rows unmodeled unless verified unit-level revenue, expense, occupancy, and management-structure data is available; this includes apartment and penthouse rows as well as hotels, resorts, and portfolios.",
-  "Keep live Supabase rate_source=auditor at 0; modeled rows should use bvt_market_model-style labels, and unmodeled rows should keep unmodeled_* labels with zero ROI/rate.",
-  "Keep exact-area fallback rows labeled with bvt_market_model_fallback-family values unless a verified area-specific nightly-rate model is added; the latest direct check found 455 plain fallback rows, 21 fallback+near-budget rows, and 4 fallback+budget rows.",
-  "Keep live Supabase occupancy_source percentage-free; numeric occupancy belongs in est_occupancy, while confidence/sample evidence belongs in occupancy_confidence and occupancy_sample_size.",
-  "Keep the current 36 PHYSICAL_DATA_INCOMPLETE rows labeled as unavailable unless a future source scrape or owner records expose real bathrooms, land size, and building size.",
-  "Keep the tiny physical-spec guardrail active: land/build values below 20 sqm should be repaired from BHI detail pages or treated as unavailable, not displayed as precise investor due-diligence inputs.",
-  "Keep LEASE_TERM_NOT_STATED count at 4 unless BHI source data changes; if a future scrape finds a real remaining term, replace the flag with the source term rather than preserving the assumption.",
-  "Watch the next accepted scrape summary for 100% ref_code and area coverage; Supabase should continue mapping roughly 2,288 current rows unless verified source inventory changes.",
-  "Watch the next scrape summary and Supabase rows for bedrooms above 60; this should remain zero after the parser guardrail.",
-  "Watch the next midnight run to confirm the source count recovers before carry-forward or Supabase refresh is allowed to proceed.",
-  "Keep BVT_PRICE_CHANGE_THRESHOLD_PCT at the 5% default unless a deliberate audit needs more sensitive price-history logging; current asking prices still update below that threshold.",
-  "Review the nine BHI detail URLs that returned 404 during the May 22 full recovery only if their listings become important; keep their missing physical fields honest until a future scrape finds updated URLs.",
-  "Keep BVT_ALLOW_MISSING_PHYSICAL_FIELDS_TO_SUPABASE unset for normal runs; the current recovered scrape passes the gate, but future card-only scrapes should still fail closed.",
-  "Enable BVT_PIPELINE_DETAIL_FIELDS=1 for a future scheduled full scrape only after confirming BHI source limits remain stable.",
-  "Keep bathrooms, land size, and build size unavailable where detail-page JSON-LD is genuinely missing after enrichment.",
-  "Re-auth Google Sheets by regenerating token.json interactively on the Mac, then rerun the pipeline after the physical-field gate is expected to pass.",
-  "Verify the due diligence, management-fees, and occupancy-rates guides are indexed or queued in GSC when access is available.",
-  "Consider the next non-duplicate support guide only after the current guide cluster has been queued and monitored.",
-  "Deploy the prepared PDF/listing/deep-audit source-label cleanup so new bvt_market_model and occupancy provenance labels render as polished plain-English copy everywhere.",
-  "Deploy the prepared fallback-rate source-label copy so live listing/PDF text says no exact area model instead of the raw bvt market model fallback wording.",
-  "Deploy the prepared fallback-budget source-label copy so live listing/PDF text says no exact area model plus budget/near-budget caution in polished language instead of raw machine labels.",
-  "Add shareable comparison or saved-list workflow after confirming lead/user data model.",
-  "Rotate dashboard fallback passwords into Vercel environment variables.",
+  "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
+  "Reauthorize Google Sheets interactively; the September 25 pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
+  "When authenticated Search Console access is available, inspect the September 25 curated URL queue and record fresh clicks, impressions, and average position without reusing May results as current metrics.",
+  "Set and verify a private website-dashboard password in Vercel, then remove the hardcoded fallback without locking out the owner.",
+  "Rotate the stale GitHub token in .env; the September 25 deploy used the existing authenticated GitHub CLI token for one process.",
+  "Continue mobile checks after listing or filter changes, and assess a saved/shareable comparison workflow after confirming its user-data model.",
+  "Review the generated lockfile security advisories before a future dependency upgrade; do not force an untested package update into production.",
 ];
 
 function count(pattern: RegExp, text: string) {
@@ -1555,7 +1510,7 @@ export async function GET() {
         "Listing pages separate gross yield from net yield and show assumption provenance.",
         "New due diligence guide gives buyers a plain-English pre-offer checklist.",
         "New management-fees guide explains the 40% operating-cost load and the gap between brochure ROI and owner net yield.",
-        "Prepared occupancy-rates guide will explain how booked-night assumptions can inflate or weaken ROI math once deploy access is restored.",
+        "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
         "Mobile filter panel remains collapsible and now includes risk view.",
@@ -1571,11 +1526,15 @@ export async function GET() {
         "Homepage still SSRs a seed set and hydrates the full ledger client-side.",
         "Dashboard crawl checks now report distinct listing paths instead of raw duplicate URL matches.",
         "Dashboard APIs use no-store and short fetch timeouts so private checks do not cache stale status.",
+        "The website dashboard refreshes every five minutes while visible and refreshes when reopened; hidden tabs do not repeat the full live-check request each minute.",
         "Sitemap count is read live from /sitemap.xml.",
       ],
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-09-25.md",
+        ".tmp/seo_progress_2026-09-25.md",
+        ".tmp/live_verification_2026-09-25_1550.json",
         ".tmp/website_progress_2026-07-09.md",
         ".tmp/api_website_dashboard_route_2026-07-09_1234.bundle.mjs",
         ".tmp/automation_freshness_2026-07-09_1240.json",
