@@ -132,7 +132,7 @@ export default function SiteFooter() {
             >
               hello@balivillatruth.com
             </a>
-            <span className="label-micro">Audits re-run weekly</span>
+            <span className="label-micro">Source-check dates on listings</span>
           </div>
         </div>
       </div>

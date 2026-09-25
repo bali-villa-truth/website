@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-25",
+    area: "Investor trust / public methodology",
+    title: "Aligned public rate-model explanations with the live calculation",
+    status: "Deployed and verified",
+    why: "The methodology and About page had carried forward an old Booking.com/Airbnb blend, AirDNA reference, flat budget discount, and example rates even though the current July rate table is Booking.com-only with graduated 15%, 30%, and 50% price-tier discounts. Public copy now describes the actual source, treats rates as asking-rate estimates rather than earnings, and stops claiming that every listing is modeled or audited weekly. Unmodeled listings explain why no 40% cost load or net yield is calculated.",
+    url: `${SITE_URL}/methodology`,
+    progressFile: ".tmp/website_progress_2026-09-25.md",
+  },
+  {
+    date: "2026-09-25",
     area: "Investor data / model scope",
     title: "Removed Bali ROI estimates from 32 outside-Bali listings",
     status: "Live data corrected; public explanation deployed",
@@ -697,7 +706,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
-  "As of 2026-09-25 21:56 UTC, 32 Other Indonesian Islands rows are now flagged NON_BALI_LOCATION and published without modeled ROI, nightly rate, or occupancy. Before correction, the normalized source label bypassed the Bali-only model-scope rule; the independent live Supabase verifier detected 32 violations. After the quality-gated no-scrape refresh, that verifier passes with zero outside-Bali scope violations across 2,455 audited rows, 31 physical-spec gaps, and zero unmodeled rows with nonzero values. Google Sheets remains blocked by OAuth invalid_grant. The first pipeline continuation stopped only because its old live-site check expected the now-live occupancy guide to return 404; that expectation has been corrected.",
+  "As of 2026-09-25 22:19 UTC, the complete no-scrape pipeline passes after the live-guide expectation fix: 2,455 audited rows, 32 Other Indonesian Islands rows flagged NON_BALI_LOCATION with no modeled ROI/rate/occupancy, zero outside-Bali scope violations, 31 physical-spec gaps, zero unmodeled rows with nonzero values, seven passing representative listing pages, and 2,475 sitemap URLs with zero missing/extra. Google Sheets remains blocked by OAuth invalid_grant; tomorrow's full scheduled scrape remains to be observed.",
   "As of 2026-09-25 10:12 UTC, live Supabase checks pass with 2,455 audited rows, PHYSICAL_DATA_INCOMPLETE at 31, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. The canonical site and private dashboard access controls pass. The repaired BHI parser and physical-field carry-forward completed a quality-gated refresh. The successful website deployment put the occupancy guide live and brought the sitemap to exact coverage: 2,455 audited listings plus 20 static URLs, with no missing or extra listings. Six representative listing pages now pass visible-content checks; the prior tenure alert was a false positive from a related/footer link. No outside-Bali sample exists to test today.",
   "As of 2026-09-18 06:51 UTC, live Supabase data-quality checks pass with 2,443 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Automation freshness passes with launchd loaded, 23,611.6 MB free, and 23.78 hours of pipeline-log age immediately before the next local-midnight run. The canonical site is healthy and private dashboard APIs return 401. The listing verifier still finds the known RF10173B lease-term-not-stated/freehold contradiction, and sitemap coverage has drifted to 916 missing audited listing URLs, 699 stale/extra listing URLs, and 1 missing static URL until the staged deploy ships.",
   "As of 2026-07-12 18:34 UTC, live Supabase data-quality checks still pass after the July 12 scheduled scrape and afternoon SEO pass: 2,353 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Disk headroom is 9,164.2 MB, above the 1GB guardrail, and the daily-pipeline log age is 11.5 hours. The canonical site remains healthy, private dashboard APIs remain locked with 401, while listing-page tenure wording and sitemap coverage remain warn-only deploy-blocked classes.",
@@ -822,7 +831,7 @@ const uxIssues = [
   "Homepage now has risk shortcuts, but comparison mode could still be easier to save and share.",
   "Mobile ledger needs continued visual checks after each filter or card-density change.",
   "Listing pages are clearer, but PDF templates should be aligned with the new assumption-note language.",
-  "September 25 representative listing-page verification passes six available categories. The RF10173B leasehold tenure line is correct; the old Freehold alert matched a related-listing/footer link outside this property's tenure field. No outside-Bali sample is currently available.",
+  "September 25 representative listing-page verification passes all seven sampled categories, including an outside-Bali row that now shows no modeled ROI or paid audit offer. The RF10173B leasehold tenure line is correct; the old Freehold alert matched a related-listing/footer link outside this property's tenure field.",
 ];
 
 const scheduledJobs = [
@@ -842,7 +851,7 @@ const scheduledJobs = [
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
     status: "Loaded; recovery run completed 2026-09-25 03:01 MST",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The source parser now reads BHI's Inertia payload; a complete 84-page run and matched physical-field carry-forward passed the quality gates. The September 25 recovery upserted 2,455 audited rows, with PHYSICAL_DATA_INCOMPLETE at 31. Google Sheets remains blocked by OAuth invalid_grant. Monitor the next scheduled source run.",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. A September 25 no-scrape rehearsal completed with 2,455 rows, zero outside-Bali modeling violations, seven representative listing pages healthy, and exact sitemap coverage. Listing and sitemap checks now default to strict. Google Sheets remains blocked by OAuth invalid_grant. Observe the next automatic full scrape before calling unattended recovery proven.",
   },
 ];
 
@@ -850,7 +859,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 25 production build and Vercel deployment succeeded on commit 781cb3e. The occupancy-rates guide is live, the listing presentation is verified, and the sitemap exactly covers 2,455 audited listings plus 20 static pages. The stale .env GitHub token remains a maintenance issue; the existing push script worked with the authenticated GitHub CLI token for this deployment.",
+    "The September 25 production deployments put the occupancy guide, outside-Bali model-scope corrections, listing offer guards, and updated investor explanations live. The no-scrape pipeline completed at 22:19 UTC with exact coverage of 2,455 audited listings plus 20 static URLs. The stale .env GitHub token remains a maintenance issue; the existing push script works with the authenticated GitHub CLI token.",
   requiredAction: "Monitor the next scheduled refresh and keep verifying production after every deploy. Rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,

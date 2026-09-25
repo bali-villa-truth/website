@@ -127,18 +127,16 @@ export default function Methodology() {
           <SectionHeading icon={<ExternalLink size={18} />} title="Where the data comes from" />
           <div className="space-y-4 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              Every listing on Bali Villa Truth is sourced from <strong className="text-[color:var(--bvt-ink)]">Bali Home Immo (BHI)</strong>,
-              one of the largest real estate aggregators in Bali. We scrape their public listings to capture asking prices,
+              Listings on Bali Villa Truth are sourced from <strong className="text-[color:var(--bvt-ink)]">Bali Home Immo (BHI)</strong>,
+              a public real estate listing source. We scrape their public listings to capture asking prices,
               locations, bedroom counts, land size, lease terms, and property details.
             </p>
             <p>
-              Nightly rental rates are derived from a <strong className="text-[color:var(--bvt-ink)]">50/50 blend of Booking.com and Airbnb market data</strong>.
-              We scrape actual villa listings across 12 areas and 5 bedroom tiers on both platforms to build our rate model
-              — Booking.com gave us 2,499 data points and Airbnb added 415 more. Blending both platforms gives us a more
-              honest market rate: Booking.com skews toward established properties, Airbnb toward newer and boutique stays.
-              Neither alone tells the full story. A 15% &quot;reality discount&quot; is applied to the platform medians to
-              account for the fact that asking rates are not the same as realized rates. We also use Booking.com review
-              density data to estimate area-specific occupancy — more details in the occupancy section below.
+              The current nightly-rate model uses <strong className="text-[color:var(--bvt-ink)]">Booking.com villa asking rates</strong>
+              by area and bedroom tier, not verified booking revenue. Its July 2026 refresh did not include an
+              Airbnb blend. A 15% &quot;reality discount&quot; is applied to platform medians because asking rates
+              may exceed realized rates. Booking.com review density is a separate proxy for area occupancy;
+              neither input verifies the earnings of a particular villa.
             </p>
             <p>
               Exchange rates are fetched from <strong className="text-[color:var(--bvt-ink)]">ExchangeRate-API</strong> at the start of each pipeline run
@@ -153,34 +151,29 @@ export default function Methodology() {
           <SectionHeading icon={<Home size={18} />} title="Nightly rate" />
           <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              Every listing gets an estimated nightly rental rate based on its area and bedroom count.
-              Here&apos;s how we arrive at it:
+              Eligible Bali villa listings get an estimated nightly rental rate based on area and bedroom count.
+              Out-of-scope properties remain unmodeled. Here&apos;s how the supported estimate is built:
             </p>
 
             <Step num={1} title="Area + bedroom rate lookup">
-              Every listing gets a nightly rate based purely on its area and bedroom count. We maintain a
-              rate model blending real Booking.com and Airbnb data for 12 Bali areas across 5 bedroom tiers.
-              For example, a 2-bedroom villa in Canggu is estimated at $143/night, while a 2-bedroom
-              in Ungasan is $96/night. These are medians from actual listings on both platforms, not assumptions.
-              Every villa in the same area and bedroom tier gets the same base rate — the rental market
-              sets prices by location and size, not by what sellers are asking.
+              An eligible listing starts with a rate based on its area and bedroom count. We maintain a
+              Booking.com-based rate model for 12 Bali areas across 5 bedroom tiers. The base values
+              are discounted platform asking-rate medians, not realized revenue or a property appraisal.
+              Villas in the same supported area and bedroom tier share a base rate; discrete budget
+              discounts can then lower it for cheaper properties.
             </Step>
 
             <Step num={2} title="Budget property discount">
-              If a villa&apos;s asking price falls below the <strong className="text-[color:var(--bvt-ink)]">25th percentile</strong> for its area and bedroom tier,
-              we apply a flat 30% discount to the nightly rate. A $107K villa in Nusa Dua almost certainly can&apos;t
-              command the same $170/night as a $500K property with an infinity pool and ocean view — even though
-              they&apos;re in the same area with the same bedroom count. The discount acknowledges this reality
-              without reintroducing circular math: it&apos;s a binary trigger (below threshold → yes/no), not a
-              continuous function of price. You&apos;ll see &quot;Budget Villa&quot; flagged on these listings with the
-              discounted rate shown transparently — e.g. &quot;$119/nt (discounted from $170 area median)&quot;.
+              The model discounts the area-tier rate for lower-priced properties: 15% below the 35th
+              percentile, 30% below the 25th percentile, and 50% for extreme outliers priced below
+              half of the 25th-percentile benchmark. These are discrete tiers, not a continuous
+              rate adjustment based on the asking price. The listing shows the applied rate and flags.
             </Step>
 
             <Step num={3} title="No other adjustments">
-              Beyond the budget discount, the rate goes straight into the yield formula. We don&apos;t cap it,
-              inflate it, or apply continuous price-based scaling. If a mid-range villa shows a high yield,
-              that&apos;s real information — the rental market rate for that area is high relative to the purchase
-              price. We flag unusually high yields so you can investigate, but we never hide the number.
+              Beyond the budget discount, the rate goes into the yield formula without continuous
+              price-based scaling. A high modeled yield is a prompt to investigate the assumptions and
+              source details, not evidence of achievable rental income.
             </Step>
 
             <InfoBox>

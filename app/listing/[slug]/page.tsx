@@ -558,9 +558,9 @@ export default async function ListingPage({ params }: Props) {
               <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
                 <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-3">How to read this audit</h2>
                 <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                  BVT treats the ROI number as a stress-tested estimate, not a promise.
-                  The important question is whether the assumptions are strong enough
-                  to survive negotiation, lower occupancy, and lease decay.
+                  {hasNightlyRate
+                    ? "BVT treats the ROI number as a stress-tested estimate, not a promise. Check whether the assumptions survive negotiation, lower occupancy, and lease decay."
+                    : "This property is outside the supported ROI model. No rental rate, occupancy, or yield estimate is available; verify the asset and source details before making an investment case."}
                 </p>
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
@@ -580,7 +580,9 @@ export default async function ListingPage({ params }: Props) {
                       {roiDisplay}
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      After the standard 40% operating-cost load{leaseDepreciation > 0 ? " and annual lease depreciation" : ""}.
+                      {hasNightlyRate
+                        ? `After the standard 40% operating-cost load${leaseDepreciation > 0 ? " and annual lease depreciation" : ""}.`
+                        : "No net-yield calculation is made for this listing."}
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">

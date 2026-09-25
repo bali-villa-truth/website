@@ -42,9 +42,9 @@ export default function AboutPage() {
                 <span className="text-[color:var(--bvt-accent)]">exists.</span>
               </h1>
               <p className="mt-8 max-w-[58ch] text-[19px] md:text-[21px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
-                Every villa listing in Bali quotes an ROI figure. Most of those
-                figures wouldn&apos;t survive a junior analyst&apos;s first pass.
-                So we built a site that does the pass for you.
+                Many Bali villa listings quote an ROI figure without showing
+                the assumptions behind it. We built a site that checks the math
+                and makes the limits of each estimate visible.
               </p>
             </div>
           </div>
@@ -84,13 +84,12 @@ export default function AboutPage() {
           </div>
           <div className="lg:col-span-8 lg:pt-2">
             <p className="text-[17px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[62ch]">
-              We scrape every listing from Bali Home Immo, the largest single
-              source of Bali villa inventory, and run each one through a
-              standardized financial model:
+              We review public listings from Bali Home Immo and apply a
+              standardized financial model where the property is within its scope:
             </p>
             <ul className="mt-6 divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)] max-w-[62ch]">
               {[
-                "Nightly rate benchmarked against AirDNA & booking platforms in the same area",
+                "Nightly rate estimated from Booking.com villa asking rates by area and bedroom tier",
                 "Area-specific occupancy assumptions — not a flat 85%",
                 "40% operating expense load — management, OTA commissions, maintenance, utilities",
                 "Lease-term amortisation for all Hak Sewa (leasehold) properties",
@@ -143,8 +142,8 @@ export default function AboutPage() {
               },
               {
                 n: "IV.",
-                t: "We re-audit weekly.",
-                b: "Prices move. Flags change. Every listing shows its last re-audit date, and we keep price history on file so you can see which sellers are motivated.",
+                t: "We date our source checks.",
+                b: "Prices and listing details can change. Each listing shows its latest source-check date and available recorded price history, so you can verify what is still current.",
               },
             ].map((p) => (
               <div key={p.n} className="border-t border-[color:var(--bvt-hairline)] pt-5">
