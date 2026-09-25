@@ -68,7 +68,7 @@ function FAQSection() {
     },
     {
       q: 'How is your ROI different from the one on the listing page?',
-      a: "Agent ROI is typically gross yield — rental revenue divided by purchase price. We strip out 40% for operating costs (management, OTA commissions, maintenance, utilities) and, for leasehold properties, subtract annual lease depreciation. The result is a cash-on-cash number that reflects what actually lands in your pocket.",
+      a: "Agent ROI often starts with gross rental revenue divided by asking price. BVT models a 40% operating-cost allowance and, for leasehold properties, annual lease value decay. The resulting net-yield estimate is not cash-on-cash return or a forecast of money paid to you; verify actual costs, bookings, taxes, and financing separately.",
     },
     {
       q: 'Can foreigners own property in Bali?',
@@ -80,11 +80,11 @@ function FAQSection() {
     },
     {
       q: 'How often is the data updated?',
-      a: 'We re-scrape our source agents weekly and re-run the audit whenever price or status changes. Every listing page shows its last re-audit date.',
+      a: 'Our source refresh is scheduled daily, but a failed source or quality check can delay an update. Each listing shows when its source data was last checked; use that date before relying on its assumptions.',
     },
     {
       q: 'Do you offer a paid deep audit?',
-      a: "A paid deep-dive service is in the pipeline for Q2 2026 — contract review, exit-scenario modeling, and a live walkthrough. Email audits@balivillatruth.com if you'd like to be first in line.",
+      a: "Some listings offer a paid automated deep-audit report. It adds scenarios and due-diligence prompts, but it is not a legal review or a substitute for property-level evidence. Contact audits@balivillatruth.com for a custom-review inquiry.",
     },
   ];
 
@@ -902,9 +902,9 @@ export default function HomeClient({
               </h1>
               <p className="mt-8 md:mt-10 max-w-[52ch] text-[17px] md:text-[19px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
                 Bali Villa Truth is the independent audit bureau for Bali villa investors.
-                We stress-test 2,000+ asking prices against real operating costs,
-                market-rate occupancy, and lease decay — then publish the net yield
-                that actually lands in your pocket.
+                We stress-test 2,000+ asking prices using modeled operating costs,
+                area-level occupancy assumptions, and lease decay. Each eligible
+                listing shows the inputs behind its estimated net yield.
               </p>
             </div>
 
@@ -916,7 +916,7 @@ export default function HomeClient({
                     {auditedCount > 0 ? auditedCount.toLocaleString() : '2,000'}
                     <span className="text-[color:var(--bvt-accent)]">+</span>
                   </div>
-                  <div className="label-micro mt-2">Villas audited</div>
+                  <div className="label-micro mt-2">Listings reviewed</div>
                 </div>
                 <div className="h-px bg-[color:var(--bvt-hairline)]" />
                 <div>
@@ -924,14 +924,14 @@ export default function HomeClient({
                     {flaggedCount > 0 ? flaggedCount.toLocaleString() : '400'}
                     <span className="text-[color:var(--bvt-accent)]">+</span>
                   </div>
-                  <div className="label-micro mt-2">Red flags surfaced</div>
+                  <div className="label-micro mt-2">Listings with flags</div>
                 </div>
                 <div className="h-px bg-[color:var(--bvt-hairline)]" />
                 <div>
                   <div className="font-mono tabular-nums text-[28px] md:text-[32px] text-[color:var(--bvt-ink)] leading-none">
-                    Weekly
+                    Daily
                   </div>
-                  <div className="label-micro mt-2">Re-audit cadence</div>
+                  <div className="label-micro mt-2">Scheduled source refresh</div>
                 </div>
               </div>
             </aside>
@@ -965,13 +965,13 @@ export default function HomeClient({
             </div>
             <div className="flex items-center gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
               <Clock size={13} className="text-[color:var(--bvt-accent)]" />
-              <span className="text-[color:var(--bvt-ink-body)]">Re-audited weekly</span>
-              <span className="text-[color:var(--bvt-ink-dim)]">with fresh scrapes</span>
+              <span className="text-[color:var(--bvt-ink-body)]">Source-check dates shown</span>
+              <span className="text-[color:var(--bvt-ink-dim)]">on each listing</span>
             </div>
             <div className="flex items-center gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
               <Globe size={13} className="text-[color:var(--bvt-accent)]" />
-              <span className="text-[color:var(--bvt-ink-body)]">Booking.com + Airbnb</span>
-              <span className="text-[color:var(--bvt-ink-dim)]">blended rate model</span>
+              <span className="text-[color:var(--bvt-ink-body)]">Modeled rate assumptions</span>
+              <span className="text-[color:var(--bvt-ink-dim)]">with source notes</span>
             </div>
           </div>
         </div>
@@ -1064,7 +1064,7 @@ export default function HomeClient({
             <span className="text-[color:var(--bvt-accent)]">audited.</span>
           </h2>
           <p className="md:col-span-4 text-[15px] leading-[1.7] text-[color:var(--bvt-ink-muted)]">
-            Filter by location, yield band, or lease structure. Every dossier is re-audited weekly against live agent data — prices, red flags, and ROI recomputed from scratch.
+            Filter by location, yield band, or lease structure. Each listing shows its source-check date, modeled assumptions, and diligence flags; unsupported assets have no ROI estimate.
           </p>
         </div>
       </div>

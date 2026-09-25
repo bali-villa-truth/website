@@ -198,6 +198,18 @@ function tenureSchemaValue(listing: any): string {
   return "Tenure not stated";
 }
 
+const LOCATION_HUB_SLUGS = new Set([
+  "canggu", "berawa", "pererenan", "uluwatu", "bingin",
+  "seminyak", "ubud", "sanur", "ungasan", "nusa-dua",
+]);
+
+function locationHub(location: string): { href: string; label: string } {
+  const slug = location.toLowerCase().trim().replace(/\s+/g, "-");
+  return LOCATION_HUB_SLUGS.has(slug)
+    ? { href: `/${slug}`, label: location }
+    : { href: "/#listings-section", label: "Browse audits" };
+}
+
 // ---------------------------------------------------------------------------
 // Dynamic metadata (SEO)
 // ---------------------------------------------------------------------------
@@ -226,8 +238,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // added automatically by the root layout's title template.
   const title = listing.projected_roi
     ? `${niceName} — Audit · ${roi} Net Yield`
-    : `${niceName} — Bali Villa Audit`;
-  const description = `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location} listed at ${priceUsd}. Stress-tested net yield: ${roi} after 40% expenses. Full breakdown, comparable listings, sensitivity analysis.`;
+    : `${niceName} — ROI Not Modeled`;
+  const description = listing.projected_roi
+    ? `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location} listed at ${priceUsd}. Stress-tested net yield: ${roi} after 40% expenses. Full breakdown, comparable listings, sensitivity analysis.`
+    : `Source listing review: ${niceName} in ${location}, listed at ${priceUsd}. BVT has not modeled ROI for this asset; check the listing's scope and diligence flags before estimating returns.`;
 
   return {
     title,
@@ -259,12 +273,16 @@ function buildJsonLd(listing: any, slug: string) {
   const priceUsd = Math.round(getPriceUSD(listing));
   const location = listing.location || "Bali";
   const niceName = toTitleCase(listing.villa_name || "");
+  const outsideBali = String(listing.rate_source || "").includes("non_bali") || location === "Other Indonesian Islands";
+  const hub = locationHub(location);
 
   const realEstate = {
     "@type": "RealEstateListing",
     name: niceName,
     url: `https://balivillatruth.com/listing/${slug}`,
-    description: `${listing.bedrooms}-bedroom villa in ${location}, Indonesia. Independent net yield audit by Bali Villa Truth.`,
+    description: outsideBali
+      ? `${listing.bedrooms}-bedroom property in ${location}, Indonesia. Bali villa ROI model not applied.`
+      : `${listing.bedrooms}-bedroom villa in ${location}, Indonesia. Independent net yield audit by Bali Villa Truth.`,
     image: listing.thumbnail_url || undefined,
     offers: {
       "@type": "Offer",
@@ -274,8 +292,7 @@ function buildJsonLd(listing: any, slug: string) {
     },
     address: {
       "@type": "PostalAddress",
-      addressLocality: location,
-      addressRegion: "Bali",
+      ...(outsideBali ? {} : { addressLocality: location, addressRegion: "Bali" }),
       addressCountry: "ID",
     },
     additionalProperty: [
@@ -291,7 +308,7 @@ function buildJsonLd(listing: any, slug: string) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://balivillatruth.com" },
-      { "@type": "ListItem", position: 2, name: `${location} Villa Investment`, item: `https://balivillatruth.com/${location.toLowerCase().replace(/\s+/g, "-")}` },
+      { "@type": "ListItem", position: 2, name: hub.label, item: `https://balivillatruth.com${hub.href}` },
       { "@type": "ListItem", position: 3, name: niceName, item: `https://balivillatruth.com/listing/${slug}` },
     ],
   };
@@ -332,12 +349,13 @@ export default async function ListingPage({ params }: Props) {
   const leaseYearsForMath = leaseTermNotStated ? 15 : sourceLeaseYears;
   const nightlyRate = listing.est_nightly_rate || 0;
   const hasNightlyRate = nightlyRate > 0;
-  const occupancy = listing.est_occupancy || 0.65;
+  const occupancy = listing.est_occupancy ?? 0.65;
   const occupancyPct = Math.round(occupancy * 100);
+  const hasOccupancyModel = hasNightlyRate && occupancy > 0;
   const grossRevenue = nightlyRate * 365 * occupancy;
   const expenses = grossRevenue * 0.4;
   const netRevenue = grossRevenue - expenses;
-  const leaseDepreciation = leaseYearsForMath > 0 && priceUsd ? priceUsd / leaseYearsForMath : 0;
+  const leaseDepreciation = hasNightlyRate && leaseYearsForMath > 0 && priceUsd ? priceUsd / leaseYearsForMath : 0;
   const grossYield = priceUsd && grossRevenue > 0 ? (grossRevenue / priceUsd) * 100 : null;
   const roiDisplay = roi ? `${roi}%` : "N/A";
   const rateSource = cleanSourceLabel(listing.rate_source, "BVT market-rate model");
@@ -360,9 +378,10 @@ export default async function ListingPage({ params }: Props) {
   const currentPrice = priceUsd;
   const priceDelta = firstPrice && currentPrice ? ((currentPrice - firstPrice) / firstPrice) * 100 : null;
 
-  // Last audited timestamp
-  const lastAuditedISO = listing.last_audited_at || listing.updated_at || listing.created_at || null;
+  // The source timestamp must not advance during a no-scrape model correction.
+  const lastAuditedISO = listing.last_crawled_at || listing.last_audited_at || listing.updated_at || listing.created_at || null;
   const lastAuditedRel = formatRelativeDate(lastAuditedISO);
+  const hub = locationHub(listing.location || "Bali");
 
   return (
     <>
@@ -379,10 +398,10 @@ export default async function ListingPage({ params }: Props) {
             <Link href="/" className="hover:text-[color:var(--bvt-ink)] transition-colors">Home</Link>
             <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
             <Link
-              href={`/${(listing.location || "bali").toLowerCase().replace(/\s+/g, "-")}`}
+              href={hub.href}
               className="hover:text-[color:var(--bvt-ink)] transition-colors"
             >
-              {listing.location || "Bali"}
+              {hub.label}
             </Link>
             <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
             <span className="text-[color:var(--bvt-ink)]">Audit</span>
@@ -416,7 +435,7 @@ export default async function ListingPage({ params }: Props) {
               {lastAuditedRel && (
                 <>
                   <span>•</span>
-                  <span title={lastAuditedISO || ""}>Last re-audited {lastAuditedRel}</span>
+                  <span title={lastAuditedISO || ""}>Source checked {lastAuditedRel}</span>
                 </>
               )}
             </div>
@@ -575,22 +594,26 @@ export default async function ListingPage({ params }: Props) {
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
                     <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Occupancy</div>
-                    <div className="font-mono text-lg text-[color:var(--bvt-ink)]">{occupancyPct}%</div>
+                    <div className="font-mono text-lg text-[color:var(--bvt-ink)]">{hasOccupancyModel ? `${occupancyPct}%` : "Not modeled"}</div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      {occupancySource}. Treat this as an area/tier assumption unless the seller provides verified channel-manager data.
+                      {hasOccupancyModel
+                        ? `${occupancySource}. Treat this as an area/tier assumption unless the seller provides verified channel-manager data.`
+                        : "No occupancy estimate is applied outside the supported villa model. Request verified booking history before estimating returns."}
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
                     <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Lease decay</div>
                     <div className="font-mono text-lg text-[color:var(--bvt-ink)]">
-                      {leaseDepreciation > 0 ? `${money(leaseDepreciation)}/yr` : "No modeled decay"}
+                      {leaseDepreciation > 0 ? `${money(leaseDepreciation)}/yr` : "Not modeled"}
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                       {leaseDepreciation > 0
                         ? leaseTermNotStated
                           ? `Source lease term not stated. BVT uses a conservative ${leaseYearsForMath}-year internal assumption for the ROI stress test; verify the actual term before investing.`
                           : `${sourceLeaseYears} years remaining. Extension claims should be written, priced, and legally reviewed.`
-                        : "Modeled as freehold/no finite lease term in the source data."}
+                        : hasNightlyRate
+                          ? "Modeled as freehold/no finite lease term in the source data."
+                          : "The ROI model is not applied to this listing; verify any lease term independently."}
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
@@ -611,7 +634,9 @@ export default async function ListingPage({ params }: Props) {
               <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
                 <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-4">Net Yield Breakdown</h2>
                 <p className="text-xs text-slate-500 mb-4">
-                  Our stress-test uses conservative assumptions applied uniformly to all {">"}2,000 listings.{" "}
+                  {hasNightlyRate
+                    ? "This stress-test applies stated assumptions to this listing. "
+                    : "BVT has not modeled ROI for this listing; the figures below are unavailable until the asset is in scope. "}
                   <Link href="/methodology" className="text-[#d4943a] hover:text-[#e5a84d] underline">
                     Full methodology →
                   </Link>
@@ -623,7 +648,7 @@ export default async function ListingPage({ params }: Props) {
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
                     <span className="text-slate-400">Occupancy (area estimate)</span>
-                    <span className="font-medium">{occupancyPct}%</span>
+                    <span className="font-medium">{hasOccupancyModel ? `${occupancyPct}%` : "Not modeled"}</span>
                   </div>
                   {grossYield !== null && (
                     <div className="flex justify-between py-2 border-b border-slate-800">

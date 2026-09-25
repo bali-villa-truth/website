@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-25",
+    area: "Investor data / model scope",
+    title: "Removed Bali ROI estimates from 32 outside-Bali listings",
+    status: "Live data corrected; public explanation deployed",
+    why: "BHI normalized Lombok, Gili, and other off-island locations to Other Indonesian Islands. That label bypassed the older island-name scope check, so some listings inherited Bali fallback rates. The scope check and independent live-data verifier now recognize the normalized label. The quality-gated no-scrape correction published 32 NON_BALI_LOCATION rows with zero modeled ROI, nightly rate, and occupancy. Listing pages now explain why the model is not applied, and their structured data no longer labels these assets as Bali.",
+    url: `${SITE_URL}/listing/off-plan-premium-1-bedroom-mezzanine-villa-for-sale-in-kuta-lombok-rf11302`,
+    progressFile: ".tmp/website_progress_2026-09-25.md",
+  },
+  {
+    date: "2026-09-25",
     area: "Data refresh / failure safety",
     title: "Restored the source refresh after BHI changed its listing format",
     status: "Data refresh and website deployment live",
@@ -647,8 +656,8 @@ const pendingImprovements = [
   {
     priority: "High",
     owner: "Authenticated GSC",
-    title: "Request indexing for the new guide cluster and priority listings",
-    nextAction: "Use Search Console UI when authenticated browser access is available; Indexing API is not valid for these URLs.",
+    title: "Recheck the September indexing queue",
+    nextAction: "The Sep 25 URL-prefix GSC pass inspected all 16 vetted URLs (11 indexing requests, 5 already indexed). Reinspect the guide and Nusa Dua hub in 7-14 days; a request does not prove indexing.",
   },
   {
     priority: "Medium",
@@ -671,11 +680,6 @@ const blockers = [
     note: "The current website dashboard accepts a hardcoded fallback password from the staged auth source. A private Vercel environment password must be configured and verified before removing the fallback, or the dashboard could become inaccessible.",
   },
   {
-    blocker: "GSC manual indexing",
-    status: "Blocked by authenticated browser/tool access",
-    note: "No deterministic Search Console submission script exists; local Google token is Sheets-only.",
-  },
-  {
     blocker: "Backlink outreach",
     status: "Blocked by user approval/account access",
     note: "Prepared outreach exists, but no third-party posting or emailing should happen without approval.",
@@ -693,6 +697,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "As of 2026-09-25 21:56 UTC, 32 Other Indonesian Islands rows are now flagged NON_BALI_LOCATION and published without modeled ROI, nightly rate, or occupancy. Before correction, the normalized source label bypassed the Bali-only model-scope rule; the independent live Supabase verifier detected 32 violations. After the quality-gated no-scrape refresh, that verifier passes with zero outside-Bali scope violations across 2,455 audited rows, 31 physical-spec gaps, and zero unmodeled rows with nonzero values. Google Sheets remains blocked by OAuth invalid_grant. The first pipeline continuation stopped only because its old live-site check expected the now-live occupancy guide to return 404; that expectation has been corrected.",
   "As of 2026-09-25 10:12 UTC, live Supabase checks pass with 2,455 audited rows, PHYSICAL_DATA_INCOMPLETE at 31, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. The canonical site and private dashboard access controls pass. The repaired BHI parser and physical-field carry-forward completed a quality-gated refresh. The successful website deployment put the occupancy guide live and brought the sitemap to exact coverage: 2,455 audited listings plus 20 static URLs, with no missing or extra listings. Six representative listing pages now pass visible-content checks; the prior tenure alert was a false positive from a related/footer link. No outside-Bali sample exists to test today.",
   "As of 2026-09-18 06:51 UTC, live Supabase data-quality checks pass with 2,443 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Automation freshness passes with launchd loaded, 23,611.6 MB free, and 23.78 hours of pipeline-log age immediately before the next local-midnight run. The canonical site is healthy and private dashboard APIs return 401. The listing verifier still finds the known RF10173B lease-term-not-stated/freehold contradiction, and sitemap coverage has drifted to 916 missing audited listing URLs, 699 stale/extra listing URLs, and 1 missing static URL until the staged deploy ships.",
   "As of 2026-07-12 18:34 UTC, live Supabase data-quality checks still pass after the July 12 scheduled scrape and afternoon SEO pass: 2,353 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Disk headroom is 9,164.2 MB, above the 1GB guardrail, and the daily-pipeline log age is 11.5 hours. The canonical site remains healthy, private dashboard APIs remain locked with 401, while listing-page tenure wording and sitemap coverage remain warn-only deploy-blocked classes.",
@@ -1358,8 +1363,9 @@ const contentPages = [
 
 const nextActions = [
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
+  "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
   "Reauthorize Google Sheets interactively; the September 25 pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
-  "When authenticated Search Console access is available, inspect the September 25 curated URL queue and record fresh clicks, impressions, and average position without reusing May results as current metrics.",
+  "Reinspect the completed September 25 GSC queue in 7-14 days using the same URL-prefix property, and track whether the sitemap read count and exact-query ROI visibility change.",
   "Set and verify a private website-dashboard password in Vercel, then remove the hardcoded fallback without locking out the owner.",
   "Rotate the stale GitHub token in .env; the September 25 deploy used the existing authenticated GitHub CLI token for one process.",
   "Continue mobile checks after listing or filter changes, and assess a saved/shareable comparison workflow after confirming its user-data model.",
