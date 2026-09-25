@@ -106,6 +106,20 @@ export default function Methodology() {
             no inflated rates, no false precision. If we don&apos;t have real
             data, we tell you — and we give you the tools to plug in your own.
           </p>
+          <div className="mt-6 flex flex-wrap gap-3 text-[14px]">
+            <Link href="/guides/bali-villa-roi" className="link-editorial">
+              Bali villa ROI guide
+            </Link>
+            <Link href="/guides/bali-villa-leasehold-vs-freehold-roi" className="link-editorial">
+              Leasehold vs freehold ROI
+            </Link>
+            <Link href="/guides/bali-villa-management-fees" className="link-editorial">
+              Management fees
+            </Link>
+            <Link href="/guides/bali-villa-occupancy-rates" className="link-editorial">
+              Occupancy rates
+            </Link>
+          </div>
         </header>
 
         {/* === SECTION: Data Sources === */}

@@ -2,11 +2,53 @@ import { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 
 const SITE_URL = "https://balivillatruth.com";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+type ListingSitemapRow = {
+  slug: string | null;
+  last_crawled_at: string | null;
+};
+
+async function fetchListingSitemapRows(): Promise<ListingSitemapRow[]> {
+  const pageSize = 1000;
+  let from = 0;
+  const rows: ListingSitemapRow[] = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("listings_tracker")
+      .select("slug, last_crawled_at")
+      .eq("status", "audited")
+      .not("slug", "is", null)
+      .not("slug", "eq", "")
+      .order("slug", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    rows.push(...data);
+
+    if (data.length < pageSize) {
+      break;
+    }
+
+    from += pageSize;
+  }
+
+  return rows;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date().toISOString();
@@ -50,6 +92,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.81,
     },
     {
+      url: `${SITE_URL}/guides/bali-villa-occupancy-rates`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${SITE_URL}/about`,
       lastModified: now,
       changeFrequency: "monthly",
@@ -91,24 +139,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Dynamic listing pages — fetch all slugs from Supabase
+  // Dynamic listing pages — fetch all slugs from Supabase.
+  // Supabase REST responses can be capped, so paginate explicitly.
   try {
-    const { data: listings } = await supabase
-      .from("listings_tracker")
-      .select("slug, last_crawled_at")
-      .eq("status", "audited")
-      .not("slug", "is", null)
-      .not("slug", "eq", "");
+    const listings = await fetchListingSitemapRows();
 
-    if (listings) {
-      for (const listing of listings) {
-        routes.push({
-          url: `${SITE_URL}/listing/${listing.slug}`,
-          lastModified: listing.last_crawled_at || now,
-          changeFrequency: "weekly",
-          priority: 0.6,
-        });
-      }
+    for (const listing of listings) {
+      routes.push({
+        url: `${SITE_URL}/listing/${listing.slug}`,
+        lastModified: listing.last_crawled_at || now,
+        changeFrequency: "weekly",
+        priority: 0.6,
+      });
     }
   } catch (e) {
     // If Supabase fetch fails, sitemap still works with static pages

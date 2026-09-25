@@ -56,7 +56,22 @@ function formatRelativeDate(iso?: string | null): string | null {
 function cleanSourceLabel(value?: string | null, fallback = "BVT model estimate"): string {
   const raw = (value || "").trim();
   if (!raw) return fallback;
-  if (raw.toLowerCase() === "auditor") return "BVT audited market estimate";
+  const normalized = raw.toLowerCase();
+  if (normalized === "auditor") return "BVT audited market estimate";
+  if (normalized === "bvt_market_model") return "BVT market-rate estimate";
+  if (normalized === "bvt_market_model_near_budget") return "BVT market-rate estimate with near-budget caution";
+  if (normalized === "bvt_market_model_budget_discount") return "BVT market-rate estimate with budget adjustment";
+  if (normalized === "bvt_market_model_extreme_budget_discount") return "BVT market-rate estimate with extreme-budget adjustment";
+  if (normalized === "bvt_market_model_fallback") return "BVT fallback market-rate estimate (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_near_budget") return "BVT fallback market-rate estimate with near-budget caution (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_budget_discount") return "BVT fallback market-rate estimate with budget adjustment (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_extreme_budget_discount") return "BVT fallback market-rate estimate with extreme-budget adjustment (no exact area model)";
+  if (normalized === "unmodeled_missing_bedrooms") return "Not modeled: bedroom/unit count not verified";
+  if (normalized === "unmodeled_non_bali_location") return "Not modeled: outside Bali model scope";
+  if (normalized === "unmodeled_multi_unit") return "Not modeled: non-villa, multi-unit, or hospitality asset";
+  if (normalized === "review-density occupancy estimate") return "Review-density occupancy estimate";
+  if (normalized === "flat fallback occupancy assumption" || normalized === "flat (65%)") return "Flat fallback occupancy assumption";
+  if (normalized.startsWith("review-based")) return "Review-density occupancy estimate";
   return raw
     .replace(/_/g, " ")
     .replace(/\s+/g, " ")
@@ -77,6 +92,11 @@ const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slat
   OFF_PLAN: { label: "OFF PLAN", tone: "red", tip: "Property is not yet built. Higher risk: construction delays, specification changes, developer default." },
   EXTREME_BUDGET: { label: "EXTREME BUDGET", tone: "red", tip: "Price is far below area norms. Likely major issue: title problem, zoning, structural condition — verify carefully." },
   MULTI_UNIT: { label: "MULTI UNIT", tone: "amber", tip: "Listing covers multiple units — per-unit economics may differ from the headline figure." },
+  MULTI_UNIT_MODEL_UNSUPPORTED: { label: "MODEL NOT APPLIED", tone: "red", tip: "BVT does not apply its single-villa ROI model to apartment/penthouse units, hotels, resorts, apartment buildings, or villa portfolios without verified unit-level revenue and expense data." },
+  LEASE_TERM_NOT_STATED: { label: "LEASE TERM NOT STATED", tone: "amber", tip: "Source listing is leasehold but does not state the remaining lease term. Verify the actual term and extension price before underwriting." },
+  BEDROOM_COUNT_NOT_STATED: { label: "BEDROOM COUNT NOT STATED", tone: "amber", tip: "Source listing does not expose a safe bedroom count. BVT does not model ROI until the bedroom/unit count is verified." },
+  PHYSICAL_DATA_INCOMPLETE: { label: "PHYSICAL DATA INCOMPLETE", tone: "amber", tip: "Source listing is missing one or more physical specs such as bathrooms, land size, or building size." },
+  NON_BALI_LOCATION: { label: "OUTSIDE BALI MODEL", tone: "amber", tip: "This source listing is outside Bali. BVT keeps it visible but does not model Bali villa ROI for it." },
 };
 
 // ---------------------------------------------------------------------------
@@ -98,7 +118,7 @@ async function getComps(listing: any, max = 3) {
   if (!listing.location || !listing.bedrooms) return [] as any[];
   const { data } = await supabase
     .from("listings_tracker")
-    .select("id, slug, villa_name, bedrooms, last_price, projected_roi, thumbnail_url, lease_years, land_size")
+    .select("id, slug, villa_name, bedrooms, last_price, projected_roi, thumbnail_url, features, lease_years, land_size")
     .eq("status", "audited")
     .eq("location", listing.location)
     .eq("bedrooms", listing.bedrooms)
@@ -148,6 +168,36 @@ function getPriceUSD(listing: any): number {
   return currency === "USD" ? amount : amount / r;
 }
 
+function isLeaseholdListing(listing: any): boolean {
+  const features = String(listing.features || "").toLowerCase();
+  const years = Number(listing.lease_years) || 0;
+  return features.includes("leasehold") || features.includes("hak sewa") || (years > 0 && years < 999);
+}
+
+function isFreeholdListing(listing: any): boolean {
+  const features = String(listing.features || "").toLowerCase();
+  const years = Number(listing.lease_years) || 0;
+  return features.includes("freehold") || features.includes("hak milik") || years === 999;
+}
+
+function tenureLabel(listing: any): string {
+  const years = Number(listing.lease_years) || 0;
+  if (isLeaseholdListing(listing)) {
+    return years > 0 ? `Leasehold (${years}yr)` : "Leasehold (term not stated)";
+  }
+  if (isFreeholdListing(listing)) return "Freehold";
+  return "Tenure not stated";
+}
+
+function tenureSchemaValue(listing: any): string {
+  const years = Number(listing.lease_years) || 0;
+  if (isLeaseholdListing(listing)) {
+    return years > 0 ? `Leasehold — ${years} years` : "Leasehold — term not stated";
+  }
+  if (isFreeholdListing(listing)) return "Freehold";
+  return "Tenure not stated";
+}
+
 // ---------------------------------------------------------------------------
 // Dynamic metadata (SEO)
 // ---------------------------------------------------------------------------
@@ -167,9 +217,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : "N/A";
   const beds = listing.bedrooms || "?";
   const location = listing.location || "Bali";
-  const leaseType = listing.lease_years && listing.lease_years > 0
-    ? `Leasehold (${listing.lease_years}yr)`
-    : "Freehold";
+  const leaseType = tenureLabel(listing);
   const niceName = toTitleCase(listing.villa_name || "");
 
   // Title puts the villa name first so branded queries (people Googling the
@@ -235,7 +283,7 @@ function buildJsonLd(listing: any, slug: string) {
       { "@type": "PropertyValue", name: "Land Size", value: listing.land_size ? `${listing.land_size} m²` : "N/A" },
       { "@type": "PropertyValue", name: "Building Size", value: listing.building_size ? `${listing.building_size} m²` : "N/A" },
       { "@type": "PropertyValue", name: "Net Yield (Estimated)", value: listing.projected_roi ? `${Number(listing.projected_roi).toFixed(1)}%` : "N/A" },
-      { "@type": "PropertyValue", name: "Tenure", value: listing.lease_years > 0 ? `Leasehold — ${listing.lease_years} years` : "Freehold" },
+      { "@type": "PropertyValue", name: "Tenure", value: tenureSchemaValue(listing) },
     ],
   };
 
@@ -273,8 +321,15 @@ export default async function ListingPage({ params }: Props) {
     ? Number(listing.projected_roi).toFixed(1)
     : null;
   const flags: string[] = listing.flags ? listing.flags.split(",").filter(Boolean) : [];
-  const leaseType = listing.lease_years && listing.lease_years > 0 ? "Leasehold" : "Freehold";
-  const leaseYears = listing.lease_years || 0;
+  const sourceLeaseYears = Number(listing.lease_years) || 0;
+  const leaseTermNotStated = flags.includes("LEASE_TERM_NOT_STATED") || (isLeaseholdListing(listing) && sourceLeaseYears === 0);
+  const leaseType = isLeaseholdListing(listing)
+    ? "Leasehold"
+    : isFreeholdListing(listing)
+      ? "Freehold"
+      : "Tenure not stated";
+  const tenureDisplay = tenureLabel(listing);
+  const leaseYearsForMath = leaseTermNotStated ? 15 : sourceLeaseYears;
   const nightlyRate = listing.est_nightly_rate || 0;
   const hasNightlyRate = nightlyRate > 0;
   const occupancy = listing.est_occupancy || 0.65;
@@ -282,7 +337,7 @@ export default async function ListingPage({ params }: Props) {
   const grossRevenue = nightlyRate * 365 * occupancy;
   const expenses = grossRevenue * 0.4;
   const netRevenue = grossRevenue - expenses;
-  const leaseDepreciation = leaseYears > 0 && priceUsd ? priceUsd / leaseYears : 0;
+  const leaseDepreciation = leaseYearsForMath > 0 && priceUsd ? priceUsd / leaseYearsForMath : 0;
   const grossYield = priceUsd && grossRevenue > 0 ? (grossRevenue / priceUsd) * 100 : null;
   const roiDisplay = roi ? `${roi}%` : "N/A";
   const rateSource = cleanSourceLabel(listing.rate_source, "BVT market-rate model");
@@ -356,7 +411,7 @@ export default async function ListingPage({ params }: Props) {
               )}
               <span>•</span>
               <span className={leaseType === "Freehold" ? "text-emerald-400" : "text-amber-400"}>
-                {leaseType}{leaseYears > 0 ? ` (${leaseYears} years)` : ""}
+                {tenureDisplay}
               </span>
               {lastAuditedRel && (
                 <>
@@ -468,7 +523,7 @@ export default async function ListingPage({ params }: Props) {
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Tenure</span>
                     <span className={`font-medium ${leaseType === "Freehold" ? "text-emerald-400" : "text-amber-400"}`}>
-                      {leaseType}{leaseYears > 0 ? ` — ${leaseYears} yrs remaining` : ""}
+                      {tenureDisplay}
                     </span>
                   </div>
                   {listing.price_per_room && listing.price_per_room > 0 && (
@@ -532,7 +587,9 @@ export default async function ListingPage({ params }: Props) {
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                       {leaseDepreciation > 0
-                        ? `${leaseYears} years remaining. Extension claims should be written, priced, and legally reviewed.`
+                        ? leaseTermNotStated
+                          ? `Source lease term not stated. BVT uses a conservative ${leaseYearsForMath}-year internal assumption for the ROI stress test; verify the actual term before investing.`
+                          : `${sourceLeaseYears} years remaining. Extension claims should be written, priced, and legally reviewed.`
                         : "Modeled as freehold/no finite lease term in the source data."}
                     </p>
                   </div>
@@ -589,7 +646,9 @@ export default async function ListingPage({ params }: Props) {
                   {leaseDepreciation > 0 && (
                     <div className="flex justify-between py-2 border-b border-slate-800">
                       <span className="text-slate-400">
-                        Lease Depreciation ({priceUsd?.toLocaleString("en-US")} ÷ {leaseYears} yrs)
+                        {leaseTermNotStated
+                          ? `Lease Depreciation (${priceUsd?.toLocaleString("en-US")} ÷ conservative ${leaseYearsForMath}yr assumption)`
+                          : `Lease Depreciation (${priceUsd?.toLocaleString("en-US")} ÷ ${sourceLeaseYears} yrs)`}
                       </span>
                       <span className="font-medium text-amber-400">
                         −${Math.round(leaseDepreciation).toLocaleString("en-US")}
@@ -676,7 +735,7 @@ export default async function ListingPage({ params }: Props) {
                           )}
                           <div className="p-3">
                             <div className="text-[11px] text-slate-500 uppercase tracking-wider mb-1">
-                              {c.bedrooms} bed • {c.lease_years > 0 ? `Leasehold ${c.lease_years}y` : "Freehold"}
+                              {c.bedrooms} bed • {tenureLabel(c)}
                             </div>
                             <div className="text-sm font-semibold line-clamp-2 mb-2">{cName}</div>
                             <div className="flex items-center justify-between">

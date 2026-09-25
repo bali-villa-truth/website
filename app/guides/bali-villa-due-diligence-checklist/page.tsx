@@ -291,6 +291,7 @@ export default function BaliVillaDueDiligenceChecklistPage() {
                 { href: "/guides/bali-villa-roi", label: "Read the ROI guide", copy: "Understand gross yield, net yield, expenses, and occupancy." },
                 { href: "/guides/bali-villa-leasehold-vs-freehold-roi", label: "Model lease decay", copy: "See how ownership structure changes true return." },
                 { href: "/guides/bali-villa-management-fees", label: "Check operating costs", copy: "Model management, booking, maintenance, utilities, and reserve before offer." },
+                { href: "/guides/bali-villa-occupancy-rates", label: "Stress-test occupancy", copy: "Check whether booked-night assumptions are supported by area demand and records." },
                 { href: "/contact", label: "Request a custom review", copy: "Use when a specific deal needs deeper human diligence." },
               ].map((card) => (
                 <Link

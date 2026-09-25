@@ -166,6 +166,45 @@ function fmtPct(n: number, decimals = 1): string {
   return `${n.toFixed(decimals)}%`;
 }
 
+function cleanSourceLabel(value?: string | null, fallback = "BVT market-rate estimate"): string {
+  const raw = (value || "").trim();
+  if (!raw) return fallback;
+  const normalized = raw.toLowerCase();
+  if (normalized === "auditor") return "BVT audited market estimate";
+  if (normalized === "bvt_market_model") return "BVT market-rate estimate";
+  if (normalized === "bvt_market_model_near_budget") return "BVT market-rate estimate with near-budget caution";
+  if (normalized === "bvt_market_model_budget_discount") return "BVT market-rate estimate with budget adjustment";
+  if (normalized === "bvt_market_model_extreme_budget_discount") return "BVT market-rate estimate with extreme-budget adjustment";
+  if (normalized === "bvt_market_model_fallback") return "BVT fallback market-rate estimate (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_near_budget") return "BVT fallback market-rate estimate with near-budget caution (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_budget_discount") return "BVT fallback market-rate estimate with budget adjustment (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_extreme_budget_discount") return "BVT fallback market-rate estimate with extreme-budget adjustment (no exact area model)";
+  if (normalized === "unmodeled_missing_bedrooms") return "Not modeled: bedroom/unit count not verified";
+  if (normalized === "unmodeled_non_bali_location") return "Not modeled: outside Bali model scope";
+  if (normalized === "unmodeled_multi_unit") return "Not modeled: non-villa, multi-unit, or hospitality asset";
+  return raw.replace(/_/g, " ").replace(/\s+/g, " ");
+}
+
+function cleanOccupancySourceLabel(
+  value?: string | null,
+  confidence?: string | null,
+  sampleSize?: number | null,
+  fallback = "flat fallback occupancy assumption",
+): string {
+  const raw = (value || "").trim();
+  const normalized = raw.toLowerCase();
+  const conf = (confidence || "").trim().toLowerCase();
+  const n = Number(sampleSize || 0);
+  if (normalized.startsWith("review") || ["high", "medium", "low"].includes(conf) || n > 0) {
+    return "review-density occupancy estimate";
+  }
+  if (normalized === "flat fallback occupancy assumption" || normalized === "flat (65%)" || normalized.includes("flat")) {
+    return "flat fallback occupancy assumption";
+  }
+  if (!raw) return fallback;
+  return raw.replace(/_/g, " ").replace(/\s+/g, " ");
+}
+
 function yieldTier(pct: number): { color: string; bg: string; label: string } {
   if (pct >= 8) return { color: COLORS.yieldGreen, bg: COLORS.yieldGreenBg, label: "Strong" };
   if (pct >= 5) return { color: COLORS.yieldAmber, bg: COLORS.yieldAmberBg, label: "Moderate" };
@@ -448,18 +487,18 @@ function renderConfidenceSection(doc: PDFKit.PDFDocument, villa: Villa, audit: A
 
   const occConf = villa.occupancy_confidence || "—";
   const occN = villa.occupancy_sample_size || 0;
-  const occSource = villa.occupancy_source || "flat 65% assumption";
-  const rateSource = villa.rate_source || "scraper";
+  const occSource = cleanOccupancySourceLabel(villa.occupancy_source, occConf, occN);
+  const rateSource = cleanSourceLabel(villa.rate_source);
 
   const headerRow = ["Source", "Value", "Confidence"];
   const rows: string[][] = [
     headerRow,
     ["Nightly Rate",
-     rateSource.replace(/_/g, " "),
+     rateSource,
      "Area median from Booking.com + Airbnb (n≈200-500 listings/area)"],
     ["Occupancy",
-     `${fmtPct(audit.occupancy * 100, 0)} (${occSource})`,
-     occN > 0 ? `${occConf.toUpperCase()} (n=${occN})` : "Flat assumption"],
+     `${fmtPct(audit.occupancy * 100, 0)} - ${occSource}`,
+     occN > 0 ? `${occConf.toUpperCase()} (n=${occN})` : "Flat fallback"],
     ["Asking Price", villa.price_description || "—", "Scraped from Bali Home Immo listing"],
     ["Lease Years",
      audit.lease_years ? String(audit.lease_years) : "N/A (Freehold)",

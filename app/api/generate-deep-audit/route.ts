@@ -534,7 +534,7 @@ function generateDeepPdf(
       renderHeader(doc, villa, "Overview");
       renderStressHeadline(doc, audit, scenarios);
       renderKeyStats(doc, villa, audit);
-      renderDataProvenance(doc, villa);
+      renderDataProvenance(doc, villa, audit);
 
       // PAGE 3 — Comparables
       doc.addPage();
@@ -689,16 +689,55 @@ function toTitleCase(s: string): string {
   return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function renderDataProvenance(doc: PDFKit.PDFDocument, villa: Villa) {
+function cleanRateSourceLabel(value?: string | null, fallback = "BVT market-rate estimate"): string {
+  const raw = (value || "").trim();
+  if (!raw) return fallback;
+  const normalized = raw.toLowerCase();
+  if (normalized === "auditor") return "BVT audited market estimate";
+  if (normalized === "bvt_market_model") return "BVT market-rate estimate";
+  if (normalized === "bvt_market_model_near_budget") return "BVT market-rate estimate with near-budget caution";
+  if (normalized === "bvt_market_model_budget_discount") return "BVT market-rate estimate with budget adjustment";
+  if (normalized === "bvt_market_model_extreme_budget_discount") return "BVT market-rate estimate with extreme-budget adjustment";
+  if (normalized === "bvt_market_model_fallback") return "BVT fallback market-rate estimate (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_near_budget") return "BVT fallback market-rate estimate with near-budget caution (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_budget_discount") return "BVT fallback market-rate estimate with budget adjustment (no exact area model)";
+  if (normalized === "bvt_market_model_fallback_extreme_budget_discount") return "BVT fallback market-rate estimate with extreme-budget adjustment (no exact area model)";
+  if (normalized === "unmodeled_missing_bedrooms") return "Not modeled: bedroom/unit count not verified";
+  if (normalized === "unmodeled_non_bali_location") return "Not modeled: outside Bali model scope";
+  if (normalized === "unmodeled_multi_unit") return "Not modeled: non-villa, multi-unit, or hospitality asset";
+  return raw.replace(/_/g, " ").replace(/\s+/g, " ");
+}
+
+function cleanOccupancySourceLabel(
+  value?: string | null,
+  confidence?: string | null,
+  sampleSize?: number | null,
+  fallback = "flat fallback occupancy assumption",
+): string {
+  const raw = (value || "").trim();
+  const normalized = raw.toLowerCase();
+  const conf = (confidence || "").trim().toLowerCase();
+  const n = Number(sampleSize || 0);
+  if (normalized.startsWith("review") || ["high", "medium", "low"].includes(conf) || n > 0) {
+    return "review-density occupancy estimate";
+  }
+  if (normalized === "flat fallback occupancy assumption" || normalized === "flat (65%)" || normalized.includes("flat")) {
+    return "flat fallback occupancy assumption";
+  }
+  if (!raw) return fallback;
+  return raw.replace(/_/g, " ").replace(/\s+/g, " ");
+}
+
+function renderDataProvenance(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbers) {
   sectionHeader(doc, "Data Provenance");
-  const rateSource = villa.rate_source || "bvt_auditor";
-  const occSource = villa.occupancy_source || "flat 65% assumption";
+  const rateSource = cleanRateSourceLabel(villa.rate_source || "bvt_market_model");
   const occN = villa.occupancy_sample_size || 0;
   const occConf = villa.occupancy_confidence || "—";
+  const occSource = cleanOccupancySourceLabel(villa.occupancy_source, occConf, occN);
   const rows: string[][] = [
     ["Signal", "Value", "Confidence"],
-    ["Nightly rate", rateSource.replace(/_/g, " "), "BVT editorial estimate. We do not have a licensing agreement with AirDNA or Booking — treat as a considered guess, not a measurement."],
-    ["Occupancy", occSource, occN > 0 ? `${String(occConf).toUpperCase()} (n=${occN} reviews)` : "Flat assumption"],
+    ["Nightly rate", rateSource, "BVT market-rate model. We do not have a licensing agreement with AirDNA or Booking — treat as a stress-test estimate, not a measurement."],
+    ["Occupancy", `${fmtPct(audit.occupancy * 100, 0)} - ${occSource}`, occN > 0 ? `${String(occConf).toUpperCase()} (n=${occN} area sample)` : "Flat fallback"],
     ["Asking price", villa.price_description || "—", "Scraped from source listing; verify in-person."],
     ["Lease years", villa.lease_years ? String(villa.lease_years) : "N/A", "From listing description; verify via Notaris."],
   ];
@@ -1452,8 +1491,8 @@ function buildTestProfile(n: number): TestProfile | null {
     features: "Private pool, garden, parking",
     occupancy_confidence: "medium",
     occupancy_sample_size: 24,
-    occupancy_source: "airdna",
-    rate_source: "auditor",
+    occupancy_source: "review-density occupancy estimate",
+    rate_source: "bvt_market_model",
     land_size: "250 m2",
     building_size: "180 m2",
     listing_type: "freehold",

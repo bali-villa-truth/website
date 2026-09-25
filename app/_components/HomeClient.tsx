@@ -18,6 +18,18 @@ type HomeClientProps = {
   initialFlaggedCount?: number;
 };
 
+const getPipelineFlags = (villa: any): string[] =>
+  (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
+
+const isRoiUnmodeled = (villa: any): boolean => {
+  const source = String(villa.rate_source || '').toLowerCase();
+  const flags = getPipelineFlags(villa);
+  return source.startsWith('unmodeled_')
+    || flags.includes('BEDROOM_COUNT_NOT_STATED')
+    || flags.includes('NON_BALI_LOCATION')
+    || flags.includes('MULTI_UNIT_MODEL_UNSUPPORTED');
+};
+
 // Indonesian real estate glossary for foreign buyers
 const GLOSSARY: Record<string, { label: string; tip: string }> = {
   'hak_milik': { label: 'Hak Milik', tip: 'Freehold ownership — the strongest title in Indonesia. Foreigners cannot hold Hak Milik directly; most use a PT PMA (foreign-owned company) or nominee structure.' },
@@ -483,10 +495,7 @@ export default function HomeClient({
     return { text: `${symbol} ${Math.abs(pctChange).toFixed(0)}%`, direction };
   };
 
-  const getPipelineFlags = (villa: any): string[] =>
-    (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
-
-  const highRiskPipelineFlags = new Set(['SHORT_LEASE', 'OFF_PLAN', 'EXTREME_BUDGET']);
+  const highRiskPipelineFlags = new Set(['SHORT_LEASE', 'OFF_PLAN', 'EXTREME_BUDGET', 'MULTI_UNIT_MODEL_UNSUPPORTED']);
   const materialPipelineFlags = new Set([
     'SHORT_LEASE',
     'OFF_PLAN',
@@ -496,7 +505,11 @@ export default function HomeClient({
     'INFLATED_ROI',
     'RATE_PRICE_GAP',
     'MISSING_DATA',
+    'BEDROOM_COUNT_NOT_STATED',
+    'PHYSICAL_DATA_INCOMPLETE',
+    'NON_BALI_LOCATION',
     'MULTI_UNIT',
+    'MULTI_UNIT_MODEL_UNSUPPORTED',
   ]);
 
   // --- Mini sparkline SVG for price history ---
@@ -553,9 +566,9 @@ export default function HomeClient({
     );
   };
 
-  // --- Display nightly & occupancy for analysis (use DB value or conservative default so every property shows analysis) ---
+  // --- Display nightly & occupancy for analysis; never backfill rows explicitly marked unmodeled. ---
   const getDisplayNightly = (villa: any): number =>
-    villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (100 + ((villa.bedrooms || 0) * 35));
+    villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (isRoiUnmodeled(villa) ? 0 : (100 + ((villa.bedrooms || 0) * 35)));
   const getDisplayOccupancy = (villa: any): number =>
     (villa.est_occupancy ?? 0.65) * 100;
 
@@ -662,7 +675,8 @@ export default function HomeClient({
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
   const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
     const priceUSD = getPriceUSD(villa);
-    if (priceUSD <= 0) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0, leaseDepreciation: 0, depreciationYield: 0, isFreehold: true, leaseYears: 0 };
+    const unmodeled = isRoiUnmodeled(villa);
+    if (priceUSD <= 0 || unmodeled) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0, leaseDepreciation: 0, depreciationYield: 0, isFreehold: true, leaseYears: 0, unmodeled };
 
     const baseNightly = villa.est_nightly_rate || getDisplayNightly(villa);
     const adjustedNightly = baseNightly * nightlyMultiplier;
@@ -691,6 +705,7 @@ export default function HomeClient({
       depreciationYield: Math.round(depreciationYield * 10) / 10,
       isFreehold,
       leaseYears: years,
+      unmodeled,
     };
   };
 
@@ -721,19 +736,31 @@ export default function HomeClient({
       const features = (villa.features || '').toLowerCase();
       const isLeasehold = features.includes('leasehold') || features.includes('hak sewa');
       const missingLease = isLeasehold && (years === 15 || years === 0);
-      const missingBeds = Number(villa.bedrooms) === 1 && pipelineFlags.filter((f: string) => f === 'MISSING_DATA').length > 1;
+      const missingBeds = pipelineFlags.includes('BEDROOM_COUNT_NOT_STATED') || (Number(villa.bedrooms) === 1 && pipelineFlags.filter((f: string) => f === 'MISSING_DATA').length > 1);
 
       if (missingLease) {
         const annualDep = priceUSD > 0 && years > 0 ? Math.round(priceUSD / years) : 0;
         flags.push({ level: 'assumed', label: 'Lease Assumed', detail: `Agent omitted lease duration. BVT conservatively assumed a 15-year lease with $${annualDep.toLocaleString()}/yr depreciation to protect your ROI projection. Verify the actual lease term before investing.` });
       }
       if (missingBeds) {
-        flags.push({ level: 'assumed', label: 'Beds Assumed', detail: `Agent omitted bedroom count. BVT defaulted to 1 bedroom for rate estimation. The actual nightly rate may differ — verify the floor plan.` });
+        flags.push({ level: 'assumed', label: 'Beds Missing', detail: `Source omitted a safe bedroom/unit count. BVT does not model ROI for this row until the count is verified from plans, room inventory, or management records.` });
       }
       // Generic fallback if we can't determine which assumption
       if (!missingLease && !missingBeds) {
         flags.push({ level: 'assumed', label: 'BVT Assumed', detail: `Some listing data was missing. BVT applied conservative defaults to protect the ROI projection. Verify key details before investing.` });
       }
+    }
+
+    if (pipelineFlags.includes('PHYSICAL_DATA_INCOMPLETE')) {
+      flags.push({ level: 'assumed', label: 'Specs Missing', detail: `The source listing is missing one or more physical specs such as bathrooms, land size, or building size. Verify the floor plan and site measurements before comparing price per sqm or build quality.` });
+    }
+
+    if (pipelineFlags.includes('NON_BALI_LOCATION')) {
+      flags.push({ level: 'assumed', label: 'Outside Bali Model', detail: `This source listing is outside Bali. BVT keeps it visible for source transparency, but does not model Bali villa ROI, occupancy, or nightly rate for this asset.` });
+    }
+
+    if (pipelineFlags.includes('MULTI_UNIT_MODEL_UNSUPPORTED')) {
+      flags.push({ level: 'assumed', label: 'Model Not Applied', detail: `This looks like an apartment/penthouse unit, hotel, resort, apartment building, or multi-unit portfolio. BVT does not apply the single-villa ROI model until unit-level revenue, expenses, occupancy, and management structure are verified.` });
     }
 
     if (pipelineFlags.includes('BUDGET_VILLA')) {
@@ -1293,6 +1320,7 @@ export default function HomeClient({
               const redFlags = getRedFlags(villa);
               const hasDanger = redFlags.some(f => f.level === 'danger');
               const hasWarning = redFlags.length > 0;
+              const isUnmodeled = isRoiUnmodeled(villa);
 
               return (
                 <div key={villa.id} className="py-5 group">
@@ -1355,7 +1383,7 @@ export default function HomeClient({
                         netRoi >= 7 ? 'text-[color:var(--bvt-ink)]' :
                         netRoi >= 0 ? 'text-[color:var(--bvt-ink-muted)]' :
                         'text-[color:var(--bvt-bad)]'
-                      }`}>{netRoi.toFixed(1)}<span className="text-[color:var(--bvt-ink-dim)] ml-0.5">%</span></div>
+                      }`}>{isUnmodeled ? 'N/A' : <>{netRoi.toFixed(1)}<span className="text-[color:var(--bvt-ink-dim)] ml-0.5">%</span></>}</div>
                     </div>
                     <div className="py-3 pl-3 border-l border-[color:var(--bvt-hairline)]">
                       <div className="label-micro mb-1">Tenure</div>
@@ -1379,7 +1407,7 @@ export default function HomeClient({
                       <BarChart3 size={11} strokeWidth={1.5} /> {compareSet.has(villa.id) ? 'Selected' : 'Compare'}
                     </button>
                     <span className="font-mono text-[10px] tabular-nums text-[color:var(--bvt-ink-dim)] flex-1 text-center">
-                      ${getDisplayNightly(villa)}/nt · {Math.round(getDisplayOccupancy(villa))}% occ
+                      {isUnmodeled ? 'ROI not modeled' : `$${getDisplayNightly(villa)}/nt · ${Math.round(getDisplayOccupancy(villa))}% occ`}
                     </span>
                     {villa.slug ? (
                       <Link href={`/listing/${villa.slug}`} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] transition-colors">
@@ -1480,6 +1508,7 @@ export default function HomeClient({
                     const preDepreciationNet = priceUSD > 0 ? (netRevenue / priceUSD) * 100 : 0;
                     const hasDanger = redFlags.some(f => f.level === 'danger');
                     const hasWarning = redFlags.length > 0;
+                    const isUnmodeled = isRoiUnmodeled(villa);
 
                     return (
                     <tr key={villa.id} className="transition-colors group hover:bg-[color:var(--bvt-ink)]/[0.04]" onMouseEnter={() => startTransition(() => setHoveredListingUrl(villa.url))} onMouseLeave={() => startTransition(() => setHoveredListingUrl(null))}>
@@ -1586,12 +1615,18 @@ export default function HomeClient({
                               netRoi >= 0 ? 'text-[color:var(--bvt-ink-muted)]' :
                               'text-[color:var(--bvt-bad)]'
                             }`}>
-                                {netRoi.toFixed(1)}<span className="text-[14px] text-[color:var(--bvt-ink-dim)] ml-0.5">%</span>
+                                {isUnmodeled ? <span className="text-[15px] tracking-normal">N/A</span> : <>{netRoi.toFixed(1)}<span className="text-[14px] text-[color:var(--bvt-ink-dim)] ml-0.5">%</span></>}
                             </div>
                             <p className="text-[10px] text-[color:var(--bvt-ink-dim)] mt-1.5 font-mono tabular-nums">
-                              <span className="line-through opacity-60">{grossRoi.toFixed(1)}%</span>
-                              <span className="mx-1.5 text-[color:var(--bvt-ink-faint)]">·</span>
-                              ${getDisplayNightly(villa)}/nt
+                              {isUnmodeled ? (
+                                <span>not modeled</span>
+                              ) : (
+                                <>
+                                  <span className="line-through opacity-60">{grossRoi.toFixed(1)}%</span>
+                                  <span className="mx-1.5 text-[color:var(--bvt-ink-faint)]">·</span>
+                                  ${getDisplayNightly(villa)}/nt
+                                </>
+                              )}
                             </p>
 
                             {/* Pre-depreciation yield for leaseholds */}
@@ -1635,13 +1670,19 @@ export default function HomeClient({
 
                                 {/* Transparent assumptions */}
                                 <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)]">
-                                    <div className="text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase text-[9px] mb-1 font-medium">Computed using</div>
-                                    <div className="text-[color:var(--bvt-ink-body)] text-[9px] space-y-1 leading-relaxed">
-                                      <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">${nightly}/night</span> <span className="text-[color:var(--bvt-ink-muted)]">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
-                                      <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-[color:var(--bvt-ink-muted)]">(65% occ) — assumed, no occupancy data for this area</span></div>
-                                      <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">40% operating costs</span> <span className="text-[color:var(--bvt-ink-muted)]">(mgmt 15% · OTA 15% · maintenance 10%)</span></div>
-                                    </div>
-                                    <p className="text-[color:var(--bvt-ink-muted)] text-[9px] flex items-center gap-1.5 mt-2"><SlidersHorizontal size={9} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]"/> Select villas with the checkbox to adjust these assumptions</p>
+                                    <div className="text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase text-[9px] mb-1 font-medium">{isUnmodeled ? 'Not modeled' : 'Computed using'}</div>
+                                    {isUnmodeled ? (
+                                      <p className="text-[color:var(--bvt-ink-body)] text-[9px] leading-relaxed">BVT is showing the source listing, but withholding ROI until the missing or unsupported assumptions are verified.</p>
+                                    ) : (
+                                      <>
+                                        <div className="text-[color:var(--bvt-ink-body)] text-[9px] space-y-1 leading-relaxed">
+                                          <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">${nightly}/night</span> <span className="text-[color:var(--bvt-ink-muted)]">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
+                                          <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-[color:var(--bvt-ink-muted)]">(65% occ) — assumed, no occupancy data for this area</span></div>
+                                          <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">40% operating costs</span> <span className="text-[color:var(--bvt-ink-muted)]">(mgmt 15% · OTA 15% · maintenance 10%)</span></div>
+                                        </div>
+                                        <p className="text-[color:var(--bvt-ink-muted)] text-[9px] flex items-center gap-1.5 mt-2"><SlidersHorizontal size={9} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]"/> Select villas with the checkbox to adjust these assumptions</p>
+                                      </>
+                                    )}
                                 </div>
 
                                 {/* Capital depreciation for leaseholds */}
@@ -1932,12 +1973,19 @@ export default function HomeClient({
                       })}
                     </tr>
                     {/* Nightly Rate */}
-                    <tr className="border-b border-[color:var(--bvt-hairline)]">
-                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Nightly Rate</td>
-                      {compareVillas.map(v => {
-                        const base = v.est_nightly_rate || getDisplayNightly(v);
-                        const adjusted = Math.round(base * sliderNightly);
-                        return (
+	                    <tr className="border-b border-[color:var(--bvt-hairline)]">
+	                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Nightly Rate</td>
+	                      {compareVillas.map(v => {
+	                        if (isRoiUnmodeled(v)) {
+	                          return (
+	                            <td key={v.id} className="text-center py-3 px-3 text-[11px] text-[color:var(--bvt-ink-muted)]">
+	                              Not modeled
+	                            </td>
+	                          );
+	                        }
+	                        const base = v.est_nightly_rate || getDisplayNightly(v);
+	                        const adjusted = Math.round(base * sliderNightly);
+	                        return (
                           <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums">
                             <span className="text-[color:var(--bvt-ink)]">${adjusted}</span>
                             {sliderNightly !== 1.0 && <span className="text-[color:var(--bvt-ink-faint)] text-[10px] ml-1">(base ${base})</span>}
@@ -1968,54 +2016,56 @@ export default function HomeClient({
 
                       return (
                         <>
+	                          <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
+	                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Gross Revenue</td>
+	                            {results.map(r => (
+	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{r.unmodeled ? 'N/A' : `$${r.annualRevenue.toLocaleString()}/yr`}</td>
+	                            ))}
+	                          </tr>
+	                          <tr className="border-b border-[color:var(--bvt-hairline)]">
+	                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-faint)] label-micro !text-[color:var(--bvt-ink-faint)] !tracking-[0.14em]">Gross Yield</td>
+	                            {results.map(r => (
+	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-faint)] line-through">{r.unmodeled ? 'N/A' : `${r.grossYield.toFixed(1)}%`}</td>
+	                            ))}
+	                          </tr>
                           <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
-                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Gross Revenue</td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">${r.annualRevenue.toLocaleString()}/yr</td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-[color:var(--bvt-hairline)]">
-                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-faint)] label-micro !text-[color:var(--bvt-ink-faint)] !tracking-[0.14em]">Gross Yield</td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-faint)] line-through">{r.grossYield.toFixed(1)}%</td>
-                            ))}
-                          </tr>
+	                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Expenses</td>
+	                            {results.map(r => (
+	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-bad)]">{r.unmodeled ? 'N/A' : `-$${r.annualExpenses.toLocaleString()}/yr`}</td>
+	                            ))}
+	                          </tr>
                           <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
-                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Expenses</td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-bad)]">-${r.annualExpenses.toLocaleString()}/yr</td>
-                            ))}
-                          </tr>
-                          <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
-                            <td className="py-3 pr-4 text-[color:var(--bvt-ink)] label-micro !text-[color:var(--bvt-ink)] !tracking-[0.14em]">Net Revenue</td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink)]">${r.netRevenue.toLocaleString()}/yr</td>
-                            ))}
-                          </tr>
+	                            <td className="py-3 pr-4 text-[color:var(--bvt-ink)] label-micro !text-[color:var(--bvt-ink)] !tracking-[0.14em]">Net Revenue</td>
+	                            {results.map(r => (
+	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink)]">{r.unmodeled ? 'N/A' : `$${r.netRevenue.toLocaleString()}/yr`}</td>
+	                            ))}
+	                          </tr>
                           <tr className="border-b border-[color:var(--bvt-hairline-2)] bg-[color:var(--bvt-good)]/[0.06]">
                             <td className="py-3 pr-4 text-[color:var(--bvt-good)] text-[13px]">
                               <span className="font-serif italic">Cash Flow Yield</span>
                               <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">Cash-on-cash return</span>
                             </td>
-                            {results.map(r => {
-                              const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
-                              const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
-                              return (
-                                <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums font-medium text-[color:var(--bvt-good)] text-[16px]">
-                                  {cashFlowYield.toFixed(1)}%
-                                </td>
-                              );
-                            })}
+	                            {results.map(r => {
+	                              const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
+	                              const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
+	                              return (
+	                                <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums font-medium text-[color:var(--bvt-good)] text-[16px]">
+	                                  {r.unmodeled ? 'N/A' : `${cashFlowYield.toFixed(1)}%`}
+	                                </td>
+	                              );
+	                            })}
                           </tr>
                           <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-warn)]/[0.06]">
                             <td className="py-3 pr-4 text-[color:var(--bvt-warn)] text-[13px]">
                               <span className="font-serif italic">Lease Depreciation</span>
                               <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">Asset value loss/yr</span>
                             </td>
-                            {results.map(r => (
-                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums">
-                                {r.isFreehold ? (
-                                  <span className="text-[color:var(--bvt-good)] text-[11px]">Freehold — N/A</span>
+	                            {results.map(r => (
+	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums">
+	                                {r.unmodeled ? (
+	                                  <span className="text-[color:var(--bvt-ink-faint)] text-[11px]">N/A</span>
+	                                ) : r.isFreehold ? (
+	                                  <span className="text-[color:var(--bvt-good)] text-[11px]">Freehold — N/A</span>
                                 ) : r.leaseDepreciation > 0 ? (
                                   <div>
                                     <span className="text-[color:var(--bvt-warn)]">-${r.leaseDepreciation.toLocaleString()}/yr</span>
@@ -2032,15 +2082,15 @@ export default function HomeClient({
                               <span className="font-serif italic">Net Yield</span>
                               <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">After depreciation</span>
                             </td>
-                            {results.map(r => {
-                              const isBest = r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1;
-                              return (
+	                            {results.map(r => {
+	                              const isBest = !r.unmodeled && r.netYield === bestYield && results.filter(x => !x.unmodeled && x.netYield === bestYield).length === 1;
+	                              return (
                                 <td key={r.id} className={`text-center py-4 px-3 font-mono tabular-nums font-medium text-[20px] ${
                                   isBest
                                     ? 'text-[color:var(--bvt-good)]'
                                     : r.netYield >= 7 ? 'text-[color:var(--bvt-accent)]' : r.netYield >= 0 ? 'text-[color:var(--bvt-ink)]' : 'text-[color:var(--bvt-bad)]'
                                 }`}>
-                                  {r.netYield.toFixed(1)}%
+	                                  {r.unmodeled ? 'N/A' : `${r.netYield.toFixed(1)}%`}
                                   {isBest && (
                                     <span className="block text-[9px] text-[color:var(--bvt-good)] tracking-[0.2em] uppercase font-sans mt-1">Best</span>
                                   )}
@@ -2408,6 +2458,7 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
       if (!lat || !lng || lat === 0 || lng === 0) return;
 
       const roi = villa.projected_roi || 0;
+      const unmodeled = isRoiUnmodeled(villa);
       const roiTier = roi >= 10 ? 'hi' : roi >= 5 ? 'mid' : 'low';
 
       // Price formatting for popup / marker label
@@ -2430,7 +2481,8 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
       }
       // Compact label for the marker itself — "$340k · 9.2%"
       const priceShort = priceUSD >= 1e6 ? `$${(priceUSD / 1e6).toFixed(1)}M` : priceUSD >= 1000 ? `$${Math.round(priceUSD / 1000)}k` : `$${Math.round(priceUSD)}`;
-      const labelHtml = `<span class="bvt-price-marker__pill">${priceShort}<span style="color:#6b7080;padding:0 2px;">·</span>${roi.toFixed(1)}%</span>`;
+	      const roiLabel = unmodeled ? 'N/A' : `${roi.toFixed(1)}%`;
+	      const labelHtml = `<span class="bvt-price-marker__pill">${priceShort}<span style="color:#6b7080;padding:0 2px;">·</span>${roiLabel}</span>`;
 
       const marker = L.marker([lat, lng], {
         icon: L.divIcon({
@@ -2465,7 +2517,7 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
             </div>
             <div style="text-align: right;">
               <div style="font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7080; margin-bottom: 3px;">Net Yield</div>
-              <div style="font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-size: 18px; line-height: 1; color: ${dotColor};">${roi.toFixed(1)}<span style="font-size: 12px; color: #4a5060;">%</span></div>
+	              <div style="font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-size: 18px; line-height: 1; color: ${dotColor};">${unmodeled ? 'N/A' : `${roi.toFixed(1)}<span style="font-size: 12px; color: #4a5060;">%</span>`}</div>
             </div>
           </div>
           <div style="padding: 10px 14px 12px; display: flex; gap: 14px; align-items: center; justify-content: space-between;">

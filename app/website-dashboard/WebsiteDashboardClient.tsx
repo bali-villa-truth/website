@@ -22,6 +22,7 @@ const statusTone: Record<string, string> = {
   Live: "border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]",
   Active: "border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]",
   "Deployed this session": "border-[color:var(--bvt-accent)]/50 text-[color:var(--bvt-accent)]",
+  "Prepared locally, deploy blocked": "border-[color:var(--bvt-warn)]/40 text-[color:var(--bvt-warn)]",
   Blocked: "border-[color:var(--bvt-warn)]/40 text-[color:var(--bvt-warn)]",
   High: "border-[color:var(--bvt-bad)]/40 text-[color:var(--bvt-bad)]",
   Medium: "border-[color:var(--bvt-warn)]/40 text-[color:var(--bvt-warn)]",
@@ -176,6 +177,51 @@ export default function WebsiteDashboardClient() {
           </div>
         )}
 
+        {data?.deploymentGate && (
+          <section className="mt-6 border border-[color:var(--bvt-warn)]/45 bg-[color:var(--bvt-bg-elev)] rounded-md p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[color:var(--bvt-warn)]">
+                  <AlertTriangle size={18} />
+                  <span className="label-micro text-[color:var(--bvt-warn)]">Deploy gate</span>
+                </div>
+                <h2 className="mt-3 font-display text-[24px] leading-tight text-[color:var(--bvt-ink)]">
+                  {data.deploymentGate.title}
+                </h2>
+                <p className="mt-3 max-w-[90ch] text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  {data.deploymentGate.summary}
+                </p>
+                <p className="mt-3 text-[13px] font-semibold text-[color:var(--bvt-ink)]">
+                  {data.deploymentGate.requiredAction}
+                </p>
+              </div>
+              <Pill tone={statusTone.Blocked}>{data.deploymentGate.status}</Pill>
+            </div>
+            <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <div className="label-micro mb-2">Affected live paths</div>
+                <div className="space-y-2">
+                  {data.deploymentGate.affectedUrls.map((url: string) => (
+                    <a key={url} href={url} className="block text-[12px] text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] break-all">
+                      {url}
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="label-micro mb-2">Latest local proof</div>
+                <div className="space-y-2">
+                  {data.deploymentGate.latestVerification.map((file: string) => (
+                    <div key={file} className="font-mono text-[12px] text-[color:var(--bvt-ink-dim)] break-all">
+                      {file}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
           <Metric
             icon={<ClipboardCheck size={20} />}
@@ -319,6 +365,29 @@ export default function WebsiteDashboardClient() {
                 </div>
               ))}
             </div>
+            {(data?.preparedChecks || []).length > 0 && (
+              <>
+                <div className="bg-[color:var(--bvt-bg-elev)] border-t border-[color:var(--bvt-hairline)] px-4 py-3 flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-[color:var(--bvt-warn)]" />
+                  <h2 className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Prepared, not yet live</h2>
+                </div>
+                <div className="divide-y divide-[color:var(--bvt-hairline)]">
+                  {data.preparedChecks.map((check: any) => (
+                    <div key={check.name} className="p-4 flex items-start justify-between gap-4">
+                      <div>
+                        <a href={check.url} className="font-semibold text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)]">{check.name}</a>
+                        <div className="mt-1 text-[12px] text-[color:var(--bvt-ink-muted)]">{check.detail}</div>
+                        {check.title && <div className="mt-1 text-[11px] text-[color:var(--bvt-ink-dim)]">{check.title}</div>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <Pill tone={statusTone[check.state]}>{check.state}</Pill>
+                        <div className="mt-1 font-mono text-[11px] text-[color:var(--bvt-ink-dim)]">{check.status} · {check.ms}ms</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </section>
         )}
 
@@ -369,6 +438,9 @@ export default function WebsiteDashboardClient() {
         {tab === "quality" && (
           <section className="mt-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
             <ListPanel title="Data quality issues" icon={<Database size={16} />} items={data?.dataQualityIssues || []} />
+            <ListPanel title="Model assumption watchlist" icon={<AlertTriangle size={16} />} items={data?.modelAssumptionWatchlist || []} />
+            <ListPanel title="Investor evidence checklist" icon={<ClipboardCheck size={16} />} items={data?.investorEvidenceChecklist || []} />
+            <ListPanel title="Pipeline guardrails" icon={<Database size={16} />} items={data?.pipelineGuardrails || []} />
             <ListPanel title="UX and navigation issues" icon={<LayoutDashboard size={16} />} items={data?.uxIssues || []} />
             <ListPanel title="Investor-value improvements" icon={<ShieldCheck size={16} />} items={data?.investorValueImprovements || []} />
             <ListPanel title="Mobile checks" icon={<Smartphone size={16} />} items={data?.mobileUsabilityChecks || []} />

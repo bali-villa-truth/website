@@ -119,6 +119,17 @@ const KEYWORDS = [
     source: "Guide shipped 2026-05-14; awaiting indexation.",
     nextAction: "Submit guide in GSC and keep linked from ROI guide, due diligence guide, footer, llms.txt, and sitemap.",
   },
+  {
+    keyword: "bali villa occupancy rates",
+    intent: "Rental-demand and ROI assumption keyword",
+    status: "Prepared",
+    bestObservedPage: null,
+    bestObservedRange: null,
+    bestObservedUrl: `${SITE_URL}/guides/bali-villa-occupancy-rates`,
+    bestObservedTitle: "Bali Villa Occupancy Rates: ROI Stress Test",
+    source: "Guide prepared locally; deploy is blocked by GitHub 401 Bad credentials, so the live URL still returns 404.",
+    nextAction: "Refresh GITHUB_TOKEN, deploy the guide, then submit it in GSC and monitor impressions for occupancy and rental-yield queries.",
+  },
 ];
 
 const JOBS = [
@@ -173,8 +184,19 @@ const GSC_QUEUE = [
   `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131`,
 ];
 
+const GSC_AFTER_DEPLOY_QUEUE = [
+  `${SITE_URL}/guides/bali-villa-occupancy-rates`,
+];
+
 function count(pattern: RegExp, text: string) {
   return (text.match(pattern) || []).length;
+}
+
+function uniqueListingPaths(text: string) {
+  const matches = text.match(/\/listing\/[^"'<>\s)]+/g) || [];
+  return Array.from(
+    new Set(matches.map((path) => path.replace(/[?#].*$/, "")))
+  );
 }
 
 function titleFrom(text: string) {
@@ -231,6 +253,7 @@ export async function GET() {
     leaseGuide,
     dueDiligenceGuide,
     managementGuide,
+    occupancyGuide,
     sitemap,
     robots,
     llms,
@@ -241,6 +264,7 @@ export async function GET() {
     fetchText("/guides/bali-villa-leasehold-vs-freehold-roi"),
     fetchText("/guides/bali-villa-due-diligence-checklist"),
     fetchText("/guides/bali-villa-management-fees"),
+    fetchText("/guides/bali-villa-occupancy-rates"),
     fetchText("/sitemap.xml"),
     fetchText("/robots.txt"),
     fetchText("/llms.txt"),
@@ -253,20 +277,22 @@ export async function GET() {
     ok: hub.ok,
     status: hub.status,
     ms: hub.ms,
-    listingLinks: count(/\/listing\/[^" ]+/g, hub.text),
+    listingLinks: uniqueListingPaths(hub.text).length,
     roiGuideLinks: count(/\/guides\/bali-villa-roi/g, hub.text),
     leaseGuideLinks: count(/\/guides\/bali-villa-leasehold-vs-freehold-roi/g, hub.text),
     methodSections: count(/How .*? ROI is stress-tested/g, hub.text),
   }));
+  const homepageListingLinks = uniqueListingPaths(home.text).length;
+  const homepageEmptyStates = count(/No properties match your filters/g, home.text);
 
   const checks = [
     {
       name: "Homepage SSR crawl graph",
       url: home.url,
-      ok: home.ok && count(/\/listing\/[^" ]+/g, home.text) >= 50 && count(/No properties match your filters/g, home.text) === 0,
+      ok: home.ok && homepageListingLinks >= 20 && homepageEmptyStates === 0,
       status: home.status,
       ms: home.ms,
-      detail: `${count(/\/listing\/[^" ]+/g, home.text)} listing links, ${count(/No properties match your filters/g, home.text)} empty-state matches`,
+      detail: `${homepageListingLinks} distinct listing paths, ${homepageEmptyStates} empty-state matches`,
     },
     {
       name: "ROI guide",
@@ -299,6 +325,19 @@ export async function GET() {
       status: managementGuide.status,
       ms: managementGuide.ms,
       detail: managementGuide.title,
+    },
+    {
+      name: "Occupancy rates guide",
+      url: occupancyGuide.url,
+      ok:
+        (occupancyGuide.ok && count(/Article|FAQPage|BreadcrumbList/g, occupancyGuide.text) >= 3) ||
+        (occupancyGuide.status === 404 && !sitemap.text.includes("/guides/bali-villa-occupancy-rates")),
+      status: occupancyGuide.status,
+      ms: occupancyGuide.ms,
+      detail:
+        occupancyGuide.status === 404
+          ? "Prepared locally; deploy blocked by GitHub 401, so this should not be submitted to GSC yet."
+          : occupancyGuide.title,
     },
     {
       name: "Sitemap",
@@ -345,6 +384,7 @@ export async function GET() {
         hubCount: hubs.length,
         hubsWithRoiLinks: hubs.filter((hub) => hub.roiGuideLinks > 0).length,
         hubsWithLeaseLinks: hubs.filter((hub) => hub.leaseGuideLinks > 0).length,
+        homepageListingLinks,
         sitemapUrls: count(/<loc>/g, sitemap.text),
         indexed,
         notIndexed,
@@ -361,6 +401,7 @@ export async function GET() {
         notIndexed,
         clicks: 35,
         queue: GSC_QUEUE,
+        afterDeployQueue: GSC_AFTER_DEPLOY_QUEUE,
         accounts: [
           "sc-domain:balivillatruth.com under michael.schvarcz@gmail.com",
           "https://balivillatruth.com/ URL-prefix under michael@balivillatruth.com",

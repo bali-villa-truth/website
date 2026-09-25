@@ -56,6 +56,7 @@ export default function SiteFooter() {
         { href: "/guides/bali-villa-leasehold-vs-freehold-roi", label: "Leasehold vs freehold ROI" },
         { href: "/guides/bali-villa-due-diligence-checklist", label: "Due diligence checklist" },
         { href: "/guides/bali-villa-management-fees", label: "Management fees & costs" },
+        { href: "/guides/bali-villa-occupancy-rates", label: "Occupancy rates" },
         { href: "/#paste-url", label: "Audit a specific listing" },
         { href: "/#newsletter", label: "Weekly best-yields email" },
         { href: "/contact", label: "Request a custom review" },

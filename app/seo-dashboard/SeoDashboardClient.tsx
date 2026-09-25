@@ -379,6 +379,21 @@ export default function SeoDashboardClient() {
                   </div>
                 ))}
               </div>
+              {(data?.gsc.afterDeployQueue || []).length > 0 && (
+                <>
+                  <div className="bg-[color:var(--bvt-bg-elev)] border-t border-[color:var(--bvt-hairline)] px-4 py-3">
+                    <h2 className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Queue after deploy access is restored</h2>
+                  </div>
+                  <div className="divide-y divide-[color:var(--bvt-hairline)]">
+                    {data.gsc.afterDeployQueue.map((url: string, index: number) => (
+                      <div key={url} className="p-4 flex items-center gap-4">
+                        <div className="font-mono text-[12px] text-[color:var(--bvt-warn)] w-7 shrink-0">{String(index + 1).padStart(2, "0")}</div>
+                        <a href={url} className="text-[13px] text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] break-all">{url}</a>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </section>
         )}

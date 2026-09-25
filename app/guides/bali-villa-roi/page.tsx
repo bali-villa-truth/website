@@ -339,6 +339,10 @@ export default function BaliVillaRoiGuidePage() {
             comparing listings at scale. Before closing, a buyer should still ask for
             owner statements, channel-manager exports, tax records where available,
             and the management contract behind any revenue claim.
+            The full demand-input breakdown is in the{" "}
+            <InlineLink href="/guides/bali-villa-occupancy-rates">
+              Bali villa occupancy rates guide
+            </InlineLink>.
           </p>
           <p>
             Area matters. <InlineLink href="/canggu">Canggu</InlineLink>,{" "}

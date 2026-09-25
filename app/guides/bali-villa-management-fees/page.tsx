@@ -293,6 +293,10 @@ export default function BaliVillaManagementFeesPage() {
             <InlineLink href="/guides/bali-villa-leasehold-vs-freehold-roi">
               leasehold vs freehold ROI guide
             </InlineLink>{" "}
+            and the{" "}
+            <InlineLink href="/guides/bali-villa-occupancy-rates">
+              occupancy rates guide
+            </InlineLink>{" "}
             and then run the{" "}
             <InlineLink href="/guides/bali-villa-due-diligence-checklist">
               due diligence checklist
