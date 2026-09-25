@@ -27,7 +27,7 @@ const PREPARED_PATHS = [
     name: "Occupancy rates guide",
     path: "/guides/bali-villa-occupancy-rates",
     expect: ["Bali villa occupancy rates", "FAQPage"],
-    blockedDetail: "Prepared locally; production still returns 404 until GITHUB_TOKEN is refreshed and the preserved deploy workflow can run.",
+    blockedDetail: "Unexpected 404 after the 2026-09-25 successful deployment; investigate the current production route.",
   },
 ];
 
@@ -36,7 +36,7 @@ const completedImprovements = [
     date: "2026-09-25",
     area: "Data refresh / failure safety",
     title: "Restored the source refresh after BHI changed its listing format",
-    status: "Data refresh live; dashboard update prepared locally, deploy blocked",
+    status: "Data refresh and website deployment live",
     why: "The September 24 and 25 scheduled runs parsed zero listings after BHI moved index data into a structured Inertia payload. The scraper now parses that payload, distinguishes a valid page from a real Cloudflare challenge, and rejects incomplete pagination. A complete 84-page run recovered 2,455 sale listings. Matched physical-field carry-forward reduced the initial 204 physical-data gaps to 31, below the 50-row cloud-write ceiling. The quality-gated pipeline completed at 03:01 MST and upserted 2,455 audited rows. Automation health now requires a completed run, not merely a recent log.",
     url: `${SITE_URL}/website-dashboard`,
     progressFile: ".tmp/website_progress_2026-09-25.md",
@@ -640,9 +640,15 @@ const completedImprovements = [
 const pendingImprovements = [
   {
     priority: "High",
+    owner: "Site security",
+    title: "Rotate the website dashboard password and remove its code fallback",
+    nextAction: "Set a private WEBSITE_DASHBOARD_PASSWORD in Vercel and confirm it works before deploying an auth change that removes the hardcoded fallback. Keep both dashboards noindexed and require authentication for their APIs.",
+  },
+  {
+    priority: "High",
     owner: "Data pipeline",
     title: "Expose confidence/provenance fields consistently across every listing",
-    nextAction: "Rate-source, exact-area fallback, and occupancy-source labels are now normalized in Supabase; deploy the prepared PDF/listing/deep-audit copy so every surface renders the labels in polished plain English.",
+    nextAction: "Rate-source, exact-area fallback, and occupancy-source labels are normalized in Supabase and deployed on listing/PDF surfaces; verify representative outputs after each refresh.",
   },
   {
     priority: "High",
@@ -666,9 +672,9 @@ const pendingImprovements = [
 
 const blockers = [
   {
-    blocker: "GitHub deploy token",
-    status: "Blocked by invalid GITHUB_TOKEN",
-    note: "The prepared occupancy-rates guide and dashboard truth-state updates cannot deploy because python3 push_to_github.py fails GitHub auth preflight with 401 Bad credentials.",
+    blocker: "Website dashboard password rotation",
+    status: "Requires private Vercel environment setup",
+    note: "The current website dashboard accepts a hardcoded fallback password from the staged auth source. A private Vercel environment password must be configured and verified before removing the fallback, or the dashboard could become inaccessible.",
   },
   {
     blocker: "GSC manual indexing",
@@ -698,7 +704,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
-  "As of 2026-09-25 10:04 UTC, live Supabase checks pass with 2,455 audited rows, PHYSICAL_DATA_INCOMPLETE at 31, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. The canonical site remains healthy and private dashboard APIs return 401. September 24-25 scheduled scrapes failed after BHI moved listing data into an Inertia payload; the repaired parser and physical-field carry-forward let the September 25 recovery pipeline complete and publish validated data. A known tenure contradiction remains on a representative listing, and the outside-Bali sample category is now unavailable. Sitemap coverage reports 956 audited listing URLs missing, 727 stale/extra listing URLs, and 1 missing static URL pending deploy.",
+  "As of 2026-09-25 10:12 UTC, live Supabase checks pass with 2,455 audited rows, PHYSICAL_DATA_INCOMPLETE at 31, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. The canonical site and private dashboard access controls pass. The repaired BHI parser and physical-field carry-forward completed a quality-gated refresh. The successful website deployment put the occupancy guide live and brought the sitemap to exact coverage: 2,455 audited listings plus 20 static URLs, with no missing or extra listings. Six representative listing pages now pass visible-content checks; the prior tenure alert was a false positive from a related/footer link. No outside-Bali sample exists to test today.",
   "As of 2026-09-18 06:51 UTC, live Supabase data-quality checks pass with 2,443 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Automation freshness passes with launchd loaded, 23,611.6 MB free, and 23.78 hours of pipeline-log age immediately before the next local-midnight run. The canonical site is healthy and private dashboard APIs return 401. The listing verifier still finds the known RF10173B lease-term-not-stated/freehold contradiction, and sitemap coverage has drifted to 916 missing audited listing URLs, 699 stale/extra listing URLs, and 1 missing static URL until the staged deploy ships.",
   "As of 2026-07-12 18:34 UTC, live Supabase data-quality checks still pass after the July 12 scheduled scrape and afternoon SEO pass: 2,353 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Disk headroom is 9,164.2 MB, above the 1GB guardrail, and the daily-pipeline log age is 11.5 hours. The canonical site remains healthy, private dashboard APIs remain locked with 401, while listing-page tenure wording and sitemap coverage remain warn-only deploy-blocked classes.",
   "As of 2026-07-12 12:34 UTC, the July 12 scheduled scrape and Supabase refresh stayed at the recovered data baseline: 2,353 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Disk headroom is 9,338.0 MB, above the 1GB guardrail, and the daily-pipeline log age is 5.49 hours. The canonical site remains healthy, private dashboard APIs remain locked with 401, while listing-page tenure wording and sitemap coverage remain warn-only deploy-blocked classes.",
@@ -751,7 +757,7 @@ const dataQualityIssues = [
 ];
 
 const modelAssumptionWatchlist = [
-  "The prepared occupancy guide uses screening estimates, not verified property-level occupancy promises.",
+  "The live occupancy guide uses screening estimates, not verified property-level occupancy promises.",
   "Bingin currently falls back to 65% because there is no exact Bingin review-density model yet.",
   "Sanur reaches the current 80% model ceiling and should be manually reviewed before treating it as high-confidence demand evidence.",
   "Canggu, Berawa, Ubud, Uluwatu, Seminyak, and Ungasan are clustered around low-40% screening occupancy in the current local guide; investors should request booking exports before underwriting higher claims.",
@@ -782,7 +788,7 @@ const pipelineGuardrails = [
   "daily_pipeline.sh now runs validate_scrape_summary.py before enrichment, Google Sheets, or Supabase writes, so low critical-field coverage fails closed even when listing count is high enough.",
   "daily_pipeline.sh now runs validate_scrape_summary.py --require-warning-coverage before both Google Sheets and Supabase, so missing bathrooms, land size, or build size blocks cloud writes by default.",
   "daily_pipeline.sh now runs carry_forward_bhi_physical_fields.py by default after the core coverage gate, using .tmp/scraped_listings.previous.json to preserve matched bathrooms, land size, and build size when BHI cards omit them.",
-  "carry_forward_bhi_physical_fields.py now skips carry-forward when the current source already has 80%+ coverage for bathrooms, land, and build, so freshly detail-enriched scrapes do not fail on stale previous-scrape match rate.",
+  "carry_forward_bhi_physical_fields.py skips only when current bathrooms, land, and build coverage is complete; below 100%, matched prior verified fields can prevent a partial source payload from breaching the physical-data write gate.",
   "carry_forward_bhi_physical_fields.py only fills missing physical fields, requires high match coverage, writes .tmp/physical_field_carry_forward_report.json, and rebuilds .tmp/scraped_listings_summary.json before the strict cloud-write gate.",
   "carry_forward_bhi_physical_fields.py now preserves existing detail-enrichment metadata when rebuilding .tmp/scraped_listings_summary.json, so repair and preservation reports can coexist in the summary.",
   "enrich_bhi_detail_fields.py can recover missing physical fields from an existing scrape JSON, with non-destructive output by default and --sample-mode spread for validation across the full inventory.",
@@ -815,14 +821,14 @@ const pipelineGuardrails = [
   "The daily launchd pipeline now validates scraped listing count before enrichment, Google Sheets, or Supabase writes.",
   "Default scheduled minimum is 1,000 listings via BVT_MIN_PIPELINE_LISTINGS; lower it only for deliberate manual parser tests.",
   "scrape_bhi.py now writes through a temp file and backs up the previous scrape to .tmp/scraped_listings.previous.json before replacement.",
-  "Current data-refresh blockers are separate: the latest BHI source scrape recovered after page-2 calibration and the July 3 physical-data regression was repaired; Google Sheets OAuth still needs interactive re-auth, GitHub deploy still needs a valid token, and Supabase writes still require physical-field coverage before any accepted refresh.",
+  "Current data-refresh concerns are separate: the September 25 BHI Inertia parser recovery passed the physical-data gates and Supabase refresh; Google Sheets OAuth still needs interactive re-auth. GitHub deployment succeeded through the existing push script with working CLI credentials. Continue enforcing physical-field coverage before every cloud write.",
 ];
 
 const uxIssues = [
   "Homepage now has risk shortcuts, but comparison mode could still be easier to save and share.",
   "Mobile ledger needs continued visual checks after each filter or card-density change.",
   "Listing pages are clearer, but PDF templates should be aligned with the new assumption-note language.",
-  "Representative listing-page verification still catches the deploy-blocked lease-term-not-stated/freehold contradiction. The latest September 18 sample is RF10173B. The staged listing-page fix still needs a valid GitHub deploy token before production can stop rendering Freehold where the source term is not stated.",
+  "September 25 representative listing-page verification passes six available categories. The RF10173B leasehold tenure line is correct; the old Freehold alert matched a related-listing/footer link outside this property's tenure field. No outside-Bali sample is currently available.",
 ];
 
 const scheduledJobs = [
@@ -842,16 +848,16 @@ const scheduledJobs = [
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
     status: "Loaded; recovery run completed 2026-09-25 03:01 MST",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The source parser now reads BHI's Inertia payload; a complete 84-page run and matched physical-field carry-forward passed the quality gates. The September 25 recovery upserted 2,455 audited rows, with PHYSICAL_DATA_INCOMPLETE at 31. Google Sheets remains blocked by OAuth invalid_grant, and website deploy fixes remain blocked by GitHub credentials. Monitor the next scheduled source run.",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The source parser now reads BHI's Inertia payload; a complete 84-page run and matched physical-field carry-forward passed the quality gates. The September 25 recovery upserted 2,455 audited rows, with PHYSICAL_DATA_INCOMPLETE at 31. Google Sheets remains blocked by OAuth invalid_grant. Monitor the next scheduled source run.",
   },
 ];
 
 const deploymentGate = {
-  status: "Blocked",
-  title: "GitHub deploy token is invalid",
+  status: "Live",
+  title: "Website deployment completed",
   summary:
-    "The prepared occupancy-rates guide, dashboard improvements, listing-page tenure fix, outside-Bali label, unmodeled apartment/multi-unit copy, exact-area fallback source copy, sitemap pagination fix, homepage no-backfill UI, flag-label UI updates, and PDF/listing/deep-audit provenance copy are staged in .tmp. The local artifact audit now passes with 64 required files ready, but python3 push_to_github.py still stops at GitHub auth preflight with 401 Bad credentials.",
-  requiredAction: "Refresh or replace GITHUB_TOKEN in .env, then rerun python3 push_to_github.py.",
+    "The September 25 production build and Vercel deployment succeeded on commit 781cb3e. The occupancy-rates guide is live, the listing presentation is verified, and the sitemap exactly covers 2,455 audited listings plus 20 static pages. The stale .env GitHub token remains a maintenance issue; the existing push script worked with the authenticated GitHub CLI token for this deployment.",
+  requiredAction: "Monitor the next scheduled refresh and keep verifying production after every deploy. Rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     `${SITE_URL}/sitemap.xml`,
@@ -859,6 +865,11 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/live_verification_2026-09-25_1008.json",
+    ".tmp/sitemap_coverage_2026-09-25_1008.json",
+    ".tmp/listing_page_verification_2026-09-25_1009.json",
+    ".tmp/supabase_data_quality_verification_2026-09-25_1010.json",
+    ".tmp/seo_progress_2026-09-25.md",
     ".tmp/api_website_dashboard_route_2026-09-25_0950.bundle.mjs",
     ".tmp/automation_freshness_2026-09-25_0955.json",
     ".tmp/supabase_data_quality_verification_2026-09-25_0950.json",

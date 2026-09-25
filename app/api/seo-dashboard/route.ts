@@ -23,13 +23,13 @@ const KEYWORDS = [
   {
     keyword: "bali villa roi",
     intent: "Primary buyer-intent keyword",
-    status: "Observed",
+    status: "Historical observation",
     bestObservedPage: 12,
     bestObservedRange: "111-120",
     bestObservedUrl: `${SITE_URL}/ubud`,
     bestObservedTitle: "Ubud Villa Investment ROI — Independent Yield Audits",
     source: "User Google screenshot, 2026-05-13 1:02 PM",
-    nextAction: "Submit Ubud and ROI guides in GSC; monitor every 6 hours.",
+    nextAction: "Inspect the ROI guide in GSC; compare fresh query impressions and average position.",
   },
   {
     keyword: "bali villa investment",
@@ -67,29 +67,29 @@ const KEYWORDS = [
   {
     keyword: "bali villa net yield",
     intent: "BVT-specific differentiation keyword",
-    status: "Prepared",
+    status: "Live; rank unverified",
     bestObservedPage: null,
     bestObservedRange: null,
     bestObservedUrl: `${SITE_URL}/guides/bali-villa-roi`,
     bestObservedTitle: "Bali Villa ROI: 2026 Net Yield Guide for Buyers",
-    source: "Content and internal links shipped; awaiting indexation.",
-    nextAction: "Track once the ROI guide is indexed.",
+    source: "Content and internal links live; current GSC indexing and rank unverified.",
+    nextAction: "Inspect the ROI guide in GSC and track query impressions.",
   },
   {
     keyword: "bali villa leasehold vs freehold roi",
     intent: "Long-tail due-diligence keyword",
-    status: "Prepared",
+    status: "Live; rank unverified",
     bestObservedPage: null,
     bestObservedRange: null,
     bestObservedUrl: `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
     bestObservedTitle: "Bali Villa Leasehold vs Freehold ROI — Real Yield Impact",
-    source: "Support guide shipped 2026-05-13; awaiting indexation.",
+    source: "Support guide live; current GSC indexing and rank unverified.",
     nextAction: "Submit guide in GSC and monitor impressions.",
   },
   {
     keyword: "ubud villa investment roi",
     intent: "Location-specific ROI keyword",
-    status: "Observed",
+    status: "Historical observation",
     bestObservedPage: 12,
     bestObservedRange: "111-120",
     bestObservedUrl: `${SITE_URL}/ubud`,
@@ -100,35 +100,35 @@ const KEYWORDS = [
   {
     keyword: "bali villa due diligence checklist",
     intent: "Buyer risk and verification keyword",
-    status: "Prepared",
+    status: "Live; rank unverified",
     bestObservedPage: null,
     bestObservedRange: null,
     bestObservedUrl: `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
     bestObservedTitle: "Bali Villa Due Diligence Checklist: 25 Red Flags",
-    source: "Guide shipped 2026-05-13; awaiting indexation.",
+    source: "Guide live; current GSC indexing and rank unverified.",
     nextAction: "Submit guide in GSC and link from ROI, listing, and homepage investor paths.",
   },
   {
     keyword: "bali villa management fees",
     intent: "Operating-cost and net-yield validation keyword",
-    status: "Prepared",
+    status: "Live; rank unverified",
     bestObservedPage: null,
     bestObservedRange: null,
     bestObservedUrl: `${SITE_URL}/guides/bali-villa-management-fees`,
     bestObservedTitle: "Bali Villa Management Fees and Operating Costs",
-    source: "Guide shipped 2026-05-14; awaiting indexation.",
+    source: "Guide live; current GSC indexing and rank unverified.",
     nextAction: "Submit guide in GSC and keep linked from ROI guide, due diligence guide, footer, llms.txt, and sitemap.",
   },
   {
     keyword: "bali villa occupancy rates",
     intent: "Rental-demand and ROI assumption keyword",
-    status: "Prepared",
+    status: "Live; rank unverified",
     bestObservedPage: null,
     bestObservedRange: null,
     bestObservedUrl: `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     bestObservedTitle: "Bali Villa Occupancy Rates: ROI Stress Test",
-    source: "Guide prepared locally; deploy is blocked by GitHub 401 Bad credentials, so the live URL still returns 404.",
-    nextAction: "Refresh GITHUB_TOKEN, deploy the guide, then submit it in GSC and monitor impressions for occupancy and rental-yield queries.",
+    source: "Guide live on 2026-09-25; public rank and GSC index status have not been verified.",
+    nextAction: "Inspect in GSC after the two priority URLs and track occupancy-query impressions.",
   },
 ];
 
@@ -139,7 +139,7 @@ const JOBS = [
     cadence: "Every 6 hours",
     status: "Active",
     owner: "Codex automation",
-    lastKnownRun: "Configured 2026-05-13",
+    lastKnownRun: "Active; prompt updated 2026-09-25",
     nextAction: "Recheck SERP visibility, site health, GSC queue, and content opportunities.",
   },
   {
@@ -148,8 +148,8 @@ const JOBS = [
     cadence: "Manual when browser/GSC access is available",
     status: "Blocked",
     owner: "GSC UI",
-    lastKnownRun: "Last successful manual pass 2026-05-12",
-    nextAction: "Submit /nusa-dua, ROI guide, leasehold/freehold guide, /ubud, then flagship listings.",
+    lastKnownRun: "No authenticated submission verified on 2026-09-25",
+    nextAction: "Inspect /nusa-dua, then ROI guide, then the 14 current modeled villa audits.",
   },
   {
     id: "indexnow-submit",
@@ -164,29 +164,33 @@ const JOBS = [
     id: "monthly-rate-scrape",
     name: "Monthly rate/data refresh",
     cadence: "Monthly",
-    status: "Scheduled outside SEO dashboard",
+    status: "Schedule needs verification",
     owner: "Local pipeline",
     lastKnownRun: "2026-05-01",
-    nextAction: "Next rate scrape around 2026-06-01.",
+    nextAction: "Confirm the monthly rate-source job before reporting its next run.",
   },
 ];
 
 const GSC_QUEUE = [
   `${SITE_URL}/nusa-dua`,
   `${SITE_URL}/guides/bali-villa-roi`,
-  `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
-  `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
-  `${SITE_URL}/guides/bali-villa-management-fees`,
-  `${SITE_URL}/ubud`,
-  `${SITE_URL}/listing/2-units-villa-with-total-5-bedrooms-for-sale-freehold-in-pandawa-near-pandawa-beach-rf6636`,
-  `${SITE_URL}/listing/cozy-3-bedroom-villa-for-sale-leasehold-and-yearly-rent-in-kutuh-rf6460`,
-  `${SITE_URL}/listing/3-unit-of-beautiful-tropical-house-for-sale-leasehold-in-uluwatu-rf8008`,
+  `${SITE_URL}/listing/brand-new-2-bedroom-villa-for-sale-in-bali-canggu-padonan-rf2647`,
+  `${SITE_URL}/listing/2-bedroom-villa-for-sale-in-ubud-rf11027`,
+  `${SITE_URL}/listing/3-bedroom-tropical-villa-for-sale-walking-distance-to-sanur-beach-rf3853a`,
+  `${SITE_URL}/listing/modern-2-bedroom-villa-for-sale-in-bali-seminyak-rf6368`,
+  `${SITE_URL}/listing/brand-new-2-bedroom-villa-for-sale-in-bali-pererenan-rf5666b`,
+  `${SITE_URL}/listing/brand-new-4-bedroom-family-villa-for-sale-and-rent-in-berawa-rf9016`,
+  `${SITE_URL}/listing/3-bedroom-tropical-villa-for-sale-and-rent-in-balangan-kt029`,
   `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131`,
+  `${SITE_URL}/listing/beautiful-2-bedrooms-villa-for-sale-in-kutuh-near-pandawa-beach-fm072a`,
+  `${SITE_URL}/listing/brand-new-3-bedroom-villa-for-sale-freehold-in-bali-tanah-lot-rf2023`,
+  `${SITE_URL}/listing/brand-new-2-bedrooms-villa-for-sale-freehold-in-kutuh-near-pandawa-beach-rf6021`,
+  `${SITE_URL}/listing/wonderful-3-bedroom-villa-for-sale-rent-in-bali-seminyak-al107`,
+  `${SITE_URL}/listing/beautiful-2-bedrooms-brand-new-villa-for-sale-and-rent-in-bali-canggu-padonan-rf8643`,
+  `${SITE_URL}/listing/3-bedroom-villa-for-sale-in-bali-pererenan-tumbak-bayuh-rf3403`,
 ];
 
-const GSC_AFTER_DEPLOY_QUEUE = [
-  `${SITE_URL}/guides/bali-villa-occupancy-rates`,
-];
+const GSC_AFTER_DEPLOY_QUEUE: string[] = [];
 
 function count(pattern: RegExp, text: string) {
   return (text.match(pattern) || []).length;
@@ -330,14 +334,10 @@ export async function GET() {
       name: "Occupancy rates guide",
       url: occupancyGuide.url,
       ok:
-        (occupancyGuide.ok && count(/Article|FAQPage|BreadcrumbList/g, occupancyGuide.text) >= 3) ||
-        (occupancyGuide.status === 404 && !sitemap.text.includes("/guides/bali-villa-occupancy-rates")),
+        occupancyGuide.ok && count(/Article|FAQPage|BreadcrumbList/g, occupancyGuide.text) >= 3,
       status: occupancyGuide.status,
       ms: occupancyGuide.ms,
-      detail:
-        occupancyGuide.status === 404
-          ? "Prepared locally; deploy blocked by GitHub 401, so this should not be submitted to GSC yet."
-          : occupancyGuide.title,
+      detail: occupancyGuide.title,
     },
     {
       name: "Sitemap",
@@ -376,7 +376,7 @@ export async function GET() {
       rankProvider: {
         mode: "manual-observation",
         note:
-          "Exact live Google ranks require GSC access or a SERP API key. This dashboard shows verified observations plus live site-health signals.",
+          "The page-12 screenshot and GSC totals are from May 2026, not current measurements. Exact live Google ranks require authenticated GSC or a reproducible SERP check; site-health signals are fetched live.",
       },
       summary: {
         healthChecksPassing: checks.filter((check) => check.ok).length,
@@ -396,7 +396,8 @@ export async function GET() {
       keywords: KEYWORDS,
       jobs: JOBS,
       gsc: {
-        status: "Blocked until authenticated Search Console UI access is available",
+        status: "Signed out in the in-app browser on 2026-09-25; no indexing requests or current GSC metrics verified.",
+        lastKnownMetricsDate: "2026-05-13",
         indexed,
         notIndexed,
         clicks: 35,

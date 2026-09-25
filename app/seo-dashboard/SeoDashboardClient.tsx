@@ -161,13 +161,13 @@ export default function SeoDashboardClient() {
         <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
           <Metric
             icon={<Search size={20} />}
-            label="Best observed rank"
+            label="Best observed (May 13)"
             value={data ? `Page ${data.summary.bestObservedPage}` : "—"}
-            detail="Manual Google screenshot showed BVT around page 12 for bali villa roi."
+            detail="Historical Google screenshot for bali villa roi; current position is unverified."
           />
           <Metric
             icon={<ShieldCheck size={20} />}
-            label="Indexed pages"
+            label="Indexed pages (May 13)"
             value={data ? `${data.summary.indexed}` : "—"}
             detail={data ? `${data.summary.indexedPercent}% of last known GSC indexed/not-indexed set.` : "Waiting for API data."}
           />
@@ -361,10 +361,10 @@ export default function SeoDashboardClient() {
               <div className="mt-5 space-y-3 text-[13px] text-[color:var(--bvt-ink-muted)]">
                 <div className="flex items-center gap-2">
                   <Clock size={14} />
-                  Last known clicks: {data?.gsc.clicks}
+                  Clicks as of {data?.gsc.lastKnownMetricsDate}: {data?.gsc.clicks}
                 </div>
-                <div>Indexed: {data?.gsc.indexed}</div>
-                <div>Not indexed: {data?.gsc.notIndexed}</div>
+                <div>Indexed then: {data?.gsc.indexed}</div>
+                <div>Not indexed then: {data?.gsc.notIndexed}</div>
               </div>
             </div>
             <div className="lg:col-span-8 border border-[color:var(--bvt-hairline)] rounded-md overflow-hidden">

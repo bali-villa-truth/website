@@ -195,7 +195,7 @@ export default function WebsiteDashboardClient() {
                   {data.deploymentGate.requiredAction}
                 </p>
               </div>
-              <Pill tone={statusTone.Blocked}>{data.deploymentGate.status}</Pill>
+              <Pill tone={data.deploymentGate.status === "Live" ? statusTone.Live : statusTone.Blocked}>{data.deploymentGate.status}</Pill>
             </div>
             <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
