@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-25",
+    area: "Private dashboard security",
+    title: "Rotated both dashboard passwords out of public source",
+    status: "Deployed and access-tested",
+    why: "The previous fallback credentials were visible in the public website repository. Both have been revoked. New independent high-entropy credentials are stored only as digests in source, and login sessions are verified server-side against those digests. The old passwords and sessions no longer open the dashboards; unauthenticated APIs still return 401, and both pages remain noindex, nofollow. A managed Vercel environment secret is a future operational improvement, not a prerequisite for this rotation.",
+    url: `${SITE_URL}/website-dashboard`,
+    progressFile: ".tmp/website_progress_2026-09-25.md",
+  },
+  {
+    date: "2026-09-25",
     area: "Investor trust / public methodology",
     title: "Aligned public rate-model explanations with the live calculation",
     status: "Deployed and verified",
@@ -651,10 +660,10 @@ const completedImprovements = [
 
 const pendingImprovements = [
   {
-    priority: "High",
+    priority: "Medium",
     owner: "Site security",
-    title: "Rotate the website dashboard password and remove its code fallback",
-    nextAction: "Set a private WEBSITE_DASHBOARD_PASSWORD in Vercel and confirm it works before deploying an auth change that removes the hardcoded fallback. Keep both dashboards noindexed and require authentication for their APIs.",
+    title: "Move rotated dashboard credentials to managed Vercel secrets",
+    nextAction: "Set private WEBSITE_DASHBOARD_PASSWORD and SEO_DASHBOARD_PASSWORD values in Vercel, verify both logins, and then remove the public digest fallbacks. The current rotated credentials are high entropy and the public repository does not contain their plaintext or a forgeable session token.",
   },
   {
     priority: "High",
@@ -683,11 +692,6 @@ const pendingImprovements = [
 ];
 
 const blockers = [
-  {
-    blocker: "Website dashboard password rotation",
-    status: "Requires private Vercel environment setup",
-    note: "The current website dashboard accepts a hardcoded fallback password from the staged auth source. A private Vercel environment password must be configured and verified before removing the fallback, or the dashboard could become inaccessible.",
-  },
   {
     blocker: "Backlink outreach",
     status: "Blocked by user approval/account access",
@@ -1375,7 +1379,7 @@ const nextActions = [
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
   "Reauthorize Google Sheets interactively; the September 25 pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
   "Reinspect the completed September 25 GSC queue in 7-14 days using the same URL-prefix property, and track whether the sitemap read count and exact-query ROI visibility change.",
-  "Set and verify a private website-dashboard password in Vercel, then remove the hardcoded fallback without locking out the owner.",
+  "Optionally move the rotated dashboard credentials to private Vercel environment variables, verify both logins, then remove the public digest fallbacks.",
   "Rotate the stale GitHub token in .env; the September 25 deploy used the existing authenticated GitHub CLI token for one process.",
   "Continue mobile checks after listing or filter changes, and assess a saved/shareable comparison workflow after confirming its user-data model.",
   "Review the generated lockfile security advisories before a future dependency upgrade; do not force an untested package update into production.",

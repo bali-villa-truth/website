@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(dashboardCookieOptions());
+  response.cookies.set(dashboardCookieOptions(password));
   return response;
 }
 
