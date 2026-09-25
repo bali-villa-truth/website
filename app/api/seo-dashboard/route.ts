@@ -23,13 +23,15 @@ const KEYWORDS = [
   {
     keyword: "bali villa roi",
     intent: "Primary buyer-intent keyword",
-    status: "Historical observation",
+    status: "GSC measured",
     bestObservedPage: 12,
     bestObservedRange: "111-120",
     bestObservedUrl: `${SITE_URL}/ubud`,
     bestObservedTitle: "Ubud Villa Investment ROI — Independent Yield Audits",
-    source: "User Google screenshot, 2026-05-13 1:02 PM",
-    nextAction: "Inspect the ROI guide in GSC; compare fresh query impressions and average position.",
+    source: "GSC URL-prefix, Jun 24-Sep 23: 27 impressions, 0 clicks, average position 53.5. Page-12 screenshot is historical (May 13).",
+    gscAveragePosition: 53.5,
+    gscImpressions: 27,
+    nextAction: "ROI guide was queued Sep 25; recheck indexing and exact-query impressions in 7-14 days.",
   },
   {
     keyword: "bali villa investment",
@@ -72,8 +74,8 @@ const KEYWORDS = [
     bestObservedRange: null,
     bestObservedUrl: `${SITE_URL}/guides/bali-villa-roi`,
     bestObservedTitle: "Bali Villa ROI: 2026 Net Yield Guide for Buyers",
-    source: "Content and internal links live; current GSC indexing and rank unverified.",
-    nextAction: "Inspect the ROI guide in GSC and track query impressions.",
+    source: "ROI guide is live but GSC showed it was not indexed on Sep 25; indexing requested.",
+    nextAction: "Reinspect the guide in 7-14 days and track query impressions.",
   },
   {
     keyword: "bali villa leasehold vs freehold roi",
@@ -145,11 +147,11 @@ const JOBS = [
   {
     id: "gsc-indexing-queue",
     name: "Google Search Console indexing queue",
-    cadence: "Manual when browser/GSC access is available",
-    status: "Blocked",
+    cadence: "Manual recheck in 7-14 days",
+    status: "Completed",
     owner: "GSC UI",
-    lastKnownRun: "No authenticated submission verified on 2026-09-25",
-    nextAction: "Inspect /nusa-dua, then ROI guide, then the 14 current modeled villa audits.",
+    lastKnownRun: "Sep 25: 16 URLs inspected; 11 queued, 5 already indexed",
+    nextAction: "Reinspect ROI guide and /nusa-dua, then compare sitemap discovery and exact-query impressions.",
   },
   {
     id: "indexnow-submit",
@@ -188,6 +190,11 @@ const GSC_QUEUE = [
   `${SITE_URL}/listing/wonderful-3-bedroom-villa-for-sale-rent-in-bali-seminyak-al107`,
   `${SITE_URL}/listing/beautiful-2-bedrooms-brand-new-villa-for-sale-and-rent-in-bali-canggu-padonan-rf8643`,
   `${SITE_URL}/listing/3-bedroom-villa-for-sale-in-bali-pererenan-tumbak-bayuh-rf3403`,
+];
+
+const GSC_QUEUE_STATES = [
+  "Queued", "Queued", "Queued", "Queued", "Indexed", "Queued", "Queued", "Queued",
+  "Queued", "Indexed", "Indexed", "Queued", "Indexed", "Indexed", "Queued", "Queued",
 ];
 
 const GSC_AFTER_DEPLOY_QUEUE: string[] = [];
@@ -365,8 +372,8 @@ export async function GET() {
     },
   ];
 
-  const indexed = 1236;
-  const notIndexed = 1012;
+  const indexed = 581;
+  const notIndexed = 1725;
   const totalKnown = indexed + notIndexed;
 
   return Response.json(
@@ -374,9 +381,9 @@ export async function GET() {
       generatedAt: new Date().toISOString(),
       site: SITE_URL,
       rankProvider: {
-        mode: "manual-observation",
+        mode: "dated-gsc-snapshot",
         note:
-          "The page-12 screenshot and GSC totals are from May 2026, not current measurements. Exact live Google ranks require authenticated GSC or a reproducible SERP check; site-health signals are fetched live.",
+          "GSC URL-prefix metrics were read Sep 25, with page indexing last updated Sep 20 and Web performance through Sep 23. Average position is a period aggregate, not a current Google rank. The May page-12 screenshot remains historical; site-health signals are fetched live.",
       },
       summary: {
         healthChecksPassing: checks.filter((check) => check.ok).length,
@@ -396,16 +403,31 @@ export async function GET() {
       keywords: KEYWORDS,
       jobs: JOBS,
       gsc: {
-        status: "Signed out in the in-app browser on 2026-09-25; no indexing requests or current GSC metrics verified.",
-        lastKnownMetricsDate: "2026-05-13",
+        status: "Sep 25: all 16 current-queue URLs inspected; 11 indexing requests confirmed and 5 already indexed. ROI guide and /nusa-dua are not indexed yet. Sitemap resubmitted; Google's last read still shows Jun 27.",
+        lastKnownMetricsDate: "2026-09-25",
+        indexingDataDate: "2026-09-20",
+        performanceThrough: "2026-09-23",
         indexed,
         notIndexed,
-        clicks: 35,
-        queue: GSC_QUEUE,
+        crawledNotIndexed: 1470,
+        notFound: 251,
+        clicks: 4,
+        impressions: 701,
+        averagePosition: 40.7,
+        recent28Days: { clicks: 0, impressions: 121, averagePosition: 58.9 },
+        exactQuery: {
+          keyword: "bali villa roi",
+          clicks: 0,
+          impressions: 27,
+          averagePosition: 53.5,
+          recent28DayImpressions: 0,
+        },
+        queue: [],
+        inspectedQueue: GSC_QUEUE.map((url, index) => ({ url, status: GSC_QUEUE_STATES[index] })),
         afterDeployQueue: GSC_AFTER_DEPLOY_QUEUE,
         accounts: [
-          "sc-domain:balivillatruth.com under michael.schvarcz@gmail.com",
-          "https://balivillatruth.com/ URL-prefix under michael@balivillatruth.com",
+          "https://balivillatruth.com/ URL-prefix accessible under michael.schvarcz@gmail.com",
+          "sc-domain:balivillatruth.com returned access error under this account on Sep 25",
         ],
       },
       checks,

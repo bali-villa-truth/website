@@ -19,10 +19,12 @@ type DashboardData = any;
 
 const statusTone: Record<string, string> = {
   Observed: "border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]",
+  "GSC measured": "border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]",
   Prepared: "border-[color:var(--bvt-accent)]/40 text-[color:var(--bvt-accent)]",
   "Needs check": "border-[color:var(--bvt-warn)]/40 text-[color:var(--bvt-warn)]",
   Active: "border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]",
   Healthy: "border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]",
+  Completed: "border-[color:var(--bvt-good)]/40 text-[color:var(--bvt-good)]",
   Blocked: "border-[color:var(--bvt-warn)]/40 text-[color:var(--bvt-warn)]",
 };
 
@@ -59,11 +61,6 @@ function Metric({
       </p>
     </div>
   );
-}
-
-function rankScore(keyword: any) {
-  if (!keyword.bestObservedPage) return 0;
-  return Math.max(4, Math.min(100, Math.round(100 - (keyword.bestObservedPage - 1) * 7)));
 }
 
 export default function SeoDashboardClient() {
@@ -161,15 +158,15 @@ export default function SeoDashboardClient() {
         <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
           <Metric
             icon={<Search size={20} />}
-            label="Best observed (May 13)"
-            value={data ? `Page ${data.summary.bestObservedPage}` : "—"}
-            detail="Historical Google screenshot for bali villa roi; current position is unverified."
+            label="ROI avg. position (3mo)"
+            value={data ? `${data.gsc.exactQuery.averagePosition}` : "—"}
+            detail={data ? `${data.gsc.exactQuery.impressions} impressions, 0 clicks; GSC through Sep 23. Not a live rank.` : "Waiting for GSC snapshot."}
           />
           <Metric
             icon={<ShieldCheck size={20} />}
-            label="Indexed pages (May 13)"
+            label="Indexed pages (Sep 20)"
             value={data ? `${data.summary.indexed}` : "—"}
-            detail={data ? `${data.summary.indexedPercent}% of last known GSC indexed/not-indexed set.` : "Waiting for API data."}
+            detail={data ? `${data.summary.indexedPercent}% of GSC-known indexed/not-indexed pages.` : "Waiting for API data."}
           />
           <Metric
             icon={<LinkIcon size={20} />}
@@ -212,7 +209,7 @@ export default function SeoDashboardClient() {
               <div>
                 <h2 className="font-display text-[28px] text-[color:var(--bvt-ink)]">Keyword visibility</h2>
                 <p className="mt-1 text-[13px] text-[color:var(--bvt-ink-muted)]">
-                  Exact daily ranks need GSC or a SERP API. Rows below separate verified observations from tracking targets.
+                  GSC average positions are period aggregates. Historical observations and unmeasured targets are labeled separately.
                 </p>
               </div>
               <div className="relative w-full md:w-[320px]">
@@ -231,7 +228,7 @@ export default function SeoDashboardClient() {
                   <tr>
                     <th className="px-4 py-3 font-semibold">Keyword</th>
                     <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold">Observed Rank</th>
+                    <th className="px-4 py-3 font-semibold">Measured Visibility</th>
                     <th className="px-4 py-3 font-semibold">Best BVT URL</th>
                     <th className="px-4 py-3 font-semibold">Next Action</th>
                   </tr>
@@ -249,16 +246,18 @@ export default function SeoDashboardClient() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="font-mono text-[color:var(--bvt-ink)]">
-                          {row.bestObservedPage ? `Page ${row.bestObservedPage}` : "Not verified"}
-                        </div>
-                        <div className="mt-2 h-2 w-32 rounded-full bg-white/10">
-                          <div
-                            className="h-2 rounded-full bg-[color:var(--bvt-accent)]"
-                            style={{ width: `${rankScore(row)}%` }}
-                          />
+                          {row.gscAveragePosition != null
+                            ? `Avg. ${row.gscAveragePosition}`
+                            : row.bestObservedPage
+                              ? `Page ${row.bestObservedPage} (May)`
+                              : "Not verified"}
                         </div>
                         <div className="mt-1 text-[11px] text-[color:var(--bvt-ink-dim)]">
-                          {row.bestObservedRange ? `Approx. results ${row.bestObservedRange}` : "Awaiting GSC/public observation"}
+                          {row.gscImpressions != null
+                            ? `${row.gscImpressions} impressions over 3 months; 0 in last 28 days`
+                            : row.bestObservedRange
+                              ? `Historical results ${row.bestObservedRange}`
+                              : "Awaiting GSC/public observation"}
                         </div>
                       </td>
                       <td className="px-4 py-4">
@@ -353,29 +352,33 @@ export default function SeoDashboardClient() {
         {tab === "gsc" && (
           <section className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-4">
             <div className="lg:col-span-4 border border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-elev)] rounded-md p-5">
-              <div className="flex items-center gap-2 text-[color:var(--bvt-warn)]">
-                <AlertTriangle size={18} />
-                <span className="label-micro text-[color:var(--bvt-warn)]">Current blocker</span>
+              <div className="flex items-center gap-2 text-[color:var(--bvt-good)]">
+                <CheckCircle2 size={18} />
+                <span className="label-micro text-[color:var(--bvt-good)]">Search Console checkpoint</span>
               </div>
               <p className="mt-4 text-[15px] leading-relaxed text-[color:var(--bvt-ink-body)]">{data?.gsc.status}</p>
               <div className="mt-5 space-y-3 text-[13px] text-[color:var(--bvt-ink-muted)]">
                 <div className="flex items-center gap-2">
                   <Clock size={14} />
-                  Clicks as of {data?.gsc.lastKnownMetricsDate}: {data?.gsc.clicks}
+                  Web performance through {data?.gsc.performanceThrough}
                 </div>
-                <div>Indexed then: {data?.gsc.indexed}</div>
-                <div>Not indexed then: {data?.gsc.notIndexed}</div>
+                <div>3 months: {data?.gsc.impressions} impressions, {data?.gsc.clicks} clicks, avg. position {data?.gsc.averagePosition}</div>
+                <div>Last 28 days: {data?.gsc.recent28Days.impressions} impressions, {data?.gsc.recent28Days.clicks} clicks</div>
+                <div>Exact "bali villa roi": {data?.gsc.exactQuery.impressions} impressions / 3 months; {data?.gsc.exactQuery.recent28DayImpressions} / last 28 days</div>
+                <div>Indexed as of {data?.gsc.indexingDataDate}: {data?.gsc.indexed}</div>
+                <div>Not indexed: {data?.gsc.notIndexed} ({data?.gsc.crawledNotIndexed} crawled, {data?.gsc.notFound} 404)</div>
               </div>
             </div>
             <div className="lg:col-span-8 border border-[color:var(--bvt-hairline)] rounded-md overflow-hidden">
               <div className="bg-[color:var(--bvt-bg-elev)] px-4 py-3">
-                <h2 className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Next GSC indexing order</h2>
+                <h2 className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Inspected URLs - Sep 25</h2>
               </div>
               <div className="divide-y divide-[color:var(--bvt-hairline)]">
-                {(data?.gsc.queue || []).map((url: string, index: number) => (
-                  <div key={url} className="p-4 flex items-center gap-4">
+                {(data?.gsc.inspectedQueue || []).map((item: any, index: number) => (
+                  <div key={item.url} className="p-4 flex items-center gap-4">
                     <div className="font-mono text-[12px] text-[color:var(--bvt-accent)] w-7 shrink-0">{String(index + 1).padStart(2, "0")}</div>
-                    <a href={url} className="text-[13px] text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] break-all">{url}</a>
+                    <a href={item.url} className="min-w-0 flex-1 text-[13px] text-[color:var(--bvt-ink)] hover:text-[color:var(--bvt-accent)] break-all">{item.url}</a>
+                    <Pill tone={statusTone.Completed}>{item.status}</Pill>
                   </div>
                 ))}
               </div>
