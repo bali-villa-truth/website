@@ -119,10 +119,13 @@ function computeAudit(villa: Villa, usdRate: number): AuditNumbers {
   const usdMatch = priceDesc.match(/USD\s*([\d,]+)/i);
   if (usdMatch) priceUsd = parseFloat(usdMatch[1].replace(/,/g, ""));
   if (!priceUsd && priceLocal) priceUsd = priceLocal / usdRate;
+  const auditPriceUsd = Number(villa.price_per_room) * Number(villa.bedrooms);
+  if (auditPriceUsd > 0) priceUsd = auditPriceUsd;
 
   const nightlyRate = villa.est_nightly_rate || 0;
-  const occupancy = villa.est_occupancy || 0.65;
-  const leaseYears = villa.lease_years || 0;
+  const occupancy = 0.65;
+  const flags = (villa.flags || "").split(",");
+  const leaseYears = villa.lease_years || (flags.includes("LEASE_TERM_NOT_STATED") ? 15 : 0);
   const bedrooms = villa.bedrooms || 0;
   const featuresLower = (villa.features || "").toLowerCase();
   const isLeasehold =
@@ -211,10 +214,19 @@ interface Comp {
   bedrooms: number | null;
   last_price: number | null;
   price_description: string | null;
+  price_per_room?: number | null;
   projected_roi: number | null;
   est_nightly_rate: number | null;
   est_occupancy: number | null;
   lease_years: number | null;
+}
+
+function compPriceUsd(comp: Comp): number {
+  const auditPrice = Number(comp.price_per_room) * Number(comp.bedrooms);
+  if (auditPrice > 0) return auditPrice;
+  const usd = (comp.price_description || "").match(/USD\s*([\d,]+)/i);
+  if (usd) return parseFloat(usd[1].replace(/,/g, ""));
+  return (comp.last_price || 0) / USD_RATE_FALLBACK;
 }
 
 // Loose typing on purpose: SupabaseClient's generic inference doesn't line up
@@ -250,7 +262,7 @@ async function fetchComps(
   let res = await supabase
     .from("listings_tracker")
     .select(
-      "id,slug,villa_name,location,bedrooms,last_price,price_description,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years"
     )
     .eq("location", area)
     .eq("bedrooms", beds)
@@ -270,7 +282,7 @@ async function fetchComps(
   res = await supabase
     .from("listings_tracker")
     .select(
-      "id,slug,villa_name,location,bedrooms,last_price,price_description,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years"
     )
     .eq("location", area)
     .gte("bedrooms", bedsLo)
@@ -289,7 +301,7 @@ async function fetchComps(
   res = await supabase
     .from("listings_tracker")
     .select(
-      "id,slug,villa_name,location,bedrooms,last_price,price_description,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years"
     )
     .eq("bedrooms", beds)
     .neq("id", villa.id)
@@ -329,11 +341,11 @@ function buildScenarios(audit: AuditNumbers): Scenario[] {
     { label: "Base case (as published)", rate_mult: 1.0, occ_delta: 0, opex_mult: 1.0,
       description: "The headline number from the free audit." },
     { label: "Cyclical downturn (-15% occ)", rate_mult: 1.0, occ_delta: -0.15, opex_mult: 1.0,
-      description: "Modeled on Bali's 2015-16 oversupply + 2020 tourism shock blended." },
+      description: "Illustrative 15-point occupancy downside; not a historical forecast." },
     { label: "Competitive saturation", rate_mult: 0.88, occ_delta: -0.08, opex_mult: 1.0,
       description: "If Canggu-style inventory growth hits your area: rates compress 12%, occupancy drifts 8pp." },
     { label: "Operating-cost inflation", rate_mult: 1.0, occ_delta: 0, opex_mult: 1.2,
-      description: "Indonesia CPI + manager fees + maintenance re-bids at +20% — plausible over a 5yr hold." },
+      description: "Illustrative 20% increase in the operating-cost assumption." },
     { label: "Double-shock", rate_mult: 0.88, occ_delta: -0.12, opex_mult: 1.15,
       description: "Saturation + cost inflation stacked. Tests whether the villa is still cash-flow positive." },
     { label: "Bull case (premium repositioning)", rate_mult: 1.15, occ_delta: 0.05, opex_mult: 1.0,
@@ -357,12 +369,7 @@ function buildNegotiationMemo(villa: Villa, audit: AuditNumbers, comps: Comp[]):
   const lines: string[] = [];
   const ny = audit.net_yield_pct;
   const flags = (villa.flags || "").split(",").map((f) => f.trim()).filter(Boolean);
-  const compPrices = comps.map((c) => {
-    const d = c.price_description || "";
-    const m = d.match(/USD\s*([\d,]+)/i);
-    if (m) return parseFloat(m[1].replace(/,/g, ""));
-    return (c.last_price || 0) / USD_RATE_FALLBACK;
-  }).filter((p) => p > 0);
+  const compPrices = comps.map(compPriceUsd).filter((p) => p > 0);
   const compMed = compPrices.length
     ? compPrices.sort((a, b) => a - b)[Math.floor(compPrices.length / 2)]
     : 0;
@@ -391,36 +398,36 @@ function buildNegotiationMemo(villa: Villa, audit: AuditNumbers, comps: Comp[]):
   // from "push for a discount to reach yield" to "don't bid above asking,
   // use condition/comps for discount."
   const walkAwayYield = Math.max(5, ny - 1.5);
-  const walkAwayPrice =
-    audit.net_revenue > 0 && walkAwayYield > 0
-      ? audit.net_revenue / (walkAwayYield / 100)
-      : audit.price_usd * 0.85;
+  const cashBeforeLease = audit.gross_revenue - audit.total_expenses;
+  const leaseDecayRate = audit.is_leasehold && audit.lease_years > 0 ? 1 / audit.lease_years : 0;
+  const walkAwayPrice = cashBeforeLease > 0
+    ? cashBeforeLease / (walkAwayYield / 100 + leaseDecayRate)
+    : 0;
   if (walkAwayPrice < audit.price_usd) {
     const discountPct = ((audit.price_usd - walkAwayPrice) / audit.price_usd) * 100;
     lines.push(
-      `Your walk-away number should be the price that delivers at least a ${walkAwayYield.toFixed(1)}% net yield — approximately ${fmtCurrency(walkAwayPrice)}. That's a ${discountPct.toFixed(0)}% discount from asking. If the seller won't move at least halfway to that, walk. There are ${compPrices.length} comparable listings; you are not obligated to this one.`
+      `At the modeled rate, occupancy, expenses, and lease term, a ${walkAwayYield.toFixed(1)}% net-yield screen implies a maximum price near ${fmtCurrency(walkAwayPrice)} (${discountPct.toFixed(0)}% below asking). This is an illustrative ceiling, not an offer recommendation; verify the inputs and compare property condition before negotiating.`
     );
   } else {
     lines.push(
-      `At asking, this villa already clears your ${walkAwayYield.toFixed(1)}% minimum yield hurdle — it runs at ${fmtPct(ny)}. Yield is not the negotiation lever here. Push on condition and comps instead: commission a survey, and use defect findings plus any gap versus the ${compPrices.length} comparable listings as your discount mechanism. Don't bid above ${fmtCurrency(audit.price_usd)} regardless of how the seller frames demand.`
+      `At the published assumptions, the asking price clears an illustrative ${walkAwayYield.toFixed(1)}% yield hurdle (${fmtPct(ny)} modeled net yield). This does not establish a fair price. Review condition, source records, title, lease terms, and truly comparable properties before setting your own limit.`
     );
   }
 
   // Opening offer
-  const openingOffer = audit.price_usd * 0.82;
   lines.push(
-    `Recommended opening offer: ${fmtCurrency(openingOffer)} (~18% below asking). This is aggressive but defensible — if the net yield math at the asking price is ${fmtPct(ny)}, you have empirical justification for leaving room. Expect a counter at ~10-12% off. Meet at ~15% off asking if survey comes back clean.`
+    `Before making an offer, replace modeled rent and costs with verified records and decide your own required return. The asking price alone does not justify a standard percentage discount or predict a seller's counteroffer.`
   );
 
   // Flag-specific leverage
   if (flags.includes("SHORT_LEASE")) {
     lines.push(
-      `**Short-lease leverage:** With <15 years remaining, every year you hold erodes 6-10% of value. Demand a 30-40% discount from a comparable fresh-lease price — not because you're being difficult, but because that's the math.`
+      `**Short-lease diligence:** Fewer than 15 years remain. Obtain the signed lease, extension rights and price, then compare the full economics with a genuinely similar longer-lease villa. Resale value may not decline linearly.`
     );
   }
   if (flags.includes("OFF_PLAN")) {
     lines.push(
-      `**Off-plan leverage:** Do NOT pay more than 30% before Pondok Wisata + PBG + SLF are issued. Insist on a construction guarantee tied to milestone payments. A seller who won't negotiate payment staging is either underfunded or hiding delays.`
+      `**Off-plan diligence:** Have local counsel verify the required permits, delivery milestones, escrow or payment protections, and remedies for delays before committing funds. Do not infer a developer's finances or intent from payment terms alone.`
     );
   }
   if (flags.includes("BUDGET_VILLA") || flags.includes("EXTREME_BUDGET")) {
@@ -430,13 +437,13 @@ function buildNegotiationMemo(villa: Villa, audit: AuditNumbers, comps: Comp[]):
   }
   if (audit.is_leasehold && audit.lease_years > 0 && audit.lease_years < 25) {
     lines.push(
-      `**Lease extension:** Before making the final offer, get the landlord's written quote to extend the lease by 20-25 years. If extension is expensive/impossible, that changes the math — use it as a further discount lever.`
+      `**Lease extension:** Ask for the landlord's written extension terms, price, and enforceability before modeling any extension. An unpriced option is not extra lease tenure.`
     );
   }
 
   // Due diligence stop
   lines.push(
-    `Do NOT transfer any funds before: (1) a Notaris/PPAT has verified the title chain, (2) a qualified surveyor has inspected the building, (3) Pondok Wisata + PBG + SLF documents are in your possession and validated, (4) a licensed Indonesian lawyer has reviewed the sale agreement. Budget $1,500-3,000 for this. It's cheap insurance.`
+    `Before transferring funds, engage qualified local legal and technical advisers to verify the title chain, permits applicable to this property, physical condition, and sale agreement. Obtain actual professional-fee quotes rather than assuming a standard diligence budget.`
   );
 
   return lines;
@@ -463,8 +470,8 @@ function buildExitScenarios(audit: AuditNumbers): ExitRow[] {
   for (const yr of holds) {
     const gross = audit.gross_revenue * yr;
     const ops = audit.total_expenses * yr;
-    const leasePaid = audit.lease_cost * yr;
-    const net = audit.net_revenue * yr;
+    const leaseDecayAllowance = audit.lease_cost * yr;
+    const net = gross - ops;
     let resale: number;
     if (audit.is_leasehold && audit.lease_years > 0) {
       const remaining = Math.max(0, audit.lease_years - yr);
@@ -481,7 +488,7 @@ function buildExitScenarios(audit: AuditNumbers): ExitRow[] {
       year: yr,
       gross_collected: gross,
       ops_paid: ops,
-      lease_paid: leasePaid,
+      lease_paid: leaseDecayAllowance,
       net_collected: net,
       resale_value: resale,
       total_return: totalReturn,
@@ -673,13 +680,13 @@ function renderKeyStats(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbe
     ["Ownership", leaseLabel],
     ["Location", villa.location || "—"],
     // --- RIGHT column: pricing + yield ---
-    ["Asking Price", fmtCurrency(audit.price_usd)],
+    ["USD Price (audit FX)", fmtCurrency(audit.price_usd)],
     ["Local Price", audit.price_desc || "—"],
     ["Price / m² (land)", pricePerSqm > 0 ? fmtCurrency(pricePerSqm) : "—"],
     ["Price / Bedroom", villa.price_per_room && villa.price_per_room > 0
       ? fmtCurrency(villa.price_per_room) : "—"],
     ["Est. Nightly Rate", `${fmtCurrency(audit.nightly_rate)}/night`],
-    ["Est. Occupancy", fmtPct(audit.occupancy * 100, 0)],
+    ["Scenario Occupancy", fmtPct(audit.occupancy * 100, 0)],
     ["Base Net Yield",   fmtPct(audit.net_yield_pct)],
   ];
   twoColRows(doc, rows);
@@ -740,9 +747,10 @@ function renderDataProvenance(doc: PDFKit.PDFDocument, villa: Villa, audit: Audi
   const rows: string[][] = [
     ["Signal", "Value", "Confidence"],
     ["Nightly rate", rateSource, exactAreaRate ? "Booking.com asking-rate sample, 1 Aug 2026; not booked revenue. Verify this villa's realized rate." : "Fallback estimate; no exact-area sample or booked revenue. Verify this villa's realized rate."],
-    ["Occupancy", `${fmtPct(audit.occupancy * 100, 0)} - ${occSource}`, reviewBased ? "Provisional Mar 2026 review proxy; repeated cards, sample coverage unverified" : "Flat fallback assumption; no booked-night data"],
+    ["Occupancy in yield", "65% shared scenario", "Assumed for comparison; no booked-night data"],
+    ["Area occupancy proxy", reviewBased && villa.est_occupancy != null ? `${fmtPct(villa.est_occupancy * 100, 0)} - ${occSource}` : "Not available", reviewBased ? "Provisional Mar 2026 review proxy; not used in yield" : "No validated area proxy"],
     ["Asking price", villa.price_description || "—", "Scraped from source listing; verify in-person."],
-    ["Lease years", villa.lease_years ? String(villa.lease_years) : "N/A", "From listing description; verify via Notaris."],
+    ["Lease years", audit.lease_years ? String(audit.lease_years) : "N/A", (villa.flags || "").includes("LEASE_TERM_NOT_STATED") ? "15-year model assumption; source term missing" : "From listing description; verify via Notaris."],
   ];
   dataTable(doc, rows, [100, 140, 272]);
 }
@@ -774,12 +782,7 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
   const rows: string[][] = [headerRow];
   for (const c of filteredComps) {
     const nm = (c.villa_name || "—").slice(0, 100);
-    const price = (() => {
-      const d = c.price_description || "";
-      const m = d.match(/USD\s*([\d,]+)/i);
-      if (m) return `$${parseFloat(m[1].replace(/,/g, "")).toLocaleString()}`;
-      return c.last_price ? fmtCurrency(c.last_price / USD_RATE_FALLBACK) : "—";
-    })();
+    const price = compPriceUsd(c) > 0 ? fmtCurrency(compPriceUsd(c)) : "—";
     const lease = c.lease_years ? `${c.lease_years}yr` : "Free";
     rows.push([
       nm,
@@ -794,12 +797,7 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
   doc.y += 10;
 
   // Median line
-  const prices = filteredComps.map((c) => {
-    const d = c.price_description || "";
-    const m = d.match(/USD\s*([\d,]+)/i);
-    if (m) return parseFloat(m[1].replace(/,/g, ""));
-    return (c.last_price || 0) / USD_RATE_FALLBACK;
-  }).filter((p) => p > 0).sort((a, b) => a - b);
+  const prices = filteredComps.map(compPriceUsd).filter((p) => p > 0).sort((a, b) => a - b);
   const yields = filteredComps.map((c) => c.projected_roi).filter((v): v is number => v !== null && v !== undefined).sort((a, b) => a - b);
   if (prices.length && yields.length) {
     const priceMed = prices[Math.floor(prices.length / 2)];
@@ -826,7 +824,7 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
 
 function renderScenarios(doc: PDFKit.PDFDocument, scenarios: Scenario[]) {
   sectionHeader(doc, "Six-Scenario Stress Test");
-  const rows: string[][] = [["Scenario", "Rate", "Occ", "Opex", "Net yield", "Cashflow"]];
+  const rows: string[][] = [["Scenario", "Rate", "Occ", "Opex", "Net yield", "After decay"]];
   for (const s of scenarios) {
     rows.push([
       s.label,
@@ -853,13 +851,13 @@ function renderScenarios(doc: PDFKit.PDFDocument, scenarios: Scenario[]) {
   const spread = base.net_yield - worst.net_yield;
   let interpretation: string;
   if (worst.net_yield < 0) {
-    interpretation = `Under a double-shock (${worst.label.toLowerCase()}) this villa goes cash-flow negative (${fmtPct(worst.net_yield)}). You would need external income to carry it. Budget the risk.`;
+    interpretation = `Under ${worst.label.toLowerCase()}, the modeled yield after lease decay is negative (${fmtPct(worst.net_yield)}). This is not the same as cash flow; inspect operating income and likely resale loss separately.`;
   } else if (worst.net_yield < 3) {
-    interpretation = `Under a double-shock (${worst.label.toLowerCase()}) net yield collapses to ${fmtPct(worst.net_yield)} — below the ~3% risk-free alternative. The villa stays positive on paper but loses its investment rationale in that scenario. If you think simultaneous rate, occupancy, and cost pressure is plausible, you need a bigger discount at purchase to compensate.`;
+    interpretation = `Under ${worst.label.toLowerCase()}, the modeled yield after lease decay falls to ${fmtPct(worst.net_yield)}. Compare that with your own required return and test the assumptions against property records before making an offer.`;
   } else if (spread > 4) {
     interpretation = `The yield range is wide (${fmtPct(worst.net_yield)}-${fmtPct(bull?.net_yield || 0)}). Performance depends heavily on the rate/occupancy assumptions holding. Model it against your own risk tolerance.`;
   } else {
-    interpretation = `The yield range is tight across scenarios and the worst case (${fmtPct(worst.net_yield)}) stays above the risk-free floor. This villa is relatively robust to the shocks modeled here.`;
+    interpretation = `The modeled range is narrow across these selected scenarios; the lowest tested yield is ${fmtPct(worst.net_yield)}. This does not cover unmodeled legal, capital-repair, financing, or resale risks.`;
   }
   doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
     .text(interpretation, 50, doc.y, { width: 512, lineGap: 3 });
@@ -869,7 +867,7 @@ function renderScenarios(doc: PDFKit.PDFDocument, scenarios: Scenario[]) {
 function renderOpsSensitivity(doc: PDFKit.PDFDocument, audit: AuditNumbers) {
   sectionHeader(doc, "Operating-Cost Sensitivity");
   doc.fontSize(9).font("Helvetica").fillColor(COLORS.inkMuted)
-    .text("How does net yield change if specific line items come in higher than our 15/15/10% assumptions? (Real-world Bali villa OpEx often runs 45-55% of gross once you include repairs, staff, and pool/garden.)",
+    .text("How does modeled net yield change if operating costs differ from the 15/15/10% assumptions? These are scenarios, not measured costs for this villa.",
           50, doc.y, { width: 512, lineGap: 2 });
   doc.y += 8;
 
@@ -934,7 +932,7 @@ function renderExits(doc: PDFKit.PDFDocument, exits: ExitRow[]) {
           50, doc.y, { width: 512, lineGap: 1 });
   doc.y += 8;
   doc.fontSize(8.5).font("Helvetica-Oblique").fillColor(COLORS.inkDim)
-    .text("Leasehold resale estimated via linear lease-amortization (remaining years / total years × purchase price). Real resale depends on buyer demand at exit, which is the weakest point in Bali's market — short-lease resale can be illiquid. Freehold resale assumes flat USD price (a conservative floor).",
+    .text("Cash collected is gross rent less operating costs; lease decay is reflected only in the illustrative resale value, not deducted twice. Leasehold resale uses a linear remaining-years assumption and may differ substantially in practice. Freehold resale is held flat in USD as a scenario, not a floor or guarantee.",
           50, doc.y, { width: 512, lineGap: 2 });
   doc.y += 12;
 }
@@ -1695,8 +1693,8 @@ async function handleTest(profileNum: number, key: string): Promise<Response> {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="BVT-TestProfile-${profileNum}.pdf"`,
-        "X-Test-Profile": profile.name,
-        "X-Test-Expectation": profile.expect,
+        "X-Test-Profile": encodeURIComponent(profile.name),
+        "X-Test-Expectation": encodeURIComponent(profile.expect),
         "Cache-Control": "no-store",
       },
     });

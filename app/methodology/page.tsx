@@ -10,7 +10,7 @@ const METHOD_FAQS = [
   },
   {
     q: 'How does Bali Villa Truth calculate net yield?',
-    a: 'We estimate annual gross revenue from nightly rate, occupancy, and 365 nights, subtract a 40% operating expense load, then subtract annual lease depreciation for leasehold properties. Net yield is adjusted annual revenue divided by asking price.',
+    a: 'The published badge uses a shared 65% occupancy screening scenario: nightly rate times 365 nights times 65%, less a 40% operating-cost load and annual lease depreciation where applicable. This is a comparison estimate, not a forecast of booked nights.',
   },
   {
     q: 'Why is leasehold depreciation included?',
@@ -18,7 +18,7 @@ const METHOD_FAQS = [
   },
   {
     q: 'Are the occupancy rates actual booking data?',
-    a: 'No. Occupancy is estimated from Booking.com review density by area. It is a demand proxy, not property-level booking history, so every listing should still be verified with local managers and actual channel data where possible.',
+    a: 'No. The yield badge uses an assumed 65% occupancy. Separate area percentages come from a provisional March 2026 Booking.com review-density proxy and are not used in the badge. Neither is property-level booking history.',
   },
   {
     q: 'Why do agent ROI numbers differ from BVT yields?',
@@ -29,7 +29,7 @@ const METHOD_FAQS = [
 const HOWTO_STEPS = [
   'Estimate a market nightly rate from the villa area and bedroom count.',
   'Adjust budget properties where the asking price falls below the area and bedroom benchmark.',
-  'Estimate area occupancy from Booking.com review-density signals.',
+  'Apply a shared 65% occupancy scenario; show the provisional area proxy separately.',
   'Calculate gross annual rental revenue from nightly rate, occupancy, and 365 nights.',
   'Subtract a 40% operating expense load for management, booking fees, utilities, and maintenance.',
   'Subtract annual lease depreciation for leasehold villas.',
@@ -193,9 +193,10 @@ export default function Methodology() {
           <SectionHeading icon={<Calendar size={18} />} title="Occupancy rate" />
           <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              The current model assigns area-specific occupancy assumptions between <strong className="text-[color:var(--bvt-ink)]">40% and 80%</strong> from
-              Booking.com review density. Those bounds are chosen model inputs, not measured occupancy.
-              The active review snapshot was collected on 7 March 2026 and requires revalidation.
+              The published net-yield badge uses a <strong className="text-[color:var(--bvt-ink)]">shared 65% occupancy scenario</strong> for every modeled villa.
+              It is a comparison assumption, not measured occupancy or a forecast. Separately, the site stores
+              area review-density percentages mapped to a chosen 40%–80% range. That proxy is <strong>not used in the badge</strong>.
+              Its 7 March 2026 snapshot requires revalidation.
             </p>
 
             <Step num={1} title="Review density as a demand proxy">
@@ -226,8 +227,8 @@ export default function Methodology() {
               </p>
               <p className="text-[14px] leading-[1.65] text-[color:var(--bvt-ink-body)]">
                 These are not actual occupancy data or evidence that one area outperforms another.
-                The 40%–80% mapping and the old March sample can materially change a yield estimate.
-                For unsupported areas we use a flat 65% fallback and label it as an assumption.
+                The provisional 40%–80% mapping does not drive the published yield badge.
+                The 65% comparison scenario can still materially overstate or understate a specific villa's results.
                 Request property-level booking exports and test lower occupancy before underwriting.
               </p>
             </div>
@@ -252,7 +253,7 @@ export default function Methodology() {
 
             <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-5 font-mono text-[12px] leading-[1.9] tabular-nums overflow-x-auto text-[color:var(--bvt-ink)]">
               <div className="text-[color:var(--bvt-ink-faint)] mb-2">{`// The full calculation`}</div>
-              <div>gross_revenue = nightly_rate × 365 × occupancy</div>
+              <div>gross_revenue = nightly_rate × 365 × 65% assumed occupancy</div>
               <div>expenses = gross_revenue × 40%</div>
               <div>net_revenue = gross_revenue − expenses</div>
               <div className="mt-3 text-[color:var(--bvt-accent)]">{`// For leaseholds only:`}</div>
@@ -262,7 +263,8 @@ export default function Methodology() {
             </div>
 
             <p>
-              The crossed-out &ldquo;Gross&rdquo; percentage you see above the badge is the number many agents
+              The USD price used in this calculation is fixed at the audit exchange rate; a display-time
+              currency conversion may differ. The crossed-out &ldquo;Gross&rdquo; percentage you see above the badge is the number many agents
               quote — it ignores all operating costs and lease depreciation. We show it struck through so you can
               see exactly how much those costs eat into your returns.
             </p>
@@ -433,8 +435,8 @@ export default function Methodology() {
             </p>
             <p>
               This methodology page is a living document. When we change how we calculate something, we
-              update it here. The current model uses graduated budget discounts, but its occupancy proxy
-              needs a clean refresh before its sample-size labels can be treated as reliable.
+              update it here. The published yield currently uses a shared 65% occupancy scenario.
+              The separate area proxy needs a clean refresh before its sample-size labels can be treated as reliable.
             </p>
           </div>
         </section>

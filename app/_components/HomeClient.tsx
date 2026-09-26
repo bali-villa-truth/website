@@ -460,6 +460,13 @@ export default function HomeClient({
     return currency === 'USD' ? amount : amount / r;
   };
 
+  // The published yield uses the USD purchase-price basis stored by the auditor.
+  // Display-time FX is useful for browsing, but must not change ROI arithmetic.
+  const getAuditPriceUSD = (villa: any): number => {
+    const audited = Number(villa.price_per_room) * Number(villa.bedrooms);
+    return audited > 0 ? audited : getPriceUSD(villa);
+  };
+
   // --- Convert and format price in display currency (for table) ---
   const formatPriceInCurrency = (villa: any): string => {
     const priceUSD = getPriceUSD(villa);
@@ -569,8 +576,7 @@ export default function HomeClient({
   // --- Display nightly & occupancy for analysis; never backfill rows explicitly marked unmodeled. ---
   const getDisplayNightly = (villa: any): number =>
     villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (isRoiUnmodeled(villa) ? 0 : (100 + ((villa.bedrooms || 0) * 35)));
-  const getDisplayOccupancy = (villa: any): number =>
-    (villa.est_occupancy ?? 0.65) * 100;
+  const getDisplayOccupancy = (_villa: any): number => 65;
 
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
   // Split into two memos so clicking a heart doesn't invalidate the whole filtered set
@@ -674,7 +680,7 @@ export default function HomeClient({
 
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
   const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
-    const priceUSD = getPriceUSD(villa);
+    const priceUSD = getAuditPriceUSD(villa);
     const unmodeled = isRoiUnmodeled(villa);
     if (priceUSD <= 0 || unmodeled) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0, leaseDepreciation: 0, depreciationYield: 0, isFreehold: true, leaseYears: 0, unmodeled };
 
@@ -688,7 +694,7 @@ export default function HomeClient({
 
     // Lease depreciation for ALL leasehold villas
     const features = (villa.features || '').toLowerCase();
-    const years = Number(villa.lease_years) || 0;
+    const years = Number(villa.lease_years) || ((villa.flags || '').split(',').includes('LEASE_TERM_NOT_STATED') ? 15 : 0);
     const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
     const leaseDepreciation = (!isFreehold && years > 0) ? Math.round(priceUSD / years) : 0;
     const depreciationYield = (!isFreehold && years > 0) ? (1 / years) * 100 : 0;
@@ -717,15 +723,14 @@ export default function HomeClient({
   const getRedFlags = (villa: any): RedFlag[] => {
     const flags: RedFlag[] = [];
     const years = Number(villa.lease_years) || 0;
-    const priceUSD = getPriceUSD(villa);
+    const priceUSD = getAuditPriceUSD(villa);
     const nightly = getDisplayNightly(villa);
     // Use pipeline values for flag text — consistent with badge and sort order
     const netRoiPipeline = Number(villa.projected_roi) || 0;
-    const occupancy = villa.est_occupancy || 0.65;
+    const occupancy = 0.65;
     const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
     const grossRevenue = nightly * 365 * occupancy;
     const netRevenue = grossRevenue * 0.60;
-    const cashFlowYield = priceUSD > 0 ? (netRevenue / priceUSD) * 100 : 0;
 
     // --- ALL flags read from pipeline (auditor_remote.py --enrich) ---
     // No client-side flag computation — everything is pre-computed server-side.
@@ -735,11 +740,11 @@ export default function HomeClient({
     if (pipelineFlags.includes('MISSING_DATA')) {
       const features = (villa.features || '').toLowerCase();
       const isLeasehold = features.includes('leasehold') || features.includes('hak sewa');
-      const missingLease = isLeasehold && (years === 15 || years === 0);
+      const missingLease = isLeasehold && (pipelineFlags.includes('LEASE_TERM_NOT_STATED') || years === 0);
       const missingBeds = pipelineFlags.includes('BEDROOM_COUNT_NOT_STATED') || (Number(villa.bedrooms) === 1 && pipelineFlags.filter((f: string) => f === 'MISSING_DATA').length > 1);
 
       if (missingLease) {
-        const annualDep = priceUSD > 0 && years > 0 ? Math.round(priceUSD / years) : 0;
+        const annualDep = priceUSD > 0 ? Math.round(priceUSD / 15) : 0;
         flags.push({ level: 'assumed', label: 'Lease Assumed', detail: `Agent omitted lease duration. BVT conservatively assumed a 15-year lease with $${annualDep.toLocaleString()}/yr depreciation to protect your ROI projection. Verify the actual lease term before investing.` });
       }
       if (missingBeds) {
@@ -782,16 +787,11 @@ export default function HomeClient({
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
-      const preCapRate = Number(villa.agent_claimed_rate) || 0;
-      const cappedRate = nightly;
-      const rateContext = preCapRate > 0 && preCapRate > cappedRate
-        ? ` BVT's initial model estimated $${preCapRate}/nt, but this was capped to $${cappedRate}/nt to stay within market limits.`
-        : '';
-      flags.push({ level: 'warning', label: 'Inflated Claim', detail: `This property's gross yield (${grossRoi.toFixed(0)}%) is unrealistically high — a number like this typically ignores operating costs and lease depreciation. BVT capped the nightly rate to reflect market reality. After 40% expenses, the cash flow yield is ~${cashFlowYield.toFixed(1)}%.${rateContext}` });
+      flags.push({ level: 'warning', label: 'High Gross Yield', detail: `The modeled gross yield is ${grossRoi.toFixed(0)}% under a 65% occupancy scenario. It excludes operating costs and lease decay. The published net estimate is ${netRoiPipeline.toFixed(1)}%; verify the nightly rate, asset condition, and lease term before relying on it.` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
-      flags.push({ level: 'warning', label: 'Optimistic Claim', detail: `This property's gross yield is ${grossRoi.toFixed(0)}% — but gross yield ignores operating expenses (${sliderExpense}%) and lease depreciation. After those costs, BVT estimates a net yield of ~${cashFlowYield.toFixed(1)}%. The gap between gross and net is where investors lose money when they rely on headline numbers.` });
+      flags.push({ level: 'warning', label: 'Gross vs Net', detail: `Modeled gross yield is ${grossRoi.toFixed(0)}% at 65% occupancy; gross excludes operating costs and lease decay. The published net estimate is ${netRoiPipeline.toFixed(1)}%. Test lower occupancy and obtain actual operating records.` });
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
@@ -903,7 +903,7 @@ export default function HomeClient({
               <p className="mt-8 md:mt-10 max-w-[52ch] text-[17px] md:text-[19px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
                 Bali Villa Truth is the independent audit bureau for Bali villa investors.
                 We stress-test 2,000+ asking prices using modeled operating costs,
-                area-level occupancy assumptions, and lease decay. Each eligible
+                a shared 65% occupancy screening scenario, and lease decay. Each eligible
                 listing shows the inputs behind its estimated net yield.
               </p>
             </div>
@@ -1311,12 +1311,12 @@ export default function HomeClient({
           ) : (
             displayListings.map((villa, idx) => {
               const netRoi = Number(villa.projected_roi) || 0;
-              const occupancy = villa.est_occupancy || 0.65;
+              const occupancy = 0.65;
               const nightly = getDisplayNightly(villa);
-              const priceUSD = getPriceUSD(villa);
+              const priceUSD = getAuditPriceUSD(villa);
               const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
               const isFreehold = (() => { const f = (villa.features || '').toLowerCase(); const ly = Number(villa.lease_years); return f.includes('freehold') || f.includes('hak milik') || ly === 999; })();
-              const leaseYears = Number(villa.lease_years) || 0;
+              const leaseYears = Number(villa.lease_years) || ((villa.flags || '').split(',').includes('LEASE_TERM_NOT_STATED') ? 15 : 0);
               const redFlags = getRedFlags(villa);
               const hasDanger = redFlags.some(f => f.level === 'danger');
               const hasWarning = redFlags.length > 0;
@@ -1407,7 +1407,7 @@ export default function HomeClient({
                       <BarChart3 size={11} strokeWidth={1.5} /> {compareSet.has(villa.id) ? 'Selected' : 'Compare'}
                     </button>
                     <span className="font-mono text-[10px] tabular-nums text-[color:var(--bvt-ink-dim)] flex-1 text-center">
-                      {isUnmodeled ? 'ROI not modeled' : `$${getDisplayNightly(villa)}/nt · ${Math.round(getDisplayOccupancy(villa))}% occ`}
+                      {isUnmodeled ? 'ROI not modeled' : `$${getDisplayNightly(villa)}/nt · ${Math.round(getDisplayOccupancy(villa))}% model occ`}
                     </span>
                     {villa.slug ? (
                       <Link href={`/listing/${villa.slug}`} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] transition-colors">
@@ -1496,12 +1496,12 @@ export default function HomeClient({
                     const rateFactors = parseRateFactors(villa.rate_factors);
                     const redFlags = getRedFlags(villa);
                     const netRoi = Number(villa.projected_roi) || 0;
-                    const occupancy = villa.est_occupancy || 0.65;
+                    const occupancy = 0.65;
                     const nightly = getDisplayNightly(villa);
-                    const priceUSD = getPriceUSD(villa);
+                    const priceUSD = getAuditPriceUSD(villa);
                     const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
                     const isFreehold = (() => { const f = (villa.features || '').toLowerCase(); const ly = Number(villa.lease_years); return f.includes('freehold') || f.includes('hak milik') || ly === 999; })();
-                    const leaseYears = Number(villa.lease_years) || 0;
+                    const leaseYears = Number(villa.lease_years) || ((villa.flags || '').split(',').includes('LEASE_TERM_NOT_STATED') ? 15 : 0);
                     const leaseDepreciation = (!isFreehold && leaseYears > 0) ? (1 / leaseYears) * 100 : 0;
                     const grossRevenue = nightly * 365 * occupancy;
                     const netRevenue = grossRevenue * 0.60;
@@ -1677,7 +1677,7 @@ export default function HomeClient({
                                       <>
                                         <div className="text-[color:var(--bvt-ink-body)] text-[9px] space-y-1 leading-relaxed">
                                           <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">${nightly}/night</span> <span className="text-[color:var(--bvt-ink-muted)]">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
-                                          <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-[color:var(--bvt-ink-muted)]">(65% occ) — assumed, no occupancy data for this area</span></div>
+                                          <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-[color:var(--bvt-ink-muted)]">(65% comparison scenario, not booked nights)</span></div>
                                           <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">40% operating costs</span> <span className="text-[color:var(--bvt-ink-muted)]">(mgmt 15% · OTA 15% · maintenance 10%)</span></div>
                                         </div>
                                         <p className="text-[color:var(--bvt-ink-muted)] text-[9px] flex items-center gap-1.5 mt-2"><SlidersHorizontal size={9} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]"/> Select villas with the checkbox to adjust these assumptions</p>
@@ -2042,11 +2042,11 @@ export default function HomeClient({
 	                          </tr>
                           <tr className="border-b border-[color:var(--bvt-hairline-2)] bg-[color:var(--bvt-good)]/[0.06]">
                             <td className="py-3 pr-4 text-[color:var(--bvt-good)] text-[13px]">
-                              <span className="font-serif italic">Cash Flow Yield</span>
-                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">Cash-on-cash return</span>
+                              <span className="font-serif italic">Pre-lease yield</span>
+                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">After operating costs, before lease decay</span>
                             </td>
 	                            {results.map(r => {
-	                              const priceUSD = getPriceUSD(compareVillas.find(v => v.id === r.id));
+	                              const priceUSD = getAuditPriceUSD(compareVillas.find(v => v.id === r.id));
 	                              const cashFlowYield = priceUSD > 0 ? (r.netRevenue / priceUSD) * 100 : 0;
 	                              return (
 	                                <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums font-medium text-[color:var(--bvt-good)] text-[16px]">

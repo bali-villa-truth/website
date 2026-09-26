@@ -7,7 +7,7 @@ export async function GET() {
 
 Independent ROI audits for Bali villa investors.
 
-Bali Villa Truth does not sell villas and does not take agent commissions. The site audits Bali villa listings with a standardized model: market nightly rates, area occupancy estimates, 40% operating expenses, lease depreciation, and red-flag detection.
+Bali Villa Truth does not sell villas and does not take agent commissions. The site audits Bali villa listings with a standardized model: estimated market nightly rates, a shared 65% occupancy screening scenario, 40% operating expenses, lease depreciation, and red-flag detection. Separate area review-density proxies are provisional and do not drive the published yield badges.
 
 ## Core Pages
 

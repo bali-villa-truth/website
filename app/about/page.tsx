@@ -90,7 +90,7 @@ export default function AboutPage() {
             <ul className="mt-6 divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)] max-w-[62ch]">
               {[
                 "Nightly rate estimated from Booking.com villa asking rates by area and bedroom tier",
-                "Area-specific occupancy assumptions — not a flat 85%",
+                "Shared 65% occupancy scenario; provisional area proxies shown separately",
                 "40% operating expense load — management, OTA commissions, maintenance, utilities",
                 "Lease-term amortisation for all Hak Sewa (leasehold) properties",
                 "Red-flag detection for short leases, price/rate mismatches, and inflated claims",

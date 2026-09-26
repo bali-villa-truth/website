@@ -211,7 +211,7 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
             <div className="lg:col-span-8 space-y-4 text-[15px] md:text-[16px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
               <p>
                 Every {cfg.name} villa audit uses the same Bali villa ROI model:
-                estimated nightly rate, area occupancy, a 40% operating-cost load,
+                estimated nightly rate, a shared 65% occupancy scenario, a 40% operating-cost load,
                 and lease depreciation for leasehold villas. That keeps {cfg.name}
                 yields comparable with Canggu, Uluwatu, Seminyak, Sanur, and the
                 rest of the BVT ledger.

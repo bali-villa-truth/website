@@ -32,22 +32,22 @@ const areaNotes = [
 ];
 
 const modelRows = [
-  { area: "Canggu", href: "/canggu", estimate: "41%", source: "Review-density model", sample: "75-property sample" },
-  { area: "Berawa", href: "/berawa", estimate: "41%", source: "Review-density model", sample: "75-property sample" },
-  { area: "Pererenan", href: "/pererenan", estimate: "49%", source: "Review-density model", sample: "75-property sample" },
-  { area: "Uluwatu", href: "/uluwatu", estimate: "42%", source: "Review-density model", sample: "75-property sample" },
+  { area: "Canggu", href: "/canggu", estimate: "41%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
+  { area: "Berawa", href: "/berawa", estimate: "41%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
+  { area: "Pererenan", href: "/pererenan", estimate: "49%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
+  { area: "Uluwatu", href: "/uluwatu", estimate: "42%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
   { area: "Bingin", href: "/bingin", estimate: "65%", source: "Flat fallback", sample: "No exact Bingin review model yet" },
-  { area: "Seminyak", href: "/seminyak", estimate: "42%", source: "Review-density model", sample: "75-property sample" },
-  { area: "Ubud", href: "/ubud", estimate: "41%", source: "Review-density model", sample: "75-property sample" },
-  { area: "Sanur", href: "/sanur", estimate: "80%", source: "Review-density model ceiling", sample: "75-property sample" },
-  { area: "Ungasan", href: "/ungasan", estimate: "42%", source: "Review-density model", sample: "30-property sample" },
-  { area: "Nusa Dua", href: "/nusa-dua", estimate: "51%", source: "Review-density model", sample: "75-property sample" },
+  { area: "Seminyak", href: "/seminyak", estimate: "42%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
+  { area: "Ubud", href: "/ubud", estimate: "41%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
+  { area: "Sanur", href: "/sanur", estimate: "80%", source: "Provisional model ceiling", sample: "Unique-property coverage unverified" },
+  { area: "Ungasan", href: "/ungasan", estimate: "42%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
+  { area: "Nusa Dua", href: "/nusa-dua", estimate: "51%", source: "Provisional review proxy", sample: "Unique-property coverage unverified" },
 ];
 
 const faqItems = [
   {
     q: "What occupancy rate should I assume for a Bali villa?",
-    a: "Do not use one island-wide number. Start with the area, villa type, nightly rate, seasonality, and management plan. BVT uses area-level occupancy assumptions as a screening model, then expects buyers to verify property-level booking history before offer.",
+    a: "BVT's 65% badge assumption is a common comparison scenario, not a recommendation for every area. Build your own cases using villa type, seasonality, management plan, and verified property booking history before an offer.",
   },
   {
     q: "Is 80% occupancy realistic in Bali?",
@@ -82,7 +82,7 @@ const jsonLd = {
         "A buyer-focused guide to Bali villa occupancy rates, area demand, seasonality, nightly rates, and why occupancy must be stress-tested before trusting ROI claims.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-14",
-      dateModified: "2026-05-14",
+      dateModified: "2026-09-26",
       author: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       publisher: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       articleSection: "Bali Villa Investment",
@@ -234,11 +234,11 @@ export default function BaliVillaOccupancyRatesPage() {
 
         <Section eyebrow="02 · BVT method" title="Area demand is a proxy. Property history is proof.">
           <p>
-            BVT uses area-level occupancy assumptions to compare more than 2,000
-            audited listings consistently. The public model uses market demand
-            signals, including Booking.com review-density patterns by area, then
-            applies the same logic across listings so buyers can compare one villa
-            against another without accepting every seller's custom forecast.
+            BVT's published net-yield badges use the same assumed 65% occupancy
+            for each modeled villa. That makes the listings comparable under one
+            scenario, but does not predict booked nights. Separately, the site
+            shows area review-density proxies from Booking.com. Those provisional
+            percentages do not drive the published yield.
           </p>
           <p>
             That is useful for screening. It is not the same as verified booking
@@ -250,7 +250,7 @@ export default function BaliVillaOccupancyRatesPage() {
           <div className="border border-[color:var(--bvt-hairline)] rounded-md bg-[color:var(--bvt-bg-elev)] p-5">
             <div className="label-micro mb-3">Screening vs proof</div>
             <p className="text-[14px] md:text-[15px] leading-relaxed text-[color:var(--bvt-ink-body)]">
-              BVT occupancy estimate = useful for comparing listings at scale.
+              BVT 65% scenario = a consistent comparison, not a forecast.
               Property booking records = needed before relying on a specific deal.
             </p>
           </div>
@@ -258,11 +258,11 @@ export default function BaliVillaOccupancyRatesPage() {
 
         <Section eyebrow="03 · Current model" title="BVT publishes the screening estimate, then asks buyers to verify it.">
           <p>
-            These are the current BVT public screening estimates used for area-level
-            comparison. They are rounded to the nearest whole percent and come from
-            the review-density model in the rate engine, except where an area falls
-            back to the flat default. They are not a claim that any specific villa
-            will book that percentage of nights.
+            These are provisional area-level proxies, rounded to the nearest whole
+            percent, from a 7 March 2026 review-density snapshot. Repeated result
+            cards and malformed review scores mean the old raw-card sample counts
+            are not reliable unique-property counts. These values are not used in
+            BVT's published net-yield badges and do not establish any villa's booked nights.
           </p>
           <div className="md:hidden space-y-3">
             {modelRows.map((row) => (

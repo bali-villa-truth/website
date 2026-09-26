@@ -6,7 +6,7 @@ const cfg: AreaConfig = {
   name: "Pererenan",
   tagline: "The quieter Canggu bet with rising supply risk",
   intro:
-    "Pererenan attracts buyers who want Canggu rental demand without Berawa-level intensity. The area can work well for design-led villas with calm surroundings and beach access, but the investment case depends on not overpaying for the 'next Canggu' story. Our Pererenan audits model realistic nightly rates, area occupancy, 40% operating costs, and lease decay so buyers can separate genuine yield from appreciation-driven sales copy.",
+    "Pererenan attracts buyers who want Canggu rental demand without Berawa-level intensity. The area can work well for design-led villas with calm surroundings and beach access, but the investment case depends on not overpaying for the 'next Canggu' story. Our Pererenan audits model estimated nightly rates, a shared 65% occupancy scenario, 40% operating costs, and lease decay so buyers can separate gross from net yield.",
   pros: [
     "Strong overflow demand from Canggu with a calmer guest experience",
     "Lifestyle appeal for longer-stay renters and remote workers",

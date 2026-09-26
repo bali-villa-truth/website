@@ -34,6 +34,7 @@ interface Villa {
   location: string | null;
   last_price: number | null;
   price_description: string | null;
+  price_per_room: number | null;
   bedrooms: number | null;
   projected_roi: number | null;
   est_nightly_rate: number | null;
@@ -106,10 +107,13 @@ function computeAudit(villa: Villa, usdRate: number): AuditNumbers {
   if (!priceUsd && priceLocal) {
     priceUsd = priceLocal / usdRate;
   }
+  const auditPriceUsd = Number(villa.price_per_room) * Number(villa.bedrooms);
+  if (auditPriceUsd > 0) priceUsd = auditPriceUsd;
 
   const nightlyRate = villa.est_nightly_rate || 0;
-  const occupancy = villa.est_occupancy || 0.65;
-  const leaseYears = villa.lease_years || 0;
+  const occupancy = 0.65;
+  const flags = (villa.flags || "").split(",");
+  const leaseYears = villa.lease_years || (flags.includes("LEASE_TERM_NOT_STATED") ? 15 : 0);
   const bedrooms = villa.bedrooms || 0;
   const featuresLower = (villa.features || "").toLowerCase();
   const isLeasehold = featuresLower.includes("leasehold") ||
@@ -377,12 +381,12 @@ function renderKeyStats(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbe
     : audit.lease_type;
 
   const rows: [string, string][] = [
-    ["Asking Price", fmtCurrency(audit.price_usd)],
+    ["USD Price (audit FX)", fmtCurrency(audit.price_usd)],
     ["Local Price", audit.price_desc || "—"],
     ["Bedrooms", String(audit.bedrooms || "—")],
     ["Ownership", leaseLabel],
     ["Est. Nightly Rate", `${fmtCurrency(audit.nightly_rate)}/night`],
-    ["Est. Occupancy", fmtPct(audit.occupancy * 100, 0)],
+    ["Scenario Occupancy", fmtPct(audit.occupancy * 100, 0)],
   ];
 
   const rowHeight = 22;
@@ -425,7 +429,7 @@ function renderVerdict(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumber
   if (audit.is_leasehold && audit.lease_cost > 0) {
     body += ` and ${fmtCurrency(audit.lease_cost)}/year in lease depreciation`;
   }
-  body += `, net cashflow is about ${fmtCurrency(audit.net_revenue)} on a ${fmtCurrency(audit.price_usd)} purchase.`;
+  body += `, net after a noncash lease-decay allowance is about ${fmtCurrency(audit.net_revenue)} on a ${fmtCurrency(audit.price_usd)} purchase. Cash received before taxes, financing, and capital repairs may differ.`;
 
   doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.slate700)
     .text(intro + body, 50, doc.y, { width: 512, lineGap: 3 });
@@ -473,7 +477,7 @@ function renderMathSection(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNu
                `${fmtCurrency(audit.price_usd)} ÷ ${audit.lease_years} years`,
                `−${fmtCurrency(audit.lease_cost)}`]);
   }
-  rows.push(["Net Annual Cashflow", "What lands in your pocket each year", fmtCurrency(audit.net_revenue)]);
+  rows.push(["Net After Lease Decay", "Screening result, not cash received", fmtCurrency(audit.net_revenue)]);
   rows.push(["÷ Asking Price", fmtCurrency(audit.price_usd), ""]);
   rows.push(["= NET YIELD", "", fmtPct(audit.net_yield_pct)]);
 
@@ -499,27 +503,28 @@ function renderConfidenceSection(doc: PDFKit.PDFDocument, villa: Villa, audit: A
     ["Nightly Rate",
      rateSource,
      exactAreaRate ? "Booking.com asking-rate sample, 1 Aug 2026; not booked revenue" : "Fallback estimate; no exact-area sample or booked revenue"],
-    ["Occupancy",
-     `${fmtPct(audit.occupancy * 100, 0)} - ${occSource}`,
-     reviewBased ? "Provisional Mar 2026 review proxy; repeated cards, sample coverage unverified" : "Flat fallback assumption; no booked-night data"],
+    ["Occupancy in yield", "65% shared scenario", "Assumed for comparison; no booked-night data"],
+    ["Area occupancy proxy",
+     reviewBased && villa.est_occupancy != null ? `${fmtPct(villa.est_occupancy * 100, 0)} - ${occSource}` : "Not available",
+     reviewBased ? "Provisional Mar 2026 review proxy; not used in yield" : "No validated area proxy"],
     ["Asking Price", villa.price_description || "—", "Scraped from Bali Home Immo listing"],
     ["Lease Years",
      audit.lease_years ? String(audit.lease_years) : "N/A (Freehold)",
-     "From listing description"],
+     (villa.flags || "").includes("LEASE_TERM_NOT_STATED") ? "15-year model assumption; source term missing" : "From listing description; verify"],
   ];
 
   renderDataTable(doc, rows, [95, 170, 247]);
 }
 
 function renderProjection(doc: PDFKit.PDFDocument, audit: AuditNumbers) {
-  sectionHeader(doc, "5-Year Cashflow Projection");
+  sectionHeader(doc, "5-Year Yield Scenario");
   doc.fontSize(8.5).font("Helvetica").fillColor(COLORS.slate500)
-    .text("Assumes flat rates and occupancy. Real-world performance varies year to year. Cumulative Return sums all net annual cashflows (ignores resale — which for leaseholds trends toward zero anyway).",
+    .text("Assumes flat rates and 65% occupancy. Lease decay is a noncash allowance; these figures are not distributable cash or a resale forecast. Cumulative figures omit resale.",
           50, doc.y, { width: 512, lineGap: 2 });
 
   doc.y += 10;
 
-  const rows: string[][] = [["Year", "Gross Rev", "Op. Costs", "Lease Cost", "Net Cashflow", "Cumulative"]];
+  const rows: string[][] = [["Year", "Gross Rev", "Op. Costs", "Lease Decay", "Net After Decay", "Cumulative"]];
   let cumulative = 0;
   for (let yr = 1; yr <= 5; yr++) {
     cumulative += audit.net_revenue;
@@ -748,7 +753,7 @@ function buildEmailHtml(villa: Villa, audit: AuditNumbers): string {
       </div>
 
       <p style="color:#475569; line-height:1.6; margin:16px 0;">
-        The attached PDF includes the full math breakdown, 5-year cashflow projection, sensitivity analysis,
+        The attached PDF includes the full math breakdown, a 5-year yield scenario, sensitivity analysis,
         and a list of questions to ask the agent before you commit.
       </p>
 

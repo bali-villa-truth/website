@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-26",
+    area: "Investor ROI clarity",
+    title: "Reconciled gross, net, and occupancy across pages and reports",
+    status: "Deployed and verified",
+    why: "A live audit of 2,193 modeled rows found that stored net yields reconcile to a shared 65% occupancy scenario and the auditor's stored USD price, not to the provisional area proxy shown beside them. Listing breakdowns, homepage gross yields, comparison math, public explanations, and free/paid report calculations now use and label the same scenario and price basis. The paid report also separates noncash lease decay from cash received in exit cases and removes unsupported offer/counteroffer predictions. The occupancy guide no longer calls repeated result cards independent property samples. No ROI values were silently recalculated from the flawed March review cache. The read-only live-data verifier now fails on future scenario drift.",
+    url: `${SITE_URL}/methodology`,
+    progressFile: ".tmp/website_progress_2026-09-26.md",
+  },
+  {
+    date: "2026-09-26",
     area: "Investor data provenance",
     title: "Dated the model inputs and surfaced occupancy uncertainty",
     status: "Deployed and verified",
@@ -669,6 +678,12 @@ const completedImprovements = [
 
 const pendingImprovements = [
   {
+    priority: "High",
+    owner: "Data pipeline",
+    title: "Replace the provisional March area occupancy proxy only after a clean sample",
+    nextAction: "Collect deduplicated Booking.com properties with valid review scores and complete pagination, validate every area's coverage, then decide whether to keep the shared 65% comparison baseline or publish a new, separately tested area model. Do not feed the known flawed cache into yield calculations.",
+  },
+  {
     priority: "Medium",
     owner: "Site security",
     title: "Move rotated dashboard credentials to managed Vercel secrets",
@@ -719,6 +734,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "2026-09-26 ROI reconciliation: 2,193 modeled live rows were checked against the auditor's shared 65% occupancy, 40% operating costs, stored USD purchase-price basis, and lease decay. Zero rows differ by more than 0.15 percentage points (maximum rounding difference 0.005). The earlier listing-page contradiction came from displaying provisional area occupancy and display-time FX alongside this stored yield. The site now labels the comparison scenario explicitly; actual property occupancy and owner P&L are still unknown.",
   "2026-09-26 model-input audit: the active rate table exactly replays the 1 August 2026 Booking.com cache across all 60 area/bedroom tiers. The active occupancy table replays the 7 March 2026 review cache, but that cache has 858 result cards versus 286 unique name/review-count pairs within areas; 567 scores are invalid (1010/10). Raw-card sample sizes and associated high-confidence labels are not independent-property evidence. Published occupancy/yield values have not been recomputed; they remain provisional until a fresh validated sample and guarded pipeline run.",
   "As of 2026-09-25 22:19 UTC, the complete no-scrape pipeline passes after the live-guide expectation fix: 2,455 audited rows, 32 Other Indonesian Islands rows flagged NON_BALI_LOCATION with no modeled ROI/rate/occupancy, zero outside-Bali scope violations, 31 physical-spec gaps, zero unmodeled rows with nonzero values, seven passing representative listing pages, and 2,475 sitemap URLs with zero missing/extra. Google Sheets remains blocked by OAuth invalid_grant; tomorrow's full scheduled scrape remains to be observed.",
   "As of 2026-09-25 10:12 UTC, live Supabase checks pass with 2,455 audited rows, PHYSICAL_DATA_INCOMPLETE at 31, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. The canonical site and private dashboard access controls pass. The repaired BHI parser and physical-field carry-forward completed a quality-gated refresh. The successful website deployment put the occupancy guide live and brought the sitemap to exact coverage: 2,455 audited listings plus 20 static URLs, with no missing or extra listings. Six representative listing pages now pass visible-content checks; the prior tenure alert was a false positive from a related/footer link. No outside-Bali sample exists to test today.",
@@ -743,7 +759,7 @@ const dataQualityIssues = [
   "As of 2026-07-08 18:39 UTC, live Supabase data-quality checks pass with 2,349 audited rows, PHYSICAL_DATA_INCOMPLETE reduced to 36 after targeted BHI detail recovery, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. The non-destructive recovery attempt covered all 45 prior physical-gap targets, failed 0, recovered bathrooms/land/build for 9 listings, and the no-scrape pipeline refreshed Supabase after strict validation.",
   "The July 3 physical-data regression was repaired after verification caught PHYSICAL_DATA_INCOMPLETE rising above the threshold. The pipeline now checks local physical-gap counts before cloud writes, runs targeted detail recovery when needed, reruns the auditor, rebuilds the summary, and refuses Supabase writes if the count remains above BVT_MAX_PHYSICAL_INCOMPLETE.",
   "Some listings still rely on BVT market-model rate estimates rather than property-level booking exports.",
-  "Occupancy is area/tier modeled unless a listing has stronger review-density provenance.",
+  "Published yield uses a shared assumed 65% occupancy scenario; the separate March area review-density proxy is provisional and is not used in the badge.",
   "Lease extension terms are not knowable from most source listings and must be verified manually.",
   "Pipeline labels should distinguish assumed, modeled, scraped, and verified inputs more clearly.",
   "The May 21 scheduled BHI scrape recovered to 2,283 unique listings and passed core critical-field coverage, but the Google Sheets step still fails with invalid_grant.",
@@ -774,12 +790,12 @@ const dataQualityIssues = [
 ];
 
 const modelAssumptionWatchlist = [
-  "The live occupancy guide uses screening estimates, not verified property-level occupancy promises.",
+  "The published net-yield badge uses a shared 65% occupancy screening scenario. The area figures in the occupancy guide are separate provisional review-density proxies, not booked-night evidence.",
   "Bingin currently falls back to 65% because there is no exact Bingin review-density model yet.",
   "Sanur reaches the current 80% model ceiling and should be manually reviewed before treating it as high-confidence demand evidence.",
   "Canggu, Berawa, Ubud, Uluwatu, Seminyak, and Ungasan are clustered around low-40% screening occupancy in the current local guide; investors should request booking exports before underwriting higher claims.",
   "Pererenan and Nusa Dua screen higher than the low-40% cluster, but still need property-specific confirmation from OTA calendars, channel-manager exports, or owner P&Ls.",
-  "Any listing with modeled nightly rate plus modeled occupancy should be presented as a lower-confidence ROI screen until independent rental records are available.",
+  "Any modeled yield is only a 65% occupancy comparison screen until independent property rental records and true operating costs are available.",
 ];
 
 const investorEvidenceChecklist = [
@@ -864,8 +880,8 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; manual recovery completed 2026-09-25; next unattended full run not yet verified",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. A September 25 no-scrape rehearsal completed with 2,455 rows, zero outside-Bali modeling violations, seven representative listing pages healthy, and exact sitemap coverage. Listing and sitemap checks now default to strict. Google Sheets remains blocked by OAuth invalid_grant. Observe the next automatic full scrape before calling unattended recovery proven.",
+    status: "Loaded; unattended 2026-09-26 midnight full run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 26 unattended full run parsed 2,454 sale listings across 84 pages, passed the strict Supabase/listing/sitemap gates, and marked one listing delisted. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds.",
   },
 ];
 
@@ -873,7 +889,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 26 production release dated the August asking-rate and March occupancy inputs across methodology, listings, and audit PDFs, and removed unsupported confidence and blend wording. Canonical live, listing, sitemap, mobile-overflow, and dashboard-access checks passed. The live occupancy numbers remain provisional until a clean review sample passes validation and the model is safely refreshed. The stale .env GitHub token remains a maintenance issue; the existing push script works with the authenticated GitHub CLI token.",
+    "The September 26 release reconciled published ROI explanations to the auditor's 65% occupancy scenario and stored USD price basis across listings, browsing, methodology, guides, and report generation. The previous input-provenance correction remains live. Canonical, listing, sitemap, mobile, and dashboard-access checks passed. Separate March area occupancy proxies remain provisional until a clean sample is validated. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
   requiredAction: "Monitor the next scheduled refresh and keep verifying production after every deploy. Rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,

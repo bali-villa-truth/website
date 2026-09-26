@@ -28,6 +28,7 @@ const LISTING_FIELDS = [
   "location",
   "last_price",
   "price_description",
+  "price_per_room",
   "bedrooms",
   "beds_baths",
   "land_size",

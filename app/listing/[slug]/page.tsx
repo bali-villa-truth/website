@@ -333,7 +333,8 @@ export default async function ListingPage({ params }: Props) {
   const jsonLd = buildJsonLd(listing, slug);
   const niceName = toTitleCase(listing.villa_name || "");
 
-  const priceUsd = Math.round(getPriceUSD(listing)) || null;
+  const auditPriceUsd = Number(listing.price_per_room) * Number(listing.bedrooms);
+  const priceUsd = Math.round(auditPriceUsd > 0 ? auditPriceUsd : getPriceUSD(listing)) || null;
   const roi = listing.projected_roi
     ? Number(listing.projected_roi).toFixed(1)
     : null;
@@ -349,8 +350,9 @@ export default async function ListingPage({ params }: Props) {
   const leaseYearsForMath = leaseTermNotStated ? 15 : sourceLeaseYears;
   const nightlyRate = listing.est_nightly_rate || 0;
   const hasNightlyRate = nightlyRate > 0;
-  const occupancy = listing.est_occupancy ?? 0.65;
+  const occupancy = 0.65;
   const occupancyPct = Math.round(occupancy * 100);
+  const areaOccupancyPct = listing.est_occupancy != null ? Math.round(Number(listing.est_occupancy) * 100) : null;
   const hasOccupancyModel = hasNightlyRate && occupancy > 0;
   const grossRevenue = nightlyRate * 365 * occupancy;
   const expenses = grossRevenue * 0.4;
@@ -600,13 +602,13 @@ export default async function ListingPage({ params }: Props) {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
-                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Occupancy</div>
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Occupancy used in yield</div>
                     <div className="font-mono text-lg text-[color:var(--bvt-ink)]">{hasOccupancyModel ? `${occupancyPct}%` : "Not modeled"}</div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                       {hasOccupancyModel
-                        ? `${occupancySource}. ${usesReviewDensityProxy
-                            ? "Based on a 7 Mar 2026 review snapshot with repeated result cards and unverified sample coverage; provisional, not actual booked nights."
-                            : "This is a fallback assumption, not actual booked nights."} Request verified channel-manager data and test a lower-occupancy case.`
+                        ? `65% is a common comparison scenario, not booked nights. ${areaOccupancyPct !== null && usesReviewDensityProxy
+                            ? `A separate ${areaOccupancyPct}% area proxy from 7 Mar 2026 review cards is provisional and is not used in the yield badge.`
+                            : `${occupancySource} is not property-level evidence.`} Request verified channel-manager data and test a lower-occupancy case.`
                         : "No occupancy estimate is applied outside the supported villa model. Request verified booking history before estimating returns."}
                     </p>
                   </div>
@@ -656,7 +658,7 @@ export default async function ListingPage({ params }: Props) {
                     <span className="font-medium">{hasNightlyRate ? `$${nightlyRate}/night` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
-                    <span className="text-slate-400">Occupancy (area estimate)</span>
+                    <span className="text-slate-400">Occupancy (shared scenario)</span>
                     <span className="font-medium">{hasOccupancyModel ? `${occupancyPct}%` : "Not modeled"}</span>
                   </div>
                   {grossYield !== null && (
@@ -674,7 +676,7 @@ export default async function ListingPage({ params }: Props) {
                     <span className="font-medium text-red-400">{hasNightlyRate ? `−$${Math.round(expenses).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
-                    <span className="text-slate-400">Net Revenue</span>
+                    <span className="text-slate-400">Net Revenue (before lease decay)</span>
                     <span className="font-medium">{hasNightlyRate ? `$${Math.round(netRevenue).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   {leaseDepreciation > 0 && (
@@ -705,7 +707,7 @@ export default async function ListingPage({ params }: Props) {
                 <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
                   <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-2">Sensitivity analysis</h2>
                   <p className="text-xs text-slate-500 mb-4">
-                    What happens to the net yield if our nightly rate is off by ±15%, or occupancy is different from the area estimate of {occupancyPct}%?
+                    What happens to net yield if the nightly rate is off by ±15%, or occupancy differs from the shared {occupancyPct}% scenario?
                   </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
@@ -817,11 +819,11 @@ export default async function ListingPage({ params }: Props) {
             <div className="space-y-4">
               <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 sticky top-[4.5rem] max-h-[calc(100vh-5.5rem)] overflow-y-auto sidebar-scroll">
                 <div className="text-center mb-4">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Asking Price</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Price basis for yield</p>
                   <p className="text-3xl font-extrabold">
                     {priceUsd ? `$${priceUsd.toLocaleString("en-US")}` : "Price N/A"}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">USD</p>
+                  <p className="text-xs text-slate-500 mt-1">USD at audit FX · source ask: {listing.price_description || "not stated"}</p>
                 </div>
 
                 <div className="text-center py-4 border-t border-b border-slate-800 mb-4">
