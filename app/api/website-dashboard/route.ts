@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-26",
+    area: "Investor downside risk",
+    title: "Added a combined downside screen to modeled listing audits",
+    status: "Deployed and verified",
+    why: "The existing sensitivity table varied nightly rate and occupancy but held the 40% expense load fixed, making it harder to inspect a simultaneous operating-cost miss. Eligible listings now show a clearly labeled illustrative case at 50% occupancy, 15% below the modeled nightly rate, and 50% operating costs, on the same audit price and lease allowance. Leasehold pages explain that the lease allowance is noncash. Out-of-scope assets still show no modeled yield. The live leasehold example and unmodeled hotel were checked, along with 390px and 1440px layouts; no stored ROI, occupancy, or rate data changed.",
+    url: `${SITE_URL}/listing/brand-new-cozy-1-bedroom-villa-for-sale-near-balangan-beach-rf9833`,
+    progressFile: ".tmp/website_progress_2026-09-26.md",
+  },
+  {
+    date: "2026-09-26",
     area: "Investor ROI clarity",
     title: "Reconciled gross, net, and occupancy across pages and reports",
     status: "Deployed and verified",
@@ -889,7 +898,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 26 release reconciled published ROI explanations to the auditor's 65% occupancy scenario and stored USD price basis across listings, browsing, methodology, guides, and report generation. The previous input-provenance correction remains live. Canonical, listing, sitemap, mobile, and dashboard-access checks passed. Separate March area occupancy proxies remain provisional until a clean sample is validated. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
+    "The September 26 release reconciled published ROI explanations to the auditor's 65% occupancy scenario and stored USD price basis across listings, browsing, methodology, guides, and report generation. Modeled listing audits now also show a combined downside case for lower occupancy, lower nightly rate, and higher operating costs; this is an illustrative screen, not a forecast. Canonical, listing, sitemap, mobile, and dashboard-access checks passed. Separate March area occupancy proxies remain provisional until a clean sample is validated. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
   requiredAction: "Monitor the next scheduled refresh and keep verifying production after every deploy. Rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
@@ -898,6 +907,13 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/live_verification_2026-09-26_downside_release.json",
+    ".tmp/listing_page_verification_2026-09-26_downside_release.json",
+    ".tmp/sitemap_coverage_2026-09-26_downside_release.json",
+    ".tmp/supabase_data_quality_verification_2026-09-26_1554.json",
+    ".tmp/automation_freshness_2026-09-26_1554.json",
+    ".tmp/downside_sensitivity_live_390_2026-09-26.png",
+    ".tmp/downside_sensitivity_live_1440_2026-09-26.png",
     ".tmp/live_verification_2026-09-26_roi_final.json",
     ".tmp/listing_page_verification_2026-09-26_roi_final.json",
     ".tmp/sitemap_coverage_2026-09-26_roi_final.json",
@@ -1565,6 +1581,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Modeled listing audits now show an explicit combined downside case at 50% occupancy, 15% lower nightly rate, and 50% operating costs; leasehold pages distinguish the noncash lease allowance from rental cash flow.",
         "Homepage explains that BVT is an independent audit bureau, not a broker.",
         "Risk shortcuts help users find best ROI, safer-looking, high-risk, and leasehold-only paths.",
         "Listing pages separate gross yield from net yield and show assumption provenance.",
@@ -1573,6 +1590,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The live combined-downside section fits a 390px listing page without horizontal overflow or browser errors; desktop was checked at 1440px.",
         "Mobile filter panel remains collapsible and now includes risk view.",
         "Investor shortcut cards stack into single-column controls on narrow screens.",
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
@@ -1592,6 +1610,8 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-09-26.md",
+        ".tmp/seo_progress_2026-09-26.md",
         ".tmp/website_progress_2026-09-25.md",
         ".tmp/seo_progress_2026-09-25.md",
         ".tmp/live_verification_2026-09-25_1550.json",
