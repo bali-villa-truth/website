@@ -24,7 +24,7 @@ const flagshipAudits = [
     detail: "A high-yield example where price per bedroom and area rate assumptions matter.",
   },
   {
-    href: "/listing/cozy-3-bedroom-villa-for-sale-leasehold-and-yearly-rent-in-kutuh-rf6460",
+    href: "/listing/charming-contemporary-3-bedroom-villa-for-sale-leasehold-and-rent-in-kutuh-ra016",
     label: "Kutuh 3-bed leasehold audit",
     detail: "Shows why lease years must be deducted before calling a deal attractive.",
   },
@@ -48,7 +48,7 @@ const flagshipAudits = [
 const faqItems = [
   {
     q: "What is a realistic Bali villa ROI in 2026?",
-    a: "A realistic target is usually 5% to 10% true net yield after management, platform fees, maintenance, vacancy, utilities, and lease decay. Some villas can exceed that, but every double-digit claim should be stress-tested against expenses, occupancy, and lease length.",
+    a: "There is no dependable market-wide ROI target. BVT's published yields are screening estimates under a shared 65% occupancy scenario, a 40% operating-cost assumption, and a lease-decay allowance where applicable. Verify actual booking revenue, costs, and tenure before treating any projected yield as achievable.",
   },
   {
     q: "Why is net yield lower than agent ROI?",
@@ -87,7 +87,7 @@ const guideJsonLd = {
         "A buyer-focused guide to Bali villa ROI, net yield, occupancy, leasehold decay, management fees, and due diligence for villa investors.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-13",
-      dateModified: "2026-05-13",
+      dateModified: "2026-09-26",
       author: {
         "@type": "Organization",
         name: "Bali Villa Truth",
@@ -212,19 +212,18 @@ export default function BaliVillaRoiGuidePage() {
               </h1>
               <p className="mt-8 max-w-[68ch] text-[17px] md:text-[20px] leading-[1.62] text-[color:var(--bvt-ink-body)]">
                 Bali villa ROI is not the number printed in a sales deck. For a buyer,
-                the only useful number is the cash left after occupancy risk,
-                management fees, platform costs, maintenance, utilities, taxes, and
-                leasehold decay. This guide shows how Bali Villa Truth stress-tests
+                a useful comparison starts with rental revenue after operating costs
+                and a separate allowance for leasehold value erosion. This guide shows how Bali Villa Truth stress-tests
                 those assumptions across 2,000+ audited listings.
               </p>
             </div>
             <aside className="lg:col-span-4 border-t border-[color:var(--bvt-hairline)] pt-6">
               <div className="label-micro mb-5">Fast answer</div>
               <p className="text-[15px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
-                A credible Bali villa ROI target is usually 5% to 10% true net yield.
-                Double-digit returns can exist, but only after the deal survives
-                expense modeling, lease depreciation, realistic occupancy, and local
-                due diligence.
+                There is no guaranteed Bali villa ROI target. BVT's figures compare
+                listings under a shared 65% occupancy scenario, a 40% operating-cost
+                load, and a lease-decay allowance where applicable. They are
+                screening estimates, not a forecast of what a buyer will earn.
               </p>
               <Link href="/#listings-section" className="inline-block mt-5 link-editorial text-[14px]">
                 Browse audited villas
@@ -246,15 +245,15 @@ export default function BaliVillaRoiGuidePage() {
           <p>
             Bali Villa Truth treats Bali villa ROI as a net-yield question. We start
             with estimated rental revenue, subtract a standard 40% operating expense
-            load, and then subtract annual lease depreciation for leasehold villas.
-            That final number is divided by the asking price. It is intentionally
-            conservative because the buyer carries the downside if the brochure is
-            too optimistic.
+            load, and then subtract an annual lease-decay allowance for leasehold villas.
+            That final number is divided by the auditor's USD purchase-price basis.
+            Lease decay reduces the modeled economic yield; it is not a cash operating
+            bill. The result is a comparable screening scenario, not realized profit.
           </p>
           <div className="border border-[color:var(--bvt-hairline)] rounded-md p-5 bg-[color:var(--bvt-bg-elev)]">
             <div className="label-micro mb-3">BVT net-yield formula</div>
             <p className="font-mono text-[13px] md:text-[14px] leading-relaxed text-[color:var(--bvt-ink)]">
-              ((nightly rate x occupancy x 365) - 40% expenses - annual lease decay) / asking price
+              ((nightly rate x 65% occupancy x 365) x 60% after operating costs - annual lease-decay allowance) / audited USD price
             </p>
           </div>
           <p>
@@ -269,7 +268,7 @@ export default function BaliVillaRoiGuidePage() {
           </p>
         </Section>
 
-        <Section eyebrow="02 · Expenses" title="The silent leak is usually 35% to 45% of revenue.">
+        <Section eyebrow="02 · Expenses" title="Operating costs can erase the headline return.">
           <p>
             A villa can be booked often and still disappoint as an investment.
             Operating costs hit before profit arrives. Management commissions,
@@ -333,12 +332,13 @@ export default function BaliVillaRoiGuidePage() {
             micro-location, the villa quality, the rate, and the management plan.
           </p>
           <p>
-            BVT estimates occupancy from area-level demand signals, including
-            Booking.com review-density patterns. That is not the same as verified
-            property-level booking history, and we say so. It is a market proxy for
-            comparing listings at scale. Before closing, a buyer should still ask for
-            owner statements, channel-manager exports, tax records where available,
-            and the management contract behind any revenue claim.
+            BVT uses the same 65% occupancy scenario for published yield comparisons;
+            it does not claim that every villa will achieve 65% bookings. Separate
+            area-level review-density figures are provisional demand proxies and do
+            not drive the headline yield. Neither input is verified property-level
+            booking history. Before closing, ask for owner statements, channel-manager
+            exports, tax records where available, and the management contract behind
+            any revenue claim.
             The full demand-input breakdown is in the{" "}
             <InlineLink href="/guides/bali-villa-occupancy-rates">
               Bali villa occupancy rates guide
