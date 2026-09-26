@@ -367,13 +367,14 @@ export default async function ListingPage({ params }: Props) {
   // Sensitivity grid: rows = nightly rate multiplier, cols = occupancy points
   const rateMultipliers = [0.85, 1.0, 1.15];
   const occPoints = [Math.max(20, occupancyPct - 15), occupancyPct, Math.min(95, occupancyPct + 15)];
-  function yieldAt(rateMult: number, occPct: number): number | null {
+  function yieldAt(rateMult: number, occPct: number, expenseRatio = 0.4): number | null {
     if (!priceUsd || priceUsd <= 0 || !nightlyRate) return null;
     const gross = nightlyRate * rateMult * 365 * (occPct / 100);
-    const netRev = gross * 0.6; // after 40% expenses
+    const netRev = gross * (1 - expenseRatio);
     const adj = netRev - leaseDepreciation;
     return (adj / priceUsd) * 100;
   }
+  const combinedDownsideYield = yieldAt(0.85, 50, 0.5);
 
   // Price history: compute delta from first → current
   const priceHistSorted = priceHistory.slice().sort((a: any, b: any) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
@@ -743,6 +744,25 @@ export default async function ListingPage({ params }: Props) {
                   <p className="text-[11px] text-slate-500 mt-3">
                     "Rate ±15%" stress-tests our nightly rate model. "Occ" rows are absolute occupancy points, not percentage-point shifts. The PDF audit extends this to a 5-year cashflow projection.
                   </p>
+                  <div className="mt-5 border-t border-slate-800 pt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="max-w-xl">
+                      <h3 className="text-sm font-semibold text-[color:var(--bvt-ink)]">Combined downside screen</h3>
+                      <p className="mt-1 text-xs text-slate-400 leading-relaxed">
+                        50% occupancy, a 15% lower nightly rate, and 50% operating costs, with the same purchase-price basis and lease allowance. This is an illustrative scenario, not a forecast.
+                      </p>
+                    </div>
+                    <div className="sm:text-right shrink-0">
+                      <div className={`font-mono text-xl font-semibold ${combinedDownsideYield !== null && combinedDownsideYield < 0 ? "text-red-400" : "text-amber-400"}`}>
+                        {combinedDownsideYield !== null ? `${combinedDownsideYield.toFixed(1)}%` : "Not available"}
+                      </div>
+                      <div className="text-[11px] text-slate-500">modeled net yield</div>
+                    </div>
+                  </div>
+                  {leaseDepreciation > 0 && (
+                    <p className="text-[11px] text-slate-500 mt-3">
+                      The lease allowance is noncash; a negative screening yield does not by itself mean negative rental cash flow.
+                    </p>
+                  )}
                 </section>
               )}
 
