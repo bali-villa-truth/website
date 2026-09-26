@@ -844,7 +844,7 @@ const pipelineGuardrails = [
 const uxIssues = [
   "Homepage now has risk shortcuts, but comparison mode could still be easier to save and share.",
   "Mobile ledger needs continued visual checks after each filter or card-density change.",
-  "Listing pages are clearer, but PDF templates should be aligned with the new assumption-note language.",
+  "The listing and both audit-PDF templates now date their model inputs and avoid the unsupported Airbnb blend or raw-card confidence claim. Continue checking report layout after future model or copy changes.",
   "September 25 representative listing-page verification passes all seven sampled categories, including an outside-Bali row that now shows no modeled ROI or paid audit offer. The RF10173B leasehold tenure line is correct; the old Freehold alert matched a related-listing/footer link outside this property's tenure field.",
 ];
 
@@ -864,7 +864,7 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; recovery run completed 2026-09-25 03:01 MST",
+    status: "Loaded; manual recovery completed 2026-09-25; next unattended full run not yet verified",
     purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. A September 25 no-scrape rehearsal completed with 2,455 rows, zero outside-Bali modeling violations, seven representative listing pages healthy, and exact sitemap coverage. Listing and sitemap checks now default to strict. Google Sheets remains blocked by OAuth invalid_grant. Observe the next automatic full scrape before calling unattended recovery proven.",
   },
 ];
@@ -873,7 +873,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 25 production deployments put the occupancy guide, outside-Bali model-scope corrections, listing offer guards, and updated investor explanations live. The no-scrape pipeline completed at 22:19 UTC with exact coverage of 2,455 audited listings plus 20 static URLs. The stale .env GitHub token remains a maintenance issue; the existing push script works with the authenticated GitHub CLI token.",
+    "The September 26 production release dated the August asking-rate and March occupancy inputs across methodology, listings, and audit PDFs, and removed unsupported confidence and blend wording. Canonical live, listing, sitemap, mobile-overflow, and dashboard-access checks passed. The live occupancy numbers remain provisional until a clean review sample passes validation and the model is safely refreshed. The stale .env GitHub token remains a maintenance issue; the existing push script works with the authenticated GitHub CLI token.",
   requiredAction: "Monitor the next scheduled refresh and keep verifying production after every deploy. Rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
@@ -882,6 +882,11 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/live_verification_2026-09-26_0407.json",
+    ".tmp/listing_page_verification_2026-09-26_0407.json",
+    ".tmp/sitemap_coverage_2026-09-26_0407.json",
+    ".tmp/supabase_data_quality_verification_2026-09-26_0352.json",
+    ".tmp/website_progress_2026-09-26.md",
     ".tmp/live_verification_2026-09-25_1008.json",
     ".tmp/sitemap_coverage_2026-09-25_1008.json",
     ".tmp/listing_page_verification_2026-09-25_1009.json",
