@@ -118,7 +118,7 @@ async function getComps(listing: any, max = 3) {
   if (!listing.location || !listing.bedrooms) return [] as any[];
   const { data } = await supabase
     .from("listings_tracker")
-    .select("id, slug, villa_name, bedrooms, last_price, projected_roi, thumbnail_url, features, lease_years, land_size")
+    .select("id, slug, villa_name, bedrooms, last_price, price_description, price_per_room, projected_roi, thumbnail_url, features, lease_years, land_size")
     .eq("status", "audited")
     .eq("location", listing.location)
     .eq("bedrooms", listing.bedrooms)
@@ -141,11 +141,8 @@ async function getPriceHistory(listingId: number) {
   return data || [];
 }
 
-// Price stored in `last_price` may be in IDR (when >= 1M) or USD. Convert to USD.
-// Fallback IDR rate MUST stay in sync with:
-//   - app/api/generate-deep-audit/route.ts (USD_RATE_FALLBACK)
-//   - app/_lib/AreaPage.tsx (USD_RATE_FALLBACK)
-// If this drifts, identical listings display different USD prices across pages.
+// Keep metadata, schema, comps, and on-page yield on the stored audit USD basis.
+// Unmodeled listings use source-currency conversion only when no audit basis exists.
 const FALLBACK_RATES: Record<string, number> = {
   USD: 1, IDR: 16782, AUD: 1.53, EUR: 0.92, SGD: 1.34,
 };
@@ -162,6 +159,8 @@ function parseListingPrice(listing: any): { amount: number; currency: string } {
 }
 
 function getPriceUSD(listing: any): number {
+  const auditPrice = Number(listing.price_per_room) * Number(listing.bedrooms);
+  if (auditPrice > 0) return auditPrice;
   const { amount, currency } = parseListingPrice(listing);
   const r = FALLBACK_RATES[currency];
   if (!r || r <= 0) return amount;
@@ -240,8 +239,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? `${niceName} — Audit · ${roi} Net Yield`
     : `${niceName} — ROI Not Modeled`;
   const description = listing.projected_roi
-    ? `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location} listed at ${priceUsd}. Stress-tested net yield: ${roi} after 40% expenses. Full breakdown, comparable listings, sensitivity analysis.`
-    : `Source listing review: ${niceName} in ${location}, listed at ${priceUsd}. BVT has not modeled ROI for this asset; check the listing's scope and diligence flags before estimating returns.`;
+    ? `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location}, analyzed at ${priceUsd} at audit FX. Estimated net yield: ${roi} under a 65% occupancy scenario after 40% operating costs and any lease decay. Review the assumptions.`
+    : `Source listing review: ${niceName} in ${location}, USD price equivalent ${priceUsd}. BVT has not modeled ROI for this asset; check the listing's scope and diligence flags before estimating returns.`;
 
   return {
     title,
@@ -333,8 +332,7 @@ export default async function ListingPage({ params }: Props) {
   const jsonLd = buildJsonLd(listing, slug);
   const niceName = toTitleCase(listing.villa_name || "");
 
-  const auditPriceUsd = Number(listing.price_per_room) * Number(listing.bedrooms);
-  const priceUsd = Math.round(auditPriceUsd > 0 ? auditPriceUsd : getPriceUSD(listing)) || null;
+  const priceUsd = Math.round(getPriceUSD(listing)) || null;
   const roi = listing.projected_roi
     ? Number(listing.projected_roi).toFixed(1)
     : null;
@@ -823,7 +821,7 @@ export default async function ListingPage({ params }: Props) {
                   <p className="text-3xl font-extrabold">
                     {priceUsd ? `$${priceUsd.toLocaleString("en-US")}` : "Price N/A"}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">USD at audit FX · source ask: {listing.price_description || "not stated"}</p>
+                  <p className="text-xs text-slate-500 mt-1">{Number(listing.price_per_room) * Number(listing.bedrooms) > 0 ? "USD at audit FX" : "USD estimate"} · source ask: {listing.price_description || "not stated"}</p>
                 </div>
 
                 <div className="text-center py-4 border-t border-b border-slate-800 mb-4">

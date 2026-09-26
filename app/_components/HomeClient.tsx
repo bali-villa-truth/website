@@ -1679,6 +1679,7 @@ export default function HomeClient({
                                           <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">${nightly}/night</span> <span className="text-[color:var(--bvt-ink-muted)]">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
                                           <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-[color:var(--bvt-ink-muted)]">(65% comparison scenario, not booked nights)</span></div>
                                           <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">40% operating costs</span> <span className="text-[color:var(--bvt-ink-muted)]">(mgmt 15% · OTA 15% · maintenance 10%)</span></div>
+                                          <div className="text-[color:var(--bvt-ink-muted)]">Gross/net yields use the stored USD price at audit FX; display currency may convert at a newer rate.</div>
                                         </div>
                                         <p className="text-[color:var(--bvt-ink-muted)] text-[9px] flex items-center gap-1.5 mt-2"><SlidersHorizontal size={9} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]"/> Select villas with the checkbox to adjust these assumptions</p>
                                       </>
