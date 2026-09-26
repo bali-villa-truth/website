@@ -483,22 +483,25 @@ function renderMathSection(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNu
 }
 
 function renderConfidenceSection(doc: PDFKit.PDFDocument, villa: Villa, audit: AuditNumbers) {
-  sectionHeader(doc, "Data Confidence");
+  sectionHeader(doc, "Data Provenance and Limits");
 
   const occConf = villa.occupancy_confidence || "—";
   const occN = villa.occupancy_sample_size || 0;
   const occSource = cleanOccupancySourceLabel(villa.occupancy_source, occConf, occN);
   const rateSource = cleanSourceLabel(villa.rate_source);
+  const reviewBased = villa.occupancy_source === "review-density occupancy estimate";
+  const exactAreaRate = (villa.rate_source || "").startsWith("bvt_market_model")
+    && !(villa.rate_source || "").includes("fallback");
 
   const headerRow = ["Source", "Value", "Confidence"];
   const rows: string[][] = [
     headerRow,
     ["Nightly Rate",
      rateSource,
-     "Area median from Booking.com + Airbnb (n≈200-500 listings/area)"],
+     exactAreaRate ? "Booking.com asking-rate sample, 1 Aug 2026; not booked revenue" : "Fallback estimate; no exact-area sample or booked revenue"],
     ["Occupancy",
      `${fmtPct(audit.occupancy * 100, 0)} - ${occSource}`,
-     occN > 0 ? `${occConf.toUpperCase()} (n=${occN})` : "Flat fallback"],
+     reviewBased ? "Provisional Mar 2026 review proxy; repeated cards, sample coverage unverified" : "Flat fallback assumption; no booked-night data"],
     ["Asking Price", villa.price_description || "—", "Scraped from Bali Home Immo listing"],
     ["Lease Years",
      audit.lease_years ? String(audit.lease_years) : "N/A (Freehold)",

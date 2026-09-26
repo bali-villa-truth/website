@@ -360,6 +360,9 @@ export default async function ListingPage({ params }: Props) {
   const roiDisplay = roi ? `${roi}%` : "N/A";
   const rateSource = cleanSourceLabel(listing.rate_source, "BVT market-rate model");
   const occupancySource = cleanSourceLabel(listing.occupancy_source, "Area occupancy estimate");
+  const usesAreaRateSample = (listing.rate_source || "").startsWith("bvt_market_model")
+    && !(listing.rate_source || "").includes("fallback");
+  const usesReviewDensityProxy = listing.occupancy_source === "review-density occupancy estimate";
 
   // Sensitivity grid: rows = nightly rate multiplier, cols = occupancy points
   const rateMultipliers = [0.85, 1.0, 1.15];
@@ -591,7 +594,9 @@ export default async function ListingPage({ params }: Props) {
                       {hasNightlyRate ? `$${nightlyRate}/night` : "Not available"}
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      {rateSource}. Verify property-level booking history before relying on it.
+                      {rateSource}. {usesAreaRateSample
+                        ? "Area/bedroom asking-rate sample: Booking.com, collected 1 Aug 2026 for 3 Nov 2026 stays. Not booked revenue."
+                        : "No exact area/bedroom rate sample is available for this estimate."} Verify property-level booking history before relying on it.
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
@@ -599,7 +604,9 @@ export default async function ListingPage({ params }: Props) {
                     <div className="font-mono text-lg text-[color:var(--bvt-ink)]">{hasOccupancyModel ? `${occupancyPct}%` : "Not modeled"}</div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                       {hasOccupancyModel
-                        ? `${occupancySource}. Treat this as an area/tier assumption unless the seller provides verified channel-manager data.`
+                        ? `${occupancySource}. ${usesReviewDensityProxy
+                            ? "Based on a 7 Mar 2026 review snapshot with repeated result cards and unverified sample coverage; provisional, not actual booked nights."
+                            : "This is a fallback assumption, not actual booked nights."} Request verified channel-manager data and test a lower-occupancy case.`
                         : "No occupancy estimate is applied outside the supported villa model. Request verified booking history before estimating returns."}
                     </p>
                   </div>

@@ -734,10 +734,13 @@ function renderDataProvenance(doc: PDFKit.PDFDocument, villa: Villa, audit: Audi
   const occN = villa.occupancy_sample_size || 0;
   const occConf = villa.occupancy_confidence || "—";
   const occSource = cleanOccupancySourceLabel(villa.occupancy_source, occConf, occN);
+  const reviewBased = villa.occupancy_source === "review-density occupancy estimate";
+  const exactAreaRate = (villa.rate_source || "").startsWith("bvt_market_model")
+    && !(villa.rate_source || "").includes("fallback");
   const rows: string[][] = [
     ["Signal", "Value", "Confidence"],
-    ["Nightly rate", rateSource, "BVT market-rate model. We do not have a licensing agreement with AirDNA or Booking — treat as a stress-test estimate, not a measurement."],
-    ["Occupancy", `${fmtPct(audit.occupancy * 100, 0)} - ${occSource}`, occN > 0 ? `${String(occConf).toUpperCase()} (n=${occN} area sample)` : "Flat fallback"],
+    ["Nightly rate", rateSource, exactAreaRate ? "Booking.com asking-rate sample, 1 Aug 2026; not booked revenue. Verify this villa's realized rate." : "Fallback estimate; no exact-area sample or booked revenue. Verify this villa's realized rate."],
+    ["Occupancy", `${fmtPct(audit.occupancy * 100, 0)} - ${occSource}`, reviewBased ? "Provisional Mar 2026 review proxy; repeated cards, sample coverage unverified" : "Flat fallback assumption; no booked-night data"],
     ["Asking price", villa.price_description || "—", "Scraped from source listing; verify in-person."],
     ["Lease years", villa.lease_years ? String(villa.lease_years) : "N/A", "From listing description; verify via Notaris."],
   ];

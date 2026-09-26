@@ -27,6 +27,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 
 const completedImprovements = [
   {
+    date: "2026-09-26",
+    area: "Investor data provenance",
+    title: "Dated the model inputs and surfaced occupancy uncertainty",
+    status: "Deployed and verified",
+    why: "The active nightly-rate table matches the 1 August Booking.com snapshot, not July. Investor pages now date that asking-rate sample and the 7 March review-density occupancy snapshot, explain that they are not booked revenue or occupancy, and remove misleading high-confidence wording. A cached-input audit found repeated result cards and invalid review scores, so existing occupancy assumptions are explicitly provisional until a clean sample is validated and the model rerun. No yield values were silently recalculated from the flawed cache.",
+    url: `${SITE_URL}/methodology`,
+    progressFile: ".tmp/website_progress_2026-09-26.md",
+  },
+  {
     date: "2026-09-25",
     area: "Private dashboard security",
     title: "Rotated both dashboard passwords out of public source",
@@ -40,7 +49,7 @@ const completedImprovements = [
     area: "Investor trust / public methodology",
     title: "Aligned public rate-model explanations with the live calculation",
     status: "Deployed and verified",
-    why: "The methodology and About page had carried forward an old Booking.com/Airbnb blend, AirDNA reference, flat budget discount, and example rates even though the current July rate table is Booking.com-only with graduated 15%, 30%, and 50% price-tier discounts. Public copy now describes the actual source, treats rates as asking-rate estimates rather than earnings, and stops claiming that every listing is modeled or audited weekly. Unmodeled listings explain why no 40% cost load or net yield is calculated.",
+    why: "The methodology and About page had carried forward an old Booking.com/Airbnb blend, AirDNA reference, flat budget discount, and example rates even though the active rate table is Booking.com-only with graduated 15%, 30%, and 50% price-tier discounts. The table was subsequently verified against the 1 August snapshot; the earlier July date was incorrect. Public copy treats rates as asking-rate estimates rather than earnings and stops claiming that every listing is modeled or audited weekly. Unmodeled listings explain why no 40% cost load or net yield is calculated.",
     url: `${SITE_URL}/methodology`,
     progressFile: ".tmp/website_progress_2026-09-25.md",
   },
@@ -710,6 +719,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "2026-09-26 model-input audit: the active rate table exactly replays the 1 August 2026 Booking.com cache across all 60 area/bedroom tiers. The active occupancy table replays the 7 March 2026 review cache, but that cache has 858 result cards versus 286 unique name/review-count pairs within areas; 567 scores are invalid (1010/10). Raw-card sample sizes and associated high-confidence labels are not independent-property evidence. Published occupancy/yield values have not been recomputed; they remain provisional until a fresh validated sample and guarded pipeline run.",
   "As of 2026-09-25 22:19 UTC, the complete no-scrape pipeline passes after the live-guide expectation fix: 2,455 audited rows, 32 Other Indonesian Islands rows flagged NON_BALI_LOCATION with no modeled ROI/rate/occupancy, zero outside-Bali scope violations, 31 physical-spec gaps, zero unmodeled rows with nonzero values, seven passing representative listing pages, and 2,475 sitemap URLs with zero missing/extra. Google Sheets remains blocked by OAuth invalid_grant; tomorrow's full scheduled scrape remains to be observed.",
   "As of 2026-09-25 10:12 UTC, live Supabase checks pass with 2,455 audited rows, PHYSICAL_DATA_INCOMPLETE at 31, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. The canonical site and private dashboard access controls pass. The repaired BHI parser and physical-field carry-forward completed a quality-gated refresh. The successful website deployment put the occupancy guide live and brought the sitemap to exact coverage: 2,455 audited listings plus 20 static URLs, with no missing or extra listings. Six representative listing pages now pass visible-content checks; the prior tenure alert was a false positive from a related/footer link. No outside-Bali sample exists to test today.",
   "As of 2026-09-18 06:51 UTC, live Supabase data-quality checks pass with 2,443 audited rows, PHYSICAL_DATA_INCOMPLETE at 36, 0 bedroom outliers, 0 unmodeled rows with nonzero ROI/rates, and 0 legacy rate_source=auditor rows. Automation freshness passes with launchd loaded, 23,611.6 MB free, and 23.78 hours of pipeline-log age immediately before the next local-midnight run. The canonical site is healthy and private dashboard APIs return 401. The listing verifier still finds the known RF10173B lease-term-not-stated/freehold contradiction, and sitemap coverage has drifted to 916 missing audited listing URLs, 699 stale/extra listing URLs, and 1 missing static URL until the staged deploy ships.",
@@ -1375,6 +1385,8 @@ const contentPages = [
 ];
 
 const nextActions = [
+  "Refresh the Booking.com review sample with pagination, unique-property, and 0-10 score validation; review area-level changes and sample coverage before updating the occupancy model or investor ROI values.",
+  "Refresh and validate the Booking.com asking-rate sample; the current 1 August snapshot is dated and is not realized booking revenue. Do not advertise a monthly rate-refresh cadence without successful runs.",
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
   "Reauthorize Google Sheets interactively; the September 25 pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",

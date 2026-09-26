@@ -133,8 +133,8 @@ export default function Methodology() {
             </p>
             <p>
               The current nightly-rate model uses <strong className="text-[color:var(--bvt-ink)]">Booking.com villa asking rates</strong>
-              by area and bedroom tier, not verified booking revenue. Its July 2026 refresh did not include an
-              Airbnb blend. A 15% &quot;reality discount&quot; is applied to platform medians because asking rates
+              by area and bedroom tier, not verified booking revenue. The active table comes from a 1 August 2026
+              sample for 3 November 2026 stays; it does not include an Airbnb blend. A 15% &quot;reality discount&quot; is applied to platform medians because asking rates
               may exceed realized rates. Booking.com review density is a separate proxy for area occupancy;
               neither input verifies the earnings of a particular villa.
             </p>
@@ -193,16 +193,15 @@ export default function Methodology() {
           <SectionHeading icon={<Calendar size={18} />} title="Occupancy rate" />
           <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              We estimate area-specific occupancy rates ranging from <strong className="text-[color:var(--bvt-ink)]">40% to 80%</strong> based on
-              Booking.com review density. Areas with more reviews per property indicate higher demand,
-              which we use as a proxy for occupancy. This replaced our earlier flat 65% assumption.
+              The current model assigns area-specific occupancy assumptions between <strong className="text-[color:var(--bvt-ink)]">40% and 80%</strong> from
+              Booking.com review density. Those bounds are chosen model inputs, not measured occupancy.
+              The active review snapshot was collected on 7 March 2026 and requires revalidation.
             </p>
 
             <Step num={1} title="Review density as a demand proxy">
-              We sample villa listings on Booking.com across 12 Bali areas, collecting review counts
-              and scores per property. More reviews generally means more bookings — a property with 400 reviews
-              has almost certainly hosted more guests than one with 15. We use a blended median/mean of review
-              counts per area to reduce the skew from outlier mega-resorts.
+              We sampled Booking.com result cards across 12 Bali areas and used review counts as a rough
+              demand signal. The model blends median and mean review counts to reduce outlier influence.
+              Review counts also depend on listing age, channel mix, and how often guests leave feedback.
             </Step>
 
             <Step num={2} title="Relative ranking, not absolute conversion">
@@ -210,19 +209,15 @@ export default function Methodology() {
               knowing average stay length, review-to-booking ratios, and listing ages, which we don&apos;t have.
               Instead, we rank areas by review density and map them onto a 40%–80% range. The busiest area
               gets the highest occupancy, the quietest gets the lowest, and everything else is interpolated.
-              This relative approach avoids brittle assumptions while still differentiating between areas.
+              This relative mapping differentiates areas, but it cannot establish actual occupied nights.
             </Step>
 
-            <Step num={3} title="Confidence levels">
-              Not all estimates are equally reliable. We show you how confident we are based on how many
-              properties we sampled per area:
+            <Step num={3} title="Sample coverage is not forecast confidence">
+              Earlier confidence labels were based on raw result-card counts, not independently verified
+              properties or booking outcomes. The March snapshot contains repeated cards from pagination
+              and malformed review scores. Until a clean sample is validated and the model is republished,
+              treat all displayed review-density occupancy assumptions as provisional.
             </Step>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 not-prose">
-              <ConfidenceCard level="High confidence" count="n ≥ 15" desc="Large sample size. Reliable estimate for the area." tone="strong" />
-              <ConfidenceCard level="Medium confidence" count="n = 8–14" desc="Moderate sample. Reasonable estimate, but more data would help." tone="medium" />
-              <ConfidenceCard level="Low confidence" count="n < 8" desc="Small sample. Treat as a rough estimate — the area may not be well-represented." tone="weak" />
-            </div>
 
             <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-5">
               <p className="font-semibold text-[color:var(--bvt-ink)] mb-2 flex items-center gap-2 text-[13px]">
@@ -230,11 +225,10 @@ export default function Methodology() {
                 <span className="label-micro">What this is not</span>
               </p>
               <p className="text-[14px] leading-[1.65] text-[color:var(--bvt-ink-body)]">
-                This is not actual occupancy data. It&apos;s an estimate derived from a proxy (review density)
-                for a proxy (demand). It&apos;s better than a flat guess — it captures the real difference
-                between a bustling Seminyak and a quiet Tabanan — but it&apos;s still an approximation.
-                For areas where we couldn&apos;t gather enough data, we fall back to a flat 65% and label
-                it clearly as &ldquo;assumed.&rdquo;
+                These are not actual occupancy data or evidence that one area outperforms another.
+                The 40%–80% mapping and the old March sample can materially change a yield estimate.
+                For unsupported areas we use a flat 65% fallback and label it as an assumption.
+                Request property-level booking exports and test lower occupancy before underwriting.
               </p>
             </div>
 
@@ -431,16 +425,16 @@ export default function Methodology() {
           <SectionHeading icon={<BookOpen size={18} />} title="How we keep it current" />
           <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              Our pipeline runs periodically to capture new listings and price changes. Booking.com rate data
-              is refreshed approximately monthly. Occupancy estimates are refreshed quarterly — review
-              counts change slowly, so more frequent updates would add noise without signal.
-              When prices change by more than 1%, we log the event and snapshot the ROI at that point.
+              Our listing pipeline runs periodically to capture new listings and asking-price changes.
+              The active Booking.com rate sample is dated 1 August 2026; the review-density occupancy
+              sample is dated 7 March 2026. Neither is a live market feed. New samples should be applied
+              only after validation. Asking prices update when the source changes; the price-history event
+              threshold is 5% for a material change, not every smaller move.
             </p>
             <p>
               This methodology page is a living document. When we change how we calculate something, we
-              update it here. The most recent updates: area-specific occupancy estimation with confidence
-              indicators (replacing the flat 65% assumption), graduated budget discounts for cheap
-              properties, and transparent rate sourcing showing where every nightly rate comes from.
+              update it here. The current model uses graduated budget discounts, but its occupancy proxy
+              needs a clean refresh before its sample-size labels can be treated as reliable.
             </p>
           </div>
         </section>
@@ -480,22 +474,6 @@ function InfoBox({ children }: { children: React.ReactNode }) {
   return (
     <div className="border-l-2 border-[color:var(--bvt-accent)] bg-[color:var(--bvt-bg-elev)]/60 pl-5 pr-5 py-4 text-[14px] leading-[1.65] text-[color:var(--bvt-ink-body)]">
       {children}
-    </div>
-  );
-}
-
-function ConfidenceCard({ level, count, desc, tone }: { level: string; count: string; desc: string; tone: 'strong' | 'medium' | 'weak' }) {
-  const accentClass =
-    tone === 'strong' ? 'text-[color:var(--bvt-accent)]' :
-    tone === 'medium' ? 'text-[color:var(--bvt-accent)]/70' :
-    'text-[color:var(--bvt-ink-muted)]';
-  return (
-    <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-4">
-      <div className="flex items-baseline justify-between mb-2 gap-2">
-        <span className={`label-micro ${accentClass}`}>{level}</span>
-        <span className={`font-mono tabular-nums text-[13px] font-semibold ${accentClass}`}>{count}</span>
-      </div>
-      <p className="text-[12px] leading-[1.55] text-[color:var(--bvt-ink-muted)]">{desc}</p>
     </div>
   );
 }
