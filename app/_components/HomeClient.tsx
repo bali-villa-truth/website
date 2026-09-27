@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink } from 'lucide-react';
 import { BvtLockup } from './BvtSeal';
 
 const supabase = createClient(
@@ -32,13 +32,13 @@ const isRoiUnmodeled = (villa: any): boolean => {
 
 // Indonesian real estate glossary for foreign buyers
 const GLOSSARY: Record<string, { label: string; tip: string }> = {
-  'hak_milik': { label: 'Hak Milik', tip: 'Freehold ownership — the strongest title in Indonesia. Foreigners cannot hold Hak Milik directly; most use a PT PMA (foreign-owned company) or nominee structure.' },
-  'hak_sewa': { label: 'Hak Sewa', tip: 'Leasehold — a right to use property for a fixed period. The most common structure for foreign buyers in Bali. The asset reverts to the landowner when the lease expires.' },
-  'shm': { label: 'SHM', tip: 'Sertifikat Hak Milik — the freehold land certificate. The highest form of land ownership in Indonesia, reserved for Indonesian citizens.' },
-  'imb': { label: 'IMB', tip: 'Izin Mendirikan Bangunan — the building construction permit. Essential for legal builds. Without an IMB (now called PBG), a property may face demolition risk.' },
-  'pbg': { label: 'PBG', tip: 'Persetujuan Bangunan Gedung — the new building approval that replaced IMB in 2021. Required for all new construction.' },
-  'pt_pma': { label: 'PT PMA', tip: 'Foreign-owned Indonesian company (Penanaman Modal Asing). The legal way for foreigners to hold property — requires minimum investment and ongoing compliance costs.' },
-  'notaris': { label: 'Notaris', tip: 'Indonesian notary — handles all property transactions, lease agreements, and company formations. A trusted notaris is essential for any Bali property purchase.' },
+  'hak_milik': { label: 'Hak Milik', tip: 'Indonesian land ownership right. A foreign individual cannot hold Hak Milik directly. A listing marked freehold does not establish what this buyer can acquire; verify the certificate and buyer eligibility with independent counsel.' },
+  'hak_sewa': { label: 'Hak Sewa', tip: 'Contractual lease right for a stated term, not Hak Milik title. Verify the lessor\'s authority, remaining term, extension price, and signed documents before relying on a listing label.' },
+  'shm': { label: 'SHM', tip: 'Sertifikat Hak Milik land certificate. Have independent counsel verify the registry record, legal holder, and any encumbrances; the certificate alone does not establish foreign-buyer eligibility.' },
+  'imb': { label: 'IMB', tip: 'Legacy building-permit label. Request the issued approval and have local counsel check whether it covers the actual building and intended use.' },
+  'pbg': { label: 'PBG', tip: 'Persetujuan Bangunan Gedung building approval. Verify the issued document matches the property and intended use; do not infer compliance from a listing label.' },
+  'pt_pma': { label: 'PT PMA', tip: 'Indonesian foreign-investment company. Company-held land rights differ from a person\'s Hak Milik; incorporation alone does not validate a villa\'s title, approvals, or rental operation.' },
+  'notaris': { label: 'Notaris', tip: 'Indonesian notary. Confirm the relevant land-deed and registration steps with an independent Indonesian property lawyer and qualified local professionals.' },
 };
 
 function GlossaryTip({ term }: { term: keyof typeof GLOSSARY }) {
@@ -46,8 +46,10 @@ function GlossaryTip({ term }: { term: keyof typeof GLOSSARY }) {
   if (!g) return null;
   return (
     <span className="relative group/glossary inline-flex items-center">
-      <Info size={11} className="text-[color:var(--bvt-ink-faint)] group-hover/glossary:text-[color:var(--bvt-accent)] cursor-help ml-1 flex-shrink-0 transition-colors" />
-      <span className="invisible group-hover/glossary:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[10px] leading-relaxed px-3 py-2.5 shadow-xl z-50 pointer-events-none">
+      <button type="button" aria-label={`${g.label}: ${g.tip}`} className="ml-1 inline-flex items-center text-[color:var(--bvt-ink-faint)] hover:text-[color:var(--bvt-accent)] focus-visible:text-[color:var(--bvt-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--bvt-accent)]">
+        <Info size={11} className="flex-shrink-0" />
+      </button>
+      <span role="tooltip" className="invisible group-hover/glossary:visible group-focus-within/glossary:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[10px] leading-relaxed px-3 py-2.5 shadow-xl z-50 pointer-events-none">
         <span className="font-medium text-[color:var(--bvt-accent)] tracking-[0.1em] uppercase text-[9px]">{g.label}</span>
         <span className="block mt-1 text-[color:var(--bvt-ink-body)] normal-case tracking-normal">{g.tip}</span>
       </span>
@@ -61,7 +63,7 @@ function GlossaryTip({ term }: { term: keyof typeof GLOSSARY }) {
  * what makes BVT different from agents.
  */
 function FAQSection() {
-  const faqs: Array<{ q: string; a: string }> = [
+  const faqs: Array<{ q: string; a: string; source?: { href: string; label: string } }> = [
     {
       q: 'Is Bali Villa Truth affiliated with any agent or broker?',
       a: "No. We're an independent auditor. We don't sell villas, take commissions, or get paid by agents. The source link on each listing opens the original agent page — we earn nothing if you book.",
@@ -72,11 +74,12 @@ function FAQSection() {
     },
     {
       q: 'Can foreigners own property in Bali?',
-      a: "Not directly as Hak Milik (freehold). Foreigners typically hold property through (a) a long-term Hak Sewa lease, usually 25-30 years, or (b) a PT PMA (foreign-owned Indonesian company). Each has legal, tax and exit-liquidity trade-offs — talk to an independent notaris before signing anything.",
+      a: "A foreign individual cannot directly hold Hak Milik. Residential use rights, leases, and company-held land rights have different eligibility and permitted uses; a listing's 'freehold' label does not establish what you can acquire. Have an independent Indonesian property lawyer verify the title, proposed structure, permits, and rental-use rules before paying a deposit.",
+      source: { href: 'https://jdih.atrbpn.go.id/peraturan/detail/946/peraturan-pemerintah-nomor-18-tahun-2021', label: 'Official land-rights regulation (ATR/BPN)' },
     },
     {
       q: 'Why do so many listings have red flags?',
-      a: "Bali's market is brochure-driven — ROI claims of 15-25% are common but rarely survive expense modeling. Our flags aren't judgments; they surface assumptions we had to push back on (short lease, inflated nightly rate, missing data). A flagged villa can still be a good buy — you just go in with eyes open.",
+      a: "Headline ROI claims can omit operating costs or assume high occupancy. Our flags aren't judgments; they highlight issues such as short leases, unusual asking prices, and missing data. A flagged villa may still merit review, but each issue needs independent evidence.",
     },
     {
       q: 'How often is the data updated?',
@@ -114,8 +117,8 @@ function FAQSection() {
             The questions<br />buyers actually ask.
           </h2>
           <p className="mt-5 text-[15px] leading-relaxed text-[color:var(--bvt-ink-muted)] max-w-[36ch]">
-            No hedging, no brochure copy. If you&apos;re about to commit a seven-figure
-            sum, these are the things you should already know.
+            No brochure copy. Before paying a deposit, these are the questions
+            worth asking with independent advisers.
           </p>
         </header>
 
@@ -135,6 +138,11 @@ function FAQSection() {
                 <p className="mt-4 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[65ch]">
                   {f.a}
                 </p>
+                {f.source && (
+                  <a href={f.source.href} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-[color:var(--bvt-accent)] underline hover:text-[color:var(--bvt-ink)]">
+                    {f.source.label}<ExternalLink size={12} aria-hidden="true" />
+                  </a>
+                )}
               </details>
             ))}
           </div>
