@@ -219,6 +219,7 @@ interface Comp {
   est_nightly_rate: number | null;
   est_occupancy: number | null;
   lease_years: number | null;
+  features?: string | null;
 }
 
 function compPriceUsd(comp: Comp): number {
@@ -262,7 +263,7 @@ async function fetchComps(
   let res = await supabase
     .from("listings_tracker")
     .select(
-      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years,features"
     )
     .eq("location", area)
     .eq("bedrooms", beds)
@@ -282,7 +283,7 @@ async function fetchComps(
   res = await supabase
     .from("listings_tracker")
     .select(
-      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years,features"
     )
     .eq("location", area)
     .gte("bedrooms", bedsLo)
@@ -301,7 +302,7 @@ async function fetchComps(
   res = await supabase
     .from("listings_tracker")
     .select(
-      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years"
+      "id,slug,villa_name,location,bedrooms,last_price,price_description,price_per_room,projected_roi,est_nightly_rate,est_occupancy,lease_years,features"
     )
     .eq("bedrooms", beds)
     .neq("id", villa.id)
@@ -378,15 +379,15 @@ function buildNegotiationMemo(villa: Villa, audit: AuditNumbers, comps: Comp[]):
   // Anchor
   if (compMed > 0 && gapPct > 8) {
     lines.push(
-      `Anchor the conversation on comps, not the asking price. This villa is priced ~${gapPct.toFixed(0)}% above the median ${villa.bedrooms || "?"}-bedroom in ${villa.location || "the area"} (median $${Math.round(compMed).toLocaleString()}, n=${compPrices.length}). Open with: "I've looked at ${compPrices.length} comparable listings in the same area and bedroom count. Your price is at the top of the range — what justifies that premium?"`
+      `This asking price is about ${gapPct.toFixed(0)}% above the median of ${compPrices.length} selected public asking listings (median $${Math.round(compMed).toLocaleString()}). These are not closed sales or an appraisal. Ask which differences in tenure, size, condition, location, and rental history justify the gap.`
     );
   } else if (compMed > 0 && gapPct < -8) {
     lines.push(
-      `The asking price is ~${Math.abs(gapPct).toFixed(0)}% below the ${villa.location} median for this bedroom tier. That's a signal — either the seller is motivated (offer fast and firm) or there's a defect you haven't found yet (lease, title, structure). Do not close until you've inspected and verified.`
+      `This asking price is about ${Math.abs(gapPct).toFixed(0)}% below the median of ${compPrices.length} selected public asking listings. The gap does not establish seller motivation or a defect. Verify tenure, land and building size, condition, permits, and source price before comparing offers.`
     );
   } else {
     lines.push(
-      `Pricing is in line with the ${villa.location} median for this bedroom tier. The negotiation lever is condition, not price — get a professional survey and use defect findings as your discount mechanism.`
+      `The asking price is near the median of the selected public asking listings. That alone does not establish fair value. Compare tenure, size, condition, permits, and rental records before setting your own limit.`
     );
   }
 
@@ -432,7 +433,7 @@ function buildNegotiationMemo(villa: Villa, audit: AuditNumbers, comps: Comp[]):
   }
   if (flags.includes("BUDGET_VILLA") || flags.includes("EXTREME_BUDGET")) {
     lines.push(
-      `**Budget-tier caution:** The "deal" is priced-in. Before negotiating further, verify why this villa is below the 25th percentile. Check land certificate (SHM vs HGB vs Hak Pakai), zoning compatibility, existing debt, and whether it's a nominee structure.`
+      `**Budget-tier caution:** The model flagged a low asking price for its tier or per-bedroom screen; this does not identify the cause. Ask independent local advisers to check ownership rights, zoning, encumbrances, and condition, then compare the actual asset with similar listings.`
     );
   }
   if (audit.is_leasehold && audit.lease_years > 0 && audit.lease_years < 25) {
@@ -766,9 +767,9 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
   // Defensive: ensure no comp matches the subject villa's ID (paranoia check)
   const filteredComps = comps.filter(c => c.id !== villa.id);
 
-  sectionHeader(doc, `Top ${filteredComps.length} Comparable Listings`);
+  sectionHeader(doc, `${filteredComps.length} Selected Asking Listings`);
   doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
-    .text(fallbackText[fallback] || "", 50, doc.y, { width: 512, lineGap: 2 });
+    .text(`${fallbackText[fallback] || ""} Public asks, not closed sales; tenure and condition may differ.`, 50, doc.y, { width: 512, lineGap: 2 });
   doc.y += 6;
 
   if (filteredComps.length === 0) {
@@ -783,7 +784,11 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
   for (const c of filteredComps) {
     const nm = (c.villa_name || "—").slice(0, 100);
     const price = compPriceUsd(c) > 0 ? fmtCurrency(compPriceUsd(c)) : "—";
-    const lease = c.lease_years ? `${c.lease_years}yr` : "Free";
+    const lease = c.lease_years && c.lease_years < 999
+      ? `${c.lease_years}yr`
+      : c.lease_years === 999 || String(c.features || "").toLowerCase().includes("freehold")
+        ? "Freehold"
+        : "Term N/S";
     rows.push([
       nm,
       (c.location || "—").slice(0, 18),
@@ -804,13 +809,13 @@ function renderComps(doc: PDFKit.PDFDocument, villa: Villa, comps: Comp[], fallb
     const yieldMed = yields[Math.floor(yields.length / 2)];
     doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.accent)
       .text(
-        `Peer-group median: $${Math.round(priceMed).toLocaleString()} · ${yieldMed.toFixed(1)}% net yield (n=${filteredComps.length})`,
+        `Selected asking-listing median: $${Math.round(priceMed).toLocaleString()} · ${yieldMed.toFixed(1)}% modeled net yield (n=${filteredComps.length})`,
         50, doc.y, { width: 512 }
       );
     doc.y += 16;
     doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.inkMuted)
       .text(
-        "Use this line in your negotiation. If your target villa is priced materially above the peer-group median without a defensible quality premium (oceanfront, fresh lease, recent renovation), that's unnegotiated margin — which belongs to you, not the seller.",
+        "This small, selected asking-price sample is a screening comparison, not a sale appraisal or evidence of a negotiable margin. Verify actual comparability before using it in a decision.",
         50, doc.y, { width: 512, lineGap: 2 }
       );
     doc.y += 6;
@@ -1312,11 +1317,7 @@ async function handle(session_id: string) {
   // newlines from pasted values, which break downstream API calls.
   const stripeKey = (process.env.STRIPE_SECRET_KEY || "").trim();
   const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
-  const supabaseKey = (
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    ""
-  ).trim();
+  const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
   const resendKey = (process.env.RESEND_API_KEY || "").trim();
   const fromEmail = (
     process.env.RESEND_FROM_EMAIL || "audits@balivillatruth.com"
@@ -1326,7 +1327,7 @@ async function handle(session_id: string) {
   ).trim();
 
   if (!stripeKey || !supabaseUrl || !supabaseKey || !resendKey) {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+    return NextResponse.json({ error: "Paid audit delivery is not configured" }, { status: 503 });
   }
 
   const stripe = new Stripe(stripeKey);

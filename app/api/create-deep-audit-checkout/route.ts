@@ -10,6 +10,8 @@
  * Required env vars:
  *   STRIPE_SECRET_KEY          — sk_live_... or sk_test_...
  *   STRIPE_DEEP_AUDIT_PRICE_ID — price_... (for the $49 product)
+ *   SUPABASE_SERVICE_ROLE_KEY  — needed to record paid delivery idempotently
+ *   RESEND_API_KEY             — needed to deliver the report after payment
  *   NEXT_PUBLIC_SITE_URL       — https://balivillatruth.com (used for redirects)
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -38,10 +40,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: "Listing data not configured" }, { status: 500 });
+    // A paid checkout must have both payment and delivery credentials.
+    const secret = (process.env.STRIPE_SECRET_KEY || "").trim();
+    const priceId = (process.env.STRIPE_DEEP_AUDIT_PRICE_ID || "").trim();
+    const resendKey = (process.env.RESEND_API_KEY || "").trim();
+    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "").trim();
+    const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+    if (process.env.BVT_PAID_AUDIT_ENABLED !== "1" || !secret || !priceId || !resendKey || !supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: "Paid audit checkout is not available" }, { status: 503 });
     }
     const { data: listing, error: listingError } = await createClient(supabaseUrl, supabaseKey)
       .from("listings_tracker")
@@ -59,23 +65,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Defensive: trim whitespace/newlines from env values. Vercel's
-    // env editor occasionally records a trailing newline if the user
-    // pastes from a multi-line source — Stripe then rejects the price
-    // id with "No such price: 'price_...\n'". Trim here so we're
-    // resilient to that.
-    const secret = (process.env.STRIPE_SECRET_KEY || "").trim();
-    const priceId = (process.env.STRIPE_DEEP_AUDIT_PRICE_ID || "").trim();
     const siteUrl = (
       process.env.NEXT_PUBLIC_SITE_URL || "https://balivillatruth.com"
     ).trim();
-
-    if (!secret || !priceId) {
-      return NextResponse.json(
-        { error: "Payments not configured" },
-        { status: 500 }
-      );
-    }
 
     const stripe = new Stripe(secret);
 

@@ -23,12 +23,14 @@ export default function ListingClient({
   listingId,
   slug,
   modeled,
+  paidAuditAvailable,
 }: {
   sourceUrl: string;
   villaName: string;
   listingId: number;
   slug: string;
   modeled: boolean;
+  paidAuditAvailable: boolean;
 }) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -147,7 +149,7 @@ export default function ListingClient({
               ✓ Audit on its way to {email}
             </div>
             <p className="text-[11px] text-[color:var(--bvt-ink-muted)] leading-relaxed">
-              Check your inbox (and spam folder the first time). Arrives in under a minute.
+              Check your inbox and spam folder. Delivery time can vary by email provider.
             </p>
           </div>
         ) : (
@@ -190,8 +192,8 @@ export default function ListingClient({
         )}
       </div>
 
-      {/* Deep Audit upgrade — always visible. Uses the same email field. */}
-      <div className="mt-3 pt-4 border-t border-[color:var(--bvt-hairline)]">
+      {/* Keep the checkout offer off listings until payment and delivery are configured. */}
+      {paidAuditAvailable ? <div className="mt-3 pt-4 border-t border-[color:var(--bvt-hairline)]">
         <div className="border border-[color:var(--bvt-accent)]/35 bg-[color:var(--bvt-accent)]/[0.04] p-4">
           <div className="flex items-center gap-2.5 mb-1.5">
             <p className="font-serif text-[17px] text-[color:var(--bvt-ink)] leading-tight tracking-tight">
@@ -202,7 +204,7 @@ export default function ListingClient({
             </span>
           </div>
           <p className="text-[11px] text-[color:var(--bvt-ink-muted)] leading-snug mb-3">
-            5 pages. Real comps · 6-scenario stress test · negotiation memo · exit scenarios · legal DD checklist.
+            Public asking-price comparables · 6-scenario stress test · negotiation questions · exit scenarios · due-diligence checklist.
           </p>
 
           <button
@@ -219,10 +221,12 @@ export default function ListingClient({
             </p>
           )}
           <p className="text-[10px] text-[color:var(--bvt-ink-muted)] text-center mt-2 tracking-wide">
-            Stripe · Emailed in 30s · Not financial advice
+            Stripe checkout · PDF emailed after payment · Not financial advice
           </p>
         </div>
-      </div>
+      </div> : <p className="mt-3 pt-4 border-t border-[color:var(--bvt-hairline)] text-[11px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+        Need a different audit scope? <a href="/contact" className="text-[color:var(--bvt-accent)] underline">Contact BVT</a>. Paid checkout is not available on this listing right now.
+      </p>}
       </>}
     </div>
   );

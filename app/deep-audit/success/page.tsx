@@ -25,7 +25,7 @@ function DeepAuditSuccessInner() {
   useEffect(() => {
     if (!sessionId) {
       setState('error');
-      setErrorMsg('Missing session_id. Contact us at hello@balivillatruth.com with your Stripe receipt.');
+      setErrorMsg('The checkout session is missing. If you completed a payment, contact hello@balivillatruth.com with your Stripe receipt.');
       return;
     }
     let canceled = false;
@@ -49,7 +49,7 @@ function DeepAuditSuccessInner() {
       } catch {
         if (canceled) return;
         setState('error');
-        setErrorMsg('Network error. Your payment was successful — email hello@balivillatruth.com and we will resend immediately.');
+        setErrorMsg('We could not verify the checkout session. If you completed a payment, email hello@balivillatruth.com with your Stripe receipt.');
       }
     })();
     return () => { canceled = true; };
@@ -66,11 +66,10 @@ function DeepAuditSuccessInner() {
         {state === 'loading' && (
           <>
             <h1 className="font-display text-[36px] md:text-[44px] leading-[1.1] tracking-[-0.02em]">
-              Generating your Deep Audit…
+              Verifying checkout and preparing your Deep Audit…
             </h1>
             <p className="mt-4 text-[color:var(--bvt-ink-muted)] text-[15px] leading-relaxed">
-              Your payment was received. We&apos;re building your 5-page PDF — area comparables, stress-test
-              matrix, negotiation memo, exit scenarios, and due-diligence checklist. This takes about 10-20 seconds.
+              We&apos;re checking the payment status before generating the PDF. Please keep this page open while the request completes.
             </p>
             <div className="mt-8 flex items-center gap-3 text-[color:var(--bvt-ink-dim)] text-sm">
               <div className="h-[3px] w-24 bg-[color:var(--bvt-accent)] rounded-full animate-pulse" />
@@ -91,7 +90,7 @@ function DeepAuditSuccessInner() {
             <p className="mt-5 text-[color:var(--bvt-ink-muted)] text-[16px] leading-relaxed max-w-[56ch]">
               {state === 'already_sent'
                 ? `We've already sent the Deep Audit for ${villaName || 'this villa'} to your inbox. If you can't find it, check spam — and reply to that email to get a re-send.`
-                : `Your Deep Audit for ${villaName || 'this villa'} is in your inbox. If it's not there in 60 seconds, check your spam folder (and reply to the email once you find it — it trains your provider).`}
+                : `Your Deep Audit for ${villaName || 'this villa'} was sent by email. Delivery time can vary; check your spam folder if needed.`}
             </p>
 
             <div className="mt-10 rounded-lg border border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft,rgba(0,0,0,0.03))] p-6">
@@ -99,9 +98,9 @@ function DeepAuditSuccessInner() {
                 Before you do anything else
               </h2>
               <ol className="space-y-2 text-[14px] leading-relaxed text-[color:var(--bvt-ink-muted)] list-decimal list-inside">
-                <li>Print the PDF. Read the negotiation memo the night before you meet the seller.</li>
-                <li>Work through the due-diligence checklist in section 5 before wiring any money.</li>
-                <li>Budget $1,500-3,000 for a Notaris/PPAT, independent surveyor, and Indonesian lawyer. The $49 you paid is the cheap insurance; the professional fees are the real one.</li>
+                <li>Review the assumptions and compare them with property-level rental records.</li>
+                <li>Work through the due-diligence checklist before transferring any funds.</li>
+                <li>Have independent local legal and survey professionals verify title, lease rights, permits, and physical condition.</li>
               </ol>
             </div>
 
@@ -131,7 +130,7 @@ function DeepAuditSuccessInner() {
               {errorMsg}
             </p>
             <p className="mt-4 text-[color:var(--bvt-ink-muted)] text-[14px] leading-relaxed">
-              <strong>Your payment went through.</strong> Email <a className="underline" href="mailto:hello@balivillatruth.com">hello@balivillatruth.com</a> with your Stripe receipt and we&apos;ll hand-deliver the PDF within 12 hours. We reply personally.
+              We could not confirm payment or delivery from this page. If you completed a payment, email <a className="underline" href="mailto:hello@balivillatruth.com">hello@balivillatruth.com</a> with your Stripe receipt so the transaction can be checked.
             </p>
           </>
         )}

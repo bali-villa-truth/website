@@ -369,6 +369,13 @@ export default async function ListingPage({ params }: Props) {
   const usesAreaRateSample = (listing.rate_source || "").startsWith("bvt_market_model")
     && !(listing.rate_source || "").includes("fallback");
   const usesReviewDensityProxy = listing.occupancy_source === "review-density occupancy estimate";
+  const paidAuditAvailable = Boolean(
+    process.env.BVT_PAID_AUDIT_ENABLED === "1" &&
+    process.env.STRIPE_SECRET_KEY?.trim() &&
+    process.env.STRIPE_DEEP_AUDIT_PRICE_ID?.trim() &&
+    process.env.RESEND_API_KEY?.trim() &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  );
 
   // Sensitivity grid: rows = nightly rate multiplier, cols = occupancy points
   const rateMultipliers = [0.85, 1.0, 1.15];
@@ -896,6 +903,7 @@ export default async function ListingPage({ params }: Props) {
                   listingId={listing.id}
                   slug={slug}
                   modeled={hasNightlyRate}
+                  paidAuditAvailable={paidAuditAvailable}
                 />
               </div>
 
