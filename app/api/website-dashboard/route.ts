@@ -27,6 +27,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 
 const completedImprovements = [
   {
+    date: "2026-09-27",
+    area: "Investor trust / ownership clarity",
+    title: "Corrected foreign-ownership and title explanations on the homepage",
+    status: "Deployed and verified",
+    why: "The homepage no longer suggests nominee ownership as a routine route, treats PT PMA as universally suitable, or quotes an unsupported common-ROI range. The ownership FAQ and title glossary now distinguish source-listing labels from independently verified rights, direct readers to an Indonesian property lawyer before a deposit, and link the official ATR/BPN land-rights regulation. Desktop glossary definitions can be reached by keyboard. The FAQ was checked at 390px and 1440px with no horizontal overflow or browser errors; no listing data or model outputs changed.",
+    url: `${SITE_URL}/#faq`,
+    progressFile: ".tmp/website_progress_2026-09-27.md",
+  },
+  {
     date: "2026-09-26",
     area: "Investor downside risk",
     title: "Added a combined downside screen to modeled listing audits",
