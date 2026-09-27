@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-27",
+    area: "Free audit clarity / paid-launch safety",
+    title: "Aligned the mobile audit button with its free email form and guarded paid checkout",
+    status: "Deployed and verified",
+    why: "The mobile bar previously advertised a $49 report and a 30-second delivery time, but opened the free PDF email form. It now labels that action as a free audit without a delivery guarantee. The paid offer and checkout require an explicit launch flag plus payment and delivery credentials. The paid success page waits for session verification before claiming payment, and the report labels its comparison properties as public asking listings rather than closed sales. Live 320px, 390px, and desktop checks passed with no overflow or browser errors; the free button focused the intended form. No payment, email, or investor data changed.",
+    url: `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
+    progressFile: ".tmp/website_progress_2026-09-27.md",
+  },
+  {
+    date: "2026-09-27",
     area: "Listing ROI clarity / mobile diligence",
     title: "Made listing yield and risk flags understandable without hover",
     status: "Deployed and verified",
@@ -715,6 +724,12 @@ const completedImprovements = [
 const pendingImprovements = [
   {
     priority: "High",
+    owner: "Paid audit / owner approval",
+    title: "Verify Deep Audit end to end before enabling paid checkout",
+    nextAction: "Keep BVT_PAID_AUDIT_ENABLED off. Review the generated PDF's cash-versus-lease allowance, legal/refund copy, and source comparables; make failed paid_audits writes visible; then configure Stripe and delivery secrets and run an owner-approved test-mode checkout, email, and repeat visit before launch.",
+  },
+  {
+    priority: "High",
     owner: "Data pipeline",
     title: "Replace the provisional March area occupancy proxy only after a clean sample",
     nextAction: "Collect deduplicated Booking.com properties with valid review scores and complete pagination, validate every area's coverage, then decide whether to keep the shared 65% comparison baseline or publish a new, separately tested area model. Do not feed the known flawed cache into yield calculations.",
@@ -760,7 +775,7 @@ const blockers = [
   {
     blocker: "Deep Audit paid checkout",
     status: "External setup required",
-    note: "Stripe product, Vercel env vars, and Supabase paid_audits SQL remain user/account tasks from the prior handoff.",
+    note: "Checkout is deliberately off until BVT_PAID_AUDIT_ENABLED=1. Local Stripe and service-role keys are absent; owner account access and approval are needed for test-mode payment and email verification. The paid_audits table is reachable, so its migration is not assumed missing. PDF legal/refund language and database-write failure handling also need review before enabling.",
   },
   {
     blocker: "Google Sheets push",
@@ -925,8 +940,8 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 27 listing release now shows mobile-readable risk-flag explanations and correct gross-versus-net yield language, including a noncash lease allowance. The earlier homepage tenure correction, ROI reconciliation, and combined downside screen remain live. Canonical, listing, sitemap, and mobile checks passed; the midnight data refresh completed. March area occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
-  requiredAction: "Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
+    "The September 27 paid-guard release corrected the mobile free-audit call to action and disabled paid checkout until an explicit launch flag and required credentials are present. Payment wording and asking-listing comparables are more cautious. Canonical, listing, sitemap, and live mobile/desktop checks passed. The earlier flag and tenure clarity releases remain live. March area occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
+  requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     `${SITE_URL}/sitemap.xml`,
@@ -934,6 +949,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/live_verification_2026-09-27_paid_guard_release.json",
+    ".tmp/listing_page_verification_2026-09-27_paid_guard_release.json",
+    ".tmp/sitemap_coverage_2026-09-27_paid_guard_release.json",
+    ".tmp/website_progress_2026-09-27.md",
     ".tmp/live_verification_2026-09-27_flag_release.json",
     ".tmp/listing_page_verification_2026-09-27_flag_release.json",
     ".tmp/sitemap_coverage_2026-09-27_flag_release.json",
@@ -1620,6 +1639,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "The mobile free-audit button now tells buyers what it actually opens; paid checkout is deliberately held until the report, payment, and delivery path are verified. Paid comparables are described as public asking listings, not completed sales.",
         "Listing dossiers now state that 65% occupancy already includes unoccupied nights, separate operating income from the noncash lease allowance, and give every flag a visible diligence explanation and checklist link, including on mobile.",
         "Mobile cards now separate listed tenure from model assumptions; an unstated lease term is not shown as a 15-year source fact. Unmodeled assets do not display invented lease-value math in the homepage hover details.",
         "Modeled listing audits now show an explicit combined downside case at 50% occupancy, 15% lower nightly rate, and 50% operating costs; leasehold pages distinguish the noncash lease allowance from rental cash flow.",
@@ -1631,6 +1651,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "After the paid-guard release, the live modeled listing passed 320px, 390px, and 1440px checks with no overflow or browser errors; the mobile free-PDF button focused the free email field.",
         "Modeled, unmodeled, and leasehold listing dossiers passed live 320px, 390px, and 1440px checks after the flag-explanation release; no page errors or horizontal overflow occurred.",
         "The corrected mobile tenure card was checked live at 320px and 390px against a missing-term source row, a stated 29-year lease, and freehold; no horizontal overflow or browser errors occurred.",
         "The live combined-downside section fits a 390px listing page without horizontal overflow or browser errors; desktop was checked at 1440px.",
