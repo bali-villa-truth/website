@@ -725,7 +725,7 @@ export default function HomeClient({
 
   // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
   // Three levels: 'danger' (red) = deal-breaker risk, 'warning' (amber) = caution,
-  // 'assumed' (blue) = BVT filled in missing data with conservative defaults
+  // 'assumed' (blue) = missing source data or a disclosed model assumption
   type RedFlag = { level: 'warning' | 'danger' | 'assumed'; label: string; detail: string };
 
   const getRedFlags = (villa: any): RedFlag[] => {
@@ -744,7 +744,7 @@ export default function HomeClient({
     // No client-side flag computation — everything is pre-computed server-side.
     const pipelineFlags = (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
 
-    // --- MISSING_DATA: Agent omitted critical listing data, BVT assumed conservative defaults ---
+    // --- MISSING_DATA: source omitted critical listing data ---
     if (pipelineFlags.includes('MISSING_DATA')) {
       const features = (villa.features || '').toLowerCase();
       const isLeasehold = features.includes('leasehold') || features.includes('hak sewa');
@@ -752,15 +752,18 @@ export default function HomeClient({
       const missingBeds = pipelineFlags.includes('BEDROOM_COUNT_NOT_STATED') || (Number(villa.bedrooms) === 1 && pipelineFlags.filter((f: string) => f === 'MISSING_DATA').length > 1);
 
       if (missingLease) {
-        const annualDep = priceUSD > 0 ? Math.round(priceUSD / 15) : 0;
-        flags.push({ level: 'assumed', label: 'Lease Assumed', detail: `Agent omitted lease duration. BVT conservatively assumed a 15-year lease with $${annualDep.toLocaleString()}/yr depreciation to protect your ROI projection. Verify the actual lease term before investing.` });
+        flags.push(isRoiUnmodeled(villa)
+          ? { level: 'assumed', label: 'Lease Term Missing', detail: 'The source does not state the remaining lease term. BVT does not show a lease-value calculation or ROI for this unmodeled asset. Verify the signed term and extension rights before comparing it with villas.' }
+          : { level: 'assumed', label: 'Lease Term Assumed', detail: 'The source does not state the remaining lease term. BVT uses an illustrative 15-year term in the screening yield, not a verified expiry date. Check the signed lease and extension terms before relying on the estimate.' });
       }
       if (missingBeds) {
         flags.push({ level: 'assumed', label: 'Beds Missing', detail: `Source omitted a safe bedroom/unit count. BVT does not model ROI for this row until the count is verified from plans, room inventory, or management records.` });
       }
       // Generic fallback if we can't determine which assumption
       if (!missingLease && !missingBeds) {
-        flags.push({ level: 'assumed', label: 'BVT Assumed', detail: `Some listing data was missing. BVT applied conservative defaults to protect the ROI projection. Verify key details before investing.` });
+        flags.push(isRoiUnmodeled(villa)
+          ? { level: 'assumed', label: 'Data Missing', detail: 'The source omits important details. BVT withholds ROI for this asset; verify the missing information before comparison.' }
+          : { level: 'assumed', label: 'Inputs Assumed', detail: 'The source omits important details. BVT uses disclosed screening assumptions, not verified operating results. Check the missing inputs before relying on the estimate.' });
       }
     }
 
@@ -779,19 +782,13 @@ export default function HomeClient({
     if (pipelineFlags.includes('BUDGET_VILLA')) {
       const beds = Number(villa.bedrooms) || 1;
       const ppr = Math.round(priceUSD / beds);
-      flags.push({ level: 'warning', label: 'Budget Villa', detail: `$${ppr.toLocaleString()}/room is below the $50k threshold. Expect lower build quality, higher maintenance costs, and a less affluent renter demographic.` });
+      flags.push({ level: 'warning', label: 'Budget Villa', detail: `The audit-price basis is about $${ppr.toLocaleString()} per bedroom. BVT flags this listing as budget-priced under its area/bedroom rate rules; that does not establish build quality or guest demand. Check comparable sales, condition, and likely repairs.` });
     }
 
     if (pipelineFlags.includes('SHORT_LEASE')) {
       const annualDepreciation = years > 0 ? Math.round(priceUSD / years) : 0;
       const netRevenueAnnual = Math.round(netRevenue);
-      const depreciationExceedsRent = annualDepreciation > netRevenueAnnual;
-      const depreciationDetail = annualDepreciation > 0
-        ? depreciationExceedsRent
-          ? ` Rental income (~$${netRevenueAnnual.toLocaleString()}/yr) cannot cover lease depreciation ($${annualDepreciation.toLocaleString()}/yr).`
-          : ` Lease depreciation costs $${annualDepreciation.toLocaleString()}/yr against ~$${netRevenueAnnual.toLocaleString()}/yr net rent.`
-        : '';
-      flags.push({ level: 'danger', label: 'Short Lease', detail: `Only ${years} years remaining. Your asset depreciates ${years > 0 ? (100/years).toFixed(1) : '∞'}% per year toward $0.${depreciationDetail}` });
+      flags.push({ level: 'danger', label: 'Short Lease', detail: `${years} years are recorded as remaining. BVT's straight-line, noncash lease-value allowance is about $${annualDepreciation.toLocaleString()}/yr, compared with $${netRevenueAnnual.toLocaleString()}/yr in modeled rent after operating costs. This is a screening comparison, not a resale forecast or a cash bill. Verify the signed expiry and extension terms.` });
     }
 
     if (pipelineFlags.includes('INFLATED_ROI')) {
@@ -803,20 +800,14 @@ export default function HomeClient({
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP')) {
-      flags.push({ level: 'warning', label: 'Inflated Nightly Rate', detail: `This is a sub-$200k property showing a high nightly rate. Budget builds rarely command premium luxury rates — the demographic paying $200+/nt expects finishes that typically can't be built at this price point. BVT has modeled a rate of $${nightly}/nt that reflects the actual asset class.` });
+      flags.push({ level: 'warning', label: 'Rate-Price Gap', detail: `The asking price and BVT's $${nightly}/night modeled rate need a property-level comp check. The rate is an estimate, not booked revenue; verify similar villas' actual booking records, condition, and management costs.` });
     }
 
     // --- RATE_ADJUSTED: Pipeline significantly adjusted the nightly rate (>25% deviation from base model) ---
     // Informational — not a red flag. Tells user the rate was modeled, not just pulled from area averages.
     if (pipelineFlags.includes('RATE_ADJUSTED')) {
-      const preCapRate = Number(villa.agent_claimed_rate) || 0;
       const modelRate = nightly;
-      const rateSource = villa.rate_source || 'model';
-      const wasAuditorCapped = rateSource === 'auditor' && preCapRate > 0 && modelRate < preCapRate;
-      const detailText = wasAuditorCapped
-        ? `BVT's rate model initially estimated $${preCapRate}/nt, but this implied a gross yield above safe market limits. The rate was capped to $${modelRate}/nt to keep the ROI projection realistic.`
-        : `BVT modeled this rate at $${modelRate}/nt — a >25% adjustment from the area baseline. This typically reflects a luxury build premium or a price-tier correction. The math is sound, but verify comparables.`;
-      flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: detailText });
+      flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: `BVT's $${modelRate}/night rate differs by more than 25% from its area baseline. This is a model adjustment, not evidence of achieved rent; compare similar villas and request booking records.` });
     }
 
     return flags;
@@ -1324,7 +1315,10 @@ export default function HomeClient({
               const priceUSD = getAuditPriceUSD(villa);
               const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
               const isFreehold = (() => { const f = (villa.features || '').toLowerCase(); const ly = Number(villa.lease_years); return f.includes('freehold') || f.includes('hak milik') || ly === 999; })();
-              const leaseYears = Number(villa.lease_years) || ((villa.flags || '').split(',').includes('LEASE_TERM_NOT_STATED') ? 15 : 0);
+              const listedLeaseYears = Number(villa.lease_years) || 0;
+              const leaseTermNotStated = getPipelineFlags(villa).includes('LEASE_TERM_NOT_STATED');
+              const isLeasehold = /leasehold|hak sewa/i.test(villa.features || '') || (listedLeaseYears > 0 && listedLeaseYears < 999);
+              const listedTenure = isFreehold ? 'Freehold' : isLeasehold ? 'Leasehold' : 'Unverified';
               const redFlags = getRedFlags(villa);
               const hasDanger = redFlags.some(f => f.level === 'danger');
               const hasWarning = redFlags.length > 0;
@@ -1394,8 +1388,13 @@ export default function HomeClient({
                       }`}>{isUnmodeled ? 'N/A' : <>{netRoi.toFixed(1)}<span className="text-[color:var(--bvt-ink-dim)] ml-0.5">%</span></>}</div>
                     </div>
                     <div className="py-3 pl-3 border-l border-[color:var(--bvt-hairline)]">
-                      <div className="label-micro mb-1">Tenure</div>
-                      <div className="text-[12px] text-[color:var(--bvt-ink)] leading-tight">{villa.bedrooms || '?'}-bed · {isFreehold ? 'Freehold' : leaseYears > 0 ? `${leaseYears}yr` : 'Leasehold'}</div>
+                      <div className="label-micro mb-1 leading-tight">Listed tenure</div>
+                      <div className="text-[12px] text-[color:var(--bvt-ink)] leading-tight">{villa.bedrooms || '?'}-bed · {listedTenure}</div>
+                      {leaseTermNotStated ? (
+                        <div className="mt-1 text-[10px] leading-tight text-[color:var(--bvt-warn)]">Term not stated</div>
+                      ) : !isFreehold && listedLeaseYears > 0 && listedLeaseYears < 999 ? (
+                        <div className="mt-1 text-[10px] leading-tight text-[color:var(--bvt-ink-dim)]">{listedLeaseYears}yr stated</div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -1509,14 +1508,15 @@ export default function HomeClient({
                     const priceUSD = getAuditPriceUSD(villa);
                     const grossRoi = priceUSD > 0 ? ((nightly * 365 * occupancy) / priceUSD) * 100 : 0;
                     const isFreehold = (() => { const f = (villa.features || '').toLowerCase(); const ly = Number(villa.lease_years); return f.includes('freehold') || f.includes('hak milik') || ly === 999; })();
-                    const leaseYears = Number(villa.lease_years) || ((villa.flags || '').split(',').includes('LEASE_TERM_NOT_STATED') ? 15 : 0);
-                    const leaseDepreciation = (!isFreehold && leaseYears > 0) ? (1 / leaseYears) * 100 : 0;
+                    const leaseTermAssumed = getPipelineFlags(villa).includes('LEASE_TERM_NOT_STATED');
+                    const leaseYears = Number(villa.lease_years) || (leaseTermAssumed ? 15 : 0);
+                    const isUnmodeled = isRoiUnmodeled(villa);
+                    const leaseDepreciation = (!isUnmodeled && !isFreehold && leaseYears > 0) ? (1 / leaseYears) * 100 : 0;
                     const grossRevenue = nightly * 365 * occupancy;
                     const netRevenue = grossRevenue * 0.60;
                     const preDepreciationNet = priceUSD > 0 ? (netRevenue / priceUSD) * 100 : 0;
                     const hasDanger = redFlags.some(f => f.level === 'danger');
                     const hasWarning = redFlags.length > 0;
-                    const isUnmodeled = isRoiUnmodeled(villa);
 
                     return (
                     <tr key={villa.id} className="transition-colors group hover:bg-[color:var(--bvt-ink)]/[0.04]" onMouseEnter={() => startTransition(() => setHoveredListingUrl(villa.url))} onMouseLeave={() => startTransition(() => setHoveredListingUrl(null))}>
@@ -1639,7 +1639,7 @@ export default function HomeClient({
 
                             {/* Pre-depreciation yield for leaseholds */}
                             {!isFreehold && leaseDepreciation > 0 && (
-                              <p className="text-[10px] text-[color:var(--bvt-warn)] font-mono tabular-nums mt-1">Pre-exp: {preDepreciationNet.toFixed(1)}%</p>
+                              <p className="text-[10px] text-[color:var(--bvt-warn)] font-mono tabular-nums mt-1">Before lease allowance: {preDepreciationNet.toFixed(1)}%</p>
                             )}
 
                             {/* Red flag markers under ROI */}
@@ -1661,11 +1661,11 @@ export default function HomeClient({
                             {hoveredRoi === villa.id && (
                                 <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 w-72 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[10px] p-3 shadow-xl pointer-events-none">
                                 <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)] flex items-center gap-1.5 text-[color:var(--bvt-accent)] tracking-[0.14em] uppercase text-[9px] font-medium">
-                                  <Eye size={10} strokeWidth={1.75}/> BVT Yield Breakdown
+                                  <Eye size={10} strokeWidth={1.75}/> {isUnmodeled ? 'Why ROI is not modeled' : 'BVT Yield Breakdown'}
                                 </div>
 
                                 {/* Gross vs Net comparison */}
-                                <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)] flex gap-4">
+                                {!isUnmodeled && <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)] flex gap-4">
                                   <div className="flex-1 text-center">
                                     <div className="text-[color:var(--bvt-ink-muted)] text-[9px] mb-0.5 tracking-[0.12em] uppercase">Gross</div>
                                     <div className="text-[17px] font-mono tabular-nums text-[color:var(--bvt-ink-faint)] line-through">{grossRoi.toFixed(1)}%</div>
@@ -1674,7 +1674,7 @@ export default function HomeClient({
                                     <div className="text-[color:var(--bvt-accent)] text-[9px] mb-0.5 tracking-[0.12em] uppercase font-medium">Net</div>
                                     <div className={`text-[17px] font-mono tabular-nums font-medium ${netRoi >= 7 ? 'text-[color:var(--bvt-good)]' : netRoi >= 0 ? 'text-[color:var(--bvt-warn)]' : 'text-[color:var(--bvt-bad)]'}`}>{netRoi.toFixed(1)}%</div>
                                   </div>
-                                </div>
+                                </div>}
 
                                 {/* Transparent assumptions */}
                                 <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)]">
@@ -1697,17 +1697,17 @@ export default function HomeClient({
                                 {/* Capital depreciation for leaseholds */}
                                 {!isFreehold && leaseDepreciation > 0 && (
                                 <div className="mb-2 pb-2 border-b border-[color:var(--bvt-hairline)]">
-                                    <div className="text-[color:var(--bvt-warn)] tracking-[0.12em] uppercase text-[9px] mb-1 font-medium">Lease Depreciation</div>
+                                    <div className="text-[color:var(--bvt-warn)] tracking-[0.12em] uppercase text-[9px] mb-1 font-medium">Noncash lease allowance</div>
                                     {(() => {
                                       const depCostAnnual = leaseYears > 0 ? Math.round(priceUSD / leaseYears) : 0;
                                       return (
                                         <>
                                           <div className="flex justify-between">
-                                            <span className="text-[color:var(--bvt-ink-body)]">Lease expiry ({leaseYears}yr)</span>
+                                            <span className="text-[color:var(--bvt-ink-body)]">{leaseTermAssumed ? `Assumed ${leaseYears}yr term` : `${leaseYears}yr stated term`}</span>
                                             <span className="text-[color:var(--bvt-warn)] font-mono tabular-nums">-{leaseDepreciation.toFixed(1)}%/yr</span>
                                           </div>
                                           {depCostAnnual > 0 && (
-                                            <div className="text-[color:var(--bvt-ink-muted)] text-[9px] mt-0.5">≈ ${depCostAnnual.toLocaleString()}/yr in capital loss — asset heads to $0</div>
+                                            <div className="text-[color:var(--bvt-ink-muted)] text-[9px] mt-0.5">About ${depCostAnnual.toLocaleString()}/yr of modeled lease-value erosion, not a cash expense. Actual resale value depends on the contract and market.</div>
                                           )}
                                         </>
                                       );
@@ -1729,7 +1729,7 @@ export default function HomeClient({
 
                                 {!isFreehold && leaseDepreciation > 0 && (
                                   <div>
-                                    <p className="text-[color:var(--bvt-ink-muted)] text-[9px] leading-relaxed"><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">Cash Flow {preDepreciationNet.toFixed(1)}%</span> = money hitting your account each year. <span className="text-[color:var(--bvt-accent)] font-mono tabular-nums">Net Yield {netRoi.toFixed(1)}%</span> = true return after the asset depreciates to $0.</p>
+                                    <p className="text-[color:var(--bvt-ink-muted)] text-[9px] leading-relaxed"><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">Operating yield {preDepreciationNet.toFixed(1)}%</span> models rent after operating costs, before tax, financing, and major repairs. <span className="text-[color:var(--bvt-accent)] font-mono tabular-nums">Screening net yield {netRoi.toFixed(1)}%</span> also subtracts a noncash lease-value allowance; neither is realized return.</p>
                                   </div>
                                 )}
                                 </div>
