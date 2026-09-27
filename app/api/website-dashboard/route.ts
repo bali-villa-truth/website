@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-27",
+    area: "Mobile data clarity / investor risk",
+    title: "Stopped presenting an unstated lease term as a 15-year fact",
+    status: "Deployed and verified",
+    why: "One audited source says Leasehold, term not stated, but the mobile card had displayed the model's 15-year fallback as if it were a documented remaining term. It now shows the listed tenure with Term not stated, while a stated 29-year lease and freehold sample remain clear. Unmodeled hover details no longer display a zero gross/net comparison or a lease-depreciation result. Modeled leasehold details distinguish noncash lease-value allowance from rental cash and avoid treating modeled outcomes as realized returns. Budget, short-lease, and rate-gap flags no longer make unsupported build-quality, guest-demographic, fixed-$50k-threshold, or guaranteed-resale claims. No source data, flags, or stored ROI changed. Live 320px, 390px, and desktop checks passed after deploy.",
+    url: `${SITE_URL}/`,
+    progressFile: ".tmp/website_progress_2026-09-27.md",
+  },
+  {
+    date: "2026-09-27",
     area: "Investor trust / ownership clarity",
     title: "Corrected foreign-ownership and title explanations on the homepage",
     status: "Deployed and verified",
@@ -898,8 +907,8 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; unattended 2026-09-26 midnight full run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 26 unattended full run parsed 2,454 sale listings across 84 pages, passed the strict Supabase/listing/sitemap gates, and marked one listing delisted. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds.",
+    status: "Loaded; unattended 2026-09-27 midnight full run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 27 unattended run completed at 00:05 Phoenix time. Fresh read-only checks found 2,454 audited listings, 31 physical-spec gaps, seven representative listing categories healthy, and exact sitemap coverage. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds.",
   },
 ];
 
@@ -907,8 +916,8 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 26 release reconciled published ROI explanations to the auditor's 65% occupancy scenario and stored USD price basis across listings, browsing, methodology, guides, and report generation. Modeled listing audits now also show a combined downside case for lower occupancy, lower nightly rate, and higher operating costs; this is an illustrative screen, not a forecast. Canonical, listing, sitemap, mobile, and dashboard-access checks passed. Separate March area occupancy proxies remain provisional until a clean sample is validated. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
-  requiredAction: "Monitor the next scheduled refresh and keep verifying production after every deploy. Rotate the stale .env GitHub token separately.",
+    "The September 27 homepage release fixed a mobile lease-term label that had presented a 15-year screening fallback as a documented source term, and removed misleading yield and red-flag explanations from browsing. The prior ROI scenario reconciliation and combined downside screen remain live. Canonical, listing, sitemap, mobile, and dashboard-access checks passed; the midnight data refresh completed. March area occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
+  requiredAction: "Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     `${SITE_URL}/sitemap.xml`,
@@ -916,6 +925,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/live_verification_2026-09-27_tenure_release.json",
+    ".tmp/listing_page_verification_2026-09-27_tenure_release.json",
+    ".tmp/sitemap_coverage_2026-09-27_tenure_release.json",
+    ".tmp/supabase_data_quality_verification_2026-09-27_0955.json",
+    ".tmp/automation_freshness_2026-09-27_0955.json",
+    ".tmp/website_progress_2026-09-27.md",
     ".tmp/live_verification_2026-09-26_downside_release.json",
     ".tmp/listing_page_verification_2026-09-26_downside_release.json",
     ".tmp/sitemap_coverage_2026-09-26_downside_release.json",
@@ -1590,6 +1605,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Mobile cards now separate listed tenure from model assumptions; an unstated lease term is not shown as a 15-year source fact. Unmodeled assets do not display invented lease-value math in the homepage hover details.",
         "Modeled listing audits now show an explicit combined downside case at 50% occupancy, 15% lower nightly rate, and 50% operating costs; leasehold pages distinguish the noncash lease allowance from rental cash flow.",
         "Homepage explains that BVT is an independent audit bureau, not a broker.",
         "Risk shortcuts help users find best ROI, safer-looking, high-risk, and leasehold-only paths.",
@@ -1599,6 +1615,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The corrected mobile tenure card was checked live at 320px and 390px against a missing-term source row, a stated 29-year lease, and freehold; no horizontal overflow or browser errors occurred.",
         "The live combined-downside section fits a 390px listing page without horizontal overflow or browser errors; desktop was checked at 1440px.",
         "Mobile filter panel remains collapsible and now includes risk view.",
         "Investor shortcut cards stack into single-column controls on narrow screens.",
@@ -1619,6 +1636,7 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-09-27.md",
         ".tmp/website_progress_2026-09-26.md",
         ".tmp/seo_progress_2026-09-26.md",
         ".tmp/website_progress_2026-09-25.md",
