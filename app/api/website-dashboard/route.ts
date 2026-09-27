@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-27",
+    area: "Listing ROI clarity / mobile diligence",
+    title: "Made listing yield and risk flags understandable without hover",
+    status: "Deployed and verified",
+    why: "Listing audits now explain that the 65% occupancy screen already includes unoccupied nights, distinguish modeled operating income from the noncash lease-value allowance, and avoid showing model explanations on unsupported assets. Every pipeline flag has a visible plain-English diligence note and a link to the buyer checklist, including on mobile. Flag language no longer assumes a title defect, seller motivation, or a universal 25th-percentile budget threshold. No stored yields, source data, or flags changed. Live modeled, unmodeled, and leasehold examples passed 320px, 390px, and desktop checks with no overflow or browser errors.",
+    url: `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
+    progressFile: ".tmp/website_progress_2026-09-27.md",
+  },
+  {
+    date: "2026-09-27",
     area: "Mobile data clarity / investor risk",
     title: "Stopped presenting an unstated lease term as a 15-year fact",
     status: "Deployed and verified",
@@ -916,7 +925,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 27 homepage release fixed a mobile lease-term label that had presented a 15-year screening fallback as a documented source term, and removed misleading yield and red-flag explanations from browsing. The prior ROI scenario reconciliation and combined downside screen remain live. Canonical, listing, sitemap, mobile, and dashboard-access checks passed; the midnight data refresh completed. March area occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
+    "The September 27 listing release now shows mobile-readable risk-flag explanations and correct gross-versus-net yield language, including a noncash lease allowance. The earlier homepage tenure correction, ROI reconciliation, and combined downside screen remain live. Canonical, listing, sitemap, and mobile checks passed; the midnight data refresh completed. March area occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
   requiredAction: "Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
@@ -925,6 +934,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/live_verification_2026-09-27_flag_release.json",
+    ".tmp/listing_page_verification_2026-09-27_flag_release.json",
+    ".tmp/sitemap_coverage_2026-09-27_flag_release.json",
+    ".tmp/supabase_data_quality_verification_2026-09-27_1556.json",
+    ".tmp/automation_freshness_2026-09-27_1556.json",
+    ".tmp/listing_flags_live_390_2026-09-27.png",
     ".tmp/live_verification_2026-09-27_tenure_release.json",
     ".tmp/listing_page_verification_2026-09-27_tenure_release.json",
     ".tmp/sitemap_coverage_2026-09-27_tenure_release.json",
@@ -1605,6 +1620,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Listing dossiers now state that 65% occupancy already includes unoccupied nights, separate operating income from the noncash lease allowance, and give every flag a visible diligence explanation and checklist link, including on mobile.",
         "Mobile cards now separate listed tenure from model assumptions; an unstated lease term is not shown as a 15-year source fact. Unmodeled assets do not display invented lease-value math in the homepage hover details.",
         "Modeled listing audits now show an explicit combined downside case at 50% occupancy, 15% lower nightly rate, and 50% operating costs; leasehold pages distinguish the noncash lease allowance from rental cash flow.",
         "Homepage explains that BVT is an independent audit bureau, not a broker.",
@@ -1615,6 +1631,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "Modeled, unmodeled, and leasehold listing dossiers passed live 320px, 390px, and 1440px checks after the flag-explanation release; no page errors or horizontal overflow occurred.",
         "The corrected mobile tenure card was checked live at 320px and 390px against a missing-term source row, a stated 29-year lease, and freehold; no horizontal overflow or browser errors occurred.",
         "The live combined-downside section fits a 390px listing page without horizontal overflow or browser errors; desktop was checked at 1440px.",
         "Mobile filter panel remains collapsible and now includes risk view.",
@@ -1637,6 +1654,7 @@ export async function GET() {
       nextActions,
       progressFiles: [
         ".tmp/website_progress_2026-09-27.md",
+        ".tmp/seo_progress_2026-09-27.md",
         ".tmp/website_progress_2026-09-26.md",
         ".tmp/seo_progress_2026-09-26.md",
         ".tmp/website_progress_2026-09-25.md",
