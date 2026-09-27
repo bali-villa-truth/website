@@ -85,18 +85,24 @@ function money(value: number | null | undefined): string {
 
 // Human-readable labels + tooltips for flags (aligns with /methodology page)
 const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slate"; tip: string }> = {
-  SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "Less than 15 years remaining — lease depreciation significantly impacts returns." },
-  BUDGET_VILLA: { label: "BUDGET VILLA", tone: "amber", tip: "Asking price below the 25th percentile for its area + bedroom tier. Nightly rate discounted 30% vs. area median." },
-  HIGH_YIELD: { label: "HIGH YIELD", tone: "amber", tip: "Gross yield exceeds 20%. Either genuinely underpriced, or the asking price doesn't reflect reality — investigate." },
-  OPTIMISTIC_CLAIM: { label: "OPTIMISTIC CLAIM", tone: "amber", tip: "Gross yield between 15-20%. The gap between gross and net is where investors lose money." },
+  SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "The source records fewer than 15 years remaining. A shorter term increases BVT's noncash lease-value allowance; verify the signed expiry and extension terms." },
+  BUDGET_VILLA: { label: "BUDGET VILLA", tone: "amber", tip: "The asking price is low for the model tier or below the $50,000-per-bedroom screen. Check the reason for the price and whether the modeled nightly rate is supportable." },
+  NEAR_BUDGET: { label: "NEAR BUDGET", tone: "amber", tip: "The asking price is near the lower end of the area and bedroom tier. BVT applies a cautious rate adjustment; verify property-level bookings." },
+  HIGH_YIELD: { label: "HIGH YIELD", tone: "amber", tip: "A high modeled gross yield needs independent rate, occupancy, cost, and asking-price evidence before it can be treated as achievable." },
+  OPTIMISTIC_CLAIM: { label: "OPTIMISTIC CLAIM", tone: "amber", tip: "A high modeled gross yield can narrow after operating costs and any lease allowance. Request actual operating records." },
+  INFLATED_ROI: { label: "HIGH MODEL YIELD", tone: "amber", tip: "The unadjusted modeled nightly rate implies more than 20% operating yield before any lease allowance. This is not a seller-reported result; check comparable rates and actual bookings." },
+  OPTIMISTIC_ROI: { label: "ELEVATED MODEL YIELD", tone: "amber", tip: "The unadjusted modeled nightly rate implies more than 15% operating yield before any lease allowance. Test lower rates and occupancy." },
+  RATE_PRICE_GAP: { label: "RATE / PRICE GAP", tone: "amber", tip: "At 65% occupancy, the modeled rate implies over 30% gross yield on an asking price below $200,000. Verify the asking price and property-level booking evidence." },
   OFF_PLAN: { label: "OFF PLAN", tone: "red", tip: "Property is not yet built. Higher risk: construction delays, specification changes, developer default." },
-  EXTREME_BUDGET: { label: "EXTREME BUDGET", tone: "red", tip: "Price is far below area norms. Likely major issue: title problem, zoning, structural condition — verify carefully." },
+  EXTREME_BUDGET: { label: "EXTREME BUDGET", tone: "red", tip: "The asking price is far below the model tier. The nightly rate is heavily adjusted; investigate title, permits, condition, and comparable sales without assuming a particular defect." },
   MULTI_UNIT: { label: "MULTI UNIT", tone: "amber", tip: "Listing covers multiple units — per-unit economics may differ from the headline figure." },
   MULTI_UNIT_MODEL_UNSUPPORTED: { label: "MODEL NOT APPLIED", tone: "red", tip: "BVT does not apply its single-villa ROI model to apartment/penthouse units, hotels, resorts, apartment buildings, or villa portfolios without verified unit-level revenue and expense data." },
   LEASE_TERM_NOT_STATED: { label: "LEASE TERM NOT STATED", tone: "amber", tip: "Source listing is leasehold but does not state the remaining lease term. Verify the actual term and extension price before underwriting." },
   BEDROOM_COUNT_NOT_STATED: { label: "BEDROOM COUNT NOT STATED", tone: "amber", tip: "Source listing does not expose a safe bedroom count. BVT does not model ROI until the bedroom/unit count is verified." },
   PHYSICAL_DATA_INCOMPLETE: { label: "PHYSICAL DATA INCOMPLETE", tone: "amber", tip: "Source listing is missing one or more physical specs such as bathrooms, land size, or building size." },
   NON_BALI_LOCATION: { label: "OUTSIDE BALI MODEL", tone: "amber", tip: "This source listing is outside Bali. BVT keeps it visible but does not model Bali villa ROI for it." },
+  MISSING_DATA: { label: "DATA MISSING", tone: "amber", tip: "Important source details are unavailable. Confirm them before comparing price or relying on any estimate." },
+  RATE_ADJUSTED: { label: "RATE ADJUSTED", tone: "amber", tip: "The modeled nightly rate differs from the base area rate. This is a model adjustment, not evidence of achieved rent." },
 };
 
 // ---------------------------------------------------------------------------
@@ -513,7 +519,7 @@ export default async function ListingPage({ params }: Props) {
                   </div>
                   {priceDelta !== null && priceDelta <= -5 && (
                     <p className="text-xs text-emerald-400 mt-3">
-                      Price has dropped — potentially a motivated seller. Worth a conversation.
+                      The tracked asking price is at least 5% below the first observation. Confirm the current source ask and currency before drawing a conclusion.
                     </p>
                   )}
                 </section>
@@ -573,7 +579,9 @@ export default async function ListingPage({ params }: Props) {
                       {grossYield !== null ? `${grossYield.toFixed(1)}%` : "Not available"}
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      Revenue before management, OTA fees, maintenance, utilities, vacancy, and lease decay.
+                      {hasNightlyRate
+                        ? "Modeled revenue at 65% occupancy, before operating costs and any noncash lease allowance. Unoccupied nights are already reflected in the occupancy assumption."
+                        : "No gross-yield calculation is made for this listing."}
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
@@ -585,7 +593,7 @@ export default async function ListingPage({ params }: Props) {
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                       {hasNightlyRate
-                        ? `After the standard 40% operating-cost load${leaseDepreciation > 0 ? " and annual lease depreciation" : ""}.`
+                        ? `After the standard 40% operating-cost load${leaseDepreciation > 0 ? " and a noncash lease-value allowance" : ""}; before tax, financing, and major repairs.`
                         : "No net-yield calculation is made for this listing."}
                     </p>
                   </div>
@@ -612,15 +620,15 @@ export default async function ListingPage({ params }: Props) {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
-                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Lease decay</div>
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Lease-value allowance</div>
                     <div className="font-mono text-lg text-[color:var(--bvt-ink)]">
                       {leaseDepreciation > 0 ? `${money(leaseDepreciation)}/yr` : "Not modeled"}
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                       {leaseDepreciation > 0
                         ? leaseTermNotStated
-                          ? `Source lease term not stated. BVT uses a conservative ${leaseYearsForMath}-year internal assumption for the ROI stress test; verify the actual term before investing.`
-                          : `${sourceLeaseYears} years remaining. Extension claims should be written, priced, and legally reviewed.`
+                          ? `Source lease term not stated. BVT uses an illustrative ${leaseYearsForMath}-year term for this noncash ROI allowance, not a verified expiry or resale forecast. Verify the signed term before investing.`
+                          : `${sourceLeaseYears} years recorded as remaining. This noncash screening allowance is not a payment or resale forecast. Have extension rights and costs legally reviewed.`
                         : hasNightlyRate
                           ? "Modeled as freehold/no finite lease term in the source data."
                           : "The ROI model is not applied to this listing; verify any lease term independently."}
@@ -638,6 +646,26 @@ export default async function ListingPage({ params }: Props) {
                     </p>
                   </div>
                 </div>
+                {flags.length > 0 && (
+                  <div className="mt-5 border-t border-slate-800 pt-4">
+                    <h3 className="text-sm font-semibold text-[color:var(--bvt-ink)] mb-3">What the flags mean</h3>
+                    <ul className="space-y-3">
+                      {flags.map((flag: string) => {
+                        const key = flag.trim().toUpperCase().replace(/\s+/g, "_");
+                        const meta = FLAG_LABELS[key];
+                        return (
+                          <li key={flag} className="text-xs leading-relaxed">
+                            <span className="font-semibold text-amber-300">{meta?.label || flag.replace(/_/g, " ")}: </span>
+                            <span className="text-slate-400">{meta?.tip || "Confirm the source detail and its effect on the investment case before relying on this listing."}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Link href="/guides/bali-villa-due-diligence-checklist" className="inline-block mt-4 text-xs text-[#d4943a] hover:text-[#e5a84d] underline">
+                      Use the due diligence checklist →
+                    </Link>
+                  </div>
+                )}
               </section>
 
               {/* Yield Breakdown */}
@@ -675,15 +703,15 @@ export default async function ListingPage({ params }: Props) {
                     <span className="font-medium text-red-400">{hasNightlyRate ? `−$${Math.round(expenses).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
-                    <span className="text-slate-400">Net Revenue (before lease decay)</span>
+                    <span className="text-slate-400">Modeled rental income after operating costs</span>
                     <span className="font-medium">{hasNightlyRate ? `$${Math.round(netRevenue).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   {leaseDepreciation > 0 && (
                     <div className="flex justify-between py-2 border-b border-slate-800">
                       <span className="text-slate-400">
                         {leaseTermNotStated
-                          ? `Lease Depreciation (${priceUsd?.toLocaleString("en-US")} ÷ conservative ${leaseYearsForMath}yr assumption)`
-                          : `Lease Depreciation (${priceUsd?.toLocaleString("en-US")} ÷ ${sourceLeaseYears} yrs)`}
+                          ? `Noncash lease allowance (${priceUsd?.toLocaleString("en-US")} ÷ assumed ${leaseYearsForMath}yr term)`
+                          : `Noncash lease allowance (${priceUsd?.toLocaleString("en-US")} ÷ ${sourceLeaseYears} yrs)`}
                       </span>
                       <span className="font-medium text-amber-400">
                         −${Math.round(leaseDepreciation).toLocaleString("en-US")}
