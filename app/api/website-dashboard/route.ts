@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-28",
+    area: "Investor data / portfolio model scope",
+    title: "Withheld single-villa yields for explicit two-villa portfolios",
+    status: "Live data corrected and verified",
+    why: "Source review confirmed that RF2431 comprises two separate two-bedroom villas, not one four-bedroom villa. The detector now recognizes spelled unit counts and separate unit/bedroom counts without treating ordinary two-bedroom plural descriptions as portfolios. Eleven explicit two-unit rows gained the unsupported-model flag; ten previously modeled rows now publish no single-villa ROI, nightly rate, or occupancy estimate. Source prices, physical facts, and crawl timestamps were preserved. All eleven public pages, titles, and schema show unavailable ROI. The strict data, eight-category listing, canonical-site, and exact sitemap checks pass. No unit-level rate or price allocation was inferred.",
+    url: `${SITE_URL}/listing/two-modern-2-bedroom-ricefield-view-villas-for-sale-leasehold-in-babakan-canggu-rf2431`,
+    progressFile: ".tmp/seo_progress_2026-09-28.md",
+  },
+  {
+    date: "2026-09-28",
     area: "Missing-data clarity / yield results",
     title: "Distinguished a modeled zero yield from unavailable ROI and unknown physical facts",
     status: "Deployed and verified",
@@ -733,12 +742,6 @@ const completedImprovements = [
 const pendingImprovements = [
   {
     priority: "High",
-    owner: "Data pipeline",
-    title: "Review RF2431's portfolio wording against model scope",
-    nextAction: "The stored title says Two Modern 2 Bedroom ... Villas while the row uses a four-bedroom single-villa model. Check the source's unit and asking-price basis and the unsupported-asset detector before changing flags or yields. A title alone is a review lead, not a verified unit-level investment case.",
-  },
-  {
-    priority: "High",
     owner: "Paid audit / owner approval",
     title: "Verify Deep Audit end to end before enabling paid checkout",
     nextAction: "Keep BVT_PAID_AUDIT_ENABLED off. Review the generated PDF's cash-versus-lease allowance, legal/refund copy, and source comparables; make failed paid_audits writes visible; then configure Stripe and delivery secrets and run an owner-approved test-mode checkout, email, and repeat visit before launch.",
@@ -800,6 +803,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "The September 28 no-scrape portfolio correction withheld single-villa math from ten additional explicit two-unit assets; eleven rows gained the scope flag. Strict live checks find zero unsupported portfolio rows leaking ROI, nightly rates, or occupancy estimates. RF2431's source confirms two separate villas, while some other titles have ambiguous unit price allocation. Source prices, physical facts, and crawl dates were not changed; no portfolio-specific return is claimed.",
   "2026-09-28 listing-label audit found two modeled rows with stored 0.0% yield whose public pages incorrectly said ROI Not Modeled. The public label is corrected without recalculation. Physical missing-value placeholders are now Not stated rather than 0 Bath or an unexplained dash. The listing verifier now checks an optional live zero-yield sample in visible HTML, title, and structured data, plus rejects literal zero-bath placeholders on physical-gap samples; 21 unit tests pass.",
   "2026-09-26 ROI reconciliation: 2,193 modeled live rows were checked against the auditor's shared 65% occupancy, 40% operating costs, stored USD purchase-price basis, and lease decay. Zero rows differ by more than 0.15 percentage points (maximum rounding difference 0.005). The earlier listing-page contradiction came from displaying provisional area occupancy and display-time FX alongside this stored yield. The site now labels the comparison scenario explicitly; actual property occupancy and owner P&L are still unknown.",
   "2026-09-26 model-input audit: the active rate table exactly replays the 1 August 2026 Booking.com cache across all 60 area/bedroom tiers. The active occupancy table replays the 7 March 2026 review cache, but that cache has 858 result cards versus 286 unique name/review-count pairs within areas; 567 scores are invalid (1010/10). Raw-card sample sizes and associated high-confidence labels are not independent-property evidence. Published occupancy/yield values have not been recomputed; they remain provisional until a fresh validated sample and guarded pipeline run.",
@@ -948,7 +952,7 @@ const scheduledJobs = [
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
     status: "Loaded; unattended 2026-09-27 midnight full run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 27 unattended run completed at 00:05 Phoenix time. Fresh read-only checks found 2,454 audited listings, 31 physical-spec gaps, seven representative listing categories healthy, and exact sitemap coverage. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds.",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 27 unattended full run completed at 00:05 Phoenix time. A separate September 28 05:51-05:52 UTC no-scrape correction preserved source dates while withholding unsupported portfolio math. Strict checks pass with 2,454 audited listings, 31 physical-spec gaps, eight representative categories, and exact sitemap coverage. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds.",
   },
 ];
 
@@ -956,7 +960,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 28 listing release separates a rounded 0.0% modeled result from unavailable ROI and labels missing physical facts explicitly. Eight representative categories, canonical-site, exact sitemap, and live mobile/desktop checks passed. The September 27 free-audit and paid-launch guard remain live; paid checkout stays off. March area occupancy proxies remain provisional. RF2431's portfolio wording needs model-scope review. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
+    "The September 28 listing release separates a rounded 0.0% modeled result from unavailable ROI and labels missing physical facts explicitly. The later guarded no-scrape correction withheld single-villa yields for ten explicit two-unit assets, including source-confirmed RF2431, and added scope flags to eleven rows. Source facts and crawl dates were preserved. Strict data, eight-category listing, canonical-site, and exact sitemap checks pass. Paid checkout stays off; March occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues. GSC follow-up is October 2-9; the completed September 25 queue must not be resubmitted.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
@@ -965,6 +969,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/portfolio_scope_correction_2026-09-28.json",
+    ".tmp/live_verification_2026-09-28_0551.json",
+    ".tmp/listing_page_verification_2026-09-28_0551.json",
+    ".tmp/sitemap_coverage_2026-09-28_0551.json",
+    ".tmp/supabase_data_quality_verification_2026-09-28_0551.json",
+    ".tmp/seo_progress_2026-09-28.md",
     ".tmp/live_verification_2026-09-28_zero_release.json",
     ".tmp/listing_page_verification_2026-09-28_zero_release.json",
     ".tmp/sitemap_coverage_2026-09-28_zero_release.json",
