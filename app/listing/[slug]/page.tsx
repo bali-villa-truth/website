@@ -586,6 +586,14 @@ export default async function ListingPage({ params }: Props) {
                     </div>
                   )}
                 </div>
+                <div className="mt-5 pt-4 border-t border-slate-800 flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                  <Link href={`/contact?listing=${encodeURIComponent(slug)}&reason=correction`} className="text-[color:var(--bvt-accent)] underline underline-offset-4 py-2">
+                    Report a listing-data error
+                  </Link>
+                  <Link href={`/contact?listing=${encodeURIComponent(slug)}&reason=audit`} className="text-[color:var(--bvt-accent)] underline underline-offset-4 py-2">
+                    Custom review enquiry
+                  </Link>
+                </div>
               </section>
 
               {/* Investor assumption notes */}

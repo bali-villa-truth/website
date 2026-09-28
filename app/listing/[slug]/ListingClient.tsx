@@ -225,7 +225,7 @@ export default function ListingClient({
           </p>
         </div>
       </div> : <p className="mt-3 pt-4 border-t border-[color:var(--bvt-hairline)] text-[11px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
-        Need a different audit scope? <a href="/contact" className="text-[color:var(--bvt-accent)] underline">Contact BVT</a>. Paid checkout is not available on this listing right now.
+        Need a different audit scope? <a href={`/contact?listing=${encodeURIComponent(slug)}&reason=audit`} className="text-[color:var(--bvt-accent)] underline">Contact BVT</a>. Paid checkout is not available on this listing right now.
       </p>}
       </>}
     </div>

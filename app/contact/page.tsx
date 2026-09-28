@@ -1,117 +1,130 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowUpRight, Mail } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Contact — Bali Villa Truth",
+  title: "Contact Bali Villa Truth",
   description:
-    "Get in touch with Bali Villa Truth. Request a custom audit, ask a question, or share feedback. We reply within 48 hours — typically same-day.",
+    "Report a listing-data correction or enquire about an independent villa review. Bali Villa Truth is not a broker and does not sell villas or guarantee returns.",
   alternates: { canonical: "https://balivillatruth.com/contact" },
   openGraph: {
-    title: "Contact — Bali Villa Truth",
+    title: "Contact Bali Villa Truth",
     description:
-      "Get in touch. Custom audits, feedback, or due-diligence questions welcome.",
+      "Listing corrections, independent review enquiries, and due-diligence questions.",
     url: "https://balivillatruth.com/contact",
   },
 };
 
-export default function ContactPage() {
+type ContactQuery = Record<string, string | string[] | undefined>;
+
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<ContactQuery>;
+}) {
+  const query = await searchParams;
+  const slug = typeof query.listing === "string" && query.listing.length <= 300 &&
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(query.listing) ? query.listing : null;
+  const listingUrl = slug ? `https://balivillatruth.com/listing/${slug}` : null;
+  const reason = query.reason === "correction" || query.reason === "audit" ? query.reason : null;
+  const reference = listingUrl || "[BVT or original listing URL]";
+  const emailLink = (subject: string, body: string) =>
+    `mailto:audits@balivillatruth.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const correctionEmail = emailLink(
+    "BVT listing-data correction",
+    `Listing reference: ${reference}\n\nField or assumption to review:\nCurrent BVT value:\nProposed correction:\nSupporting source URL or document:\nSource date:\nAdditional context:\n`,
+  );
+  const reviewEmail = emailLink(
+    "BVT custom-review enquiry",
+    `Listing reference: ${reference}\n\nQuestions to review:\nAsking price and currency:\nOwnership type and remaining lease term, if known:\nAvailable rental and operating-cost evidence:\nDecision timeline:\n`,
+  );
+
   return (
     <div className="bg-[color:var(--bvt-bg)] text-[color:var(--bvt-ink-body)]">
-      <article className="max-w-[1400px] mx-auto px-6 md:px-10 pt-10 md:pt-16 pb-16">
-        {/* Breadcrumb */}
-        <nav className="mb-10 text-[12px]" aria-label="Breadcrumb">
-          <Link href="/" className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] transition-colors">
-            Home
-          </Link>
+      <article className="max-w-[1100px] mx-auto px-6 md:px-10 pt-10 md:pt-16 pb-16">
+        <nav className="mb-8 text-[12px]" aria-label="Breadcrumb">
+          <Link href="/" className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)]">Home</Link>
           <span className="mx-2 text-[color:var(--bvt-ink-faint)]">/</span>
           <span className="text-[color:var(--bvt-ink)]">Contact</span>
         </nav>
 
-        {/* Editorial hero */}
-        <header className="mb-16 md:mb-24">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
-            <span className="label-micro">Letters to the editor</span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
-            <div className="lg:col-span-8">
-              <h1 className="font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[44px] sm:text-[56px] md:text-[72px] lg:text-[84px]">
-                Write to us.
-              </h1>
-              <p className="mt-8 max-w-[52ch] text-[19px] md:text-[21px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
-                We&apos;re a small, independent team. There&apos;s no sales
-                funnel — just one email address that reaches us directly.
-              </p>
-            </div>
-          </div>
+        <header className="mb-10 max-w-[70ch]">
+          <p className="label-micro mb-4">Independent investment research</p>
+          <h1 className="font-display text-[color:var(--bvt-ink)] text-[36px] md:text-[48px] leading-[1.1] tracking-normal">
+            Contact Bali Villa Truth
+          </h1>
+          <p className="mt-5 text-[17px] leading-[1.65]">
+            Questions about a listing, its assumptions, or a possible data error?
+            BVT provides independent ROI analysis. We are not a broker, do not
+            sell villas, and do not guarantee investment returns.
+          </p>
         </header>
 
-        {/* Email call-to-action — giant editorial address */}
-        <section className="mb-20 md:mb-28 border-t border-b border-[color:var(--bvt-hairline)] py-14 md:py-20">
-          <div className="label-micro mb-5">Email</div>
-          <a
-            href="mailto:audits@balivillatruth.com"
-            className="group font-display text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] text-[40px] sm:text-[56px] md:text-[72px] leading-[1.05] tracking-[-0.02em] break-all transition-colors"
-          >
-            audits@balivillatruth.com
-            <span className="inline-block text-[color:var(--bvt-accent)] ml-3 transition-transform group-hover:translate-x-1" aria-hidden>↗</span>
-          </a>
-          <p className="mt-8 max-w-[60ch] text-[15px] leading-[1.65] text-[color:var(--bvt-ink-muted)]">
-            We reply within 48 hours — usually same day, Bali time (UTC+8).
-            Include a BHI listing URL if you want a quick second opinion on a
-            specific property.
+        {listingUrl && (
+          <section className="mb-10 border-y border-[color:var(--bvt-hairline)] py-5" aria-labelledby="listing-reference">
+            <h2 id="listing-reference" className="label-micro mb-2">Listing reference</h2>
+            <Link href={listingUrl} className="inline-flex max-w-full items-start gap-2 text-[13px] leading-relaxed text-[color:var(--bvt-accent)] underline underline-offset-4">
+              <span className="min-w-0 [overflow-wrap:anywhere]">{listingUrl}</span>
+              <ArrowUpRight className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+            </Link>
+            {reason && <p className="mt-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
+              Enquiry: {reason === "correction" ? "listing-data correction" : "custom review"}
+            </p>}
+          </section>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 mb-12">
+          <section className="border-t border-[color:var(--bvt-hairline)] pt-6" aria-labelledby="correction-heading">
+            <h2 id="correction-heading" className="font-display text-[26px] leading-tight text-[color:var(--bvt-ink)]">Report a data correction</h2>
+            <p className="mt-4 text-[15px] leading-[1.65]">
+              A changed asking price, incorrect property detail, or a misleading
+              model assumption deserves a closer look. A correction report is
+              evidence to review, not an automatic change to the audit.
+            </p>
+            <ul className="mt-4 space-y-2 text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)] list-disc pl-5">
+              <li>The field or assumption in question</li>
+              <li>A source URL or dated supporting document</li>
+              <li>The corrected value and what changed</li>
+            </ul>
+            <a href={correctionEmail} className="mt-6 inline-flex items-center justify-center gap-2 min-h-11 px-4 py-3 text-[13px] font-medium bg-[color:var(--bvt-accent)] text-[color:var(--bvt-bg)] hover:bg-[color:var(--bvt-accent-warm)] transition-colors">
+              <Mail className="w-4 h-4 shrink-0" aria-hidden="true" />Email a correction
+            </a>
+          </section>
+
+          <section className="border-t border-[color:var(--bvt-hairline)] pt-6" aria-labelledby="review-heading">
+            <h2 id="review-heading" className="font-display text-[26px] leading-tight text-[color:var(--bvt-ink)]">Custom review enquiry</h2>
+            <p className="mt-4 text-[15px] leading-[1.65]">
+              Ask about a property-specific review of pricing, lease terms,
+              rental evidence, costs, or downside scenarios. Scope, availability,
+              any fee, and timing need confirmation before proceeding.
+            </p>
+            <ul className="mt-4 space-y-2 text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)] list-disc pl-5">
+              <li>The listing and your decision questions</li>
+              <li>Known lease terms and operating-cost evidence</li>
+              <li>Your decision timeline and evidence gaps</li>
+            </ul>
+            <a href={reviewEmail} className="mt-6 inline-flex items-center justify-center gap-2 min-h-11 px-4 py-3 text-[13px] font-medium border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink)] hover:border-[color:var(--bvt-accent)] transition-colors">
+              <Mail className="w-4 h-4 shrink-0" aria-hidden="true" />Enquire about a review
+            </a>
+          </section>
+        </div>
+
+        <section className="border-t border-[color:var(--bvt-hairline)] pt-6 mb-10">
+          <h2 className="text-[15px] font-medium text-[color:var(--bvt-ink)]">General questions and feedback</h2>
+          <a href="mailto:audits@balivillatruth.com" className="mt-2 inline-block max-w-full text-[14px] text-[color:var(--bvt-accent)] underline underline-offset-4 [overflow-wrap:anywhere]">audits@balivillatruth.com</a>
+          <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+            Response and review availability are not guaranteed. Do not include
+            passports, bank details, or other sensitive personal documents in an initial enquiry.
           </p>
         </section>
 
-        {/* Two-column editorial rails */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 mb-20 md:mb-28">
-          <div>
-            <div className="flex items-center gap-3 mb-5">
-              <span className="h-px w-8 bg-[color:var(--bvt-accent)]" aria-hidden />
-              <span className="label-micro">Good reasons to write</span>
-            </div>
-            <ul className="divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)]">
-              {[
-                "Audit a listing we haven't covered yet",
-                "Second opinion before signing a lease",
-                "Spotted an error in our data — please tell us",
-                "Feature requests, feedback, partnership ideas",
-              ].map((x, i) => (
-                <li key={i} className="py-4 flex gap-4">
-                  <span className="font-mono text-[11px] text-[color:var(--bvt-accent)] tabular-nums mt-1">0{i + 1}</span>
-                  <span className="text-[15px] leading-[1.6] text-[color:var(--bvt-ink-body)]">{x}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <div className="flex items-center gap-3 mb-5">
-              <span className="h-px w-8 bg-[color:var(--bvt-warn)]" aria-hidden />
-              <span className="label-micro">What we can&apos;t do</span>
-            </div>
-            <ul className="divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)]">
-              {[
-                "Legal or tax advice — talk to a notaris",
-                "Introduce you to agents — we're not brokers",
-                "Guarantee ROI — our numbers are estimates",
-                "Respond to cold sales or SEO pitches",
-              ].map((x, i) => (
-                <li key={i} className="py-4 flex gap-4">
-                  <span className="font-mono text-[11px] text-[color:var(--bvt-warn)] tabular-nums mt-1">0{i + 1}</span>
-                  <span className="text-[15px] leading-[1.6] text-[color:var(--bvt-ink-body)]">{x}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Fine print */}
-        <section className="pt-8 border-t border-[color:var(--bvt-hairline)]">
-          <p className="text-[12px] leading-[1.65] text-[color:var(--bvt-ink-dim)] max-w-[70ch]">
-            Our analysis is informational only and is not financial, legal, or
-            investment advice. Always consult an independent Indonesian notaris
-            and tax advisor before investing in Bali real estate.
+        <section className="border-t border-[color:var(--bvt-hairline)] pt-6">
+          <p className="text-[12px] leading-[1.65] text-[color:var(--bvt-ink-muted)] max-w-[80ch]">
+            BVT analysis is informational, not financial, legal, tax, or
+            investment advice. Independent legal and tax professionals should
+            verify ownership, permissions, contracts, and tax treatment before
+            any purchase. <Link href="/methodology" className="text-[color:var(--bvt-accent)] underline">Read the methodology</Link>
+            {" or "}<Link href="/guides/bali-villa-due-diligence-checklist" className="text-[color:var(--bvt-accent)] underline">review the due-diligence checklist</Link>.
           </p>
         </section>
       </article>
