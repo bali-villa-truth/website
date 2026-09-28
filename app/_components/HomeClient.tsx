@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink } from 'lucide-react';
 import { BvtLockup } from './BvtSeal';
+import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -355,6 +356,34 @@ export default function HomeClient({
   const [sliderNightly, setSliderNightly] = useState(1.0);   // multiplier: 0.5x–2.0x
   const [sliderOccupancy, setSliderOccupancy] = useState(65); // percent: 20–95 — matches pipeline flat 65%
   const [sliderExpense, setSliderExpense] = useState(40);     // percent: 20–60
+  const comparisonDialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showCompare) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    comparisonDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowCompare(false);
+      if (event.key !== 'Tab') return;
+      const controls = Array.from(comparisonDialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]') || [])
+        .filter(element => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKey);
+      if (previousFocus?.isConnected && previousFocus !== document.body) previousFocus.focus();
+      else document.querySelector<HTMLButtonElement>('[data-open-comparison]')?.focus();
+    };
+  }, [showCompare]);
 
   const toggleCompare = useCallback((villaId: number) => {
     setCompareSet(prev => {
@@ -689,38 +718,16 @@ export default function HomeClient({
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
   const calculateDynamicROI = (villa: any, nightlyMultiplier: number, occupancyPct: number, expensePct: number) => {
     const priceUSD = getAuditPriceUSD(villa);
-    const unmodeled = isRoiUnmodeled(villa);
-    if (priceUSD <= 0 || unmodeled) return { grossYield: 0, netYield: 0, annualRevenue: 0, annualExpenses: 0, netRevenue: 0, leaseDepreciation: 0, depreciationYield: 0, isFreehold: true, leaseYears: 0, unmodeled };
-
-    const baseNightly = villa.est_nightly_rate || getDisplayNightly(villa);
-    const adjustedNightly = baseNightly * nightlyMultiplier;
-    const occupancy = occupancyPct / 100;
-    const annualRevenue = adjustedNightly * 365 * occupancy;
-    const annualExpenses = annualRevenue * (expensePct / 100);
-    const netRevenue = annualRevenue - annualExpenses;
-    const grossYield = (annualRevenue / priceUSD) * 100;
-
-    // Lease depreciation for ALL leasehold villas
     const features = (villa.features || '').toLowerCase();
-    const years = Number(villa.lease_years) || ((villa.flags || '').split(',').includes('LEASE_TERM_NOT_STATED') ? 15 : 0);
+    const years = Number(villa.lease_years) || 0;
     const isFreehold = features.includes('freehold') || features.includes('hak milik') || years === 999;
-    const leaseDepreciation = (!isFreehold && years > 0) ? Math.round(priceUSD / years) : 0;
-    const depreciationYield = (!isFreehold && years > 0) ? (1 / years) * 100 : 0;
-    const netAfterDepreciation = netRevenue - leaseDepreciation;
-    let netYield = (netAfterDepreciation / priceUSD) * 100;
-
-    return {
-      grossYield: Math.min(grossYield, 80),
-      netYield: Math.max(netYield, -20),
-      annualRevenue: Math.round(annualRevenue),
-      annualExpenses: Math.round(annualExpenses),
-      netRevenue: Math.round(netRevenue),
-      leaseDepreciation,
-      depreciationYield: Math.round(depreciationYield * 10) / 10,
-      isFreehold,
+    return calculateComparisonScenario({
+      priceUSD,
+      nightlyRate: Number(villa.est_nightly_rate || getDisplayNightly(villa)),
       leaseYears: years,
-      unmodeled,
-    };
+      isFreehold,
+      unsupported: isRoiUnmodeled(villa),
+    }, nightlyMultiplier, occupancyPct, expensePct);
   };
 
   // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
@@ -1818,6 +1825,7 @@ export default function HomeClient({
             </span>
           </div>
           <button
+            data-open-comparison
             onClick={() => { setShowCompare(true); setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
             className="bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[11px] font-semibold tracking-[0.14em] uppercase px-5 py-2 transition-colors flex items-center gap-2"
           >
@@ -1835,10 +1843,11 @@ export default function HomeClient({
       {/* COMPARE PANEL MODAL */}
       {showCompare && (() => {
         const compareVillas = listings.filter(v => compareSet.has(v.id));
+        const scenarios = new globalThis.Map(compareVillas.map(v => [v.id, calculateDynamicROI(v, sliderNightly, sliderOccupancy, sliderExpense)] as const));
         const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
         return (
-          <div className="fixed inset-0 bg-[#05080e]/85 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
+          <div ref={comparisonDialogRef} role="dialog" aria-modal="true" aria-labelledby="comparison-title" className="fixed inset-0 bg-[#05080e]/85 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
             <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] shadow-2xl w-full max-w-6xl my-8 relative">
               {/* Header — editorial masthead */}
               <div className="flex items-start justify-between p-6 md:p-8 border-b border-[color:var(--bvt-hairline)]">
@@ -1847,11 +1856,11 @@ export default function HomeClient({
                     <SlidersHorizontal size={14} className="text-[color:var(--bvt-accent)]" strokeWidth={1.75} />
                     <span className="label-micro">Sensitivity · Sliders</span>
                   </div>
-                  <h2 className="font-serif text-[22px] md:text-[26px] font-medium text-[color:var(--bvt-ink)] tracking-tight leading-tight">
+                  <h2 id="comparison-title" className="font-serif text-[22px] md:text-[26px] font-medium text-[color:var(--bvt-ink)] tracking-normal leading-tight">
                     Villa ROI Calculator
                   </h2>
                   <p className="text-[13px] text-[color:var(--bvt-ink-muted)] mt-1.5">
-                    Adjust assumptions to see how yields change across your selection.
+                    Illustrative scenarios, not guaranteed income. Unsupported assets have no modeled results.
                   </p>
                 </div>
                 <button
@@ -1869,11 +1878,12 @@ export default function HomeClient({
                   {/* Nightly Rate Multiplier */}
                   <div>
                     <div className="flex justify-between items-baseline mb-3">
-                      <label className="label-micro">Nightly Rate</label>
+                      <label htmlFor="compare-nightly" className="label-micro">Nightly Rate</label>
                       <span className="font-mono tabular-nums text-[15px] font-medium text-[color:var(--bvt-accent)]">{sliderNightly.toFixed(1)}x</span>
                     </div>
                     <input
                       type="range" min="0.5" max="2.0" step="0.1"
+                      id="compare-nightly"
                       value={sliderNightly}
                       onChange={(e) => setSliderNightly(parseFloat(e.target.value))}
                       className="w-full h-[3px] bg-[color:var(--bvt-hairline-2)] appearance-none cursor-pointer accent-[color:var(--bvt-accent)]"
@@ -1888,11 +1898,12 @@ export default function HomeClient({
                   {/* Occupancy */}
                   <div>
                     <div className="flex justify-between items-baseline mb-3">
-                      <label className="label-micro">Occupancy</label>
+                      <label htmlFor="compare-occupancy" className="label-micro">Occupancy</label>
                       <span className="font-mono tabular-nums text-[15px] font-medium text-[color:var(--bvt-accent)]">{sliderOccupancy}%</span>
                     </div>
                     <input
                       type="range" min="20" max="95" step="1"
+                      id="compare-occupancy"
                       value={sliderOccupancy}
                       onChange={(e) => setSliderOccupancy(parseInt(e.target.value))}
                       className="w-full h-[3px] bg-[color:var(--bvt-hairline-2)] appearance-none cursor-pointer accent-[color:var(--bvt-accent)]"
@@ -1907,7 +1918,7 @@ export default function HomeClient({
                   {/* Expense Load */}
                   <div>
                     <div className="flex justify-between items-baseline mb-3">
-                      <label className="label-micro relative group/expense inline-flex items-center gap-1.5">
+                      <label htmlFor="compare-expense" className="label-micro relative group/expense inline-flex items-center gap-1.5">
                         Expense Load
                         <Info size={11} className="text-[color:var(--bvt-ink-faint)] group-hover/expense:text-[color:var(--bvt-accent)] cursor-help transition-colors" />
                         <span className="invisible group-hover/expense:visible absolute top-full left-0 mt-2 w-64 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[11px] leading-relaxed px-3 py-2.5 shadow-xl z-50 pointer-events-none font-normal normal-case tracking-normal">
@@ -1922,6 +1933,7 @@ export default function HomeClient({
                     </div>
                     <input
                       type="range" min="20" max="60" step="1"
+                      id="compare-expense"
                       value={sliderExpense}
                       onChange={(e) => setSliderExpense(parseInt(e.target.value))}
                       className="w-full h-[3px] bg-[color:var(--bvt-hairline-2)] appearance-none cursor-pointer accent-[color:var(--bvt-accent)]"
@@ -1953,7 +1965,7 @@ export default function HomeClient({
                       <th className="text-left py-3 pr-4 w-36 font-medium">Metric</th>
                       {compareVillas.map(v => (
                         <th key={v.id} className="text-center py-3 px-3 min-w-[140px] font-medium">
-                          <div className="text-[color:var(--bvt-ink)] text-[11px] normal-case font-medium truncate max-w-[160px]">{v.villa_name}</div>
+                          <div title={v.villa_name} className="text-[color:var(--bvt-ink)] text-[11px] normal-case font-medium truncate max-w-[160px]">{v.villa_name}</div>
                           <div className="text-[9px] text-[color:var(--bvt-ink-muted)] font-normal tracking-wide mt-0.5">{v.location}</div>
                         </th>
                       ))}
@@ -1962,9 +1974,15 @@ export default function HomeClient({
                   <tbody className="text-xs">
                     {/* Price */}
                     <tr className="border-b border-[color:var(--bvt-hairline)]">
-                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Price</td>
+                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Displayed ask</td>
                       {compareVillas.map(v => (
                         <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink)]">{formatPriceInCurrency(v)}</td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-[color:var(--bvt-hairline)]">
+                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] text-xs">Yield price basis (USD)</td>
+                      {compareVillas.map(v => (
+                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{scenarios.get(v.id)!.unmodeled ? 'Not applied' : `$${Math.round(getAuditPriceUSD(v)).toLocaleString()}`}</td>
                       ))}
                     </tr>
                     {/* Lease */}
@@ -1976,7 +1994,7 @@ export default function HomeClient({
                         const isFH = f.includes('freehold') || f.includes('hak milik') || yrs === 999;
                         return (
                           <td key={v.id} className={`text-center py-3 px-3 font-mono tabular-nums ${isFH ? 'text-[color:var(--bvt-good)]' : 'text-[color:var(--bvt-ink-body)]'}`}>
-                            <span className="inline-flex items-center justify-center">{isFH ? <>Freehold<GlossaryTip term="hak_milik" /></> : yrs > 0 ? <>{yrs}yr lease<GlossaryTip term="hak_sewa" /></> : 'Unknown'}</span>
+                            <span className="inline-flex items-center justify-center">{isFH ? <>Freehold<GlossaryTip term="hak_milik" /></> : yrs > 0 ? <>{yrs}yr lease<GlossaryTip term="hak_sewa" /></> : f.includes('leasehold') || getPipelineFlags(v).includes('LEASE_TERM_NOT_STATED') ? 'Leasehold; term not stated' : 'Tenure not stated'}</span>
                           </td>
                         );
                       })}
@@ -1985,7 +2003,7 @@ export default function HomeClient({
 	                    <tr className="border-b border-[color:var(--bvt-hairline)]">
 	                      <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Nightly Rate</td>
 	                      {compareVillas.map(v => {
-	                        if (isRoiUnmodeled(v)) {
+                        if (scenarios.get(v.id)!.unmodeled) {
 	                          return (
 	                            <td key={v.id} className="text-center py-3 px-3 text-[11px] text-[color:var(--bvt-ink-muted)]">
 	                              Not modeled
@@ -2006,22 +2024,22 @@ export default function HomeClient({
                     <tr className="border-b border-[color:var(--bvt-hairline)]">
                       <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Occupancy</td>
                       {compareVillas.map(v => (
-                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{sliderOccupancy}%</td>
+                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{scenarios.get(v.id)!.unmodeled ? 'Not applied' : `${sliderOccupancy}% assumed`}</td>
                       ))}
                     </tr>
                     <tr className="border-b border-[color:var(--bvt-hairline)]">
                       <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Expense Load</td>
                       {compareVillas.map(v => (
-                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{sliderExpense}%</td>
+                        <td key={v.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-body)]">{scenarios.get(v.id)!.unmodeled ? 'Not applied' : `${sliderExpense}% assumed`}</td>
                       ))}
                     </tr>
                     {/* Dynamic calculations */}
                     {(() => {
                       const results = compareVillas.map(v => ({
                         id: v.id,
-                        ...calculateDynamicROI(v, sliderNightly, sliderOccupancy, sliderExpense),
+                        ...scenarios.get(v.id)!,
                       }));
-                      const bestYield = Math.max(...results.map(r => r.netYield));
+                      const bestYield = Math.max(...results.flatMap(r => r.netYield === null ? [] : [r.netYield]));
 
                       return (
                         <>
@@ -2032,9 +2050,9 @@ export default function HomeClient({
 	                            ))}
 	                          </tr>
 	                          <tr className="border-b border-[color:var(--bvt-hairline)]">
-	                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-faint)] label-micro !text-[color:var(--bvt-ink-faint)] !tracking-[0.14em]">Gross Yield</td>
+	                            <td className="py-3 pr-4 text-[color:var(--bvt-ink-muted)] label-micro !text-[color:var(--bvt-ink-muted)] !tracking-[0.14em]">Gross Yield</td>
 	                            {results.map(r => (
-	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-faint)] line-through">{r.unmodeled ? 'N/A' : `${r.grossYield.toFixed(1)}%`}</td>
+	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums text-[color:var(--bvt-ink-muted)]">{r.unmodeled ? 'N/A' : `${r.grossYield.toFixed(1)}%`}</td>
 	                            ))}
 	                          </tr>
                           <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-bg-soft)]/50">
@@ -2066,8 +2084,8 @@ export default function HomeClient({
                           </tr>
                           <tr className="border-b border-[color:var(--bvt-hairline)] bg-[color:var(--bvt-warn)]/[0.06]">
                             <td className="py-3 pr-4 text-[color:var(--bvt-warn)] text-[13px]">
-                              <span className="font-serif italic">Lease Depreciation</span>
-                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">Asset value loss/yr</span>
+                        <span className="font-serif italic">Lease allowance</span>
+                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-0.5 font-sans not-italic">Noncash straight-line screen</span>
                             </td>
 	                            {results.map(r => (
 	                              <td key={r.id} className="text-center py-3 px-3 font-mono tabular-nums">
@@ -2081,7 +2099,7 @@ export default function HomeClient({
                                     <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-0.5">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
                                   </div>
                                 ) : (
-                                  <span className="text-[color:var(--bvt-ink-faint)] text-[11px]">Unknown tenure</span>
+                                  <span className="text-[color:var(--bvt-ink-faint)] text-[11px]">Term not stated</span>
                                 )}
                               </td>
                             ))}
@@ -2089,19 +2107,20 @@ export default function HomeClient({
                           <tr className="bg-[color:var(--bvt-accent)]/[0.08] border-t border-[color:var(--bvt-accent)]/25">
                             <td className="py-4 pr-4 text-[color:var(--bvt-accent)] text-[14px]">
                               <span className="font-serif italic">Net Yield</span>
-                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">After depreciation</span>
+                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-0.5 font-sans not-italic">After noncash lease allowance</span>
                             </td>
 	                            {results.map(r => {
-	                              const isBest = !r.unmodeled && r.netYield === bestYield && results.filter(x => !x.unmodeled && x.netYield === bestYield).length === 1;
+                              const isBest = r.netYield !== null && r.netYield === bestYield && results.filter(x => x.netYield === bestYield).length === 1;
 	                              return (
                                 <td key={r.id} className={`text-center py-4 px-3 font-mono tabular-nums font-medium text-[20px] ${
-                                  isBest
-                                    ? 'text-[color:var(--bvt-good)]'
+                                  r.netYield === null
+                                    ? 'text-[color:var(--bvt-ink-muted)]'
                                     : r.netYield >= 7 ? 'text-[color:var(--bvt-accent)]' : r.netYield >= 0 ? 'text-[color:var(--bvt-ink)]' : 'text-[color:var(--bvt-bad)]'
                                 }`}>
-	                                  {r.unmodeled ? 'N/A' : `${r.netYield.toFixed(1)}%`}
+                                  {r.netYield === null ? 'N/A' : `${r.netYield.toFixed(1)}%`}
+                                  {!r.unmodeled && r.leaseTermMissing && <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-1">Lease term required</span>}
                                   {isBest && (
-                                    <span className="block text-[9px] text-[color:var(--bvt-good)] tracking-[0.2em] uppercase font-sans mt-1">Best</span>
+                                    <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] font-sans mt-1">Highest in this scenario</span>
                                   )}
                                 </td>
                               );
@@ -2115,7 +2134,7 @@ export default function HomeClient({
                               return (
                                 <td key={v.id} className="text-center py-3 px-3">
                                   {flags.length === 0 ? (
-                                    <span className="text-[color:var(--bvt-good)] text-[10px] tracking-[0.14em] uppercase">Clean</span>
+                                    <span className="text-[color:var(--bvt-ink-muted)] text-[10px]">No model flags</span>
                                   ) : (
                                     <div className="flex flex-wrap justify-center gap-1">
                                       {flags.map((f, i) => (
@@ -2154,7 +2173,7 @@ export default function HomeClient({
 
               {/* Footer note */}
               <div className="px-6 md:px-8 pb-6 md:pb-8 text-[11px] text-[color:var(--bvt-ink-muted)] italic leading-relaxed">
-                These projections are estimates based on your inputs. Actual returns depend on management quality, market conditions, and property-specific factors. BVT does not provide financial advice.
+                Gross revenue already includes unoccupied nights at the selected occupancy. Operating income is before the noncash lease allowance; net yield is not cash paid to an owner. Yield uses the audit&apos;s stored USD price, while displayed asks use display-time currency conversion. Results are not capped or floored: extreme outputs require checking the price, rates, and source terms, not treating them as achievable returns. Taxes, financing, purchase costs, and major capital work require separate underwriting. No model flags does not establish a safe investment. <Link href="/methodology" className="text-[color:var(--bvt-accent)] underline">Methodology</Link>. BVT does not provide financial advice.
               </div>
             </div>
           </div>
