@@ -27,6 +27,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 
 const completedImprovements = [
   {
+    date: "2026-09-28",
+    area: "Missing-data clarity / yield results",
+    title: "Distinguished a modeled zero yield from unavailable ROI and unknown physical facts",
+    status: "Deployed and verified",
+    why: "Two live modeled rows store a rounded 0.0% net yield, but the listing page had labeled their result and metadata unavailable. Zero now remains a numeric modeled result in the page, title, schema, and related listings, with a warning that it is not a break-even guarantee. Unsupported assets still show N/A. Missing bathrooms no longer appear as 0 Bath; absent bedrooms and physical sizes are labeled Not stated. Source-check dates no longer fall back to unrelated database timestamps. Eight representative listing categories and live 320px, 390px, and desktop checks passed, with no overflow or browser errors. No source values or model outputs changed.",
+    url: `${SITE_URL}/listing/cozy-1-bedroom-villa-for-sale-leasehold-and-rent-in-bali-ungasan-rf6360c`,
+    progressFile: ".tmp/website_progress_2026-09-28.md",
+  },
+  {
     date: "2026-09-27",
     area: "Free audit clarity / paid-launch safety",
     title: "Aligned the mobile audit button with its free email form and guarded paid checkout",
@@ -724,6 +733,12 @@ const completedImprovements = [
 const pendingImprovements = [
   {
     priority: "High",
+    owner: "Data pipeline",
+    title: "Review RF2431's portfolio wording against model scope",
+    nextAction: "The stored title says Two Modern 2 Bedroom ... Villas while the row uses a four-bedroom single-villa model. Check the source's unit and asking-price basis and the unsupported-asset detector before changing flags or yields. A title alone is a review lead, not a verified unit-level investment case.",
+  },
+  {
+    priority: "High",
     owner: "Paid audit / owner approval",
     title: "Verify Deep Audit end to end before enabling paid checkout",
     nextAction: "Keep BVT_PAID_AUDIT_ENABLED off. Review the generated PDF's cash-versus-lease allowance, legal/refund copy, and source comparables; make failed paid_audits writes visible; then configure Stripe and delivery secrets and run an owner-approved test-mode checkout, email, and repeat visit before launch.",
@@ -785,6 +800,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "2026-09-28 listing-label audit found two modeled rows with stored 0.0% yield whose public pages incorrectly said ROI Not Modeled. The public label is corrected without recalculation. Physical missing-value placeholders are now Not stated rather than 0 Bath or an unexplained dash. The listing verifier now checks an optional live zero-yield sample in visible HTML, title, and structured data, plus rejects literal zero-bath placeholders on physical-gap samples; 21 unit tests pass.",
   "2026-09-26 ROI reconciliation: 2,193 modeled live rows were checked against the auditor's shared 65% occupancy, 40% operating costs, stored USD purchase-price basis, and lease decay. Zero rows differ by more than 0.15 percentage points (maximum rounding difference 0.005). The earlier listing-page contradiction came from displaying provisional area occupancy and display-time FX alongside this stored yield. The site now labels the comparison scenario explicitly; actual property occupancy and owner P&L are still unknown.",
   "2026-09-26 model-input audit: the active rate table exactly replays the 1 August 2026 Booking.com cache across all 60 area/bedroom tiers. The active occupancy table replays the 7 March 2026 review cache, but that cache has 858 result cards versus 286 unique name/review-count pairs within areas; 567 scores are invalid (1010/10). Raw-card sample sizes and associated high-confidence labels are not independent-property evidence. Published occupancy/yield values have not been recomputed; they remain provisional until a fresh validated sample and guarded pipeline run.",
   "As of 2026-09-25 22:19 UTC, the complete no-scrape pipeline passes after the live-guide expectation fix: 2,455 audited rows, 32 Other Indonesian Islands rows flagged NON_BALI_LOCATION with no modeled ROI/rate/occupancy, zero outside-Bali scope violations, 31 physical-spec gaps, zero unmodeled rows with nonzero values, seven passing representative listing pages, and 2,475 sitemap URLs with zero missing/extra. Google Sheets remains blocked by OAuth invalid_grant; tomorrow's full scheduled scrape remains to be observed.",
@@ -940,7 +956,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 27 paid-guard release corrected the mobile free-audit call to action and disabled paid checkout until an explicit launch flag and required credentials are present. Payment wording and asking-listing comparables are more cautious. Canonical, listing, sitemap, and live mobile/desktop checks passed. The earlier flag and tenure clarity releases remain live. March area occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
+    "The September 28 listing release separates a rounded 0.0% modeled result from unavailable ROI and labels missing physical facts explicitly. Eight representative categories, canonical-site, exact sitemap, and live mobile/desktop checks passed. The September 27 free-audit and paid-launch guard remain live; paid checkout stays off. March area occupancy proxies remain provisional. RF2431's portfolio wording needs model-scope review. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
@@ -949,6 +965,13 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/live_verification_2026-09-28_zero_release.json",
+    ".tmp/listing_page_verification_2026-09-28_zero_release.json",
+    ".tmp/sitemap_coverage_2026-09-28_zero_release.json",
+    ".tmp/supabase_data_quality_verification_2026-09-28_0357.json",
+    ".tmp/automation_freshness_2026-09-28_0357.json",
+    ".tmp/missing_facts_live_390_2026-09-28.png",
+    ".tmp/website_progress_2026-09-28.md",
     ".tmp/live_verification_2026-09-27_paid_guard_release.json",
     ".tmp/listing_page_verification_2026-09-27_paid_guard_release.json",
     ".tmp/sitemap_coverage_2026-09-27_paid_guard_release.json",
@@ -1639,6 +1662,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "A modeled result that rounds to 0.0% is no longer confused with an unavailable yield. Missing bathrooms, bedrooms, and sizes are explicit unknowns, and a database update does not substitute for a source check date.",
         "The mobile free-audit button now tells buyers what it actually opens; paid checkout is deliberately held until the report, payment, and delivery path are verified. Paid comparables are described as public asking listings, not completed sales.",
         "Listing dossiers now state that 65% occupancy already includes unoccupied nights, separate operating income from the noncash lease allowance, and give every flag a visible diligence explanation and checklist link, including on mobile.",
         "Mobile cards now separate listed tenure from model assumptions; an unstated lease term is not shown as a 15-year source fact. Unmodeled assets do not display invented lease-value math in the homepage hover details.",
@@ -1651,6 +1675,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "Both modeled-zero listings, a physical-gap listing, and an unsupported hotel passed live 320px, 390px, and 1440px checks after the missing-data release, with no overflow or browser errors. Bathrooms not stated wraps within the mobile details grid.",
         "After the paid-guard release, the live modeled listing passed 320px, 390px, and 1440px checks with no overflow or browser errors; the mobile free-PDF button focused the free email field.",
         "Modeled, unmodeled, and leasehold listing dossiers passed live 320px, 390px, and 1440px checks after the flag-explanation release; no page errors or horizontal overflow occurred.",
         "The corrected mobile tenure card was checked live at 320px and 390px against a missing-term source row, a stated 29-year lease, and freehold; no horizontal overflow or browser errors occurred.",
