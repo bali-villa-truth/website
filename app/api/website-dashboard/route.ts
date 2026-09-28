@@ -12,6 +12,7 @@ export const revalidate = 0;
 const CORE_PATHS = [
   { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "/listing/"] },
   { name: "Methodology", path: "/methodology", expect: ["methodology", "40%"] },
+  { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage"] },
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
@@ -26,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-09-28",
+    area: "Investor support / corrections / mobile navigation",
+    title: "Kept listing context in correction and custom-review enquiries",
+    status: "Deployed and verified",
+    why: "Every listing now links to a correction and custom-review enquiry, including unsupported assets. The contact page carries a validated same-site listing reference into separate email drafts, requests dated evidence, and explains that a report is reviewed rather than automatically changing an audit. The unsupported 48-hour response promise and oversized email typography were removed. Scope, availability, fees, and timing need confirmation; paid checkout remains off. All 161 local and live checks passed, covering SSR, fixed canonical metadata, malformed query rejection, email-draft fields, 320px/390px/desktop layouts, and modeled/unsupported listing navigation. Strict canonical, eight-category listing, and exact sitemap checks passed. No email, payment, source-data write, or model change occurred; mailbox delivery is not verified.",
+    url: `${SITE_URL}/contact`,
+    progressFile: ".tmp/website_progress_2026-09-28.md",
+  },
   {
     date: "2026-09-28",
     area: "Investor data / portfolio model scope",
@@ -741,6 +751,12 @@ const completedImprovements = [
 
 const pendingImprovements = [
   {
+    priority: "Medium",
+    owner: "Contact mailbox / owner",
+    title: "Confirm correction-enquiry delivery and review ownership",
+    nextAction: "The enquiry links and drafts are verified, but no email was sent. Confirm that audits@balivillatruth.com is monitored and approve a delivery test before claiming a support response time or custom-review availability.",
+  },
+  {
     priority: "High",
     owner: "Paid audit / owner approval",
     title: "Verify Deep Audit end to end before enabling paid checkout",
@@ -798,11 +814,12 @@ const blockers = [
   {
     blocker: "Google Sheets push",
     status: "Blocked by expired OAuth token",
-    note: "The September 25 recovery run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
+    note: "The September 28 midnight full run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
   },
 ];
 
 const dataQualityIssues = [
+  "The September 28 scheduled midnight full scrape completed at 00:05 Phoenix time with 2,460 audited listings. Fresh 09:57 UTC checks found 32 physical-spec gaps, zero unsupported multi-unit or outside-Bali scope leaks, zero unmodeled rows with nonzero model values, and zero yield-scenario mismatches across 2,190 modeled rows. The portfolio guard survived the fresh scrape. Sitemap coverage is exact at 2,460 listing plus 20 static URLs. Unknown physical facts remain flagged; no guardrail was lowered.",
   "The September 28 no-scrape portfolio correction withheld single-villa math from ten additional explicit two-unit assets; eleven rows gained the scope flag. Strict live checks find zero unsupported portfolio rows leaking ROI, nightly rates, or occupancy estimates. RF2431's source confirms two separate villas, while some other titles have ambiguous unit price allocation. Source prices, physical facts, and crawl dates were not changed; no portfolio-specific return is claimed.",
   "2026-09-28 listing-label audit found two modeled rows with stored 0.0% yield whose public pages incorrectly said ROI Not Modeled. The public label is corrected without recalculation. Physical missing-value placeholders are now Not stated rather than 0 Bath or an unexplained dash. The listing verifier now checks an optional live zero-yield sample in visible HTML, title, and structured data, plus rejects literal zero-bath placeholders on physical-gap samples; 21 unit tests pass.",
   "2026-09-26 ROI reconciliation: 2,193 modeled live rows were checked against the auditor's shared 65% occupancy, 40% operating costs, stored USD purchase-price basis, and lease decay. Zero rows differ by more than 0.15 percentage points (maximum rounding difference 0.005). The earlier listing-page contradiction came from displaying provisional area occupancy and display-time FX alongside this stored yield. The site now labels the comparison scenario explicitly; actual property occupancy and owner P&L are still unknown.",
@@ -929,6 +946,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "Listing correction and custom-review links now preserve the listing reference, including on unsupported assets. Contact drafts are verified; actual mailbox delivery and support ownership require owner confirmation before any service-level promise.",
   "Homepage now has risk shortcuts, but comparison mode could still be easier to save and share.",
   "Mobile ledger needs continued visual checks after each filter or card-density change.",
   "The listing and both audit-PDF templates now date their model inputs and avoid the unsupported Airbnb blend or raw-card confidence claim. Continue checking report layout after future model or copy changes.",
@@ -951,8 +969,8 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; unattended 2026-09-27 midnight full run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 27 unattended full run completed at 00:05 Phoenix time. A separate September 28 05:51-05:52 UTC no-scrape correction preserved source dates while withholding unsupported portfolio math. Strict checks pass with 2,454 audited listings, 31 physical-spec gaps, eight representative categories, and exact sitemap coverage. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds.",
+    status: "Loaded; unattended 2026-09-28 midnight full run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 28 unattended full run completed at 00:05 Phoenix time with 2,460 audited listings and 32 flagged physical-spec gaps. Fresh read-only checks confirm the earlier portfolio-scope correction survived the new crawl, with no unsupported portfolio or outside-Bali model leakage. Eight representative listing categories pass and sitemap coverage is exact. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. This local job and the six-hour heartbeats are checkpoints, not 24/7 runtime.",
   },
 ];
 
@@ -960,15 +978,23 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 28 listing release separates a rounded 0.0% modeled result from unavailable ROI and labels missing physical facts explicitly. The later guarded no-scrape correction withheld single-villa yields for ten explicit two-unit assets, including source-confirmed RF2431, and added scope flags to eleven rows. Source facts and crawl dates were preserved. Strict data, eight-category listing, canonical-site, and exact sitemap checks pass. Paid checkout stays off; March occupancy proxies remain provisional. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues. GSC follow-up is October 2-9; the completed September 25 queue must not be resubmitted.",
+    "The September 28 contact release preserves listing references in correction and custom-review drafts, removes an unverified response-time promise, and passes all 161 live workflow checks. Strict canonical, eight-category listing, and exact sitemap checks pass. The scheduled midnight full scrape completed with 2,460 audited rows and 32 flagged physical gaps; the earlier portfolio-scope correction survived that refresh with zero model leaks. Paid checkout stays off and March occupancy proxies remain provisional. Mailbox delivery was not tested. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues. GSC follow-up is October 2-9; the completed September 25 queue must not be resubmitted.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/contact`,
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     `${SITE_URL}/sitemap.xml`,
     `${SITE_URL}/website-dashboard`,
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/contact_verification_live_2026-09-28.json",
+    ".tmp/live_verification_2026-09-28_contact_release.json",
+    ".tmp/listing_page_verification_2026-09-28_contact_release.json",
+    ".tmp/sitemap_coverage_2026-09-28_contact_release.json",
+    ".tmp/supabase_data_quality_verification_2026-09-28_0957.json",
+    ".tmp/automation_freshness_2026-09-28_0957.json",
+    ".tmp/contact_context_live_2026-09-28_390.png",
     ".tmp/portfolio_scope_correction_2026-09-28.json",
     ".tmp/live_verification_2026-09-28_0551.json",
     ".tmp/listing_page_verification_2026-09-28_0551.json",
@@ -1521,11 +1547,12 @@ const contentPages = [
 ];
 
 const nextActions = [
+  "Confirm the contact mailbox is monitored and approve a delivery test before publishing a response-time or review-availability promise. The current links compose drafts only; no test email was sent.",
   "Refresh the Booking.com review sample with pagination, unique-property, and 0-10 score validation; review area-level changes and sample coverage before updating the occupancy model or investor ROI values.",
   "Refresh and validate the Booking.com asking-rate sample; the current 1 August snapshot is dated and is not realized booking revenue. Do not advertise a monthly rate-refresh cadence without successful runs.",
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
-  "Reauthorize Google Sheets interactively; the September 25 pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
+  "Reauthorize Google Sheets interactively; the September 28 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
   "Reinspect the completed September 25 GSC queue in 7-14 days using the same URL-prefix property, and track whether the sitemap read count and exact-query ROI visibility change.",
   "Optionally move the rotated dashboard credentials to private Vercel environment variables, verify both logins, then remove the public digest fallbacks.",
   "Rotate the stale GitHub token in .env; the September 25 deploy used the existing authenticated GitHub CLI token for one process.",
@@ -1672,6 +1699,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Corrections and custom-review enquiries now retain the specific listing, including unsupported assets. Dated supporting evidence is requested, and the contact page no longer promises an unverified 48-hour response or guaranteed service availability.",
         "A modeled result that rounds to 0.0% is no longer confused with an unavailable yield. Missing bathrooms, bedrooms, and sizes are explicit unknowns, and a database update does not substitute for a source check date.",
         "The mobile free-audit button now tells buyers what it actually opens; paid checkout is deliberately held until the report, payment, and delivery path are verified. Paid comparables are described as public asking listings, not completed sales.",
         "Listing dossiers now state that 65% occupancy already includes unoccupied nights, separate operating income from the noncash lease allowance, and give every flag a visible diligence explanation and checklist link, including on mobile.",
@@ -1685,6 +1713,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The contact page passed live default/correction/review layouts at 320px, 390px, and 1440px with no overflow or browser errors. Modeled and unsupported listings both navigated to the right reference and back at 390px. The oversized email address is replaced by compact icon-and-text actions.",
         "Both modeled-zero listings, a physical-gap listing, and an unsupported hotel passed live 320px, 390px, and 1440px checks after the missing-data release, with no overflow or browser errors. Bathrooms not stated wraps within the mobile details grid.",
         "After the paid-guard release, the live modeled listing passed 320px, 390px, and 1440px checks with no overflow or browser errors; the mobile free-PDF button focused the free email field.",
         "Modeled, unmodeled, and leasehold listing dossiers passed live 320px, 390px, and 1440px checks after the flag-explanation release; no page errors or horizontal overflow occurred.",
@@ -1695,11 +1724,13 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "Contact is now a compact, unframed research-support page with readable enquiry sections and evidence labels, preserving the existing BVT palette.",
         "Kept the dark editorial BVT palette and small-data-tool visual language.",
         "Used restrained hairline cards, compact labels, and investor-focused copy.",
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "Contact enquiries remain server-rendered and use a fixed /contact canonical regardless of query context; malformed references are ignored and no new database fetch or client form service was added.",
         "Homepage still SSRs a seed set and hydrates the full ledger client-side.",
         "Dashboard crawl checks now report distinct listing paths instead of raw duplicate URL matches.",
         "Dashboard APIs use no-store and short fetch timeouts so private checks do not cache stale status.",
@@ -1709,6 +1740,9 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-09-28.md",
+        ".tmp/seo_progress_2026-09-28.md",
+        ".tmp/contact_verification_live_2026-09-28.json",
         ".tmp/website_progress_2026-09-27.md",
         ".tmp/seo_progress_2026-09-27.md",
         ".tmp/website_progress_2026-09-26.md",
