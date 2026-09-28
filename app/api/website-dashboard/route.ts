@@ -29,6 +29,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-28",
+    area: "Comparison calculator / investor trust / keyboard access",
+    title: "Made comparison scenarios transparent and removed hidden yield limits",
+    status: "Deployed and verified",
+    why: "The comparison calculator silently capped gross yield at 80% and floored net yield at -20%. It now shows the actual selected-scenario arithmetic without those limits; one current modeled listing crossed the old gross cap at the upper slider settings. Default calculations reconcile across all 2,190 modeled rows, and all 270 unsupported rows remain unmodeled. Unknown lease terms no longer become a 15-year assumption. The table labels its USD audit price, assumed occupancy/costs, and noncash lease allowance, while unsupported rows have no applied rate or cost assumptions. Highest in this scenario and No model flags replace Best and Clean; neither is a safety endorsement. Gross yield is readable rather than crossed out. All 141 live browser checks passed at 320px, 390px, and desktop, including keyboard sliders, focus containment, Escape, focus return, scrolling, and source-scope handling. Sixteen arithmetic tests, the production build, strict site/listing checks, and exact sitemap coverage pass. No source values, stored yields, or model inputs changed.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-09-28.md",
+  },
+  {
+    date: "2026-09-28",
     area: "Investor support / corrections / mobile navigation",
     title: "Kept listing context in correction and custom-review enquiries",
     status: "Deployed and verified",
@@ -790,7 +799,7 @@ const pendingImprovements = [
     priority: "Medium",
     owner: "UX",
     title: "Add persistent compare summaries for saved villas",
-    nextAction: "Consider a shareable comparison URL once user favorites have a stable server-side model.",
+    nextAction: "Next inspect whether a selected comparison can survive a refresh alongside the existing browser-local favorites, with clear reset/removal behavior. Sharing can follow only with a validated stable listing reference; no account or server-side favorite model is required for local persistence.",
   },
   {
     priority: "Medium",
@@ -819,7 +828,8 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
-  "The September 28 scheduled midnight full scrape completed at 00:05 Phoenix time with 2,460 audited listings. Fresh 09:57 UTC checks found 32 physical-spec gaps, zero unsupported multi-unit or outside-Bali scope leaks, zero unmodeled rows with nonzero model values, and zero yield-scenario mismatches across 2,190 modeled rows. The portfolio guard survived the fresh scrape. Sitemap coverage is exact at 2,460 listing plus 20 static URLs. Unknown physical facts remain flagged; no guardrail was lowered.",
+  "The September 28 comparison audit reconciles default arithmetic across all 2,190 modeled rows within stored rounding (maximum difference 0.005 percentage points); 270 unsupported rows retain no modeled net result. Removing the hidden 80% gross cap changes one actual listing at the upper slider settings, not the default scenario. No current row crossed the old -20% net floor at the lower settings; that regression is tested with synthetic data. Extreme input combinations are illustrative outputs, not investable claims, and require property-level evidence.",
+  "The September 28 scheduled midnight full scrape completed at 00:05 Phoenix time with 2,460 audited listings. Fresh 15:59 UTC checks found 32 physical-spec gaps, zero unsupported multi-unit or outside-Bali scope leaks, zero unmodeled rows with nonzero model values, and zero yield-scenario mismatches across 2,190 modeled rows. The portfolio guard survived the fresh scrape. Sitemap coverage is exact at 2,460 listing plus 20 static URLs. Unknown physical facts remain flagged; no guardrail was lowered.",
   "The September 28 no-scrape portfolio correction withheld single-villa math from ten additional explicit two-unit assets; eleven rows gained the scope flag. Strict live checks find zero unsupported portfolio rows leaking ROI, nightly rates, or occupancy estimates. RF2431's source confirms two separate villas, while some other titles have ambiguous unit price allocation. Source prices, physical facts, and crawl dates were not changed; no portfolio-specific return is claimed.",
   "2026-09-28 listing-label audit found two modeled rows with stored 0.0% yield whose public pages incorrectly said ROI Not Modeled. The public label is corrected without recalculation. Physical missing-value placeholders are now Not stated rather than 0 Bath or an unexplained dash. The listing verifier now checks an optional live zero-yield sample in visible HTML, title, and structured data, plus rejects literal zero-bath placeholders on physical-gap samples; 21 unit tests pass.",
   "2026-09-26 ROI reconciliation: 2,193 modeled live rows were checked against the auditor's shared 65% occupancy, 40% operating costs, stored USD purchase-price basis, and lease decay. Zero rows differ by more than 0.15 percentage points (maximum rounding difference 0.005). The earlier listing-page contradiction came from displaying provisional area occupancy and display-time FX alongside this stored yield. The site now labels the comparison scenario explicitly; actual property occupancy and owner P&L are still unknown.",
@@ -978,9 +988,10 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 28 contact release preserves listing references in correction and custom-review drafts, removes an unverified response-time promise, and passes all 161 live workflow checks. Strict canonical, eight-category listing, and exact sitemap checks pass. The scheduled midnight full scrape completed with 2,460 audited rows and 32 flagged physical gaps; the earlier portfolio-scope correction survived that refresh with zero model leaks. Paid checkout stays off and March occupancy proxies remain provisional. Mailbox delivery was not tested. Google Sheets OAuth and the stale .env GitHub token remain maintenance issues. GSC follow-up is October 2-9; the completed September 25 queue must not be resubmitted.",
+    "The September 28 comparison release removes hidden yield caps/floors, labels scenario assumptions and the noncash lease allowance, withholds unsupported math, and avoids safety endorsements. All 141 live calculator checks pass at 320px, 390px, and desktop; default arithmetic reconciles across 2,190 modeled rows. Strict canonical, eight-category listing, and exact 2,480-URL sitemap checks pass. The earlier contact release and portfolio safeguard remain live. The scheduled midnight scrape completed with 2,460 audited rows and 32 flagged physical gaps. No model or source data changed in this release. Paid checkout stays off, March occupancy proxies remain provisional, mailbox delivery is untested, and Sheets OAuth needs renewal. GSC follow-up is October 2-9; do not resubmit the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/#listings-section`,
     `${SITE_URL}/contact`,
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     `${SITE_URL}/sitemap.xml`,
@@ -988,6 +999,15 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/comparison_ui_live_2026-09-28.json",
+    ".tmp/comparison_math_verification_2026-09-28_1559.json",
+    ".tmp/comparison_input_audit_2026-09-28_1559.json",
+    ".tmp/live_verification_2026-09-28_comparison_release.json",
+    ".tmp/listing_page_verification_2026-09-28_comparison_release.json",
+    ".tmp/sitemap_coverage_2026-09-28_comparison_release.json",
+    ".tmp/supabase_data_quality_verification_2026-09-28_1559.json",
+    ".tmp/automation_freshness_2026-09-28_1559.json",
+    ".tmp/comparison_live_2026-09-28_390.png",
     ".tmp/contact_verification_live_2026-09-28.json",
     ".tmp/live_verification_2026-09-28_contact_release.json",
     ".tmp/listing_page_verification_2026-09-28_contact_release.json",
@@ -1699,6 +1719,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Comparisons now show the selected scenario without hidden 80% gross caps or -20% net floors. Audit price, occupancy/cost assumptions, and noncash lease allowance are explicit; unsupported assets receive no applied model assumptions. Highest selected yield and no flags do not imply a safe investment.",
         "Corrections and custom-review enquiries now retain the specific listing, including unsupported assets. Dated supporting evidence is requested, and the contact page no longer promises an unverified 48-hour response or guaranteed service availability.",
         "A modeled result that rounds to 0.0% is no longer confused with an unavailable yield. Missing bathrooms, bedrooms, and sizes are explicit unknowns, and a database update does not substitute for a source check date.",
         "The mobile free-audit button now tells buyers what it actually opens; paid checkout is deliberately held until the report, payment, and delivery path are verified. Paid comparables are described as public asking listings, not completed sales.",
@@ -1713,6 +1734,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The live comparison calculator passed 141 checks across 320px, 390px, and 1440px: baseline/upper/downside arithmetic, unsupported scope, readable wrapped labels, contained horizontal table scrolling, keyboard sliders, reset, modal focus trapping, Escape, restored page scrolling, and focus return. No document overflow or browser errors occurred.",
         "The contact page passed live default/correction/review layouts at 320px, 390px, and 1440px with no overflow or browser errors. Modeled and unsupported listings both navigated to the right reference and back at 390px. The oversized email address is replaced by compact icon-and-text actions.",
         "Both modeled-zero listings, a physical-gap listing, and an unsupported hotel passed live 320px, 390px, and 1440px checks after the missing-data release, with no overflow or browser errors. Bathrooms not stated wraps within the mobile details grid.",
         "After the paid-guard release, the live modeled listing passed 320px, 390px, and 1440px checks with no overflow or browser errors; the mobile free-PDF button focused the free email field.",
@@ -1724,12 +1746,14 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "Comparison results retain the compact research-table layout. Gross yield is now a readable before-cost measure rather than struck-through text, with net yield more prominent and ranking language limited to the selected scenario.",
         "Contact is now a compact, unframed research-support page with readable enquiry sections and evidence labels, preserving the existing BVT palette.",
         "Kept the dark editorial BVT palette and small-data-tool visual language.",
         "Used restrained hairline cards, compact labels, and investor-focused copy.",
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "Each comparison scenario is calculated once per selected listing per render and reused by the table; the pure math helper needs no extra network calls or dependency. The production build passes; this is not a measured speed benchmark.",
         "Contact enquiries remain server-rendered and use a fixed /contact canonical regardless of query context; malformed references are ignored and no new database fetch or client form service was added.",
         "Homepage still SSRs a seed set and hydrates the full ledger client-side.",
         "Dashboard crawl checks now report distinct listing paths instead of raw duplicate URL matches.",
@@ -1741,6 +1765,8 @@ export async function GET() {
       nextActions,
       progressFiles: [
         ".tmp/website_progress_2026-09-28.md",
+        ".tmp/comparison_ui_live_2026-09-28.json",
+        ".tmp/comparison_math_verification_2026-09-28_1559.json",
         ".tmp/seo_progress_2026-09-28.md",
         ".tmp/contact_verification_live_2026-09-28.json",
         ".tmp/website_progress_2026-09-27.md",
