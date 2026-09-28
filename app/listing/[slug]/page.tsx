@@ -83,6 +83,23 @@ function money(value: number | null | undefined): string {
   return `$${Math.round(value).toLocaleString("en-US")}`;
 }
 
+function modeledYield(listing: any): number | null {
+  const raw = listing.projected_roi;
+  if (raw == null || raw === "" || !(Number(listing.est_nightly_rate) > 0) ||
+      String(listing.rate_source || "").startsWith("unmodeled_")) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function bedsBathsLabel(raw?: string | null): string {
+  if (!raw?.trim()) return "Not stated";
+  const parts = raw.match(/^(\d+)\s+Bed\s*\/\s*(\d+)\s+Bath$/i);
+  if (!parts) return raw;
+  const beds = Number(parts[1]);
+  const baths = Number(parts[2]);
+  return `${beds > 0 ? `${beds} Bed` : "Bedrooms not stated"} / ${baths > 0 ? `${baths} Bath` : "Bathrooms not stated"}`;
+}
+
 // Human-readable labels + tooltips for flags (aligns with /methodology page)
 const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slate"; tip: string }> = {
   SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "The source records fewer than 15 years remaining. A shorter term increases BVT's noncash lease-value allowance; verify the signed expiry and extension terms." },
@@ -124,7 +141,7 @@ async function getComps(listing: any, max = 3) {
   if (!listing.location || !listing.bedrooms) return [] as any[];
   const { data } = await supabase
     .from("listings_tracker")
-    .select("id, slug, villa_name, bedrooms, last_price, price_description, price_per_room, projected_roi, thumbnail_url, features, lease_years, land_size")
+    .select("id, slug, villa_name, bedrooms, last_price, price_description, price_per_room, projected_roi, est_nightly_rate, rate_source, thumbnail_url, features, lease_years, land_size")
     .eq("status", "audited")
     .eq("location", listing.location)
     .eq("bedrooms", listing.bedrooms)
@@ -229,9 +246,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const priceUsd = priceUsdNum > 0
     ? `$${priceUsdNum.toLocaleString("en-US")} USD`
     : "Price N/A";
-  const roi = listing.projected_roi
-    ? `${Number(listing.projected_roi).toFixed(1)}%`
-    : "N/A";
+  const yieldValue = modeledYield(listing);
+  const roi = yieldValue !== null ? `${yieldValue.toFixed(1)}%` : "N/A";
   const beds = listing.bedrooms || "?";
   const location = listing.location || "Bali";
   const leaseType = tenureLabel(listing);
@@ -241,10 +257,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // listing's exact name the way BHI titles it) can match us. The differentiator
   // (audit · yield) lives in the tail; the "| Bali Villa Truth" brand suffix is
   // added automatically by the root layout's title template.
-  const title = listing.projected_roi
+  const title = yieldValue !== null
     ? `${niceName} — Audit · ${roi} Net Yield`
     : `${niceName} — ROI Not Modeled`;
-  const description = listing.projected_roi
+  const description = yieldValue !== null
     ? `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location}, analyzed at ${priceUsd} at audit FX. Estimated net yield: ${roi} under a 65% occupancy scenario after 40% operating costs and any lease decay. Review the assumptions.`
     : `Source listing review: ${niceName} in ${location}, USD price equivalent ${priceUsd}. BVT has not modeled ROI for this asset; check the listing's scope and diligence flags before estimating returns.`;
 
@@ -280,6 +296,7 @@ function buildJsonLd(listing: any, slug: string) {
   const niceName = toTitleCase(listing.villa_name || "");
   const outsideBali = String(listing.rate_source || "").includes("non_bali") || location === "Other Indonesian Islands";
   const hub = locationHub(location);
+  const yieldValue = modeledYield(listing);
 
   const realEstate = {
     "@type": "RealEstateListing",
@@ -304,7 +321,7 @@ function buildJsonLd(listing: any, slug: string) {
       { "@type": "PropertyValue", name: "Bedrooms", value: listing.bedrooms },
       { "@type": "PropertyValue", name: "Land Size", value: listing.land_size ? `${listing.land_size} m²` : "N/A" },
       { "@type": "PropertyValue", name: "Building Size", value: listing.building_size ? `${listing.building_size} m²` : "N/A" },
-      { "@type": "PropertyValue", name: "Net Yield (Estimated)", value: listing.projected_roi ? `${Number(listing.projected_roi).toFixed(1)}%` : "N/A" },
+      { "@type": "PropertyValue", name: "Net Yield (Estimated)", value: yieldValue !== null ? `${yieldValue.toFixed(1)}%` : "N/A" },
       { "@type": "PropertyValue", name: "Tenure", value: tenureSchemaValue(listing) },
     ],
   };
@@ -339,9 +356,8 @@ export default async function ListingPage({ params }: Props) {
   const niceName = toTitleCase(listing.villa_name || "");
 
   const priceUsd = Math.round(getPriceUSD(listing)) || null;
-  const roi = listing.projected_roi
-    ? Number(listing.projected_roi).toFixed(1)
-    : null;
+  const yieldValue = modeledYield(listing);
+  const roi = yieldValue !== null ? yieldValue.toFixed(1) : null;
   const flags: string[] = listing.flags ? listing.flags.split(",").filter(Boolean) : [];
   const sourceLeaseYears = Number(listing.lease_years) || 0;
   const leaseTermNotStated = flags.includes("LEASE_TERM_NOT_STATED") || (isLeaseholdListing(listing) && sourceLeaseYears === 0);
@@ -363,7 +379,7 @@ export default async function ListingPage({ params }: Props) {
   const netRevenue = grossRevenue - expenses;
   const leaseDepreciation = hasNightlyRate && leaseYearsForMath > 0 && priceUsd ? priceUsd / leaseYearsForMath : 0;
   const grossYield = priceUsd && grossRevenue > 0 ? (grossRevenue / priceUsd) * 100 : null;
-  const roiDisplay = roi ? `${roi}%` : "N/A";
+  const roiDisplay = roi !== null ? `${roi}%` : "N/A";
   const rateSource = cleanSourceLabel(listing.rate_source, "BVT market-rate model");
   const occupancySource = cleanSourceLabel(listing.occupancy_source, "Area occupancy estimate");
   const usesAreaRateSample = (listing.rate_source || "").startsWith("bvt_market_model")
@@ -396,7 +412,7 @@ export default async function ListingPage({ params }: Props) {
   const priceDelta = firstPrice && currentPrice ? ((currentPrice - firstPrice) / firstPrice) * 100 : null;
 
   // The source timestamp must not advance during a no-scrape model correction.
-  const lastAuditedISO = listing.last_crawled_at || listing.last_audited_at || listing.updated_at || listing.created_at || null;
+  const lastAuditedISO = listing.last_crawled_at || null;
   const lastAuditedRel = formatRelativeDate(lastAuditedISO);
   const hub = locationHub(listing.location || "Bali");
 
@@ -438,11 +454,11 @@ export default async function ListingPage({ params }: Props) {
                 📍 {listing.location || "Bali"}
               </span>
               <span>•</span>
-              <span>{listing.bedrooms} Bed{listing.bedrooms !== 1 ? "s" : ""}</span>
+              <span>{Number(listing.bedrooms) > 0 ? `${listing.bedrooms} Bed${Number(listing.bedrooms) !== 1 ? "s" : ""}` : "Bedroom count not stated"}</span>
               {listing.beds_baths && (
                 <>
                   <span>•</span>
-                  <span>{listing.beds_baths}</span>
+                  <span>{bedsBathsLabel(listing.beds_baths)}</span>
                 </>
               )}
               <span>•</span>
@@ -455,6 +471,7 @@ export default async function ListingPage({ params }: Props) {
                   <span title={lastAuditedISO || ""}>Source checked {lastAuditedRel}</span>
                 </>
               )}
+              {!lastAuditedRel && <span>Source check date not available</span>}
             </div>
 
             {/* FLAGS */}
@@ -538,23 +555,23 @@ export default async function ListingPage({ params }: Props) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Location</span>
-                    <span className="font-medium">{listing.location || "—"}</span>
+                    <span className="font-medium">{listing.location || "Not stated"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Bedrooms</span>
-                    <span className="font-medium">{listing.bedrooms || "—"}</span>
+                    <span className="font-medium">{Number(listing.bedrooms) > 0 ? listing.bedrooms : "Not stated"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Beds / Baths</span>
-                    <span className="font-medium">{listing.beds_baths || "—"}</span>
+                    <span className="font-medium">{bedsBathsLabel(listing.beds_baths)}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Land Size</span>
-                    <span className="font-medium">{listing.land_size ? `${listing.land_size} m²` : "—"}</span>
+                    <span className="font-medium">{Number(listing.land_size) > 0 ? `${listing.land_size} m²` : "Not stated"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Building Size</span>
-                    <span className="font-medium">{listing.building_size ? `${listing.building_size} m²` : "—"}</span>
+                    <span className="font-medium">{Number(listing.building_size) > 0 ? `${listing.building_size} m²` : "Not stated"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Tenure</span>
@@ -579,6 +596,11 @@ export default async function ListingPage({ params }: Props) {
                     ? "BVT treats the ROI number as a stress-tested estimate, not a promise. Check whether the assumptions survive negotiation, lower occupancy, and lease decay."
                     : "This property is outside the supported ROI model. No rental rate, occupancy, or yield estimate is available; verify the asset and source details before making an investment case."}
                 </p>
+                {yieldValue === 0 && (
+                  <p className="text-sm text-amber-300 mb-4 leading-relaxed">
+                    The stored model rounds to 0.0% net yield. This is a modeled result, not missing data or a guarantee of breaking even. It includes the stated operating-cost screen and any noncash lease allowance; actual rental cash flow can differ.
+                  </p>
+                )}
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
                     <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Gross yield</div>
@@ -812,7 +834,8 @@ export default async function ListingPage({ params }: Props) {
                     {comps.map((c: any) => {
                       const cPrice = Math.round(getPriceUSD(c));
                       const cName = toTitleCase(c.villa_name || "");
-                      const cRoi = c.projected_roi ? Number(c.projected_roi).toFixed(1) : null;
+                      const cYield = modeledYield(c);
+                      const cRoi = cYield !== null ? cYield.toFixed(1) : null;
                       return (
                         <Link
                           key={c.id}
