@@ -2,9 +2,10 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink, RefreshCw } from 'lucide-react';
 import { BvtLockup } from './BvtSeal';
 import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
+import { COMPARISON_STORAGE_KEY, MAX_COMPARISON_VILLAS, normalizeComparisonIds, parseComparisonSelection } from '@/app/_lib/comparisonSelection';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -272,6 +273,7 @@ export default function HomeClient({
 }: HomeClientProps) {
   const [listings, setListings] = useState<any[]>(initialListings);
   const [loading, setLoading] = useState(initialListings.length === 0);
+  const [inventoryFailed, setInventoryFailed] = useState(false);
   const [hasFullDataset, setHasFullDataset] = useState(
     initialTotalCount > 0 && initialListings.length >= initialTotalCount
   );
@@ -352,11 +354,54 @@ export default function HomeClient({
 
   // --- COMPARE MODE STATES ---
   const [compareSet, setCompareSet] = useState<Set<number>>(new Set());
+  const [comparisonLoaded, setComparisonLoaded] = useState(false);
+  const [comparisonSaveError, setComparisonSaveError] = useState(false);
+  const [removedComparisonCount, setRemovedComparisonCount] = useState(0);
   const [showCompare, setShowCompare] = useState(false);
   const [sliderNightly, setSliderNightly] = useState(1.0);   // multiplier: 0.5x–2.0x
   const [sliderOccupancy, setSliderOccupancy] = useState(65); // percent: 20–95 — matches pipeline flat 65%
   const [sliderExpense, setSliderExpense] = useState(40);     // percent: 20–60
   const comparisonDialogRef = useRef<HTMLDivElement>(null);
+  const selectedComparisonVillas = useMemo(() => listings.filter(v => compareSet.has(v.id)), [listings, compareSet]);
+  const comparisonPending = selectedComparisonVillas.length < compareSet.size;
+  const availableFavoriteIds = useMemo(() => {
+    const available = new Set(listings.map(v => v.id));
+    return Array.from(favorites).filter(id => available.has(id));
+  }, [favorites, listings]);
+
+  useEffect(() => {
+    try {
+      setCompareSet(new Set(parseComparisonSelection(localStorage.getItem(COMPARISON_STORAGE_KEY))));
+    } catch {
+      setComparisonSaveError(true);
+    }
+    setComparisonLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!comparisonLoaded) return;
+    try {
+      if (compareSet.size) localStorage.setItem(COMPARISON_STORAGE_KEY, JSON.stringify(Array.from(compareSet)));
+      else localStorage.removeItem(COMPARISON_STORAGE_KEY);
+    } catch {
+      setComparisonSaveError(true);
+    }
+  }, [compareSet, comparisonLoaded]);
+
+  // Only a complete successful inventory can establish that a stored ID is unavailable.
+  useEffect(() => {
+    if (!comparisonLoaded || !hasFullDataset) return;
+    const available = new Set(listings.map(v => v.id));
+    const remaining = Array.from(compareSet).filter(id => available.has(id));
+    if (remaining.length !== compareSet.size) {
+      setRemovedComparisonCount(compareSet.size - remaining.length);
+      setCompareSet(new Set(remaining));
+    }
+  }, [compareSet, comparisonLoaded, hasFullDataset, listings]);
+
+  useEffect(() => {
+    if (showCompare && compareSet.size === 0) setShowCompare(false);
+  }, [compareSet, showCompare]);
 
   useEffect(() => {
     if (!showCompare) return;
@@ -381,7 +426,7 @@ export default function HomeClient({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKey);
       if (previousFocus?.isConnected && previousFocus !== document.body) previousFocus.focus();
-      else document.querySelector<HTMLButtonElement>('[data-open-comparison]')?.focus();
+      else (document.querySelector<HTMLButtonElement>('[data-open-comparison]') || document.querySelector<HTMLButtonElement>('[data-saved-villas]'))?.focus();
     };
   }, [showCompare]);
 
@@ -389,7 +434,7 @@ export default function HomeClient({
     setCompareSet(prev => {
       const next = new Set(prev);
       if (next.has(villaId)) next.delete(villaId);
-      else if (next.size < 5) next.add(villaId);
+      else if (next.size < MAX_COMPARISON_VILLAS) next.add(villaId);
       return next;
     });
   }, []);
@@ -403,7 +448,7 @@ export default function HomeClient({
         .gt('last_price', 0)
         .limit(5000); // Default is 1000, we need all listings
       
-      if (error) console.error(error);
+      if (error) { console.error(error); setInventoryFailed(true); }
       else {
         const raw = data || [];
         const real = raw.filter((v: any) => (v.last_price || 0) > 0 && (v.villa_name || '').length > 2);
@@ -1230,6 +1275,7 @@ export default function HomeClient({
              </span>
            </p>
            <button
+             data-saved-villas
              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
              className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${
                showFavoritesOnly
@@ -1240,15 +1286,16 @@ export default function HomeClient({
              <Heart size={11} className={showFavoritesOnly ? 'fill-[color:var(--bvt-accent)] text-[color:var(--bvt-accent)]' : ''} strokeWidth={1.5} />
              <span className="font-mono tabular-nums">Saved · {favorites.size}</span>
            </button>
-           {showFavoritesOnly && favorites.size > 0 && compareSet.size === 0 && !showCompare && (
+           {showFavoritesOnly && availableFavoriteIds.length > 0 && compareSet.size === 0 && !showCompare && (
              <button
+               disabled={!comparisonLoaded || !hasFullDataset}
                onClick={() => {
-                 const batch = Array.from(favorites).slice(0, 5);
+                 const batch = normalizeComparisonIds(availableFavoriteIds);
                  setCompareSet(new Set(batch));
                  setShowCompare(true);
                  setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40);
                }}
-               className="flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] transition-colors"
+               className="flex items-center gap-1.5 text-[11px] font-medium text-[color:var(--bvt-accent)] hover:text-[color:var(--bvt-accent-warm)] transition-colors disabled:opacity-50"
              >
                <SlidersHorizontal size={11} strokeWidth={1.5} /> Compare saved →
              </button>
@@ -1266,6 +1313,19 @@ export default function HomeClient({
             </button>
          </div>
       </div>
+
+      {(removedComparisonCount > 0 || comparisonSaveError || (comparisonPending && inventoryFailed)) && (
+        <div role="status" className="max-w-[1400px] mx-auto mb-6 flex items-start gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
+          <Info size={14} className="shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            {removedComparisonCount > 0 && <p>{removedComparisonCount} unavailable selection{removedComparisonCount !== 1 ? 's' : ''} removed from comparison.</p>}
+            {comparisonSaveError && <p>Browser storage unavailable. Comparison selections cannot be saved on this device.</p>}
+            {comparisonPending && inventoryFailed && <p>Inventory unavailable. Stored comparison selections were retained.</p>}
+          </div>
+          {comparisonPending && inventoryFailed && <button aria-label="Retry loading comparison listings" title="Retry inventory" onClick={() => window.location.reload()} className="shrink-0 flex items-center gap-1 p-1 hover:text-[color:var(--bvt-ink)]"><RefreshCw size={14} /> Retry</button>}
+          {!(comparisonPending && inventoryFailed) && <button aria-label="Dismiss comparison notice" title="Dismiss notice" onClick={() => { setRemovedComparisonCount(0); setComparisonSaveError(false); }} className="shrink-0 p-1 hover:text-[color:var(--bvt-ink)]"><X size={14} /></button>}
+        </div>
+      )}
 
       {/* MOBILE VIEW TOGGLE: List / Map */}
       <div className="md:hidden max-w-[1400px] mx-auto mb-5">
@@ -1816,8 +1876,8 @@ export default function HomeClient({
 
       {/* FLOATING COMPARE BAR — editorial, BVT tokens */}
       {compareSet.size > 0 && !showCompare && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] shadow-2xl px-4 md:px-6 py-3 flex items-center gap-4 md:gap-5 animate-in slide-in-from-bottom duration-300 max-w-[95vw]">
-          <div className="flex items-center gap-2">
+        <div data-comparison-bar className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] shadow-2xl px-4 md:px-6 py-3 flex flex-wrap sm:flex-nowrap items-center gap-3 w-[calc(100%_-_2rem)] max-w-xl">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <BarChart3 size={13} className="text-[color:var(--bvt-accent)]" strokeWidth={1.75} />
             <span className="text-[12px] text-[color:var(--bvt-ink)]">
               <span className="font-mono tabular-nums text-[color:var(--bvt-accent)]">{compareSet.size}</span>
@@ -1826,13 +1886,17 @@ export default function HomeClient({
           </div>
           <button
             data-open-comparison
+            disabled={comparisonPending || !comparisonLoaded}
             onClick={() => { setShowCompare(true); setSliderNightly(1.0); setSliderOccupancy(65); setSliderExpense(40); }}
-            className="bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[11px] font-semibold tracking-[0.14em] uppercase px-5 py-2 transition-colors flex items-center gap-2"
+            className="order-3 sm:order-none w-full sm:w-auto justify-center bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] text-[11px] font-semibold tracking-[0.14em] uppercase px-5 py-2 transition-colors flex items-center gap-2 disabled:opacity-50"
           >
-            <SlidersHorizontal size={12} strokeWidth={2} /> Compare Now
+            <SlidersHorizontal size={12} strokeWidth={2} /> {comparisonPending ? (inventoryFailed ? 'Inventory unavailable' : 'Loading selections') : 'Compare Now'}
           </button>
           <button
-            onClick={() => setCompareSet(new Set())}
+            data-clear-comparison
+            aria-label="Clear comparison"
+            title="Clear comparison"
+            onClick={() => { setCompareSet(new Set()); document.querySelector<HTMLButtonElement>('[data-saved-villas]')?.focus(); }}
             className="text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)] text-[11px] font-medium tracking-wide uppercase px-2 py-1 transition-colors"
           >
             Clear
@@ -1842,7 +1906,7 @@ export default function HomeClient({
 
       {/* COMPARE PANEL MODAL */}
       {showCompare && (() => {
-        const compareVillas = listings.filter(v => compareSet.has(v.id));
+        const compareVillas = selectedComparisonVillas;
         const scenarios = new globalThis.Map(compareVillas.map(v => [v.id, calculateDynamicROI(v, sliderNightly, sliderOccupancy, sliderExpense)] as const));
         const BVT_DEFAULTS = { nightly: 1.0, occupancy: 65, expense: 40 };
 
@@ -1965,7 +2029,10 @@ export default function HomeClient({
                       <th className="text-left py-3 pr-4 w-36 font-medium">Metric</th>
                       {compareVillas.map(v => (
                         <th key={v.id} className="text-center py-3 px-3 min-w-[140px] font-medium">
-                          <div title={v.villa_name} className="text-[color:var(--bvt-ink)] text-[11px] normal-case font-medium truncate max-w-[160px]">{v.villa_name}</div>
+                          <div className="flex items-center justify-center gap-1">
+                            <div title={v.villa_name} className="text-[color:var(--bvt-ink)] text-[11px] normal-case font-medium truncate max-w-[128px]">{v.villa_name}</div>
+                            <button data-remove-comparison={v.id} aria-label={`Remove ${v.villa_name} from comparison`} title="Remove from comparison" onClick={() => { toggleCompare(v.id); comparisonDialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus(); }} className="shrink-0 p-1.5 hover:text-[color:var(--bvt-ink)]"><X size={12} /></button>
+                          </div>
                           <div className="text-[9px] text-[color:var(--bvt-ink-muted)] font-normal tracking-wide mt-0.5">{v.location}</div>
                         </th>
                       ))}
