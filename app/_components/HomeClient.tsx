@@ -2,10 +2,11 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink, RefreshCw } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 import { BvtLockup } from './BvtSeal';
 import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
 import { COMPARISON_STORAGE_KEY, MAX_COMPARISON_VILLAS, normalizeComparisonIds, parseComparisonSelection } from '@/app/_lib/comparisonSelection';
+import { SAVED_STORAGE_KEY, normalizeSavedIds, parseSavedSelection } from '@/app/_lib/savedSelection';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -312,14 +313,15 @@ export default function HomeClient({
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  const [favoritesSaveError, setFavoritesSaveError] = useState(false);
+  const favoritesCanPersist = useRef(false);
 
   const toggleFavorite = useCallback((villaId: number) => {
+    favoritesCanPersist.current = true;
     setFavorites(prev => {
       const next = new Set(prev);
       if (next.has(villaId)) next.delete(villaId);
       else next.add(villaId);
-      // Persist to localStorage
-      try { localStorage.setItem('bvt-favorites', JSON.stringify(Array.from(next))); } catch {}
       return next;
     });
   }, []);
@@ -327,11 +329,13 @@ export default function HomeClient({
   // Load favorites from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('bvt-favorites');
-      if (saved) {
-        const ids: number[] = JSON.parse(saved);
-        setFavorites(new Set(ids));
-      }
+      setFavorites(new Set(parseSavedSelection(localStorage.getItem(SAVED_STORAGE_KEY))));
+      favoritesCanPersist.current = true;
+    } catch {
+      setFavoritesSaveError(true);
+    }
+    setFavoritesLoaded(true);
+    try {
       // If we have a stored email, load favorites from Supabase too
       const storedEmail = localStorage.getItem('bvt-email');
       if (storedEmail) {
@@ -341,16 +345,24 @@ export default function HomeClient({
           if (data && data.length > 0) {
             setFavorites(prev => {
               const merged = new Set(prev);
-              data.forEach((row: any) => merged.add(row.villa_id));
-              try { localStorage.setItem('bvt-favorites', JSON.stringify(Array.from(merged))); } catch {}
+              normalizeSavedIds(data.map((row: any) => row.villa_id)).forEach(id => merged.add(id));
               return merged;
             });
           }
         })();
       }
     } catch {}
-    setFavoritesLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (!favoritesLoaded || !favoritesCanPersist.current) return;
+    try {
+      if (favorites.size) localStorage.setItem(SAVED_STORAGE_KEY, JSON.stringify(Array.from(favorites)));
+      else localStorage.removeItem(SAVED_STORAGE_KEY);
+    } catch {
+      setFavoritesSaveError(true);
+    }
+  }, [favorites, favoritesLoaded]);
 
   // --- COMPARE MODE STATES ---
   const [compareSet, setCompareSet] = useState<Set<number>>(new Set());
@@ -368,6 +380,17 @@ export default function HomeClient({
     const available = new Set(listings.map(v => v.id));
     return Array.from(favorites).filter(id => available.has(id));
   }, [favorites, listings]);
+  const unavailableFavoriteCount = hasFullDataset ? favorites.size - availableFavoriteIds.length : 0;
+  const savedLabel = !favoritesLoaded ? 'Saved · ...' : hasFullDataset
+    ? `Saved · ${availableFavoriteIds.length}`
+    : `Saved · ${favorites.size} ${inventoryFailed ? 'stored' : 'checking'}`;
+
+  const removeUnavailableFavorites = () => {
+    if (!hasFullDataset) return;
+    const available = new Set(listings.map(v => v.id));
+    setFavorites(prev => new Set(Array.from(prev).filter(id => available.has(id))));
+    document.querySelector<HTMLButtonElement>('[data-saved-villas]')?.focus();
+  };
 
   useEffect(() => {
     try {
@@ -883,6 +906,37 @@ export default function HomeClient({
   const auditedCount = hasFullDataset ? listings.length : (initialTotalCount || listings.length);
   const flaggedCount = hasFullDataset ? computedFlaggedCount : (initialFlaggedCount || computedFlaggedCount);
 
+  const clearListingFilters = () => {
+    setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99);
+    setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0);
+    setFilterLeaseType('All'); setRiskFilter('All'); setSortOption('price-asc');
+  };
+
+  const emptyResultsPending = loading || (showFavoritesOnly && (!favoritesLoaded || (!hasFullDataset && !inventoryFailed)));
+  const emptyResultsMessage = showFavoritesOnly
+    ? inventoryFailed && !hasFullDataset ? 'Saved inventory could not be checked.'
+      : favorites.size === 0 ? 'No saved dossiers yet.'
+      : availableFavoriteIds.length === 0 ? 'Saved dossiers are unavailable in the current inventory.'
+      : 'No saved dossiers match these filters.'
+    : inventoryFailed && !hasFullDataset ? 'Inventory could not be loaded.' : 'No properties match your filters.';
+
+  const renderEmptyResults = () => (
+    <div data-empty-results>
+      {showFavoritesOnly ? <Heart size={28} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" /> : <Filter size={28} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" />}
+      <p className="text-[13px] text-[color:var(--bvt-ink-muted)]">{emptyResultsMessage}</p>
+      <div className="mt-4 flex justify-center gap-4">
+        {showFavoritesOnly ? (
+          <button onClick={() => setShowFavoritesOnly(false)} className="inline-flex items-center gap-1.5 text-[12px] text-[color:var(--bvt-accent)]"><LayoutList size={14} /> Browse all dossiers</button>
+        ) : inventoryFailed && !hasFullDataset ? (
+          <button onClick={() => window.location.reload()} className="inline-flex items-center gap-1.5 text-[12px] text-[color:var(--bvt-accent)]"><RefreshCw size={14} /> Retry inventory</button>
+        ) : null}
+        {hasFullDataset && (!showFavoritesOnly || availableFavoriteIds.length > 0) && (
+          <button data-clear-listing-filters onClick={clearListingFilters} className="inline-flex items-center gap-1.5 text-[12px] text-[color:var(--bvt-accent)]"><Filter size={14} /> Clear filters</button>
+        )}
+      </div>
+    </div>
+  );
+
   const jumpToLedger = () => {
     document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -1264,7 +1318,7 @@ export default function HomeClient({
 
       {/* RESULTS BAR — editorial masthead strip */}
       <div className={`${showMap ? 'max-w-[100rem]' : 'max-w-[1400px]'} mx-auto mb-6 md:mb-8 flex flex-wrap justify-between items-center gap-3 transition-all`}>
-         <div className="flex items-center gap-5">
+         <div className="flex flex-wrap items-center gap-5">
            <p className="hidden md:flex items-center gap-2">
              <span className="label-micro">
                {loading
@@ -1276,6 +1330,7 @@ export default function HomeClient({
            </p>
            <button
              data-saved-villas
+             aria-pressed={showFavoritesOnly}
              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
              className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${
                showFavoritesOnly
@@ -1284,7 +1339,7 @@ export default function HomeClient({
              }`}
            >
              <Heart size={11} className={showFavoritesOnly ? 'fill-[color:var(--bvt-accent)] text-[color:var(--bvt-accent)]' : ''} strokeWidth={1.5} />
-             <span className="font-mono tabular-nums">Saved · {favorites.size}</span>
+             <span className="font-mono tabular-nums">{savedLabel}</span>
            </button>
            {showFavoritesOnly && availableFavoriteIds.length > 0 && compareSet.size === 0 && !showCompare && (
              <button
@@ -1313,6 +1368,21 @@ export default function HomeClient({
             </button>
          </div>
       </div>
+
+      {(favoritesSaveError || (showFavoritesOnly && favoritesLoaded && (!hasFullDataset || unavailableFavoriteCount > 0))) && (
+        <div data-saved-notice role="status" className="max-w-[1400px] mx-auto mb-6 flex flex-wrap items-start gap-3 text-[12px] text-[color:var(--bvt-ink-muted)]">
+          <div className="flex flex-1 min-w-[200px] items-start gap-2">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              {favoritesSaveError && <p>Browser storage unavailable. Saved changes cannot be persisted on this device.</p>}
+              {showFavoritesOnly && !hasFullDataset && <p>{inventoryFailed ? 'Inventory unavailable. Saved selections were retained.' : 'Checking current inventory. Saved selections are retained.'}</p>}
+              {showFavoritesOnly && unavailableFavoriteCount > 0 && <p>{availableFavoriteIds.length} available · {unavailableFavoriteCount} unavailable. Unavailable saved IDs are retained on this device; absence is not confirmation of delisting.</p>}
+            </div>
+          </div>
+          {showFavoritesOnly && inventoryFailed && !hasFullDataset && <button aria-label="Retry loading saved listings" title="Retry inventory" onClick={() => window.location.reload()} className="inline-flex items-center gap-1 p-1 text-[color:var(--bvt-accent)]"><RefreshCw size={14} /> Retry</button>}
+          {showFavoritesOnly && unavailableFavoriteCount > 0 && <button data-remove-unavailable-saved aria-label="Remove unavailable saved IDs on this device" title="Remove unavailable saved IDs on this device" onClick={removeUnavailableFavorites} className="inline-flex items-center gap-1 p-1 text-[color:var(--bvt-accent)]"><Trash2 size={14} /> Remove unavailable</button>}
+        </div>
+      )}
 
       {(removedComparisonCount > 0 || comparisonSaveError || (comparisonPending && inventoryFailed)) && (
         <div role="status" className="max-w-[1400px] mx-auto mb-6 flex items-start gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
@@ -1352,7 +1422,7 @@ export default function HomeClient({
       <main className={`${mobileView === 'list' ? 'block' : 'hidden'} md:hidden transition-all w-full`}>
         <div className="divide-y divide-[color:var(--bvt-hairline)] border-t border-b border-[color:var(--bvt-hairline)]">
           {displayListings.length === 0 ? (
-            loading ? (
+            emptyResultsPending ? (
               // Loading skeleton
               <div>
                 {[0,1,2,3].map(i => (
@@ -1370,8 +1440,7 @@ export default function HomeClient({
               </div>
             ) : (
               <div className="py-16 text-center">
-                {showFavoritesOnly ? <Heart size={28} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" /> : <Filter size={28} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" />}
-                <p className="text-[13px] text-[color:var(--bvt-ink-muted)]">{showFavoritesOnly ? 'No saved dossiers yet.' : 'No properties match your filters.'}</p>
+                {renderEmptyResults()}
               </div>
             )
           ) : (
@@ -1546,7 +1615,7 @@ export default function HomeClient({
             </thead>
             <tbody className="divide-y divide-[color:var(--bvt-hairline)]">
               {displayListings.length === 0 ? (
-                  loading ? (
+                  emptyResultsPending ? (
                     [0,1,2,3,4,5].map(i => (
                       <tr key={i} className="animate-pulse">
                         <td className="py-6 pr-2"><div className="h-3 bg-[color:var(--bvt-bg-soft)] w-6" /></td>
@@ -1560,8 +1629,7 @@ export default function HomeClient({
                   ) : (
                     <tr>
                         <td colSpan={6} className="py-20 text-center">
-                            {showFavoritesOnly ? <Heart size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" /> : <Filter size={32} strokeWidth={1} className="mx-auto mb-4 text-[color:var(--bvt-ink-faint)]" />}
-                            <p className="text-[14px] text-[color:var(--bvt-ink-muted)]">{showFavoritesOnly ? 'No saved dossiers yet. Click the heart to save one.' : 'No properties match your filters.'}</p>
+                            {renderEmptyResults()}
                         </td>
                     </tr>
                   )
