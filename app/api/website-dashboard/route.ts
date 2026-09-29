@@ -31,8 +31,8 @@ const completedImprovements = [
     date: "2026-09-29",
     area: "Newsletter reliability / investor trust / mobile usability",
     title: "Made newsletter signup and email status truthful",
-    status: "Deployed; live verification pending",
-    why: "Signup success now requires a confirmed database write. Storage errors and duplicate conflicts return an uncertain failure without sending an email or exposing whether an address exists. A confirmed signup remains successful even when email-provider acceptance is unconfirmed; acceptance is never described as inbox delivery. The homepage requires the explicit saved receipt, prevents repeated pending submits, retains the email after errors and recovers after a 20-second timeout. Unsupported Monday, weekly-digest and one-click-unsubscribe promises are removed from the form, footer and welcome email. The policy explains separate PDF consent and a contact-based removal request. All 28 mocked route tests, 76 intercepted browser checks, 39 comparison tests, 27 Python regressions, 357 Saved/privacy/comparison checks and the production build pass locally. No real subscribers were read, subscriptions created or emails sent. Live verification is pending. Owner sending/removal workflow, server policy and approved end-to-end tests remain separate dependencies.",
+    status: "Deployed and verified",
+    why: "Signup success now requires a confirmed database write. Storage errors and duplicate conflicts return an uncertain failure without sending an email or exposing whether an address exists. A confirmed signup remains successful even when email-provider acceptance is unconfirmed; acceptance is never described as inbox delivery. The homepage requires the explicit saved receipt, prevents repeated pending submits, retains the email after errors and recovers after a 20-second timeout. Unsupported Monday, weekly-digest and one-click-unsubscribe promises are removed from the form, footer and welcome email. The policy explains separate PDF consent and a contact-based removal request. All 28 mocked route tests, 39 comparison tests, 27 Python regressions and production builds pass. The 76 intercepted newsletter checks and 357 Saved/privacy/comparison checks pass locally and live at 320px, 390px and desktop, with no overflow or runtime errors. Live strict site/eight-category listing/exact sitemap checks and 33 dashboard-access checks pass after Vercel success; live mobile screenshots were visually inspected. No real subscribers were read, subscriptions created or emails sent. Mocked responses verify UI and route behavior, not a real delivery or deletion workflow. Owner sending/removal workflow, server policy and approved end-to-end tests remain separate dependencies.",
     url: `${SITE_URL}/#newsletter`,
     progressFile: ".tmp/website_progress_2026-09-29.md",
   },
@@ -853,6 +853,11 @@ const pendingImprovements = [
 
 const blockers = [
   {
+    blocker: "Newsletter delivery and removal verification",
+    status: "Owner confirmation and test approval required",
+    note: "The website's persistence responses and delivery copy are corrected, but the monitored removal mailbox, sending workflow, leads-table policy and end-to-end delivery/deletion are not verified. Tests used only mocked/intercepted responses, not actual subscribers. No digest, automated unsubscribe, inbox-delivery or deletion-time promise is enabled by this release.",
+  },
+  {
     blocker: "Backlink outreach",
     status: "Blocked by user approval/account access",
     note: "Prepared outreach exists, but no third-party posting or emailing should happen without approval.",
@@ -1035,7 +1040,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 29 newsletter release requires a confirmed storage response before success and separates email-provider acceptance from inbox delivery. Unsupported sending and unsubscribe promises are removed; PDF and newsletter consent remain separate. All 28 mocked route tests, 76 intercepted newsletter checks, 39 comparison tests, 27 Python regressions, 357 Saved/privacy/comparison checks and the production build pass locally. Live verification is pending. Fresh strict preflight checks verify 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine midnight run. No actual subscriber or model data changed during testing. Owner delivery/removal workflow and legacy database policy, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
+    "The September 29 newsletter release requires confirmed storage before success and separates provider acceptance from inbox delivery. Unsupported sending/unsubscribe promises are removed; PDFs retain separate consent. All 28 mocked route tests, 39 comparison tests, 27 Python regressions and production builds pass. The 76 newsletter and 357 Saved/privacy/comparison checks pass locally and live, with strict site/eight-category listing/exact sitemap checks and 33 dashboard-access checks after Vercel success. Live mobile screenshots were visually inspected. Current strict evidence verifies 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine midnight run. No actual subscriber or model data changed during testing; no real delivery/deletion is claimed. Owner delivery/removal workflow, legacy database policy, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#newsletter`,
@@ -1049,6 +1054,14 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/newsletter_ui_live_2026-09-29_1602.json",
+    ".tmp/saved_privacy_live_2026-09-29_1602.json",
+    ".tmp/saved_ui_live_2026-09-29_1602.json",
+    ".tmp/comparison_ui_live_2026-09-29_1602.json",
+    ".tmp/dashboard_privacy_2026-09-29_newsletter_release.json",
+    ".tmp/live_verification_2026-09-29_newsletter_release.json",
+    ".tmp/listing_page_verification_2026-09-29_newsletter_release.json",
+    ".tmp/sitemap_coverage_2026-09-29_newsletter_release.json",
     ".tmp/newsletter_route_tests_2026-09-29_1602.json",
     ".tmp/newsletter_ui_local_2026-09-29_1602.json",
     ".tmp/saved_privacy_local_2026-09-29_1602.json",
@@ -1840,7 +1853,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
-        "The newsletter passes 76 local intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions pass locally. Local 320px success and desktop failure screenshots were visually inspected; live verification is pending.",
+        "The newsletter passes 76 local/live intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions also pass locally/live. Local and live mobile screenshots were visually inspected; no overflow or runtime errors and no real newsletter requests or emails.",
         "The privacy release passes 57 local and live checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. All 88 Saved and 212 comparison regressions also pass locally/live. Live 320px Saved and 390px policy screenshots were visually inspected, alongside local 320px views.",
         "The Saved release passes 88 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, failed-read preservation through later in-memory saves, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
         "The comparison-persistence release passes 212 local and live browser checks. The floating bar fits 320px and 390px; removal controls remain within the desktop table, and removal/clear restore usable keyboard focus. Delayed and failed inventory, Retry, corrupt IDs, and denied browser storage are tested as explicit states.",
@@ -1881,6 +1894,7 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/newsletter_ui_live_2026-09-29_1602.json",
         ".tmp/newsletter_route_tests_2026-09-29_1602.json",
         ".tmp/newsletter_ui_local_2026-09-29_1602.json",
         ".tmp/saved_ui_live_read_guard_2026-09-29.json",
