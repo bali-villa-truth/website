@@ -6,7 +6,7 @@ import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, Do
 import { BvtLockup } from './BvtSeal';
 import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
 import { COMPARISON_STORAGE_KEY, MAX_COMPARISON_VILLAS, normalizeComparisonIds, parseComparisonSelection } from '@/app/_lib/comparisonSelection';
-import { SAVED_STORAGE_KEY, normalizeSavedIds, parseSavedSelection } from '@/app/_lib/savedSelection';
+import { SAVED_STORAGE_KEY, parseSavedSelection } from '@/app/_lib/savedSelection';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -278,7 +278,6 @@ export default function HomeClient({
   const [hasFullDataset, setHasFullDataset] = useState(
     initialTotalCount > 0 && initialListings.length >= initialTotalCount
   );
-  const [email, setEmail] = useState('');
   const [hoveredRoi, setHoveredRoi] = useState<number | null>(null);
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
 
@@ -334,23 +333,6 @@ export default function HomeClient({
       setFavoritesSaveError(true);
     }
     setFavoritesLoaded(true);
-    try {
-      // If we have a stored email, load favorites from Supabase too
-      const storedEmail = localStorage.getItem('bvt-email');
-      if (storedEmail) {
-        setEmail(storedEmail);
-        (async () => {
-          const { data } = await supabase.from('user_favorites').select('villa_id').eq('email', storedEmail);
-          if (data && data.length > 0) {
-            setFavorites(prev => {
-              const merged = new Set(prev);
-              normalizeSavedIds(data.map((row: any) => row.villa_id)).forEach(id => merged.add(id));
-              return merged;
-            });
-          }
-        })();
-      }
-    } catch {}
   }, []);
 
   useEffect(() => {
@@ -1369,11 +1351,12 @@ export default function HomeClient({
          </div>
       </div>
 
-      {(favoritesSaveError || (showFavoritesOnly && favoritesLoaded && (!hasFullDataset || unavailableFavoriteCount > 0))) && (
+      {(favoritesSaveError || (showFavoritesOnly && favoritesLoaded)) && (
         <div data-saved-notice role="status" className="max-w-[1400px] mx-auto mb-6 flex flex-wrap items-start gap-3 text-[12px] text-[color:var(--bvt-ink-muted)]">
           <div className="flex flex-1 min-w-[200px] items-start gap-2">
             <Info size={14} className="shrink-0 mt-0.5" />
             <div className="min-w-0">
+              {showFavoritesOnly && <p>Saved on this device. No account or email required. <Link href="/privacy" className="underline underline-offset-2 hover:text-[color:var(--bvt-ink)]">Privacy</Link></p>}
               {favoritesSaveError && <p>Browser storage unavailable. Saved changes cannot be persisted on this device.</p>}
               {showFavoritesOnly && !hasFullDataset && <p>{inventoryFailed ? 'Inventory unavailable. Saved selections were retained.' : 'Checking current inventory. Saved selections are retained.'}</p>}
               {showFavoritesOnly && unavailableFavoriteCount > 0 && <p>{availableFavoriteIds.length} available · {unavailableFavoriteCount} unavailable. Unavailable saved IDs are retained on this device; absence is not confirmation of delisting.</p>}

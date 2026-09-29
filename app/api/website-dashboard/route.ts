@@ -29,6 +29,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-29",
+    area: "Saved privacy / investor trust / mobile clarity",
+    title: "Removed email-only Saved imports and clarified privacy",
+    status: "Deployed; live verification pending",
+    why: "Saved no longer reads a browser-stored email or queries account favorites by that email. Existing local IDs are preserved, and removed favorites cannot return through the legacy import. Saved now states its device-local scope and links to the revised privacy policy. The policy distinguishes local selections from audit emails and newsletter opt-ins, explains analytics/hosting and private dashboard cookies, and removes an unsupported 48-hour deletion promise. It does not claim older server records were deleted or their access policy was verified. Local checks pass: 57 privacy checks, 88 Saved checks, 212 comparison regressions, 39 Node tests, 27 Python regressions, and production build. Tests intercept any account-favorite or email/payment request before it reaches a server. Live release verification is pending. No account records were retrieved, emails sent, cloud favorites written, or ROI data changed.",
+    url: `${SITE_URL}/privacy`,
+    progressFile: ".tmp/website_progress_2026-09-29.md",
+  },
+  {
+    date: "2026-09-29",
     area: "Saved shortlist / inventory clarity / mobile workflow",
     title: "Made Saved counts and empty states match confirmed inventory",
     status: "Deployed and verified",
@@ -814,10 +823,16 @@ const pendingImprovements = [
     nextAction: "The Sep 25 URL-prefix GSC pass inspected all 16 vetted URLs (11 indexing requests, 5 already indexed). Reinspect the guide and Nusa Dua hub in 7-14 days; a request does not prove indexing.",
   },
   {
-    priority: "Medium",
-    owner: "Site security / account access",
-    title: "Review account-associated favorites before sync or sharing claims",
-    nextAction: "Browser-local Saved counts, storage validation, availability, and empty states are deployed and verified. Review the existing email-associated favorites query and Supabase access policy without retrieving other users' records. Confirm the intended authenticated account model and privacy boundaries before any cross-device sync or shareable research feature. Do not infer authorization from an email stored in this browser.",
+    priority: "High",
+    owner: "Supabase policy / owner access",
+    title: "Verify server-side access to legacy favorites before any sync",
+    nextAction: "The browser's email-only import is removed, not evidence that the database is secured or old records deleted. No local user_favorites policy definition was found and no real account records were queried. Inspect the owner's Supabase schema and RLS policies, then use approved synthetic test users to verify isolation and deletion. Agree an authenticated account model before reintroducing sync or sharing; a typed or browser-stored email is not authorization.",
+  },
+  {
+    priority: "High",
+    owner: "Newsletter route / delivery owner",
+    title: "Make newsletter responses and delivery claims evidence-based",
+    nextAction: "The signup route can return success after a database insert error, and its homepage/welcome copy promises a Monday digest and one-click unsubscribe without a verified delivery job or unsubscribe path. Fix persistence error handling with mocked tests, qualify delivery copy, and confirm the owner's opt-out and sending workflow before any approved end-to-end email test. No signup or email was sent during this review.",
   },
   {
     priority: "Medium",
@@ -841,11 +856,12 @@ const blockers = [
   {
     blocker: "Google Sheets push",
     status: "Blocked by expired OAuth token",
-    note: "The September 28 midnight full run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
+    note: "The September 29 midnight full run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
   },
 ];
 
 const dataQualityIssues = [
+  "The September 29 local-midnight full refresh completed at 00:06:02 Phoenix / 07:06 UTC: 2,468 listings upserted and four delisted. Fresh 10:01 UTC strict read-only checks pass with 2,195 modeled / 273 unmodeled, 32 physical gaps, and zero scope/value/scenario leaks. Sitemap is exactly 2,468 listing plus 20 static URLs. The privacy release changes no source fields, yields, model inputs, or server favorite records. Sheets OAuth still returned invalid_grant; no duplicate pipeline was started.",
   "Fresh September 29 04:01 UTC read-only checks pass with 2,460 audited rows, 2,190 modeled, 270 unmodeled, and 32 physical gaps; zero scope/value/scenario leaks and exact 2,460-listing plus 20-static sitemap coverage. The Saved release changes only ID validation and inventory-aware presentation; no source data, cached yield, model input, or cloud favorite record changed.",
   "Fresh September 28 22:01 UTC read-only checks still find 2,460 audited rows, 2,190 modeled, 270 unmodeled, 32 physical gaps, zero scope/model-value leaks, and zero scenario mismatches. The comparison-persistence release stores IDs only and uses the loaded audit data; it neither caches yield results nor changes the model. Sitemap coverage remains exact at 2,460 listing plus 20 static URLs.",
   "The September 28 comparison audit reconciles default arithmetic across all 2,190 modeled rows within stored rounding (maximum difference 0.005 percentage points); 270 unsupported rows retain no modeled net result. Removing the hidden 80% gross cap changes one actual listing at the upper slider settings, not the default scenario. No current row crossed the old -20% net floor at the lower settings; that regression is tested with synthetic data. Extreme input combinations are illustrative outputs, not investable claims, and require property-level evidence.",
@@ -977,7 +993,7 @@ const pipelineGuardrails = [
 
 const uxIssues = [
   "Listing correction and custom-review links now preserve the listing reference, including on unsupported assets. Contact drafts are verified; actual mailbox delivery and support ownership require owner confirmation before any service-level promise.",
-  "Comparison IDs persist locally with validated limits and clear/removal controls. Saved now counts confirmed available inventory, preserves unavailable IDs until explicit removal, and distinguishes filtered, unavailable, and true empty results. Delayed/failed inventory and storage failures are tested. Cross-device sync and shareable comparisons are not shipped; existing email-associated favorite access still needs a privacy review.",
+  "Comparison IDs and Saved persist locally with validated storage, explicit removals, inventory-aware counts and failure recovery. The legacy email-only import is removed. Neither an authenticated account nor cross-device sync is shipped; server-side isolation of older favorite records still requires owner policy access and approved synthetic tests.",
   "Mobile ledger needs continued visual checks after each filter or card-density change.",
   "The listing and both audit-PDF templates now date their model inputs and avoid the unsupported Airbnb blend or raw-card confidence claim. Continue checking report layout after future model or copy changes.",
   "September 25 representative listing-page verification passes all seven sampled categories, including an outside-Bali row that now shows no modeled ROI or paid audit offer. The RF10173B leasehold tenure line is correct; the old Freehold alert matched a related-listing/footer link outside this property's tenure field.",
@@ -999,8 +1015,8 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; unattended 2026-09-28 midnight full run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 28 unattended full run completed at 00:05 Phoenix time with 2,460 audited listings and 32 flagged physical-spec gaps. Fresh read-only checks confirm the earlier portfolio-scope correction survived the new crawl, with no unsupported portfolio or outside-Bali model leakage. Eight representative listing categories pass and sitemap coverage is exact. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. This local job and the six-hour heartbeats are checkpoints, not 24/7 runtime.",
+    status: "Loaded; unattended 2026-09-29 midnight full run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 29 unattended full run completed at 00:06:02 Phoenix time with 2,468 audited listings, four delisted and 32 flagged physical-spec gaps. Fresh strict read-only checks confirm no unsupported portfolio or outside-Bali model leakage. Eight representative listing categories pass and sitemap coverage is exact. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. Both six-hour heartbeat configurations were reread ACTIVE. These local/app-dependent checkpoints are not uninterrupted 24/7 runtime.",
   },
 ];
 
@@ -1008,9 +1024,10 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 29 Saved release aligns counts and empty states with confirmed inventory, retains unavailable IDs until explicit removal, validates favorite storage, and preserves selections through failed requests or storage reads. All 88 live Saved checks and 212 comparison regressions pass across 320px, 390px, and desktop. Strict canonical, eight-category listing, and exact 2,480-URL sitemap checks pass. Fresh data checks still find 2,460 audited rows and 32 flagged physical gaps. No source fields, stored yields, model inputs, or cloud favorites changed. This is browser-local research, not a sharing or cross-device claim. Account-associated favorite access requires review. Paid checkout stays off, occupancy proxies remain provisional, mailbox delivery is untested, and Sheets OAuth needs renewal. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
+    "The September 29 privacy release removes the email-only account-favorite import while preserving browser-local Saved and comparison IDs. Local privacy/Saved/comparison checks, 39 Node tests, 27 Python regressions and the production build pass; live release checks are pending. Privacy now explains email opt-ins, local storage, analytics/hosting, dashboard cookies and legacy records without a response-time guarantee. Fresh strict data checks verify the completed midnight run: 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No source values or server favorite records changed. Legacy database isolation, newsletter success/delivery claims, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next actions. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/privacy`,
     `${SITE_URL}/#listings-section`,
     `${SITE_URL}/contact`,
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
@@ -1019,6 +1036,15 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/saved_privacy_local_2026-09-29_1001.json",
+    ".tmp/saved_ui_local_2026-09-29_1001.json",
+    ".tmp/comparison_ui_local_2026-09-29_1001.json",
+    ".tmp/comparison_math_verification_2026-09-29_1001.json",
+    ".tmp/live_verification_2026-09-29_1001.json",
+    ".tmp/listing_page_verification_2026-09-29_1001.json",
+    ".tmp/sitemap_coverage_2026-09-29_1001.json",
+    ".tmp/supabase_data_quality_verification_2026-09-29_1001.json",
+    ".tmp/automation_freshness_2026-09-29_1001.json",
     ".tmp/saved_ui_live_read_guard_2026-09-29.json",
     ".tmp/saved_ui_local_read_guard_2026-09-29.json",
     ".tmp/comparison_saved_live_read_guard_2026-09-29.json",
@@ -1610,13 +1636,14 @@ const contentPages = [
 ];
 
 const nextActions = [
-  "Review the existing email-associated favorite query and Supabase access policy without retrieving other users' records, then agree the authenticated account/privacy model before sync or sharing. Browser-local Saved and comparison persistence/availability work is complete; cross-device sync is not implied.",
+  "Review the owner's Supabase schema and RLS policy for older favorite records with approved synthetic users, not real investor records. The browser import is removed, but server isolation and historical deletion remain unverified. Do not reintroduce email-only sync.",
+  "Fix newsletter persistence-error responses and qualify unverified weekly-delivery/one-click-unsubscribe copy with mocked tests. Owner confirmation and approval are required before any email or end-to-end subscriber test.",
   "Confirm the contact mailbox is monitored and approve a delivery test before publishing a response-time or review-availability promise. The current links compose drafts only; no test email was sent.",
   "Refresh the Booking.com review sample with pagination, unique-property, and 0-10 score validation; review area-level changes and sample coverage before updating the occupancy model or investor ROI values.",
   "Refresh and validate the Booking.com asking-rate sample; the current 1 August snapshot is dated and is not realized booking revenue. Do not advertise a monthly rate-refresh cadence without successful runs.",
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
-  "Reauthorize Google Sheets interactively; the September 28 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
+  "Reauthorize Google Sheets interactively; the September 29 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
   "Reinspect the completed September 25 GSC queue in 7-14 days using the same URL-prefix property, and track whether the sitemap read count and exact-query ROI visibility change.",
   "Optionally move the rotated dashboard credentials to private Vercel environment variables, verify both logins, then remove the public digest fallbacks.",
   "Rotate the stale GitHub token in .env; the September 25 deploy used the existing authenticated GitHub CLI token for one process.",
@@ -1763,6 +1790,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Saved no longer uses an email stored in a browser as authorization to retrieve account favorites. The shortlist remains local, with a visible privacy link. The policy distinguishes local removal from server deletion and audit-email requests from newsletter opt-ins; legacy server access still needs an owner review.",
         "Saved counts now reflect confirmed available inventory. Empty results distinguish filters, unavailable assets, and no favorites; failures retain IDs and do not imply delisting. Explicit removal and clear-filter recovery keep the investor's valid shortlist intact.",
         "Comparison selections survive reloads in the same browser, while reopened scenarios reset to disclosed defaults. Individual removal and Clear do not delete Saved favorites. Failed inventory loads preserve selections instead of wrongly treating them as delisted.",
         "Comparisons now show the selected scenario without hidden 80% gross caps or -20% net floors. Audit price, occupancy/cost assumptions, and noncash lease allowance are explicit; unsupported assets receive no applied model assumptions. Highest selected yield and no flags do not imply a safe investment.",
@@ -1780,6 +1808,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The privacy release passes 57 local checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. Live release verification is pending. Local 320px Saved and policy screenshots were visually inspected.",
         "The Saved release passes 88 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, failed-read preservation through later in-memory saves, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
         "The comparison-persistence release passes 212 local and live browser checks. The floating bar fits 320px and 390px; removal controls remain within the desktop table, and removal/clear restore usable keyboard focus. Delayed and failed inventory, Retry, corrupt IDs, and denied browser storage are tested as explicit states.",
         "The live comparison calculator passed 141 checks across 320px, 390px, and 1440px: baseline/upper/downside arithmetic, unsupported scope, readable wrapped labels, contained horizontal table scrolling, keyboard sliders, reset, modal focus trapping, Escape, restored page scrolling, and focus return. No document overflow or browser errors occurred.",
@@ -1794,6 +1823,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "Saved adds a compact unframed privacy notice and policy link. The policy retains BVT's typography and colors, with a smaller mobile heading, normal letter spacing and wrapped section/body text; no decorative panels were added.",
         "Saved availability uses a compact unframed status with an Info icon, explicit Trash removal action, and readable mobile wrapping. Empty results have concise recovery controls, preserving the existing BVT visual language.",
         "The mobile comparison bar uses a compact count/Clear row and a full-width comparison action. Individual removal uses familiar X icons with accessible labels and tooltips; no new decorative panels or palette changes.",
         "Comparison results retain the compact research-table layout. Gross yield is now a readable before-cost measure rather than struck-through text, with net yield more prominent and ranking language limited to the selected scenario.",
