@@ -29,6 +29,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-29",
+    area: "Newsletter reliability / investor trust / mobile usability",
+    title: "Made newsletter signup and email status truthful",
+    status: "Deployed; live verification pending",
+    why: "Signup success now requires a confirmed database write. Storage errors and duplicate conflicts return an uncertain failure without sending an email or exposing whether an address exists. A confirmed signup remains successful even when email-provider acceptance is unconfirmed; acceptance is never described as inbox delivery. The homepage requires the explicit saved receipt, prevents repeated pending submits, retains the email after errors and recovers after a 20-second timeout. Unsupported Monday, weekly-digest and one-click-unsubscribe promises are removed from the form, footer and welcome email. The policy explains separate PDF consent and a contact-based removal request. All 28 mocked route tests, 76 intercepted browser checks, 39 comparison tests, 27 Python regressions, 357 Saved/privacy/comparison checks and the production build pass locally. No real subscribers were read, subscriptions created or emails sent. Live verification is pending. Owner sending/removal workflow, server policy and approved end-to-end tests remain separate dependencies.",
+    url: `${SITE_URL}/#newsletter`,
+    progressFile: ".tmp/website_progress_2026-09-29.md",
+  },
+  {
+    date: "2026-09-29",
     area: "Saved privacy / investor trust / mobile clarity",
     title: "Removed email-only Saved imports and clarified privacy",
     status: "Deployed and verified",
@@ -830,9 +839,9 @@ const pendingImprovements = [
   },
   {
     priority: "High",
-    owner: "Newsletter route / delivery owner",
-    title: "Make newsletter responses and delivery claims evidence-based",
-    nextAction: "The signup route can return success after a database insert error, and its homepage/welcome copy promises a Monday digest and one-click unsubscribe without a verified delivery job or unsubscribe path. Fix persistence error handling with mocked tests, qualify delivery copy, and confirm the owner's opt-out and sending workflow before any approved end-to-end email test. No signup or email was sent during this review.",
+    owner: "Newsletter delivery / Supabase policy owner",
+    title: "Verify newsletter delivery and removal workflow",
+    nextAction: "Persistence responses and delivery wording are corrected with mocked tests, not real delivery tests. Confirm the monitored removal mailbox and sending workflow, review leads-table schema/RLS and consent separation (including duplicate-address behavior), then approve synthetic signup/removal tests. The existing anonymous-key fallback remains for compatibility, not proof of safe policy. Do not query actual subscribers, send a digest, or promise delivery, cadence, one-click unsubscribe or deletion timing without evidence and approval.",
   },
   {
     priority: "Medium",
@@ -861,6 +870,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "Fresh September 29 16:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The newsletter release changes status/consent copy and response handling only; no source fact, model input, yield or subscriber record was changed by testing. The completed midnight run and Sheets OAuth blocker remain unchanged.",
   "The September 29 local-midnight full refresh completed at 00:06:02 Phoenix / 07:06 UTC: 2,468 listings upserted and four delisted. Fresh 10:01 UTC strict read-only checks pass with 2,195 modeled / 273 unmodeled, 32 physical gaps, and zero scope/value/scenario leaks. Sitemap is exactly 2,468 listing plus 20 static URLs. The privacy release changes no source fields, yields, model inputs, or server favorite records. Sheets OAuth still returned invalid_grant; no duplicate pipeline was started.",
   "Fresh September 29 04:01 UTC read-only checks pass with 2,460 audited rows, 2,190 modeled, 270 unmodeled, and 32 physical gaps; zero scope/value/scenario leaks and exact 2,460-listing plus 20-static sitemap coverage. The Saved release changes only ID validation and inventory-aware presentation; no source data, cached yield, model input, or cloud favorite record changed.",
   "Fresh September 28 22:01 UTC read-only checks still find 2,460 audited rows, 2,190 modeled, 270 unmodeled, 32 physical gaps, zero scope/model-value leaks, and zero scenario mismatches. The comparison-persistence release stores IDs only and uses the loaded audit data; it neither caches yield results nor changes the model. Sitemap coverage remains exact at 2,460 listing plus 20 static URLs.",
@@ -992,6 +1002,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "Newsletter success requires an explicit saved receipt, with storage uncertainty and email-provider uncertainty shown separately. Pending controls are disabled and timed-out requests recover. Contact-based removal does not imply automated unsubscribe or a verified mailbox workflow.",
   "Listing correction and custom-review links now preserve the listing reference, including on unsupported assets. Contact drafts are verified; actual mailbox delivery and support ownership require owner confirmation before any service-level promise.",
   "Comparison IDs and Saved persist locally with validated storage, explicit removals, inventory-aware counts and failure recovery. The legacy email-only import is removed. Neither an authenticated account nor cross-device sync is shipped; server-side isolation of older favorite records still requires owner policy access and approved synthetic tests.",
   "Mobile ledger needs continued visual checks after each filter or card-density change.",
@@ -1024,9 +1035,11 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 29 privacy release removes the email-only account-favorite import while preserving browser-local Saved and comparison IDs. All 357 privacy/Saved/comparison checks pass locally and live, with 39 Node tests, 27 Python regressions, the production build, strict site/eight-category listing/exact sitemap checks and 30 dashboard-access checks. Privacy explains email opt-ins, local storage, analytics/hosting, dashboard cookies and legacy records without a response-time guarantee. Fresh strict data checks verify the completed midnight run: 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No source values or server favorite records changed. Legacy database isolation, newsletter success/delivery claims, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next actions. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
+    "The September 29 newsletter release requires a confirmed storage response before success and separates email-provider acceptance from inbox delivery. Unsupported sending and unsubscribe promises are removed; PDF and newsletter consent remain separate. All 28 mocked route tests, 76 intercepted newsletter checks, 39 comparison tests, 27 Python regressions, 357 Saved/privacy/comparison checks and the production build pass locally. Live verification is pending. Fresh strict preflight checks verify 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine midnight run. No actual subscriber or model data changed during testing. Owner delivery/removal workflow and legacy database policy, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/#newsletter`,
+    `${SITE_URL}/api/subscribe`,
     `${SITE_URL}/privacy`,
     `${SITE_URL}/#listings-section`,
     `${SITE_URL}/contact`,
@@ -1036,6 +1049,17 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/newsletter_route_tests_2026-09-29_1602.json",
+    ".tmp/newsletter_ui_local_2026-09-29_1602.json",
+    ".tmp/saved_privacy_local_2026-09-29_1602.json",
+    ".tmp/saved_ui_local_2026-09-29_1602.json",
+    ".tmp/comparison_ui_local_2026-09-29_1602.json",
+    ".tmp/comparison_tests_2026-09-29_1602.json",
+    ".tmp/supabase_data_quality_verification_2026-09-29_1602.json",
+    ".tmp/automation_freshness_2026-09-29_1602.json",
+    ".tmp/live_verification_2026-09-29_1602.json",
+    ".tmp/listing_page_verification_2026-09-29_1602.json",
+    ".tmp/sitemap_coverage_2026-09-29_1602.json",
     ".tmp/saved_privacy_live_2026-09-29_1001.json",
     ".tmp/saved_ui_live_2026-09-29_1001.json",
     ".tmp/comparison_ui_live_2026-09-29_1001.json",
@@ -1644,7 +1668,7 @@ const contentPages = [
 
 const nextActions = [
   "Review the owner's Supabase schema and RLS policy for older favorite records with approved synthetic users, not real investor records. The browser import is removed, but server isolation and historical deletion remain unverified. Do not reintroduce email-only sync.",
-  "Fix newsletter persistence-error responses and qualify unverified weekly-delivery/one-click-unsubscribe copy with mocked tests. Owner confirmation and approval are required before any email or end-to-end subscriber test.",
+  "Confirm newsletter sending/removal ownership and leads-table schema/RLS with owner access, then approve synthetic signup/removal tests. Mocked persistence/provider tests and qualified copy do not prove inbox delivery or historical record isolation; actual subscriber reads and outreach remain unauthorized.",
   "Confirm the contact mailbox is monitored and approve a delivery test before publishing a response-time or review-availability promise. The current links compose drafts only; no test email was sent.",
   "Refresh the Booking.com review sample with pagination, unique-property, and 0-10 score validation; review area-level changes and sample coverage before updating the occupancy model or investor ROI values.",
   "Refresh and validate the Booking.com asking-rate sample; the current 1 August snapshot is dated and is not realized booking revenue. Do not advertise a monthly rate-refresh cadence without successful runs.",
@@ -1797,6 +1821,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Newsletter opt-in distinguishes a recorded signup from an uncertain request and from email-provider acceptance. It no longer promises an unverified Monday digest or one-click unsubscribe; audit PDFs remain a separate request.",
         "Saved no longer uses an email stored in a browser as authorization to retrieve account favorites. The shortlist remains local, with a visible privacy link. The policy distinguishes local removal from server deletion and audit-email requests from newsletter opt-ins; legacy server access still needs an owner review.",
         "Saved counts now reflect confirmed available inventory. Empty results distinguish filters, unavailable assets, and no favorites; failures retain IDs and do not imply delisting. Explicit removal and clear-filter recovery keep the investor's valid shortlist intact.",
         "Comparison selections survive reloads in the same browser, while reopened scenarios reset to disclosed defaults. Individual removal and Clear do not delete Saved favorites. Failed inventory loads preserve selections instead of wrongly treating them as delisted.",
@@ -1815,6 +1840,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The newsletter passes 76 local intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions pass locally. Local 320px success and desktop failure screenshots were visually inspected; live verification is pending.",
         "The privacy release passes 57 local and live checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. All 88 Saved and 212 comparison regressions also pass locally/live. Live 320px Saved and 390px policy screenshots were visually inspected, alongside local 320px views.",
         "The Saved release passes 88 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, failed-read preservation through later in-memory saves, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
         "The comparison-persistence release passes 212 local and live browser checks. The floating bar fits 320px and 390px; removal controls remain within the desktop table, and removal/clear restore usable keyboard focus. Delayed and failed inventory, Retry, corrupt IDs, and denied browser storage are tested as explicit states.",
@@ -1830,6 +1856,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "The newsletter is a restrained research section with a smaller wrapped heading, no radial halo, Lucide arrow/loading icons and an unframed success message. Pending and failure controls fit narrow phones, preserving BVT's existing palette.",
         "Saved adds a compact unframed privacy notice and policy link. The policy retains BVT's typography and colors, with a smaller mobile heading, normal letter spacing and wrapped section/body text; no decorative panels were added.",
         "Saved availability uses a compact unframed status with an Info icon, explicit Trash removal action, and readable mobile wrapping. Empty results have concise recovery controls, preserving the existing BVT visual language.",
         "The mobile comparison bar uses a compact count/Clear row and a full-width comparison action. Individual removal uses familiar X icons with accessible labels and tooltips; no new decorative panels or palette changes.",
@@ -1840,6 +1867,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "Newsletter handling adds no dependency or subscriber lookup. A 20-second browser timeout restores controls after uncertain requests, while persistence and provider acceptance remain separate. The build passes; no speed, delivery or conversion gain is claimed.",
         "Saved availability reuses the existing loaded inventory and adds no endpoint or dependency. Storage holds numeric IDs only; the production build passes. No speed, conversion, or engagement increase is claimed.",
         "Comparison persistence stores a maximum of five numeric IDs locally and adds no network endpoint or dependency. The full inventory is still required before pruning unavailable IDs. The production build passes; no new speed or conversion metric is claimed.",
         "Each comparison scenario is calculated once per selected listing per render and reused by the table; the pure math helper needs no extra network calls or dependency. The production build passes; this is not a measured speed benchmark.",
@@ -1853,6 +1881,8 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/newsletter_route_tests_2026-09-29_1602.json",
+        ".tmp/newsletter_ui_local_2026-09-29_1602.json",
         ".tmp/saved_ui_live_read_guard_2026-09-29.json",
         ".tmp/website_progress_2026-09-29.md",
         ".tmp/seo_progress_2026-09-29.md",

@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink, RefreshCw, Trash2, ArrowRight, LoaderCircle } from 'lucide-react';
 import { BvtLockup } from './BvtSeal';
 import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
 import { COMPARISON_STORAGE_KEY, MAX_COMPARISON_VILLAS, normalizeComparisonIds, parseComparisonSelection } from '@/app/_lib/comparisonSelection';
@@ -156,74 +156,71 @@ function FAQSection() {
 }
 
 /**
- * Weekly digest newsletter signup (#18). Low-pressure, no-spam copy.
+ * Newsletter opt-in; persistence and provider acceptance are separate results.
  * Posts to /api/subscribe which saves to leads table with lead_type='Newsletter'.
  */
 function NewsletterBlock() {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [ok, setOk] = useState(false);
+  const [welcomeEmailAccepted, setWelcomeEmailAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email) return;
+    if (!email || submitting) return;
     setSubmitting(true);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20000);
     try {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, source: 'homepage' }),
+        signal: controller.signal,
       });
-      if (!res.ok) throw new Error(String(res.status));
+      const result = await res.json();
+      if (!res.ok || result?.ok !== true || result?.subscription_saved !== true) throw new Error('Signup not confirmed');
+      setWelcomeEmailAccepted(result.welcome_email_status === 'accepted');
       setOk(true);
     } catch {
-      setError("Couldn't subscribe — try again in a moment.");
+      setError("We couldn't confirm your signup. Please try again later or contact us.");
     } finally {
+      window.clearTimeout(timeout);
       setSubmitting(false);
     }
   };
 
   return (
-    <section className="max-w-[1400px] mx-auto mt-24 md:mt-32 px-6 md:px-10" id="newsletter">
+    <section className="max-w-[1400px] mx-auto mt-24 md:mt-32 px-6 md:px-10" id="newsletter" aria-labelledby="newsletter-title">
       <div className="relative overflow-hidden border-t border-b border-[color:var(--bvt-hairline)] py-16 md:py-20">
-        {/* Ambient gold halo — subtle, luxury */}
-        <div
-          aria-hidden
-          className="absolute -top-40 -right-40 w-[600px] h-[600px] pointer-events-none rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(212,148,58,0.08) 0%, transparent 60%)',
-            filter: 'blur(40px)',
-          }}
-        />
-
         <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           <div className="lg:col-span-7">
             <div className="flex items-center gap-3 mb-5">
               <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
-              <span className="label-micro">The Monday dispatch</span>
+              <span className="label-micro">Research updates</span>
             </div>
-            <h2 className="font-display text-[color:var(--bvt-ink)] text-[36px] md:text-[48px] lg:text-[58px] leading-[1.02] tracking-[-0.02em]">
-              Price drops, new red flags,<br />
-              <span className="text-[color:var(--bvt-accent)]">one villa worth a closer look.</span>
+            <h2 id="newsletter-title" className="font-display text-[color:var(--bvt-ink)] text-[28px] md:text-[36px] leading-[1.1] tracking-normal">
+              Bali villa research updates
             </h2>
             <p className="mt-6 max-w-[52ch] text-[16px] leading-[1.6] text-[color:var(--bvt-ink-body)]">
-              Monday mornings, in your inbox. Notable price moves from the week,
-              the newest audits, and a featured deep-dive with the full math.
+              Join the list for new audits, material asking-price changes and
+              model-assumption notes when available. No fixed delivery schedule.
               No agent affiliates. No property pitches.
             </p>
-            <p className="mt-3 text-[12px] text-[color:var(--bvt-ink-dim)]">
-              Unsubscribe with one click. We&apos;ll never sell your email.
+            <p className="mt-3 text-[12px] leading-relaxed text-[color:var(--bvt-ink-dim)]">
+              To request removal, <a href="mailto:audits@balivillatruth.com?subject=Unsubscribe" className="underline underline-offset-2 hover:text-[color:var(--bvt-ink)]">contact us from your subscribed address</a>. We don&apos;t sell your email.
             </p>
           </div>
 
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 min-w-0">
             {ok ? (
-              <div className="border border-[color:var(--bvt-accent)]/40 bg-[color:var(--bvt-accent)]/[0.04] rounded-md p-6">
-                <div className="label-micro text-[color:var(--bvt-accent)] mb-2">Subscribed</div>
-                <p className="font-display text-[22px] leading-tight text-[color:var(--bvt-ink)]">
-                  You&apos;re in. Welcome email on its way.
+              <div data-newsletter-success role="status" className="space-y-3">
+                <div className="flex items-center gap-2 text-[color:var(--bvt-accent)]"><Check size={16} /><span className="label-micro">Signup recorded</span></div>
+                <p className="text-[15px] leading-relaxed text-[color:var(--bvt-ink-body)]">You don&apos;t need to submit again.</p>
+                <p data-newsletter-email-status className="text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                  {welcomeEmailAccepted ? 'Confirmation email submitted for sending; inbox delivery is not verified.' : 'Confirmation email acceptance could not be confirmed. Your signup is still recorded.'}
                 </p>
               </div>
             ) : (
@@ -239,20 +236,19 @@ function NewsletterBlock() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@somewhere.com"
                     required
+                    maxLength={254}
+                    disabled={submitting}
+                    aria-describedby="newsletter-consent"
                     aria-label="Email address for newsletter"
-                    className="flex-1 bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] focus:border-[color:var(--bvt-accent)] rounded-md px-4 py-3 text-[15px] text-[color:var(--bvt-ink)] placeholder-[color:var(--bvt-ink-faint)] outline-none transition-colors"
+                    className="flex-1 min-w-0 bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline-2)] focus:border-[color:var(--bvt-accent)] rounded-md px-4 py-3 text-[15px] text-[color:var(--bvt-ink)] placeholder-[color:var(--bvt-ink-faint)] outline-none transition-colors disabled:opacity-50"
                   />
                   <button
                     type="submit"
                     disabled={submitting}
                     className="inline-flex items-center justify-center gap-1.5 bg-[color:var(--bvt-accent)] hover:bg-[color:var(--bvt-accent-warm)] text-[color:var(--bvt-bg)] font-semibold text-[14px] px-5 py-3 rounded-md transition-colors disabled:opacity-50"
                   >
-                    {submitting ? 'Subscribing…' : 'Subscribe'}
-                    {!submitting && (
-                      <svg width="12" height="12" viewBox="0 0 10 10" fill="none" aria-hidden>
-                        <path d="M1 5h8M5 1l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
+                    {submitting ? <LoaderCircle size={14} className="animate-spin" aria-hidden /> : <ArrowRight size={14} aria-hidden />}
+                    {submitting ? 'Recording signup...' : 'Join update list'}
                   </button>
                 </div>
                 {error && (
@@ -260,6 +256,9 @@ function NewsletterBlock() {
                 )}
               </form>
             )}
+            <p id="newsletter-consent" className="mt-3 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+              By joining, you opt into BVT research updates. Audit PDFs are requested separately. <Link href="/privacy" className="underline underline-offset-2 hover:text-[color:var(--bvt-ink)]">Privacy</Link>
+            </p>
           </div>
         </div>
       </div>

@@ -58,7 +58,7 @@ export default function SiteFooter() {
         { href: "/guides/bali-villa-management-fees", label: "Management fees & costs" },
         { href: "/guides/bali-villa-occupancy-rates", label: "Occupancy rates" },
         { href: "/#paste-url", label: "Audit a specific listing" },
-        { href: "/#newsletter", label: "Weekly best-yields email" },
+        { href: "/#newsletter", label: "Research update list" },
         { href: "/contact", label: "Request a custom review" },
       ],
     },
