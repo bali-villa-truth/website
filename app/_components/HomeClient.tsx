@@ -317,7 +317,6 @@ export default function HomeClient({
   const favoritesCanPersist = useRef(false);
 
   const toggleFavorite = useCallback((villaId: number) => {
-    favoritesCanPersist.current = true;
     setFavorites(prev => {
       const next = new Set(prev);
       if (next.has(villaId)) next.delete(villaId);
@@ -915,6 +914,7 @@ export default function HomeClient({
   const emptyResultsPending = loading || (showFavoritesOnly && (!favoritesLoaded || (!hasFullDataset && !inventoryFailed)));
   const emptyResultsMessage = showFavoritesOnly
     ? inventoryFailed && !hasFullDataset ? 'Saved inventory could not be checked.'
+      : !favoritesCanPersist.current && favoritesSaveError ? 'Saved selections could not be restored on this device.'
       : favorites.size === 0 ? 'No saved dossiers yet.'
       : availableFavoriteIds.length === 0 ? 'Saved dossiers are unavailable in the current inventory.'
       : 'No saved dossiers match these filters.'

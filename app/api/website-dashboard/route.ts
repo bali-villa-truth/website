@@ -32,7 +32,7 @@ const completedImprovements = [
     area: "Saved shortlist / inventory clarity / mobile workflow",
     title: "Made Saved counts and empty states match confirmed inventory",
     status: "Deployed and verified",
-    why: "Saved now counts available listings only after a complete successful inventory load; unresolved counts are labeled checking or stored after failure. Unavailable saved IDs remain on the device and are not treated as proof of delisting. Buyers can explicitly remove only unavailable IDs on this device. Empty results distinguish no favorites, filters hiding saved assets, unavailable inventory, and failed requests. Clear filters keeps Saved mode; Browse all dossiers returns to the ledger. Favorites are validated positive numeric IDs without a five-item cap, loaded before writing, and not overwritten after a failed storage read. Storage denial is visible while in-memory save/remove still works. All 86 local and live Saved checks pass at 320px, 390px, and desktop, including reloads, delayed/failed inventory, Retry, malformed storage, unavailable removal, and overflow. The 212 comparison regression checks, 37 Node tests, 27 Python regressions, production build, strict page checks, and exact sitemap coverage pass. No cloud-favorite write, source fact, yield, or model input changed. Account-backed favorite access remains a separate review; sharing and cross-device sync are not promised.",
+    why: "Saved now counts available listings only after a complete successful inventory load; unresolved counts are labeled checking or stored after failure. Unavailable saved IDs remain on the device and are not treated as proof of delisting. Buyers can explicitly remove only unavailable IDs on this device. Empty results distinguish no favorites, filters hiding saved assets, unavailable inventory, failed requests, and failed restoration from storage. Clear filters keeps Saved mode; Browse all dossiers returns to the ledger. Favorites are validated positive numeric IDs without a five-item cap, loaded before writing, and not overwritten after a failed storage read, even by later in-memory saves. Storage denial is visible while in-memory save/remove still works. All 88 local and live Saved checks pass at 320px, 390px, and desktop, including reloads, delayed/failed inventory, Retry, malformed storage, unavailable removal, and overflow. The 212 comparison regression checks, 37 Node tests, 27 Python regressions, production build, strict page checks, and exact sitemap coverage pass. No cloud-favorite write, source fact, yield, or model input changed. Account-backed favorite access remains a separate review; sharing and cross-device sync are not promised.",
     url: `${SITE_URL}/#listings-section`,
     progressFile: ".tmp/website_progress_2026-09-29.md",
   },
@@ -1008,7 +1008,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 29 Saved release aligns counts and empty states with confirmed inventory, retains unavailable IDs until explicit removal, validates favorite storage, and preserves selections through failed requests. All 86 live Saved checks and 212 comparison regressions pass across 320px, 390px, and desktop. Strict canonical, eight-category listing, and exact 2,480-URL sitemap checks pass. Fresh data checks still find 2,460 audited rows and 32 flagged physical gaps. No source fields, stored yields, model inputs, or cloud favorites changed. This is browser-local research, not a sharing or cross-device claim. Account-associated favorite access requires review. Paid checkout stays off, occupancy proxies remain provisional, mailbox delivery is untested, and Sheets OAuth needs renewal. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
+    "The September 29 Saved release aligns counts and empty states with confirmed inventory, retains unavailable IDs until explicit removal, validates favorite storage, and preserves selections through failed requests or storage reads. All 88 live Saved checks and 212 comparison regressions pass across 320px, 390px, and desktop. Strict canonical, eight-category listing, and exact 2,480-URL sitemap checks pass. Fresh data checks still find 2,460 audited rows and 32 flagged physical gaps. No source fields, stored yields, model inputs, or cloud favorites changed. This is browser-local research, not a sharing or cross-device claim. Account-associated favorite access requires review. Paid checkout stays off, occupancy proxies remain provisional, mailbox delivery is untested, and Sheets OAuth needs renewal. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,
@@ -1019,6 +1019,9 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/saved_ui_live_read_guard_2026-09-29.json",
+    ".tmp/saved_ui_local_read_guard_2026-09-29.json",
+    ".tmp/comparison_saved_live_read_guard_2026-09-29.json",
     ".tmp/saved_ui_live_2026-09-29.json",
     ".tmp/saved_ui_local_2026-09-29.json",
     ".tmp/comparison_saved_live_2026-09-29.json",
@@ -1777,7 +1780,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
-        "The Saved release passes 86 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
+        "The Saved release passes 88 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, failed-read preservation through later in-memory saves, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
         "The comparison-persistence release passes 212 local and live browser checks. The floating bar fits 320px and 390px; removal controls remain within the desktop table, and removal/clear restore usable keyboard focus. Delayed and failed inventory, Retry, corrupt IDs, and denied browser storage are tested as explicit states.",
         "The live comparison calculator passed 141 checks across 320px, 390px, and 1440px: baseline/upper/downside arithmetic, unsupported scope, readable wrapped labels, contained horizontal table scrolling, keyboard sliders, reset, modal focus trapping, Escape, restored page scrolling, and focus return. No document overflow or browser errors occurred.",
         "The contact page passed live default/correction/review layouts at 320px, 390px, and 1440px with no overflow or browser errors. Modeled and unsupported listings both navigated to the right reference and back at 390px. The oversized email address is replaced by compact icon-and-text actions.",
@@ -1813,6 +1816,7 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/saved_ui_live_read_guard_2026-09-29.json",
         ".tmp/website_progress_2026-09-29.md",
         ".tmp/seo_progress_2026-09-29.md",
         ".tmp/saved_ui_live_2026-09-29.json",
