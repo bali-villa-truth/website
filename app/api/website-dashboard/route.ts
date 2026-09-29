@@ -31,8 +31,8 @@ const completedImprovements = [
     date: "2026-09-29",
     area: "Saved privacy / investor trust / mobile clarity",
     title: "Removed email-only Saved imports and clarified privacy",
-    status: "Deployed; live verification pending",
-    why: "Saved no longer reads a browser-stored email or queries account favorites by that email. Existing local IDs are preserved, and removed favorites cannot return through the legacy import. Saved now states its device-local scope and links to the revised privacy policy. The policy distinguishes local selections from audit emails and newsletter opt-ins, explains analytics/hosting and private dashboard cookies, and removes an unsupported 48-hour deletion promise. It does not claim older server records were deleted or their access policy was verified. Local checks pass: 57 privacy checks, 88 Saved checks, 212 comparison regressions, 39 Node tests, 27 Python regressions, and production build. Tests intercept any account-favorite or email/payment request before it reaches a server. Live release verification is pending. No account records were retrieved, emails sent, cloud favorites written, or ROI data changed.",
+    status: "Deployed and verified",
+    why: "Saved no longer reads a browser-stored email or queries account favorites by that email. Existing local IDs are preserved, and removed favorites cannot return through the legacy import. Saved now states its device-local scope and links to the revised privacy policy. The policy distinguishes local selections from audit emails and newsletter opt-ins, explains analytics/hosting and private dashboard cookies, and removes an unsupported 48-hour deletion promise. It does not claim older server records were deleted or their access policy was verified. All 57 privacy checks, 88 Saved checks and 212 comparison regressions pass locally and live at 320px, 390px and desktop. The 39 Node tests, 27 Python regressions, production build, strict site/eight-category listing/exact sitemap checks and 30 dashboard-access checks pass. Live Saved and policy screenshots were visually inspected. Tests intercept account-favorite and email/payment requests before they reach a server. No account records were retrieved, emails sent, cloud favorites written, or ROI data changed.",
     url: `${SITE_URL}/privacy`,
     progressFile: ".tmp/website_progress_2026-09-29.md",
   },
@@ -1024,7 +1024,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 29 privacy release removes the email-only account-favorite import while preserving browser-local Saved and comparison IDs. Local privacy/Saved/comparison checks, 39 Node tests, 27 Python regressions and the production build pass; live release checks are pending. Privacy now explains email opt-ins, local storage, analytics/hosting, dashboard cookies and legacy records without a response-time guarantee. Fresh strict data checks verify the completed midnight run: 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No source values or server favorite records changed. Legacy database isolation, newsletter success/delivery claims, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next actions. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
+    "The September 29 privacy release removes the email-only account-favorite import while preserving browser-local Saved and comparison IDs. All 357 privacy/Saved/comparison checks pass locally and live, with 39 Node tests, 27 Python regressions, the production build, strict site/eight-category listing/exact sitemap checks and 30 dashboard-access checks. Privacy explains email opt-ins, local storage, analytics/hosting, dashboard cookies and legacy records without a response-time guarantee. Fresh strict data checks verify the completed midnight run: 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No source values or server favorite records changed. Legacy database isolation, newsletter success/delivery claims, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next actions. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/privacy`,
@@ -1036,6 +1036,13 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/saved_privacy_live_2026-09-29_1001.json",
+    ".tmp/saved_ui_live_2026-09-29_1001.json",
+    ".tmp/comparison_ui_live_2026-09-29_1001.json",
+    ".tmp/dashboard_privacy_2026-09-29_privacy_release.json",
+    ".tmp/live_verification_2026-09-29_privacy_release.json",
+    ".tmp/listing_page_verification_2026-09-29_privacy_release.json",
+    ".tmp/sitemap_coverage_2026-09-29_privacy_release.json",
     ".tmp/saved_privacy_local_2026-09-29_1001.json",
     ".tmp/saved_ui_local_2026-09-29_1001.json",
     ".tmp/comparison_ui_local_2026-09-29_1001.json",
@@ -1808,7 +1815,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
-        "The privacy release passes 57 local checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. Live release verification is pending. Local 320px Saved and policy screenshots were visually inspected.",
+        "The privacy release passes 57 local and live checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. All 88 Saved and 212 comparison regressions also pass locally/live. Live 320px Saved and 390px policy screenshots were visually inspected, alongside local 320px views.",
         "The Saved release passes 88 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, failed-read preservation through later in-memory saves, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
         "The comparison-persistence release passes 212 local and live browser checks. The floating bar fits 320px and 390px; removal controls remain within the desktop table, and removal/clear restore usable keyboard focus. Delayed and failed inventory, Retry, corrupt IDs, and denied browser storage are tested as explicit states.",
         "The live comparison calculator passed 141 checks across 320px, 390px, and 1440px: baseline/upper/downside arithmetic, unsupported scope, readable wrapped labels, contained horizontal table scrolling, keyboard sliders, reset, modal focus trapping, Escape, restored page scrolling, and focus return. No document overflow or browser errors occurred.",
