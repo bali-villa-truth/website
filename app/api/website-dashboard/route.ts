@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 
 const completedImprovements = [
   {
+    date: "2026-09-29",
+    area: "Saved shortlist / inventory clarity / mobile workflow",
+    title: "Made Saved counts and empty states match confirmed inventory",
+    status: "Deployed and verified",
+    why: "Saved now counts available listings only after a complete successful inventory load; unresolved counts are labeled checking or stored after failure. Unavailable saved IDs remain on the device and are not treated as proof of delisting. Buyers can explicitly remove only unavailable IDs on this device. Empty results distinguish no favorites, filters hiding saved assets, unavailable inventory, and failed requests. Clear filters keeps Saved mode; Browse all dossiers returns to the ledger. Favorites are validated positive numeric IDs without a five-item cap, loaded before writing, and not overwritten after a failed storage read. Storage denial is visible while in-memory save/remove still works. All 86 local and live Saved checks pass at 320px, 390px, and desktop, including reloads, delayed/failed inventory, Retry, malformed storage, unavailable removal, and overflow. The 212 comparison regression checks, 37 Node tests, 27 Python regressions, production build, strict page checks, and exact sitemap coverage pass. No cloud-favorite write, source fact, yield, or model input changed. Account-backed favorite access remains a separate review; sharing and cross-device sync are not promised.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-09-29.md",
+  },
+  {
     date: "2026-09-28",
     area: "Comparison persistence / mobile workflow / failure safety",
     title: "Preserved comparison selections across reloads with safe removal and retry",
@@ -806,9 +815,9 @@ const pendingImprovements = [
   },
   {
     priority: "Medium",
-    owner: "UX",
-    title: "Reconcile Saved counts and empty states with available inventory",
-    nextAction: "Comparison persistence is live. Next review Saved's raw-ID count versus available listings, malformed favorite storage, and empty states, preserving selections when a full inventory request fails. Validate account-backed favorite access before adding cross-device or sharing claims; a stable reference and canonical URL policy are needed for sharing.",
+    owner: "Site security / account access",
+    title: "Review account-associated favorites before sync or sharing claims",
+    nextAction: "Browser-local Saved counts, storage validation, availability, and empty states are deployed and verified. Review the existing email-associated favorites query and Supabase access policy without retrieving other users' records. Confirm the intended authenticated account model and privacy boundaries before any cross-device sync or shareable research feature. Do not infer authorization from an email stored in this browser.",
   },
   {
     priority: "Medium",
@@ -837,6 +846,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "Fresh September 29 04:01 UTC read-only checks pass with 2,460 audited rows, 2,190 modeled, 270 unmodeled, and 32 physical gaps; zero scope/value/scenario leaks and exact 2,460-listing plus 20-static sitemap coverage. The Saved release changes only ID validation and inventory-aware presentation; no source data, cached yield, model input, or cloud favorite record changed.",
   "Fresh September 28 22:01 UTC read-only checks still find 2,460 audited rows, 2,190 modeled, 270 unmodeled, 32 physical gaps, zero scope/model-value leaks, and zero scenario mismatches. The comparison-persistence release stores IDs only and uses the loaded audit data; it neither caches yield results nor changes the model. Sitemap coverage remains exact at 2,460 listing plus 20 static URLs.",
   "The September 28 comparison audit reconciles default arithmetic across all 2,190 modeled rows within stored rounding (maximum difference 0.005 percentage points); 270 unsupported rows retain no modeled net result. Removing the hidden 80% gross cap changes one actual listing at the upper slider settings, not the default scenario. No current row crossed the old -20% net floor at the lower settings; that regression is tested with synthetic data. Extreme input combinations are illustrative outputs, not investable claims, and require property-level evidence.",
   "The September 28 scheduled midnight full scrape completed at 00:05 Phoenix time with 2,460 audited listings. Fresh 15:59 UTC checks found 32 physical-spec gaps, zero unsupported multi-unit or outside-Bali scope leaks, zero unmodeled rows with nonzero model values, and zero yield-scenario mismatches across 2,190 modeled rows. The portfolio guard survived the fresh scrape. Sitemap coverage is exact at 2,460 listing plus 20 static URLs. Unknown physical facts remain flagged; no guardrail was lowered.",
@@ -967,7 +977,7 @@ const pipelineGuardrails = [
 
 const uxIssues = [
   "Listing correction and custom-review links now preserve the listing reference, including on unsupported assets. Contact drafts are verified; actual mailbox delivery and support ownership require owner confirmation before any service-level promise.",
-  "Comparison IDs now persist locally with validated limits, clear/removal controls, a contained mobile bar, and honest storage/inventory error states. Saved still counts raw favorite IDs, so availability and empty-state consistency need a separate pass. Cross-device sync and shareable comparisons are not shipped.",
+  "Comparison IDs persist locally with validated limits and clear/removal controls. Saved now counts confirmed available inventory, preserves unavailable IDs until explicit removal, and distinguishes filtered, unavailable, and true empty results. Delayed/failed inventory and storage failures are tested. Cross-device sync and shareable comparisons are not shipped; existing email-associated favorite access still needs a privacy review.",
   "Mobile ledger needs continued visual checks after each filter or card-density change.",
   "The listing and both audit-PDF templates now date their model inputs and avoid the unsupported Airbnb blend or raw-card confidence claim. Continue checking report layout after future model or copy changes.",
   "September 25 representative listing-page verification passes all seven sampled categories, including an outside-Bali row that now shows no modeled ROI or paid audit offer. The RF10173B leasehold tenure line is correct; the old Freehold alert matched a related-listing/footer link outside this property's tenure field.",
@@ -998,7 +1008,7 @@ const deploymentGate = {
   status: "Live",
   title: "Website deployment completed",
   summary:
-    "The September 28 comparison-persistence release restores validated selections across reloads, adds individual removal and a contained mobile bar, and retains the shortlist during inventory/storage failures. All 212 live calculator/workflow checks pass across 320px, 390px, and desktop; arithmetic and unsupported scope remain correct. Strict canonical, eight-category listing, and exact 2,480-URL sitemap checks pass. Fresh data checks still find 2,460 audited rows and 32 flagged physical gaps. No source fields, stored yields, or model inputs changed. This is browser-local persistence, not shared or cross-device research. Paid checkout stays off, occupancy proxies remain provisional, mailbox delivery is untested, and Sheets OAuth needs renewal. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
+    "The September 29 Saved release aligns counts and empty states with confirmed inventory, retains unavailable IDs until explicit removal, validates favorite storage, and preserves selections through failed requests. All 86 live Saved checks and 212 comparison regressions pass across 320px, 390px, and desktop. Strict canonical, eight-category listing, and exact 2,480-URL sitemap checks pass. Fresh data checks still find 2,460 audited rows and 32 flagged physical gaps. No source fields, stored yields, model inputs, or cloud favorites changed. This is browser-local research, not a sharing or cross-device claim. Account-associated favorite access requires review. Paid checkout stays off, occupancy proxies remain provisional, mailbox delivery is untested, and Sheets OAuth needs renewal. GSC follow-up remains October 2-9; do not resubmit the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,
@@ -1009,6 +1019,17 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/saved_ui_live_2026-09-29.json",
+    ".tmp/saved_ui_local_2026-09-29.json",
+    ".tmp/comparison_saved_live_2026-09-29.json",
+    ".tmp/comparison_math_verification_2026-09-29_0401.json",
+    ".tmp/dashboard_privacy_2026-09-29_saved_release.json",
+    ".tmp/live_verification_2026-09-29_saved_release.json",
+    ".tmp/listing_page_verification_2026-09-29_saved_release.json",
+    ".tmp/sitemap_coverage_2026-09-29_saved_release.json",
+    ".tmp/supabase_data_quality_verification_2026-09-29_0401.json",
+    ".tmp/automation_freshness_2026-09-29_0401.json",
+    ".tmp/saved_live_2026-09-29_390.png",
     ".tmp/comparison_persistence_live_2026-09-28.json",
     ".tmp/comparison_persistence_local_2026-09-28.json",
     ".tmp/comparison_math_verification_2026-09-28_2201.json",
@@ -1586,7 +1607,7 @@ const contentPages = [
 ];
 
 const nextActions = [
-  "Review Saved counts, unavailable favorites, malformed browser-local favorite IDs, and empty states without dropping selections on partial or failed inventory loads. Comparison persistence is complete; sharing and cross-device sync are not implied.",
+  "Review the existing email-associated favorite query and Supabase access policy without retrieving other users' records, then agree the authenticated account/privacy model before sync or sharing. Browser-local Saved and comparison persistence/availability work is complete; cross-device sync is not implied.",
   "Confirm the contact mailbox is monitored and approve a delivery test before publishing a response-time or review-availability promise. The current links compose drafts only; no test email was sent.",
   "Refresh the Booking.com review sample with pagination, unique-property, and 0-10 score validation; review area-level changes and sample coverage before updating the occupancy model or investor ROI values.",
   "Refresh and validate the Booking.com asking-rate sample; the current 1 August snapshot is dated and is not realized booking revenue. Do not advertise a monthly rate-refresh cadence without successful runs.",
@@ -1739,6 +1760,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Saved counts now reflect confirmed available inventory. Empty results distinguish filters, unavailable assets, and no favorites; failures retain IDs and do not imply delisting. Explicit removal and clear-filter recovery keep the investor's valid shortlist intact.",
         "Comparison selections survive reloads in the same browser, while reopened scenarios reset to disclosed defaults. Individual removal and Clear do not delete Saved favorites. Failed inventory loads preserve selections instead of wrongly treating them as delisted.",
         "Comparisons now show the selected scenario without hidden 80% gross caps or -20% net floors. Audit price, occupancy/cost assumptions, and noncash lease allowance are explicit; unsupported assets receive no applied model assumptions. Highest selected yield and no flags do not imply a safe investment.",
         "Corrections and custom-review enquiries now retain the specific listing, including unsupported assets. Dated supporting evidence is requested, and the contact page no longer promises an unverified 48-hour response or guaranteed service availability.",
@@ -1755,6 +1777,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The Saved release passes 86 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
         "The comparison-persistence release passes 212 local and live browser checks. The floating bar fits 320px and 390px; removal controls remain within the desktop table, and removal/clear restore usable keyboard focus. Delayed and failed inventory, Retry, corrupt IDs, and denied browser storage are tested as explicit states.",
         "The live comparison calculator passed 141 checks across 320px, 390px, and 1440px: baseline/upper/downside arithmetic, unsupported scope, readable wrapped labels, contained horizontal table scrolling, keyboard sliders, reset, modal focus trapping, Escape, restored page scrolling, and focus return. No document overflow or browser errors occurred.",
         "The contact page passed live default/correction/review layouts at 320px, 390px, and 1440px with no overflow or browser errors. Modeled and unsupported listings both navigated to the right reference and back at 390px. The oversized email address is replaced by compact icon-and-text actions.",
@@ -1768,6 +1791,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "Saved availability uses a compact unframed status with an Info icon, explicit Trash removal action, and readable mobile wrapping. Empty results have concise recovery controls, preserving the existing BVT visual language.",
         "The mobile comparison bar uses a compact count/Clear row and a full-width comparison action. Individual removal uses familiar X icons with accessible labels and tooltips; no new decorative panels or palette changes.",
         "Comparison results retain the compact research-table layout. Gross yield is now a readable before-cost measure rather than struck-through text, with net yield more prominent and ranking language limited to the selected scenario.",
         "Contact is now a compact, unframed research-support page with readable enquiry sections and evidence labels, preserving the existing BVT palette.",
@@ -1776,6 +1800,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "Saved availability reuses the existing loaded inventory and adds no endpoint or dependency. Storage holds numeric IDs only; the production build passes. No speed, conversion, or engagement increase is claimed.",
         "Comparison persistence stores a maximum of five numeric IDs locally and adds no network endpoint or dependency. The full inventory is still required before pruning unavailable IDs. The production build passes; no new speed or conversion metric is claimed.",
         "Each comparison scenario is calculated once per selected listing per render and reused by the table; the pure math helper needs no extra network calls or dependency. The production build passes; this is not a measured speed benchmark.",
         "Contact enquiries remain server-rendered and use a fixed /contact canonical regardless of query context; malformed references are ignored and no new database fetch or client form service was added.",
@@ -1788,6 +1813,11 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-09-29.md",
+        ".tmp/seo_progress_2026-09-29.md",
+        ".tmp/saved_ui_live_2026-09-29.json",
+        ".tmp/saved_ui_local_2026-09-29.json",
+        ".tmp/comparison_saved_live_2026-09-29.json",
         ".tmp/website_progress_2026-09-28.md",
         ".tmp/comparison_persistence_live_2026-09-28.json",
         ".tmp/comparison_ui_live_2026-09-28.json",
