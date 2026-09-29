@@ -31,8 +31,8 @@ const completedImprovements = [
     date: "2026-09-29",
     area: "Free audit PDF / investor trust / mobile usability",
     title: "Made free audit email acknowledgements and PDF eligibility honest",
-    status: "Deployed; live verification pending",
-    why: "The PDF request now requires valid input, an audited and modeled villa, and a nonempty email-provider acceptance receipt before it reports success. A provider receipt is described as submitted for sending, not inbox delivery. Failures retain the address for retry without exposing raw provider errors. The policy now says lead recording is attempted, not guaranteed; a lead-write failure does not falsely claim storage or prevent an otherwise accepted free report. The 5-year PDF teaser is labeled a modeled scenario rather than cashflow, and the request is explicitly separate from newsletter signup. All 40 mocked route tests pass, including a synthetic three-page PDF with unchanged model math; 65 intercepted browser checks pass locally at 320px, 390px and desktop. Saved/privacy and contact regressions also pass locally. No real email was sent, lead/subscriber record was read or written, payment made, or ROI data changed. Live verification and an owner-approved delivery/policy test remain separate.",
+    status: "Deployed and verified",
+    why: "The PDF request now requires valid input, an audited and modeled villa, and a nonempty email-provider acceptance receipt before it reports success. A provider receipt is described as submitted for sending, not inbox delivery. Failures retain the address for retry without exposing raw provider errors. The policy now says lead recording is attempted, not guaranteed; a lead-write failure does not falsely claim storage or prevent an otherwise accepted free report. The 5-year PDF teaser is labeled a modeled scenario rather than cashflow, and the request is explicitly separate from newsletter signup. All 40 mocked route tests pass, including a synthetic three-page PDF with unchanged model math; 65 intercepted browser checks pass locally and live at 320px, 390px and desktop. Live 57 Saved/privacy and 161 contact regressions, strict site/eight-category listing/exact sitemap checks and 31 dashboard-access checks pass after Vercel success. The live 320px accepted screenshot was visually inspected. No real email was sent, lead/subscriber record was read or written, payment made, or ROI data changed. Owner-approved delivery and lead-policy verification remain separate.",
     url: `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
     progressFile: ".tmp/website_progress_2026-09-29.md",
   },
@@ -1059,10 +1059,10 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Deployment pending",
-  title: "Free audit reliability release awaiting live verification",
+  status: "Live",
+  title: "Free audit reliability release deployed and verified",
   summary:
-    "The September 29 free PDF release requires an audited modeled listing and a nonempty provider acceptance receipt before showing success. The UI and policy distinguish submitted email from inbox delivery and attempted lead storage from a confirmed write. Forty mocked route tests, a synthetic three-page PDF, 65 intercepted local browser checks, 57 Saved/privacy checks, 161 contact checks, 27 Python regressions and a production build pass. Live verification is pending. Earlier newsletter, Saved, comparison, strict listing/sitemap, and private dashboard releases remain verified. Current strict evidence verifies 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No actual investor record or model data changed during testing; no real PDF email was sent. Owner-approved delivery and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
+    "The September 29 free PDF release requires an audited modeled listing and a nonempty provider acceptance receipt before showing success. The UI and policy distinguish submitted email from inbox delivery and attempted lead storage from a confirmed write. Forty mocked route tests, a synthetic three-page PDF, 65 intercepted local and live browser checks, 57 local/live Saved/privacy checks, 161 local/live contact checks, 27 Python regressions and a production build pass. After Vercel success, strict site/eight-category listing/exact sitemap checks and 31 dashboard-access checks pass; the live 320px accepted screenshot was visually inspected. Earlier newsletter, Saved, comparison and dashboard releases remain verified. Current strict evidence verifies 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No actual investor record or model data changed during testing; no real PDF email was sent. Owner-approved delivery and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
@@ -1078,6 +1078,13 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/free_audit_ui_live_2026-09-29_2202.json",
+    ".tmp/dashboard_privacy_2026-09-29_free_audit_release.json",
+    ".tmp/live_verification_2026-09-29_free_audit_release.json",
+    ".tmp/listing_page_verification_2026-09-29_free_audit_release.json",
+    ".tmp/sitemap_coverage_2026-09-29_free_audit_release.json",
+    ".tmp/saved_privacy_live_2026-09-29_free_audit_release.json",
+    ".tmp/contact_paths_live_2026-09-29_free_audit_release.json",
     ".tmp/free_audit_route_tests_2026-09-29_2202.json",
     ".tmp/free_audit_ui_local_2026-09-29_2202.json",
     ".tmp/saved_privacy_local_2026-09-29_2202.json",
@@ -1883,7 +1890,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
-        "The free PDF request passes 65 local intercepted checks at 320px, 390px and 1440px, covering invalid input, pending controls, provider failures, legacy/incomplete responses, malformed JSON, network abort, timeout recovery, accepted status, unsupported assets and overflow. The 320px accepted screenshot was visually inspected. No positive request reached a server or sent email; live checks are pending.",
+        "The free PDF request passes 65 local and live intercepted checks at 320px, 390px and 1440px, covering invalid input, pending controls, provider failures, legacy/incomplete responses, malformed JSON, network abort, timeout recovery, accepted status, unsupported assets and overflow. The live 320px accepted screenshot was visually inspected. No positive request reached a server or sent email.",
         "The newsletter passes 76 local/live intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions also pass locally/live. Local and live mobile screenshots were visually inspected; no overflow or runtime errors and no real newsletter requests or emails.",
         "The privacy release passes 57 local and live checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. All 88 Saved and 212 comparison regressions also pass locally/live. Live 320px Saved and 390px policy screenshots were visually inspected, alongside local 320px views.",
         "The Saved release passes 88 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, failed-read preservation through later in-memory saves, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
@@ -1927,6 +1934,8 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/free_audit_ui_live_2026-09-29_2202.json",
+        ".tmp/dashboard_privacy_2026-09-29_free_audit_release.json",
         ".tmp/free_audit_ui_local_2026-09-29_2202.json",
         ".tmp/free_audit_route_tests_2026-09-29_2202.json",
         ".tmp/newsletter_ui_live_2026-09-29_1602.json",
