@@ -48,17 +48,22 @@ export default function ListingClient({
     if (!email) return;
     setSubmitting(true);
     setError(null);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 35000);
     try {
       const res = await fetch('/api/unlock-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, villa_id: listingId }),
+        signal: controller.signal,
       });
-      if (!res.ok) throw new Error(String(res.status));
+      const result = await res.json();
+      if (!res.ok || result?.success !== true || result?.email_status !== 'accepted') throw new Error('Email acceptance not confirmed');
       setSent(true);
     } catch {
-      setError('Something went wrong. Please try again or refresh the page.');
+      setError("We couldn't confirm sending. Check your inbox before trying again.");
     } finally {
+      window.clearTimeout(timeout);
       setSubmitting(false);
     }
   };
@@ -144,12 +149,12 @@ export default function ListingClient({
       {/* Email-me-this-audit block (free tier) */}
       <div className="mt-4 pt-4 border-t border-[color:var(--bvt-hairline)]">
         {sent ? (
-          <div className="text-center py-2">
+          <div className="text-center py-2" role="status" data-audit-email-status>
             <div className="text-[color:var(--bvt-good)] text-[13px] font-medium mb-1 tracking-wide">
-              ✓ Audit on its way to {email}
+              Audit email submitted for sending to {email}
             </div>
             <p className="text-[11px] text-[color:var(--bvt-ink-muted)] leading-relaxed">
-              Check your inbox and spam folder. Delivery time can vary by email provider.
+              Inbox delivery is not verified. Check your inbox and spam folder.
             </p>
           </div>
         ) : (
@@ -159,7 +164,7 @@ export default function ListingClient({
                 Email me this audit as a PDF
               </p>
               <p className="text-[10px] text-[color:var(--bvt-ink-muted)] leading-snug mt-0.5 tracking-wide">
-                Free · 3 pages · full math · 5-yr cashflow · agent questions
+                Free · 3 pages · full math · 5-year modeled scenario · agent questions
               </p>
             </div>
 
@@ -170,6 +175,8 @@ export default function ListingClient({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
               required
+              maxLength={254}
+              disabled={submitting}
               aria-label={`Email address for ${villaName} audit PDF`}
               className="w-full bg-[color:var(--bvt-bg-soft)] border border-[color:var(--bvt-hairline)] px-3 py-3 text-[13px] text-[color:var(--bvt-ink)] placeholder:text-[color:var(--bvt-ink-faint)] outline-none focus:border-[color:var(--bvt-accent)] transition-colors"
             />
@@ -186,7 +193,7 @@ export default function ListingClient({
               </p>
             )}
             <p className="text-[10px] text-[color:var(--bvt-ink-muted)] text-center tracking-wide">
-              One email. No newsletter spam.
+              This PDF request does not join the research update list.
             </p>
           </form>
         )}

@@ -29,6 +29,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-29",
+    area: "Free audit PDF / investor trust / mobile usability",
+    title: "Made free audit email acknowledgements and PDF eligibility honest",
+    status: "Deployed; live verification pending",
+    why: "The PDF request now requires valid input, an audited and modeled villa, and a nonempty email-provider acceptance receipt before it reports success. A provider receipt is described as submitted for sending, not inbox delivery. Failures retain the address for retry without exposing raw provider errors. The policy now says lead recording is attempted, not guaranteed; a lead-write failure does not falsely claim storage or prevent an otherwise accepted free report. The 5-year PDF teaser is labeled a modeled scenario rather than cashflow, and the request is explicitly separate from newsletter signup. All 40 mocked route tests pass, including a synthetic three-page PDF with unchanged model math; 65 intercepted browser checks pass locally at 320px, 390px and desktop. Saved/privacy and contact regressions also pass locally. No real email was sent, lead/subscriber record was read or written, payment made, or ROI data changed. Live verification and an owner-approved delivery/policy test remain separate.",
+    url: `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
+    progressFile: ".tmp/website_progress_2026-09-29.md",
+  },
+  {
+    date: "2026-09-29",
     area: "Newsletter reliability / investor trust / mobile usability",
     title: "Made newsletter signup and email status truthful",
     status: "Deployed and verified",
@@ -796,6 +805,12 @@ const completedImprovements = [
 
 const pendingImprovements = [
   {
+    priority: "High",
+    owner: "Free audit delivery / Supabase policy owner",
+    title: "Verify free PDF delivery and lead-write policy end to end",
+    nextAction: "Confirm the monitored sending mailbox, provider configuration and leads-table schema/RLS, then approve a synthetic address and test-villa request. A mocked provider receipt and generated synthetic PDF do not prove inbox delivery, lead persistence or account isolation. Do not query real investor leads or send unapproved emails.",
+  },
+  {
     priority: "Medium",
     owner: "Contact mailbox / owner",
     title: "Confirm correction-enquiry delivery and review ownership",
@@ -853,6 +868,11 @@ const pendingImprovements = [
 
 const blockers = [
   {
+    blocker: "Free audit delivery and lead-write verification",
+    status: "Owner confirmation and test approval required",
+    note: "The request route and UI now distinguish provider acceptance from inbox delivery and disclose best-effort lead recording. Mocked and intercepted tests do not verify Resend delivery, real mailbox receipt, Supabase RLS or a stored lead. No real email or lead write was attempted.",
+  },
+  {
     blocker: "Newsletter delivery and removal verification",
     status: "Owner confirmation and test approval required",
     note: "The website's persistence responses and delivery copy are corrected, but the monitored removal mailbox, sending workflow, leads-table policy and end-to-end delivery/deletion are not verified. Tests used only mocked/intercepted responses, not actual subscribers. No digest, automated unsubscribe, inbox-delivery or deletion-time promise is enabled by this release.",
@@ -875,6 +895,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "Fresh September 29 22:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The free PDF release changes request eligibility, status and wording only. Its synthetic three-page PDF test retains the existing ROI calculations. No source fact, model input or investor record was changed by testing.",
   "Fresh September 29 16:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The newsletter release changes status/consent copy and response handling only; no source fact, model input, yield or subscriber record was changed by testing. The completed midnight run and Sheets OAuth blocker remain unchanged.",
   "The September 29 local-midnight full refresh completed at 00:06:02 Phoenix / 07:06 UTC: 2,468 listings upserted and four delisted. Fresh 10:01 UTC strict read-only checks pass with 2,195 modeled / 273 unmodeled, 32 physical gaps, and zero scope/value/scenario leaks. Sitemap is exactly 2,468 listing plus 20 static URLs. The privacy release changes no source fields, yields, model inputs, or server favorite records. Sheets OAuth still returned invalid_grant; no duplicate pipeline was started.",
   "Fresh September 29 04:01 UTC read-only checks pass with 2,460 audited rows, 2,190 modeled, 270 unmodeled, and 32 physical gaps; zero scope/value/scenario leaks and exact 2,460-listing plus 20-static sitemap coverage. The Saved release changes only ID validation and inventory-aware presentation; no source data, cached yield, model input, or cloud favorite record changed.",
@@ -1007,6 +1028,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "The free PDF request now keeps the address after uncertain failures and only displays a submitted-for-sending status after a provider receipt. The 5-year teaser is a modeled scenario, not a cashflow guarantee. Real mailbox receipt and lead-table persistence still need owner-approved checks.",
   "Newsletter success requires an explicit saved receipt, with storage uncertainty and email-provider uncertainty shown separately. Pending controls are disabled and timed-out requests recover. Contact-based removal does not imply automated unsubscribe or a verified mailbox workflow.",
   "Listing correction and custom-review links now preserve the listing reference, including on unsupported assets. Contact drafts are verified; actual mailbox delivery and support ownership require owner confirmation before any service-level promise.",
   "Comparison IDs and Saved persist locally with validated storage, explicit removals, inventory-aware counts and failure recovery. The legacy email-only import is removed. Neither an authenticated account nor cross-device sync is shipped; server-side isolation of older favorite records still requires owner policy access and approved synthetic tests.",
@@ -1037,12 +1059,14 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Live",
-  title: "Website deployment completed",
+  status: "Deployment pending",
+  title: "Free audit reliability release awaiting live verification",
   summary:
-    "The September 29 newsletter release requires confirmed storage before success and separates provider acceptance from inbox delivery. Unsupported sending/unsubscribe promises are removed; PDFs retain separate consent. All 28 mocked route tests, 39 comparison tests, 27 Python regressions and production builds pass. The 76 newsletter and 357 Saved/privacy/comparison checks pass locally and live, with strict site/eight-category listing/exact sitemap checks and 33 dashboard-access checks after Vercel success. Live mobile screenshots were visually inspected. Current strict evidence verifies 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine midnight run. No actual subscriber or model data changed during testing; no real delivery/deletion is claimed. Owner delivery/removal workflow, legacy database policy, clean occupancy evidence, Sheets OAuth, managed secrets and approved mailbox/paid tests remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
+    "The September 29 free PDF release requires an audited modeled listing and a nonempty provider acceptance receipt before showing success. The UI and policy distinguish submitted email from inbox delivery and attempted lead storage from a confirmed write. Forty mocked route tests, a synthetic three-page PDF, 65 intercepted local browser checks, 57 Saved/privacy checks, 161 contact checks, 27 Python regressions and a production build pass. Live verification is pending. Earlier newsletter, Saved, comparison, strict listing/sitemap, and private dashboard releases remain verified. Current strict evidence verifies 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No actual investor record or model data changed during testing; no real PDF email was sent. Owner-approved delivery and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
+    `${SITE_URL}/api/unlock-audit`,
     `${SITE_URL}/#newsletter`,
     `${SITE_URL}/api/subscribe`,
     `${SITE_URL}/privacy`,
@@ -1054,6 +1078,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/free_audit_route_tests_2026-09-29_2202.json",
+    ".tmp/free_audit_ui_local_2026-09-29_2202.json",
+    ".tmp/saved_privacy_local_2026-09-29_2202.json",
+    ".tmp/contact_paths_local_2026-09-29_2202.json",
     ".tmp/newsletter_ui_live_2026-09-29_1602.json",
     ".tmp/saved_privacy_live_2026-09-29_1602.json",
     ".tmp/saved_ui_live_2026-09-29_1602.json",
@@ -1680,6 +1708,7 @@ const contentPages = [
 ];
 
 const nextActions = [
+  "Approve a synthetic free-audit request using a monitored test address and review the leads-table schema/RLS. The synthetic three-page PDF and mocked receipt prove code behavior, not delivery or lead persistence; avoid real investor records and unapproved emails.",
   "Review the owner's Supabase schema and RLS policy for older favorite records with approved synthetic users, not real investor records. The browser import is removed, but server isolation and historical deletion remain unverified. Do not reintroduce email-only sync.",
   "Confirm newsletter sending/removal ownership and leads-table schema/RLS with owner access, then approve synthetic signup/removal tests. Mocked persistence/provider tests and qualified copy do not prove inbox delivery or historical record isolation; actual subscriber reads and outreach remain unauthorized.",
   "Confirm the contact mailbox is monitored and approve a delivery test before publishing a response-time or review-availability promise. The current links compose drafts only; no test email was sent.",
@@ -1834,6 +1863,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Free audit PDFs are offered only for audited, modeled villas. A provider receipt is described as submitted for sending, not delivered; the 5-year report teaser is a modeled scenario, and the request remains separate from newsletter consent.",
         "Newsletter opt-in distinguishes a recorded signup from an uncertain request and from email-provider acceptance. It no longer promises an unverified Monday digest or one-click unsubscribe; audit PDFs remain a separate request.",
         "Saved no longer uses an email stored in a browser as authorization to retrieve account favorites. The shortlist remains local, with a visible privacy link. The policy distinguishes local removal from server deletion and audit-email requests from newsletter opt-ins; legacy server access still needs an owner review.",
         "Saved counts now reflect confirmed available inventory. Empty results distinguish filters, unavailable assets, and no favorites; failures retain IDs and do not imply delisting. Explicit removal and clear-filter recovery keep the investor's valid shortlist intact.",
@@ -1853,6 +1883,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The free PDF request passes 65 local intercepted checks at 320px, 390px and 1440px, covering invalid input, pending controls, provider failures, legacy/incomplete responses, malformed JSON, network abort, timeout recovery, accepted status, unsupported assets and overflow. The 320px accepted screenshot was visually inspected. No positive request reached a server or sent email; live checks are pending.",
         "The newsletter passes 76 local/live intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions also pass locally/live. Local and live mobile screenshots were visually inspected; no overflow or runtime errors and no real newsletter requests or emails.",
         "The privacy release passes 57 local and live checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. All 88 Saved and 212 comparison regressions also pass locally/live. Live 320px Saved and 390px policy screenshots were visually inspected, alongside local 320px views.",
         "The Saved release passes 88 local/live checks at 320px, 390px, and 1440px, including readable availability/removal notices, correct counts/empty states, reloads, failed and delayed inventory, Retry, malformed and denied storage, failed-read preservation through later in-memory saves, no document overflow, and no browser errors. The live 390px and local 320px screenshots were visually inspected.",
@@ -1869,6 +1900,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "The free PDF form retains the established compact listing layout, with a clear two-line submitted status and delivery caveat on narrow screens rather than a promotional delivery promise.",
         "The newsletter is a restrained research section with a smaller wrapped heading, no radial halo, Lucide arrow/loading icons and an unframed success message. Pending and failure controls fit narrow phones, preserving BVT's existing palette.",
         "Saved adds a compact unframed privacy notice and policy link. The policy retains BVT's typography and colors, with a smaller mobile heading, normal letter spacing and wrapped section/body text; no decorative panels were added.",
         "Saved availability uses a compact unframed status with an Info icon, explicit Trash removal action, and readable mobile wrapping. Empty results have concise recovery controls, preserving the existing BVT visual language.",
@@ -1880,6 +1912,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "The free PDF route adds no dependency or model recalculation. A 35-second client timeout restores retry controls after an uncertain request; this is resilience, not a measured speed or delivery improvement. Production build and synthetic three-page PDF checks pass.",
         "Newsletter handling adds no dependency or subscriber lookup. A 20-second browser timeout restores controls after uncertain requests, while persistence and provider acceptance remain separate. The build passes; no speed, delivery or conversion gain is claimed.",
         "Saved availability reuses the existing loaded inventory and adds no endpoint or dependency. Storage holds numeric IDs only; the production build passes. No speed, conversion, or engagement increase is claimed.",
         "Comparison persistence stores a maximum of five numeric IDs locally and adds no network endpoint or dependency. The full inventory is still required before pruning unavailable IDs. The production build passes; no new speed or conversion metric is claimed.",
@@ -1894,6 +1927,8 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/free_audit_ui_local_2026-09-29_2202.json",
+        ".tmp/free_audit_route_tests_2026-09-29_2202.json",
         ".tmp/newsletter_ui_live_2026-09-29_1602.json",
         ".tmp/newsletter_route_tests_2026-09-29_1602.json",
         ".tmp/newsletter_ui_local_2026-09-29_1602.json",

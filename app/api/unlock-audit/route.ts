@@ -30,6 +30,7 @@ export const maxDuration = 30;
 // ------------------------------------------------------------------
 interface Villa {
   id: number;
+  status: string | null;
   villa_name: string | null;
   location: string | null;
   last_price: number | null;
@@ -786,16 +787,17 @@ function escapeHtml(s: string): string {
 // ------------------------------------------------------------------
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { email, villa_id } = body as { email?: string; villa_id?: number };
-
+    const body = await req.json().catch(() => null);
+    const email = body && typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const villa_id = body?.villa_id;
     if (!email || !villa_id) {
       return NextResponse.json({ error: "email and villa_id are required" }, { status: 400 });
     }
-
-    // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+    }
+    if (!Number.isSafeInteger(villa_id) || villa_id <= 0) {
+      return NextResponse.json({ error: "Invalid villa_id" }, { status: 400 });
     }
 
     // Env
@@ -822,23 +824,32 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single();
 
-    if (villaErr || !villa) {
+    if (villaErr || !villa || villa.status !== "audited") {
       return NextResponse.json({ error: "Villa not found" }, { status: 404 });
     }
-    if (String(villa.rate_source || "").startsWith("unmodeled_") || Number(villa.est_nightly_rate) <= 0) {
+    if (!String(villa.rate_source || "").startsWith("bvt_market_model")
+      || villa.projected_roi === null || villa.projected_roi === undefined
+      || !Number.isFinite(Number(villa.projected_roi))
+      || !Number.isFinite(Number(villa.est_nightly_rate)) || Number(villa.est_nightly_rate) <= 0
+      || !Number.isSafeInteger(Number(villa.bedrooms)) || Number(villa.bedrooms) <= 0) {
       return NextResponse.json(
         { error: "Audit PDF is unavailable because ROI is not modeled for this listing" },
         { status: 409 }
       );
     }
 
-    // 2. Insert lead (don't block on error — non-critical)
-    await supabase.from("leads").insert([{
-      email,
-      villa_id,
-      villa_name: villa.villa_name,
-      lead_type: "Audit PDF",
-    }]);
+    // Lead logging is best-effort; report delivery must not depend on CRM storage.
+    try {
+      const { error: leadErr } = await supabase.from("leads").insert([{
+        email,
+        villa_id,
+        villa_name: villa.villa_name,
+        lead_type: "Audit PDF",
+      }]);
+      if (leadErr) console.error("Audit request record was not confirmed.");
+    } catch {
+      console.error("Audit request record was not confirmed.");
+    }
 
     // 3. Compute audit + generate PDF
     const audit = computeAudit(villa as Villa, USD_RATE_FALLBACK);
@@ -847,7 +858,7 @@ export async function POST(req: NextRequest) {
     // 4. Send email
     const resend = new Resend(resendKey);
     const safeName = ((villa.villa_name || "villa").slice(0, 40)).replace(/[^a-zA-Z0-9-_]/g, "_");
-    const { error: sendErr } = await resend.emails.send({
+    const sendResult = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: [email],
       subject: `Your Bali Villa Truth audit — ${(villa.villa_name || "villa").slice(0, 60)}`,
@@ -858,18 +869,19 @@ export async function POST(req: NextRequest) {
       }],
     });
 
-    if (sendErr) {
-      console.error("Resend error:", sendErr);
-      return NextResponse.json({ error: "Failed to send audit email" }, { status: 500 });
+    if (sendResult?.error || typeof sendResult?.data?.id !== "string" || !sendResult.data.id.trim()) {
+      console.error("Audit email provider acceptance was not confirmed.");
+      return NextResponse.json({ error: "Audit email acceptance could not be confirmed" }, { status: 503 });
     }
 
     return NextResponse.json({
       success: true,
-      message: "Audit emailed. Check your inbox.",
+      email_status: "accepted",
+      message: "Audit email submitted for sending; inbox delivery is not verified.",
       source_url: villa.url || null,
     });
-  } catch (err: any) {
-    console.error("unlock-audit error:", err);
-    return NextResponse.json({ error: err?.message || "Internal error" }, { status: 500 });
+  } catch {
+    console.error("Audit email acceptance was not confirmed.");
+    return NextResponse.json({ error: "Audit email acceptance could not be confirmed" }, { status: 503 });
   }
 }
