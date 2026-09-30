@@ -2,12 +2,12 @@
 import { useEffect, useState, useMemo, useRef, useCallback, memo, startTransition } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
-import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink, RefreshCw, Trash2, ArrowRight, LoaderCircle } from 'lucide-react';
+import { MapPin, Ruler, Calendar, X, Info, TrendingUp, AlertTriangle, Filter, DollarSign, Percent, Home, Layers, ArrowUpDown, Bed, Bath, Map, LayoutList, ShieldAlert, Eye, SlidersHorizontal, BarChart3, Check, Heart, BookOpen, Shield, ChevronDown, Clock, Globe, ExternalLink, RefreshCw, Trash2, ArrowRight, LoaderCircle, Search } from 'lucide-react';
 import { BvtLockup } from './BvtSeal';
 import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
 import { COMPARISON_STORAGE_KEY, MAX_COMPARISON_VILLAS, normalizeComparisonIds, parseComparisonSelection } from '@/app/_lib/comparisonSelection';
 import { SAVED_STORAGE_KEY, parseSavedSelection } from '@/app/_lib/savedSelection';
-import { compareKnownNumbers, getPipelineFlags, isRoiUnmodeled, modeledNetYield, pricePerLandSqm } from '@/app/_lib/listingBrowse';
+import { compareKnownNumbers, getPipelineFlags, isRoiUnmodeled, matchesListingSearch, modeledNetYield, pricePerLandSqm } from '@/app/_lib/listingBrowse';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -270,6 +270,7 @@ export default function HomeClient({
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
 
   // --- FILTER STATES ---
+  const [listingSearch, setListingSearch] = useState('');
   const [filterLocation, setFilterLocation] = useState('All');
   const [filterPrice, setFilterPrice] = useState(10000000); 
   const [filterRoi, setFilterRoi] = useState(-99);
@@ -658,6 +659,7 @@ export default function HomeClient({
   const baseFilteredListings = useMemo(() => {
     const filtered = listings.filter(villa => {
       const priceUSD = getPriceUSD(villa);
+      const matchSearch = matchesListingSearch(villa, listingSearch);
       const matchLocation = filterLocation === 'All' || (villa.location && villa.location.includes(filterLocation));
       const matchPrice = priceUSD <= filterPrice;
       const modeledYield = modeledNetYield(villa);
@@ -681,7 +683,7 @@ export default function HomeClient({
         (riskFilter === 'Clear' && !hasMaterialFlag) ||
         (riskFilter === 'Flagged' && hasMaterialFlag) ||
         (riskFilter === 'HighRisk' && hasHighRiskFlag);
-      return matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease && matchRisk;
+      return matchSearch && matchLocation && matchPrice && matchRoi && matchLand && matchBuild && matchBeds && matchBaths && matchLease && matchRisk;
     });
 
     return filtered.sort((a, b) => {
@@ -701,7 +703,7 @@ export default function HomeClient({
         default: return 0;
       }
     });
-  }, [listings, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, riskFilter, sortOption, rates]);
+  }, [listings, listingSearch, filterLocation, filterPrice, filterRoi, filterLandSize, filterBuildSize, filterBeds, filterBaths, filterLeaseType, riskFilter, sortOption, rates]);
 
   const processedListings = useMemo(() => {
     if (!showFavoritesOnly) return baseFilteredListings;
@@ -720,6 +722,7 @@ export default function HomeClient({
   // filtered properties are pinned on the map.
   const HOMEPAGE_CURATION_LIMIT = 25;
   const filtersActive =
+    listingSearch.trim() !== '' ||
     filterLocation !== 'All' ||
     filterPrice < 10000000 ||
     filterRoi > -99 ||
@@ -881,6 +884,7 @@ export default function HomeClient({
   const flaggedCount = hasFullDataset ? computedFlaggedCount : (initialFlaggedCount || computedFlaggedCount);
 
   const clearListingFilters = () => {
+    setListingSearch('');
     setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99);
     setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0);
     setFilterLeaseType('All'); setRiskFilter('All'); setSortOption('price-asc');
@@ -919,6 +923,7 @@ export default function HomeClient({
   const applyInvestorShortcut = (kind: 'bestYield' | 'safer' | 'highRisk' | 'leasehold') => {
     setShowFavoritesOnly(false);
     setShowMobileFilters(true);
+    setListingSearch('');
     setFilterLocation('All');
     setFilterPrice(10000000);
     setFilterLandSize(0);
@@ -1154,6 +1159,28 @@ export default function HomeClient({
         {/* FILTER DASHBOARD — editorial hairline */}
         <div className="border-t border-b border-[color:var(--bvt-hairline)] py-4 md:py-5 mb-8">
 
+            <div className="mb-5 max-w-[480px]">
+              <label htmlFor="listing-search" className="label-micro block mb-1.5">Search audits</label>
+              <div className="relative">
+                <Search size={16} strokeWidth={1.5} aria-hidden="true" className="absolute left-0 top-1/2 -translate-y-1/2 text-[color:var(--bvt-ink-muted)]" />
+                <input
+                  id="listing-search"
+                  data-listing-search
+                  type="text"
+                  value={listingSearch}
+                  onChange={(event) => setListingSearch(event.target.value)}
+                  placeholder="Villa name, area or listing ref"
+                  autoComplete="off"
+                  className="w-full min-w-0 bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] text-[color:var(--bvt-ink)] text-[14px] py-2 pl-7 pr-8 outline-none placeholder:text-[color:var(--bvt-ink-faint)]"
+                />
+                {listingSearch && (
+                  <button type="button" onClick={() => setListingSearch('')} aria-label="Clear search" title="Clear search" className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)]">
+                    <X size={16} strokeWidth={1.5} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Mobile filter toggle */}
             <div className="flex md:hidden items-center justify-between mb-3">
               <button onClick={() => setShowMobileFilters(!showMobileFilters)} className="flex items-center gap-2 text-[color:var(--bvt-ink)]">
@@ -1281,7 +1308,7 @@ export default function HomeClient({
                 </div>
 
                 <button
-                    onClick={() => {setFilterLocation('All'); setFilterPrice(10000000); setFilterRoi(-99); setFilterLandSize(0); setFilterBuildSize(0); setFilterBeds(0); setFilterBaths(0); setFilterLeaseType('All'); setRiskFilter('All'); setSortOption('price-asc'); setShowFavoritesOnly(false);}}
+                    onClick={() => { clearListingFilters(); setShowFavoritesOnly(false); }}
                     className="ml-auto label-micro !text-[color:var(--bvt-ink-muted)] hover:!text-[color:var(--bvt-accent)] transition-colors py-1.5"
                 >
                     Reset all ↻

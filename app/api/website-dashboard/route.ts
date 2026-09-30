@@ -29,6 +29,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-30",
+    area: "Investor navigation / audit discovery / mobile usability",
+    title: "Find an audit by villa name or listing reference",
+    status: "Prepared; live verification pending",
+    why: "The ledger now has a search field visible on both desktop and narrow phones, even while mobile filters are collapsed. It matches villa names, locations, source references in slugs, and pasted source URLs, and combines with existing yield, tenure, risk and Saved filters. Clear search and Reset all restore the expected inventory; investor shortcut buttons clear an old query before opening a new screening path. No source value, ROI model, ranking, server endpoint or account record changed. The local production build, 44 Node checks, 27 Python regressions and 63 synthetic intercepted browser checks pass at 320px, 390px and 1440px, including no-result states and no horizontal overflow. Local Saved 88/88, comparison 212/212 and intercepted newsletter 76/76 regressions pass. Mobile and desktop screenshots were inspected. Production deployment and live verification are still pending; no engagement or speed gain is claimed.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-09-30.md",
+  },
+  {
+    date: "2026-09-30",
     area: "Investor trust / modeled-input clarity / shortlist wording",
     title: "Withhold yield when its rate or ROI input is missing",
     status: "Deployed and verified",
@@ -1048,6 +1057,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "The 2,472-dossier ledger previously had no direct name/reference lookup. A local-tested search now combines with the existing filters and is visible on narrow phones; production verification is pending.",
   "Previously, the 0%+ net-yield filter treated unmodeled rows as zero and ascending yield/land-price sorts placed missing values first. The live fix distinguishes real modeled 0.0% from absent ROI and keeps missing values last; local and production synthetic browser checks pass.",
   "The free PDF request now keeps the address after uncertain failures and only displays a submitted-for-sending status after a provider receipt. The 5-year teaser is a modeled scenario, not a cashflow guarantee. Real mailbox receipt and lead-table persistence still need owner-approved checks.",
   "Newsletter success requires an explicit saved receipt, with storage uncertainty and email-provider uncertainty shown separately. Pending controls are disabled and timed-out requests recover. Contact-based removal does not imply automated unsubscribe or a verified mailbox workflow.",
@@ -1080,10 +1090,10 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Live",
-  title: "Missing-input guard and shortlist wording deployed and verified",
+  status: "Prepared",
+  title: "Audit search prepared; live verification pending",
   summary:
-    "The missing-input guard is live: it removes an invented nightly-rate fallback and withholds ROI when a modeled rate or ROI input is absent. An unavailable yield is neutral N/A, not favorable-colored. Shortcut text distinguishes screening yield from realized return and makes clear that fewer flags are not a safety verdict. Fresh September 30 scheduled-pipeline evidence confirms 2,472 audited / 2,199 modeled / 273 unmodeled, 34 physical gaps, 2,492 exact sitemap URLs and zero scope/value/scenario leaks; all current modeled rows have stored positive nightly rates. Production build, 68-artifact audit, 43 Node checks and 27 Python regressions pass. After Vercel success, synthetic browse 33/33, Saved 88/88, comparison 212/212, newsletter 76/76, strict canonical/eight-category listing/exact sitemap and dashboard-access 31/31 checks pass live. No source fact, model input, yield, investor record or real subscription was changed by testing. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
+    "The existing missing-input and shortlist-clarity release remains live and verified. A new audit search is locally prepared so investors can find a known villa, area, source reference or pasted source URL in the 2,472-dossier ledger; it works with existing filters and remains visible with mobile filters collapsed. Local production build, 44 Node checks, 27 Python regressions, 63 synthetic browse checks, Saved 88/88, comparison 212/212 and intercepted newsletter 76/76 pass. Production deployment and post-release checks are pending. Fresh September 30 data preflight confirms 2,472 audited rows, 34 physical gaps and zero unsupported scope/value leaks. No source fact, rate, occupancy, yield or investor record changed. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. The GSC follow-up remains October 2-9.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,
@@ -1099,6 +1109,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/listing_browse_2026-09-30_1606_local.json",
+    ".tmp/saved_ui_2026-09-30_1606_local.json",
+    ".tmp/comparison_ui_2026-09-30_1606_local.json",
+    ".tmp/newsletter_ui_2026-09-30_1606_local.json",
+    ".tmp/automation_freshness_2026-09-30_1606.json",
+    ".tmp/supabase_data_quality_verification_2026-09-30_1606.json",
     ".tmp/listing_browse_live_2026-09-30_1004.json",
     ".tmp/saved_ui_live_2026-09-30_1004.json",
     ".tmp/comparison_ui_live_2026-09-30_1004.json",
@@ -1925,6 +1941,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "The audit ledger now supports direct name, area, source-reference and pasted-URL lookup across loaded dossiers, combining with risk, yield, tenure and Saved filters. This is locally verified; production release remains pending.",
         "A missing nightly-rate input no longer becomes a fabricated bedroom-based estimate; unavailable yield is neutral N/A. The 8% shortcut names modeled screening yield rather than achieved return, and the lower-flag shortcut says absence of listed flags does not prove safety.",
         "Yield shortlists now require a modeled figure: 0.0% is a real result, while an unavailable ROI is not zero. Missing ROI and land-area ratios no longer lead ascending sorts, and the asking-price ratio names its land-area denominator.",
         "Free audit PDFs are offered only for audited, modeled villas. A provider receipt is described as submitted for sending, not delivered; the 5-year report teaser is a modeled scenario, and the request remains separate from newsletter consent.",
@@ -1947,6 +1964,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "Search is visible with the mobile filter drawer closed. Local 320px, 390px and 1440px synthetic checks pass 63/63 for lookup, no-result, combined-filter and reset behavior, with no overflow or browser errors; phone and desktop screenshots were inspected. Live checks remain pending.",
         "The missing-rate guard passes 33 local and live synthetic browse checks at 320px, 390px and desktop; unavailable yield is neutral N/A with a RATE MISSING label, not a favorable colored result or fabricated nightly figure. Mobile and desktop screenshots were inspected; no overflow or runtime error.",
         "Synthetic browsing checks pass 24/24 locally and live at 320px, 390px and desktop for 0% filters, ascending/descending yield, missing-last land-price sorting, and no overflow or runtime errors. Saved 88/88, comparison 212/212 and newsletter 76/76 regressions pass locally and live; live mobile and desktop screenshots were inspected.",
         "The free PDF request passes 65 local and live intercepted checks at 320px, 390px and 1440px, covering invalid input, pending controls, provider failures, legacy/incomplete responses, malformed JSON, network abort, timeout recovery, accepted status, unsupported assets and overflow. The live 320px accepted screenshot was visually inspected. No positive request reached a server or sent email.",
@@ -1966,6 +1984,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "The new search input follows the existing compact ledger labels, hairline input and Lucide icon style; it adds no decorative card and fits 320px.",
         "The existing dense investor ledger is retained; the price-per-area label now makes the land denominator and asking-price basis explicit without adding a decorative panel.",
         "The free PDF form retains the established compact listing layout, with a clear two-line submitted status and delivery caveat on narrow screens rather than a promotional delivery promise.",
         "The newsletter is a restrained research section with a smaller wrapped heading, no radial halo, Lucide arrow/loading icons and an unframed success message. Pending and failure controls fit narrow phones, preserving BVT's existing palette.",
@@ -1979,6 +1998,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "Search runs on the already loaded listing array with no new endpoint, dependency or model calculation. The production build passes; no speed or engagement improvement is claimed.",
         "The missing-input guard uses the existing stored listing fields and pure helper, without a new endpoint, dependency or model recalculation. Production build passes; no speed or engagement gain is claimed.",
         "Browsing uses a small pure sorting helper and the existing in-memory listing array; it adds no endpoint, data fetch, dependency or ROI recalculation. Build passes, but no speed or engagement gain is claimed.",
         "The free PDF route adds no dependency or model recalculation. A 35-second client timeout restores retry controls after an uncertain request; this is resilience, not a measured speed or delivery improvement. Production build and synthetic three-page PDF checks pass.",
@@ -1996,6 +2016,8 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/listing_browse_2026-09-30_1606_local.json",
+        ".tmp/website_progress_2026-09-30.md",
         ".tmp/listing_browse_live_2026-09-30_1004.json",
         ".tmp/dashboard_privacy_2026-09-30_rate_release.json",
         ".tmp/listing_browse_local_2026-09-30_1004.json",

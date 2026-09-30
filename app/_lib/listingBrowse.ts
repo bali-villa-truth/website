@@ -9,6 +9,17 @@ export function getPipelineFlags(listing: { flags?: string | null }): string[] {
   return (listing.flags || "").split(",").map((flag) => flag.trim()).filter(Boolean);
 }
 
+export function matchesListingSearch(
+  listing: { villa_name?: string | null; location?: string | null; slug?: string | null; url?: string | null },
+  query: string
+): boolean {
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return true;
+  const searchable = [listing.villa_name, listing.location, listing.slug, listing.url]
+    .filter(Boolean).join(" ").toLowerCase();
+  return terms.every((term) => searchable.includes(term));
+}
+
 export function isRoiUnmodeled(listing: ListingYield): boolean {
   const source = String(listing.rate_source || "").toLowerCase();
   const flags = getPipelineFlags(listing);
