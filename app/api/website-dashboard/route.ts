@@ -29,6 +29,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-09-30",
+    area: "Investor trust / modeled-input clarity / shortlist wording",
+    title: "Withhold yield when its rate or ROI input is missing",
+    status: "Prepared; live verification pending",
+    why: "The homepage previously invented a $100 plus $35-per-bedroom nightly rate if a modeled row lost its stored rate; a blank stored ROI string could also coerce to zero. The browse helper now treats either gap as unavailable, and the homepage uses only a finite positive stored nightly rate. Rate-dependent badges no longer turn a missing rate into a $0 or fabricated gross-yield explanation. The high-yield shortcut calls its output a modeled screening yield, not a return paid to an owner; the lower-flag path explicitly says fewer flags do not establish safety. Today's 2,199 modeled rows all have valid rates, so this is a fail-closed guard against future data gaps, not a claim that published estimates changed. Local production build, 43 Node checks, 27 Python regressions, 33 synthetic browser checks at mobile/desktop, 88 Saved, 212 comparison and 76 newsletter checks pass. Live verification remains pending; no source rate, occupancy, price or yield is being rewritten.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-09-30.md",
+  },
+  {
+    date: "2026-09-30",
     area: "Investor browsing / data clarity / mobile usability",
     title: "Stopped missing ROI and land area from ranking as zero",
     status: "Deployed and verified",
@@ -899,11 +908,12 @@ const blockers = [
   {
     blocker: "Google Sheets push",
     status: "Blocked by expired OAuth token",
-    note: "The September 29 midnight full run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
+    note: "The September 30 midnight full run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
   },
 ];
 
 const dataQualityIssues = [
+  "September 30 10:04 UTC strict read-only checks pass after the genuine 00:07:36 Phoenix scheduled refresh: 2,472 audited / 2,199 modeled / 273 unmodeled, 34 physical gaps, zero scope/value/scenario leaks and exactly 2,492 sitemap URLs. All 2,199 current modeled rows have positive stored nightly rates. The prepared missing-rate guard changes only how an incomplete future row is presented; it does not recalculate or write a source fact or yield. Sheets OAuth remains invalid_grant.",
   "September 30 04:03 UTC strict read-only checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The browsing fix changes filter/sort/display handling of missing values only; it does not recalculate or write any listing fact or ROI. The latest completed daily pipeline remains the September 29 Phoenix-midnight run, about 21 hours old at this checkpoint.",
   "Fresh September 29 22:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The free PDF release changes request eligibility, status and wording only. Its synthetic three-page PDF test retains the existing ROI calculations. No source fact, model input or investor record was changed by testing.",
   "Fresh September 29 16:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The newsletter release changes status/consent copy and response handling only; no source fact, model input, yield or subscriber record was changed by testing. The completed midnight run and Sheets OAuth blocker remain unchanged.",
@@ -1064,16 +1074,16 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; unattended 2026-09-29 midnight full run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 29 unattended full run completed at 00:06:02 Phoenix time with 2,468 audited listings, four delisted and 32 flagged physical-spec gaps. Fresh strict read-only checks confirm no unsupported portfolio or outside-Bali model leakage. Eight representative listing categories pass and sitemap coverage is exact. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. Both six-hour heartbeat configurations were reread ACTIVE. These local/app-dependent checkpoints are not uninterrupted 24/7 runtime.",
+    status: "Loaded; unattended 2026-09-30 midnight full run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 30 unattended full run completed at 00:07:36 Phoenix time with 2,472 audited listings, five delisted and 34 flagged physical-spec gaps. Fresh strict read-only checks confirm no unsupported portfolio or outside-Bali model leakage. Eight representative listing categories pass and sitemap coverage is exact. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. Both six-hour heartbeat configurations remain ACTIVE. These local/app-dependent checkpoints are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
-  status: "Live",
-  title: "Investor browsing accuracy release deployed and verified",
+  status: "Verification pending",
+  title: "Missing-rate guard and shortlist wording prepared",
   summary:
-    "The September 30 browsing release makes a 0%+ yield shortlist require an actual modeled result while preserving true modeled zero. Missing ROI or land area is sorted after known figures in both directions, and the displayed asking-price-per-land-area value uses the same validation. Forty-three Node tests, 27 Python regressions, a production build and 68-artifact audit pass. Synthetic browser checks pass 24/24 locally and live at 320px, 390px and desktop; Saved 88/88, comparison 212/212 and newsletter 76/76 also pass locally and live. After Vercel success, strict site/eight-category listing/exact sitemap checks and 31 dashboard-access checks pass. A broken pipe interrupted the first GitHub commit attempt; remote main stayed unchanged, and the retried atomic release succeeded. Strict evidence confirms 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine September 29 midnight run. No source fact, model input, yield, investor record or real subscription was changed by testing. The earlier free PDF and dashboard releases remain verified. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
+    "The missing-input guard is prepared but not yet deployed. It removes an invented nightly-rate fallback and withholds ROI when a modeled rate or ROI input is absent. Shortcut text distinguishes screening yield from realized return and makes clear that fewer flags are not a safety verdict. The previously verified zero-versus-missing ROI browse release remains live. Fresh September 30 scheduled-pipeline evidence confirms 2,472 audited / 2,199 modeled / 273 unmodeled, 34 physical gaps, 2,492 exact sitemap URLs and zero scope/value/scenario leaks; all current modeled rows have stored positive nightly rates. Local production build, 68-artifact audit, 43 Node checks, 27 Python regressions, 33 synthetic browse, 88 Saved, 212 comparison and 76 newsletter browser checks pass. Deployment and post-deploy checks remain. No source fact, model input, yield, investor record or real subscription was changed by testing. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,
@@ -1089,6 +1099,15 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/listing_browse_local_2026-09-30_1004.json",
+    ".tmp/saved_ui_local_2026-09-30_1004.json",
+    ".tmp/comparison_ui_local_2026-09-30_1004.json",
+    ".tmp/newsletter_ui_local_2026-09-30_1004.json",
+    ".tmp/automation_freshness_2026-09-30_1004.json",
+    ".tmp/supabase_data_quality_verification_2026-09-30_1004.json",
+    ".tmp/live_verification_2026-09-30_1004.json",
+    ".tmp/listing_page_verification_2026-09-30_1004.json",
+    ".tmp/sitemap_coverage_2026-09-30_1004.json",
     ".tmp/listing_browse_live_2026-09-30_0403.json",
     ".tmp/saved_ui_live_2026-09-30_0403.json",
     ".tmp/comparison_ui_live_2026-09-30_0403.json",
@@ -1898,6 +1917,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "A missing nightly-rate input will no longer become a fabricated bedroom-based estimate. The 8% shortcut names modeled screening yield rather than achieved return, and the lower-flag shortcut says absence of listed flags does not prove safety; production verification is pending.",
         "Yield shortlists now require a modeled figure: 0.0% is a real result, while an unavailable ROI is not zero. Missing ROI and land-area ratios no longer lead ascending sorts, and the asking-price ratio names its land-area denominator.",
         "Free audit PDFs are offered only for audited, modeled villas. A provider receipt is described as submitted for sending, not delivered; the 5-year report teaser is a modeled scenario, and the request remains separate from newsletter consent.",
         "Newsletter opt-in distinguishes a recorded signup from an uncertain request and from email-provider acceptance. It no longer promises an unverified Monday digest or one-click unsubscribe; audit PDFs remain a separate request.",
@@ -1919,6 +1939,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The prepared missing-rate guard passes 33 local synthetic browse checks at 320px, 390px and desktop; unavailable yield is neutral N/A with a RATE MISSING label, not a favorable colored result or fabricated nightly figure. Local mobile and desktop screenshots were inspected; no overflow or runtime error. Production verification remains pending.",
         "Synthetic browsing checks pass 24/24 locally and live at 320px, 390px and desktop for 0% filters, ascending/descending yield, missing-last land-price sorting, and no overflow or runtime errors. Saved 88/88, comparison 212/212 and newsletter 76/76 regressions pass locally and live; live mobile and desktop screenshots were inspected.",
         "The free PDF request passes 65 local and live intercepted checks at 320px, 390px and 1440px, covering invalid input, pending controls, provider failures, legacy/incomplete responses, malformed JSON, network abort, timeout recovery, accepted status, unsupported assets and overflow. The live 320px accepted screenshot was visually inspected. No positive request reached a server or sent email.",
         "The newsletter passes 76 local/live intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions also pass locally/live. Local and live mobile screenshots were visually inspected; no overflow or runtime errors and no real newsletter requests or emails.",
@@ -1950,6 +1971,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "The prepared missing-input guard uses the existing stored listing fields and pure helper, without a new endpoint, dependency or model recalculation. Production build passes; no speed or engagement gain is claimed.",
         "Browsing uses a small pure sorting helper and the existing in-memory listing array; it adds no endpoint, data fetch, dependency or ROI recalculation. Build passes, but no speed or engagement gain is claimed.",
         "The free PDF route adds no dependency or model recalculation. A 35-second client timeout restores retry controls after an uncertain request; this is resilience, not a measured speed or delivery improvement. Production build and synthetic three-page PDF checks pass.",
         "Newsletter handling adds no dependency or subscriber lookup. A 20-second browser timeout restores controls after uncertain requests, while persistence and provider acceptance remain separate. The build passes; no speed, delivery or conversion gain is claimed.",
@@ -1966,6 +1988,7 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/listing_browse_local_2026-09-30_1004.json",
         ".tmp/listing_browse_live_2026-09-30_0403.json",
         ".tmp/dashboard_privacy_2026-09-30_browse_release.json",
         ".tmp/listing_browse_local_2026-09-30_0403.json",

@@ -1,5 +1,6 @@
 type ListingYield = {
   projected_roi?: number | string | null;
+  est_nightly_rate?: number | string | null;
   rate_source?: string | null;
   flags?: string | null;
 };
@@ -13,7 +14,10 @@ export function isRoiUnmodeled(listing: ListingYield): boolean {
   const flags = getPipelineFlags(listing);
   return !source.startsWith("bvt_market_model")
     || listing.projected_roi == null
+    || String(listing.projected_roi).trim() === ""
     || !Number.isFinite(Number(listing.projected_roi))
+    || !Number.isFinite(Number(listing.est_nightly_rate))
+    || Number(listing.est_nightly_rate) <= 0
     || flags.includes("BEDROOM_COUNT_NOT_STATED")
     || flags.includes("NON_BALI_LOCATION")
     || flags.includes("MULTI_UNIT_MODEL_UNSUPPORTED");

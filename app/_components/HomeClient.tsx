@@ -645,9 +645,11 @@ export default function HomeClient({
     );
   };
 
-  // --- Display nightly & occupancy for analysis; never backfill rows explicitly marked unmodeled. ---
-  const getDisplayNightly = (villa: any): number =>
-    villa.est_nightly_rate > 0 ? villa.est_nightly_rate : (isRoiUnmodeled(villa) ? 0 : (100 + ((villa.bedrooms || 0) * 35)));
+  // --- Use the stored model input only; a missing rate must not become an invented estimate. ---
+  const getDisplayNightly = (villa: any): number => {
+    const nightly = Number(villa.est_nightly_rate);
+    return Number.isFinite(nightly) && nightly > 0 ? nightly : 0;
+  };
   const getDisplayOccupancy = (_villa: any): number => 65;
 
   // --- FILTER & SORT LOGIC (all listings shown; currency is display-only) ---
@@ -829,26 +831,32 @@ export default function HomeClient({
     if (pipelineFlags.includes('SHORT_LEASE')) {
       const annualDepreciation = years > 0 ? Math.round(priceUSD / years) : 0;
       const netRevenueAnnual = Math.round(netRevenue);
-      flags.push({ level: 'danger', label: 'Short Lease', detail: `${years} years are recorded as remaining. BVT's straight-line, noncash lease-value allowance is about $${annualDepreciation.toLocaleString()}/yr, compared with $${netRevenueAnnual.toLocaleString()}/yr in modeled rent after operating costs. This is a screening comparison, not a resale forecast or a cash bill. Verify the signed expiry and extension terms.` });
+      flags.push({ level: 'danger', label: 'Short Lease', detail: nightly > 0
+        ? `${years} years are recorded as remaining. BVT's straight-line, noncash lease-value allowance is about $${annualDepreciation.toLocaleString()}/yr, compared with $${netRevenueAnnual.toLocaleString()}/yr in modeled rent after operating costs. This is a screening comparison, not a resale forecast or a cash bill. Verify the signed expiry and extension terms.`
+        : `${years} years are recorded as remaining. BVT withholds the rental comparison because the nightly-rate input is unavailable. Verify the signed expiry and extension terms.` });
     }
 
-    if (pipelineFlags.includes('INFLATED_ROI')) {
+    if (pipelineFlags.includes('INFLATED_ROI') && nightly > 0) {
       flags.push({ level: 'warning', label: 'High Gross Yield', detail: `The modeled gross yield is ${grossRoi.toFixed(0)}% under a 65% occupancy scenario. It excludes operating costs and lease decay. The published net estimate is ${netRoiPipeline.toFixed(1)}%; verify the nightly rate, asset condition, and lease term before relying on it.` });
     }
 
-    if (pipelineFlags.includes('OPTIMISTIC_ROI')) {
+    if (pipelineFlags.includes('OPTIMISTIC_ROI') && nightly > 0) {
       flags.push({ level: 'warning', label: 'Gross vs Net', detail: `Modeled gross yield is ${grossRoi.toFixed(0)}% at 65% occupancy; gross excludes operating costs and lease decay. The published net estimate is ${netRoiPipeline.toFixed(1)}%. Test lower occupancy and obtain actual operating records.` });
     }
 
-    if (pipelineFlags.includes('RATE_PRICE_GAP')) {
+    if (pipelineFlags.includes('RATE_PRICE_GAP') && nightly > 0) {
       flags.push({ level: 'warning', label: 'Rate-Price Gap', detail: `The asking price and BVT's $${nightly}/night modeled rate need a property-level comp check. The rate is an estimate, not booked revenue; verify similar villas' actual booking records, condition, and management costs.` });
     }
 
     // --- RATE_ADJUSTED: Pipeline significantly adjusted the nightly rate (>25% deviation from base model) ---
     // Informational — not a red flag. Tells user the rate was modeled, not just pulled from area averages.
-    if (pipelineFlags.includes('RATE_ADJUSTED')) {
+    if (pipelineFlags.includes('RATE_ADJUSTED') && nightly > 0) {
       const modelRate = nightly;
       flags.push({ level: 'assumed', label: 'Adjusted Rate', detail: `BVT's $${modelRate}/night rate differs by more than 25% from its area baseline. This is a model adjustment, not evidence of achieved rent; compare similar villas and request booking records.` });
+    }
+
+    if (String(villa.rate_source || '').startsWith('bvt_market_model') && nightly === 0) {
+      flags.push({ level: 'assumed', label: 'Rate Missing', detail: 'The stored nightly-rate input is unavailable. BVT withholds ROI and rate-dependent comparisons until the model input is restored and checked.' });
     }
 
     return flags;
@@ -1070,7 +1078,7 @@ export default function HomeClient({
                 <TrendingUp size={16} className="text-[color:var(--bvt-accent)] mb-4" />
                 <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Best net yield</div>
                 <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
-                  Sort for 8%+ stress-tested returns, then inspect the expense and lease assumptions.
+                  Find 8%+ modeled screening yields, then inspect the expense and lease assumptions.
                 </p>
               </button>
               <button
@@ -1079,9 +1087,9 @@ export default function HomeClient({
                 className="group text-left border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-accent)]/60 bg-[color:var(--bvt-bg-elev)] rounded-md p-4 transition-colors"
               >
                 <Shield size={16} className="text-[color:var(--bvt-good)] mb-4" />
-                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Safer-looking</div>
+                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Lower-flag shortlist</div>
                 <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
-                  Hide material flags and keep only dossiers with a positive modeled yield.
+                  Show modeled 3%+ yields without listed material flags. Fewer flags do not establish safety.
                 </p>
               </button>
               <button
@@ -1485,6 +1493,7 @@ export default function HomeClient({
                     <div className="py-3 px-3 border-l border-[color:var(--bvt-hairline)]">
                       <div className="label-micro mb-1">Net Yield</div>
                       <div className={`font-mono text-[15px] tabular-nums ${
+                        isUnmodeled ? 'text-[color:var(--bvt-ink-muted)]' :
                         netRoi >= 12 ? 'text-[color:var(--bvt-good)]' :
                         netRoi >= 7 ? 'text-[color:var(--bvt-ink)]' :
                         netRoi >= 0 ? 'text-[color:var(--bvt-ink-muted)]' :
@@ -1721,6 +1730,7 @@ export default function HomeClient({
                             <div className="relative cursor-help text-center" onMouseEnter={() => setHoveredRoi(villa.id)} onMouseLeave={() => setHoveredRoi(null)}>
                             {/* BVT Adjusted ROI — prominent numeric */}
                             <div className={`font-mono tabular-nums text-[22px] leading-none ${
+                              isUnmodeled ? 'text-[color:var(--bvt-ink-muted)]' :
                               netRoi >= 12 ? 'text-[color:var(--bvt-good)]' :
                               netRoi >= 7 ? 'text-[color:var(--bvt-ink)]' :
                               netRoi >= 0 ? 'text-[color:var(--bvt-ink-muted)]' :
