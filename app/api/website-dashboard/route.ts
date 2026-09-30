@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 
 const completedImprovements = [
   {
+    date: "2026-09-30",
+    area: "Investor browsing / data clarity / mobile usability",
+    title: "Stopped missing ROI and land area from ranking as zero",
+    status: "Deployed; live verification pending",
+    why: "The 0%+ minimum net-yield filter now requires a real modeled result, so a listing without an ROI estimate cannot enter a yield shortlist as if it earned 0%. A genuine modeled 0.0% remains included. ROI and asking-price-per-land-square-meter sorts put missing values after known values in either direction; the displayed land-area ratio now uses the same validation and is labeled as an asking price per land m². No listing price, physical fact, rate, occupancy or modeled yield was changed. Forty-three Node tests and 27 Python regressions pass; 24 synthetic-intercept browser checks pass locally at 320px, 390px and desktop, with no overflow or real user-data request. Local Saved, comparison and newsletter checks also pass (88, 212 and 76). Production build and 68-artifact audit pass. Live verification is pending.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-09-30.md",
+  },
+  {
     date: "2026-09-29",
     area: "Free audit PDF / investor trust / mobile usability",
     title: "Made free audit email acknowledgements and PDF eligibility honest",
@@ -895,6 +904,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "September 30 04:03 UTC strict read-only checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The browsing fix changes filter/sort/display handling of missing values only; it does not recalculate or write any listing fact or ROI. The latest completed daily pipeline remains the September 29 Phoenix-midnight run, about 21 hours old at this checkpoint.",
   "Fresh September 29 22:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The free PDF release changes request eligibility, status and wording only. Its synthetic three-page PDF test retains the existing ROI calculations. No source fact, model input or investor record was changed by testing.",
   "Fresh September 29 16:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The newsletter release changes status/consent copy and response handling only; no source fact, model input, yield or subscriber record was changed by testing. The completed midnight run and Sheets OAuth blocker remain unchanged.",
   "The September 29 local-midnight full refresh completed at 00:06:02 Phoenix / 07:06 UTC: 2,468 listings upserted and four delisted. Fresh 10:01 UTC strict read-only checks pass with 2,195 modeled / 273 unmodeled, 32 physical gaps, and zero scope/value/scenario leaks. Sitemap is exactly 2,468 listing plus 20 static URLs. The privacy release changes no source fields, yields, model inputs, or server favorite records. Sheets OAuth still returned invalid_grant; no duplicate pipeline was started.",
@@ -1028,6 +1038,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "Previously, the 0%+ net-yield filter treated unmodeled rows as zero and ascending yield/land-price sorts placed missing values first. The local fix distinguishes real modeled 0.0% from absent ROI and keeps missing values last; production verification is pending.",
   "The free PDF request now keeps the address after uncertain failures and only displays a submitted-for-sending status after a provider receipt. The 5-year teaser is a modeled scenario, not a cashflow guarantee. Real mailbox receipt and lead-table persistence still need owner-approved checks.",
   "Newsletter success requires an explicit saved receipt, with storage uncertainty and email-provider uncertainty shown separately. Pending controls are disabled and timed-out requests recover. Contact-based removal does not imply automated unsubscribe or a verified mailbox workflow.",
   "Listing correction and custom-review links now preserve the listing reference, including on unsupported assets. Contact drafts are verified; actual mailbox delivery and support ownership require owner confirmation before any service-level promise.",
@@ -1059,18 +1070,18 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Live",
-  title: "Free audit reliability release deployed and verified",
+  status: "Deployment pending",
+  title: "Investor browsing accuracy release awaiting live verification",
   summary:
-    "The September 29 free PDF release requires an audited modeled listing and a nonempty provider acceptance receipt before showing success. The UI and policy distinguish submitted email from inbox delivery and attempted lead storage from a confirmed write. Forty mocked route tests, a synthetic three-page PDF, 65 intercepted local and live browser checks, 57 local/live Saved/privacy checks, 161 local/live contact checks, 27 Python regressions and a production build pass. After Vercel success, strict site/eight-category listing/exact sitemap checks and 31 dashboard-access checks pass; the live 320px accepted screenshot was visually inspected. Earlier newsletter, Saved, comparison and dashboard releases remain verified. Current strict evidence verifies 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks. No actual investor record or model data changed during testing; no real PDF email was sent. Owner-approved delivery and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
+    "The September 30 browsing release makes a 0%+ yield shortlist require an actual modeled result while preserving true modeled zero. Missing ROI or land area is sorted after known figures in both directions, and the displayed asking-price-per-land-area value uses the same validation. Forty-three Node tests, 27 Python regressions, a production build and 68-artifact audit pass. Local synthetic browser checks pass 24/24 at 320px, 390px and desktop; Saved 88/88, comparison 212/212 and newsletter 76/76 also pass locally. Live verification is pending. Strict baseline confirms 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine September 29 midnight run. No source fact, model input, yield, investor record or real subscription was changed by testing. The earlier free PDF and dashboard releases remain verified. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/#listings-section`,
     `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
     `${SITE_URL}/api/unlock-audit`,
     `${SITE_URL}/#newsletter`,
     `${SITE_URL}/api/subscribe`,
     `${SITE_URL}/privacy`,
-    `${SITE_URL}/#listings-section`,
     `${SITE_URL}/contact`,
     `${SITE_URL}/guides/bali-villa-occupancy-rates`,
     `${SITE_URL}/sitemap.xml`,
@@ -1078,6 +1089,15 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/listing_browse_local_2026-09-30_0403.json",
+    ".tmp/saved_ui_local_2026-09-30_0403.json",
+    ".tmp/comparison_ui_local_2026-09-30_0403.json",
+    ".tmp/newsletter_ui_local_2026-09-30_0403.json",
+    ".tmp/automation_freshness_2026-09-30_0403.json",
+    ".tmp/supabase_data_quality_verification_2026-09-30_0403.json",
+    ".tmp/live_verification_2026-09-30_0403.json",
+    ".tmp/listing_page_verification_2026-09-30_0403.json",
+    ".tmp/sitemap_coverage_2026-09-30_0403.json",
     ".tmp/free_audit_ui_live_2026-09-29_2202.json",
     ".tmp/dashboard_privacy_2026-09-29_free_audit_release.json",
     ".tmp/live_verification_2026-09-29_free_audit_release.json",
@@ -1870,6 +1890,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Yield shortlists now require a modeled figure: 0.0% is a real result, while an unavailable ROI is not zero. Missing ROI and land-area ratios no longer lead ascending sorts, and the asking-price ratio names its land-area denominator.",
         "Free audit PDFs are offered only for audited, modeled villas. A provider receipt is described as submitted for sending, not delivered; the 5-year report teaser is a modeled scenario, and the request remains separate from newsletter consent.",
         "Newsletter opt-in distinguishes a recorded signup from an uncertain request and from email-provider acceptance. It no longer promises an unverified Monday digest or one-click unsubscribe; audit PDFs remain a separate request.",
         "Saved no longer uses an email stored in a browser as authorization to retrieve account favorites. The shortlist remains local, with a visible privacy link. The policy distinguishes local removal from server deletion and audit-email requests from newsletter opt-ins; legacy server access still needs an owner review.",
@@ -1890,6 +1911,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "Synthetic browsing checks pass 24/24 locally at 320px, 390px and desktop for 0% filters, ascending/descending yield, missing-last land-price sorting, and no overflow or runtime errors. Saved 88/88, comparison 212/212 and newsletter 76/76 local regressions pass; live checks are pending.",
         "The free PDF request passes 65 local and live intercepted checks at 320px, 390px and 1440px, covering invalid input, pending controls, provider failures, legacy/incomplete responses, malformed JSON, network abort, timeout recovery, accepted status, unsupported assets and overflow. The live 320px accepted screenshot was visually inspected. No positive request reached a server or sent email.",
         "The newsletter passes 76 local/live intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions also pass locally/live. Local and live mobile screenshots were visually inspected; no overflow or runtime errors and no real newsletter requests or emails.",
         "The privacy release passes 57 local and live checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. All 88 Saved and 212 comparison regressions also pass locally/live. Live 320px Saved and 390px policy screenshots were visually inspected, alongside local 320px views.",
@@ -1907,6 +1929,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "The existing dense investor ledger is retained; the price-per-area label now makes the land denominator and asking-price basis explicit without adding a decorative panel.",
         "The free PDF form retains the established compact listing layout, with a clear two-line submitted status and delivery caveat on narrow screens rather than a promotional delivery promise.",
         "The newsletter is a restrained research section with a smaller wrapped heading, no radial halo, Lucide arrow/loading icons and an unframed success message. Pending and failure controls fit narrow phones, preserving BVT's existing palette.",
         "Saved adds a compact unframed privacy notice and policy link. The policy retains BVT's typography and colors, with a smaller mobile heading, normal letter spacing and wrapped section/body text; no decorative panels were added.",
@@ -1919,6 +1942,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "Browsing uses a small pure sorting helper and the existing in-memory listing array; it adds no endpoint, data fetch, dependency or ROI recalculation. Build passes, but no speed or engagement gain is claimed.",
         "The free PDF route adds no dependency or model recalculation. A 35-second client timeout restores retry controls after an uncertain request; this is resilience, not a measured speed or delivery improvement. Production build and synthetic three-page PDF checks pass.",
         "Newsletter handling adds no dependency or subscriber lookup. A 20-second browser timeout restores controls after uncertain requests, while persistence and provider acceptance remain separate. The build passes; no speed, delivery or conversion gain is claimed.",
         "Saved availability reuses the existing loaded inventory and adds no endpoint or dependency. Storage holds numeric IDs only; the production build passes. No speed, conversion, or engagement increase is claimed.",
@@ -1934,6 +1958,8 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/listing_browse_local_2026-09-30_0403.json",
+        ".tmp/website_progress_2026-09-30.md",
         ".tmp/free_audit_ui_live_2026-09-29_2202.json",
         ".tmp/dashboard_privacy_2026-09-29_free_audit_release.json",
         ".tmp/free_audit_ui_local_2026-09-29_2202.json",

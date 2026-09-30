@@ -7,6 +7,7 @@ import { BvtLockup } from './BvtSeal';
 import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
 import { COMPARISON_STORAGE_KEY, MAX_COMPARISON_VILLAS, normalizeComparisonIds, parseComparisonSelection } from '@/app/_lib/comparisonSelection';
 import { SAVED_STORAGE_KEY, parseSavedSelection } from '@/app/_lib/savedSelection';
+import { compareKnownNumbers, getPipelineFlags, isRoiUnmodeled, modeledNetYield, pricePerLandSqm } from '@/app/_lib/listingBrowse';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,18 +20,6 @@ type HomeClientProps = {
   initialListings?: any[];
   initialTotalCount?: number;
   initialFlaggedCount?: number;
-};
-
-const getPipelineFlags = (villa: any): string[] =>
-  (villa.flags || '').split(',').map((f: string) => f.trim()).filter(Boolean);
-
-const isRoiUnmodeled = (villa: any): boolean => {
-  const source = String(villa.rate_source || '').toLowerCase();
-  const flags = getPipelineFlags(villa);
-  return source.startsWith('unmodeled_')
-    || flags.includes('BEDROOM_COUNT_NOT_STATED')
-    || flags.includes('NON_BALI_LOCATION')
-    || flags.includes('MULTI_UNIT_MODEL_UNSUPPORTED');
 };
 
 // Indonesian real estate glossary for foreign buyers
@@ -564,10 +553,8 @@ export default function HomeClient({
 
   // --- Price per sqm in display currency ---
   const getPricePerSqm = (villa: any): string => {
-    const priceUSD = getPriceUSD(villa);
-    const landSize = parseInt(villa.land_size) || 0;
-    if (!priceUSD || !landSize) return '—';
-    const perSqmUSD = priceUSD / landSize;
+    const perSqmUSD = pricePerLandSqm(getPriceUSD(villa), villa.land_size);
+    if (perSqmUSD === null) return '—';
     const r = rates[displayCurrency];
     if (!r) return `${displayCurrency} ${Math.round(perSqmUSD).toLocaleString()}`;
     const value = displayCurrency === 'USD' ? perSqmUSD : perSqmUSD * r;
@@ -671,7 +658,8 @@ export default function HomeClient({
       const priceUSD = getPriceUSD(villa);
       const matchLocation = filterLocation === 'All' || (villa.location && villa.location.includes(filterLocation));
       const matchPrice = priceUSD <= filterPrice;
-      const matchRoi = (villa.projected_roi || 0) >= filterRoi;
+      const modeledYield = modeledNetYield(villa);
+      const matchRoi = filterRoi === -99 || (modeledYield !== null && modeledYield >= filterRoi);
       const matchLand = (villa.land_size || 0) >= filterLandSize;
       const matchBuild = (villa.building_size || 0) >= filterBuildSize;
       const matchBeds = (villa.bedrooms || 0) >= filterBeds;
@@ -697,19 +685,17 @@ export default function HomeClient({
     return filtered.sort((a, b) => {
       const priceA = getPriceUSD(a);
       const priceB = getPriceUSD(b);
-      const roiA = a.projected_roi || 0;
-      const roiB = b.projected_roi || 0;
-      const landA = parseInt(a.land_size) || 0;
-      const landB = parseInt(b.land_size) || 0;
-      const psmA = landA > 0 ? priceA / landA : 0;
-      const psmB = landB > 0 ? priceB / landB : 0;
+      const roiA = modeledNetYield(a);
+      const roiB = modeledNetYield(b);
+      const psmA = pricePerLandSqm(priceA, a.land_size);
+      const psmB = pricePerLandSqm(priceB, b.land_size);
       switch (sortOption) {
         case 'price-asc': return priceA - priceB;
         case 'price-desc': return priceB - priceA;
-        case 'roi-asc': return roiA - roiB;
-        case 'roi-desc': return roiB - roiA;
-        case 'psm-asc': return psmA - psmB;
-        case 'psm-desc': return psmB - psmA;
+        case 'roi-asc': return compareKnownNumbers(roiA, roiB);
+        case 'roi-desc': return compareKnownNumbers(roiA, roiB, true);
+        case 'psm-asc': return compareKnownNumbers(psmA, psmB);
+        case 'psm-desc': return compareKnownNumbers(psmA, psmB, true);
         default: return 0;
       }
     });
@@ -1246,8 +1232,8 @@ export default function HomeClient({
                         <option value="roi-asc" className="bg-[color:var(--bvt-bg)]">ROI: Low → High</option>
                         <option value="price-asc" className="bg-[color:var(--bvt-bg)]">Price: Low → High</option>
                         <option value="price-desc" className="bg-[color:var(--bvt-bg)]">Price: High → Low</option>
-                        <option value="psm-asc" className="bg-[color:var(--bvt-bg)]">Price/m²: Low → High</option>
-                        <option value="psm-desc" className="bg-[color:var(--bvt-bg)]">Price/m²: High → Low</option>
+                        <option value="psm-asc" className="bg-[color:var(--bvt-bg)]">Ask/land m²: Low → High</option>
+                        <option value="psm-desc" className="bg-[color:var(--bvt-bg)]">Ask/land m²: High → Low</option>
                     </select>
                 </div>
             </div>
@@ -1727,7 +1713,7 @@ export default function HomeClient({
                            })()}
                          </div>
                          <div className="mt-1 font-mono tabular-nums text-[11px] text-[color:var(--bvt-ink-dim)]">
-                           {getPricePerSqm(villa)} <span className="text-[color:var(--bvt-ink-faint)] normal-case tracking-normal">/m²</span>
+                           {getPricePerSqm(villa)} <span className="text-[color:var(--bvt-ink-faint)] normal-case tracking-normal">/land m²</span>
                          </div>
                         </td>
                         <td className="py-6 px-3 align-middle">
