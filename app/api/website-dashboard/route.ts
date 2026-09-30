@@ -31,8 +31,8 @@ const completedImprovements = [
     date: "2026-09-30",
     area: "Investor browsing / data clarity / mobile usability",
     title: "Stopped missing ROI and land area from ranking as zero",
-    status: "Deployed; live verification pending",
-    why: "The 0%+ minimum net-yield filter now requires a real modeled result, so a listing without an ROI estimate cannot enter a yield shortlist as if it earned 0%. A genuine modeled 0.0% remains included. ROI and asking-price-per-land-square-meter sorts put missing values after known values in either direction; the displayed land-area ratio now uses the same validation and is labeled as an asking price per land m². No listing price, physical fact, rate, occupancy or modeled yield was changed. Forty-three Node tests and 27 Python regressions pass; 24 synthetic-intercept browser checks pass locally at 320px, 390px and desktop, with no overflow or real user-data request. Local Saved, comparison and newsletter checks also pass (88, 212 and 76). Production build and 68-artifact audit pass. Live verification is pending.",
+    status: "Deployed and verified",
+    why: "The 0%+ minimum net-yield filter now requires a real modeled result, so a listing without an ROI estimate cannot enter a yield shortlist as if it earned 0%. A genuine modeled 0.0% remains included. ROI and asking-price-per-land-square-meter sorts put missing values after known values in either direction; the displayed land-area ratio now uses the same validation and is labeled as an asking price per land m². No listing price, physical fact, rate, occupancy or modeled yield was changed. Forty-three Node tests and 27 Python regressions pass; 24 synthetic-intercept browser checks pass locally and live at 320px, 390px and desktop, with no overflow or real user-data request. Saved, comparison and newsletter checks also pass locally and live (88, 212 and 76). Production build and 68-artifact audit pass. After Vercel success, strict canonical site/eight-category listing/exact sitemap checks and 31 private dashboard-access checks pass; mobile screenshots were inspected. A transient GitHub broken pipe was recovered without a partial deploy; the atomic release reached production only on retry.",
     url: `${SITE_URL}/#listings-section`,
     progressFile: ".tmp/website_progress_2026-09-30.md",
   },
@@ -1038,7 +1038,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
-  "Previously, the 0%+ net-yield filter treated unmodeled rows as zero and ascending yield/land-price sorts placed missing values first. The local fix distinguishes real modeled 0.0% from absent ROI and keeps missing values last; production verification is pending.",
+  "Previously, the 0%+ net-yield filter treated unmodeled rows as zero and ascending yield/land-price sorts placed missing values first. The live fix distinguishes real modeled 0.0% from absent ROI and keeps missing values last; local and production synthetic browser checks pass.",
   "The free PDF request now keeps the address after uncertain failures and only displays a submitted-for-sending status after a provider receipt. The 5-year teaser is a modeled scenario, not a cashflow guarantee. Real mailbox receipt and lead-table persistence still need owner-approved checks.",
   "Newsletter success requires an explicit saved receipt, with storage uncertainty and email-provider uncertainty shown separately. Pending controls are disabled and timed-out requests recover. Contact-based removal does not imply automated unsubscribe or a verified mailbox workflow.",
   "Listing correction and custom-review links now preserve the listing reference, including on unsupported assets. Contact drafts are verified; actual mailbox delivery and support ownership require owner confirmation before any service-level promise.",
@@ -1070,10 +1070,10 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Deployment pending",
-  title: "Investor browsing accuracy release awaiting live verification",
+  status: "Live",
+  title: "Investor browsing accuracy release deployed and verified",
   summary:
-    "The September 30 browsing release makes a 0%+ yield shortlist require an actual modeled result while preserving true modeled zero. Missing ROI or land area is sorted after known figures in both directions, and the displayed asking-price-per-land-area value uses the same validation. Forty-three Node tests, 27 Python regressions, a production build and 68-artifact audit pass. Local synthetic browser checks pass 24/24 at 320px, 390px and desktop; Saved 88/88, comparison 212/212 and newsletter 76/76 also pass locally. Live verification is pending. Strict baseline confirms 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine September 29 midnight run. No source fact, model input, yield, investor record or real subscription was changed by testing. The earlier free PDF and dashboard releases remain verified. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
+    "The September 30 browsing release makes a 0%+ yield shortlist require an actual modeled result while preserving true modeled zero. Missing ROI or land area is sorted after known figures in both directions, and the displayed asking-price-per-land-area value uses the same validation. Forty-three Node tests, 27 Python regressions, a production build and 68-artifact audit pass. Synthetic browser checks pass 24/24 locally and live at 320px, 390px and desktop; Saved 88/88, comparison 212/212 and newsletter 76/76 also pass locally and live. After Vercel success, strict site/eight-category listing/exact sitemap checks and 31 dashboard-access checks pass. A broken pipe interrupted the first GitHub commit attempt; remote main stayed unchanged, and the retried atomic release succeeded. Strict evidence confirms 2,468 audited rows, 32 physical gaps, 2,488 sitemap URLs and no scope/value/scenario leaks after the genuine September 29 midnight run. No source fact, model input, yield, investor record or real subscription was changed by testing. The earlier free PDF and dashboard releases remain verified. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. GSC follow-up remains October 2-9; do not repeat the completed September 25 queue.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,
@@ -1089,6 +1089,14 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/listing_browse_live_2026-09-30_0403.json",
+    ".tmp/saved_ui_live_2026-09-30_0403.json",
+    ".tmp/comparison_ui_live_2026-09-30_0403.json",
+    ".tmp/newsletter_ui_live_2026-09-30_0403.json",
+    ".tmp/dashboard_privacy_2026-09-30_browse_release.json",
+    ".tmp/live_verification_2026-09-30_browse_release.json",
+    ".tmp/listing_page_verification_2026-09-30_browse_release.json",
+    ".tmp/sitemap_coverage_2026-09-30_browse_release.json",
     ".tmp/listing_browse_local_2026-09-30_0403.json",
     ".tmp/saved_ui_local_2026-09-30_0403.json",
     ".tmp/comparison_ui_local_2026-09-30_0403.json",
@@ -1911,7 +1919,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
-        "Synthetic browsing checks pass 24/24 locally at 320px, 390px and desktop for 0% filters, ascending/descending yield, missing-last land-price sorting, and no overflow or runtime errors. Saved 88/88, comparison 212/212 and newsletter 76/76 local regressions pass; live checks are pending.",
+        "Synthetic browsing checks pass 24/24 locally and live at 320px, 390px and desktop for 0% filters, ascending/descending yield, missing-last land-price sorting, and no overflow or runtime errors. Saved 88/88, comparison 212/212 and newsletter 76/76 regressions pass locally and live; live mobile and desktop screenshots were inspected.",
         "The free PDF request passes 65 local and live intercepted checks at 320px, 390px and 1440px, covering invalid input, pending controls, provider failures, legacy/incomplete responses, malformed JSON, network abort, timeout recovery, accepted status, unsupported assets and overflow. The live 320px accepted screenshot was visually inspected. No positive request reached a server or sent email.",
         "The newsletter passes 76 local/live intercepted checks at 320px, 390px and 1440px: invalid addresses, keyboard submit, disabled pending controls, storage/receipt/JSON/network failures, a real 20-second timeout, retry, consent links and provider statuses. All 357 Saved/privacy/comparison regressions also pass locally/live. Local and live mobile screenshots were visually inspected; no overflow or runtime errors and no real newsletter requests or emails.",
         "The privacy release passes 57 local and live checks at 320px, 390px, and desktop, including readable Saved privacy links, legacy-email read denial, intercepted account requests, removal/reload without reimport, preserved comparison IDs, SSR policy content and mobile heading/overflow checks. All 88 Saved and 212 comparison regressions also pass locally/live. Live 320px Saved and 390px policy screenshots were visually inspected, alongside local 320px views.",
@@ -1958,6 +1966,8 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/listing_browse_live_2026-09-30_0403.json",
+        ".tmp/dashboard_privacy_2026-09-30_browse_release.json",
         ".tmp/listing_browse_local_2026-09-30_0403.json",
         ".tmp/website_progress_2026-09-30.md",
         ".tmp/free_audit_ui_live_2026-09-29_2202.json",
