@@ -644,6 +644,14 @@ export default async function ListingPage({ params }: Props) {
                         ? "Area/bedroom asking-rate sample: Booking.com, collected 1 Aug 2026 for 3 Nov 2026 stays. Not booked revenue."
                         : "No exact area/bedroom rate sample is available for this estimate."} Verify property-level booking history before relying on it.
                     </p>
+                    {hasNightlyRate && (
+                      <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                        Source-rate sample includes repeated result cards; distinct-property coverage is unverified.{' '}
+                        <Link href="/methodology" className="text-[#d4943a] hover:text-[#e5a84d] underline underline-offset-2">
+                          Review the rate limitation
+                        </Link>
+                      </p>
+                    )}
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
                     <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Occupancy used in yield</div>

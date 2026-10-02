@@ -258,9 +258,11 @@ export default function BaliVillaRoiGuidePage() {
           </div>
           <p>
             The full model is documented in the <InlineLink href="/methodology">BVT methodology</InlineLink>.
-            The important thing is consistency: every listing is compared through
-            the same lens, so a buyer can see which villas are genuinely attractive
-            and which only look attractive because the inputs were soft. Before
+            A consistent lens helps compare listings, but does not validate its inputs.
+            The active August 2026 nightly-rate sample contains repeated result cards,
+            so distinct-property coverage and some area-tier medians remain unverified.
+            The October refresh was held, not applied to published yields. Ask for dated
+            booking records and test lower-rate scenarios before an offer. Before
             moving from model to offer, run the{" "}
             <InlineLink href="/guides/bali-villa-due-diligence-checklist">
               Bali villa due diligence checklist

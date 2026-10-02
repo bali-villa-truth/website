@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 
 const completedImprovements = [
   {
+    date: "2026-10-02",
+    area: "Investor trust / rate provenance / ROI uncertainty",
+    title: "Disclosed the repeated-card rate-sample limitation",
+    status: "Prepared; live verification pending",
+    why: "The methodology, ROI guide and modeled listing pages now explain that the active 1 August asking-rate sample contains repeated result cards, so raw observations are not independent properties and distinct-property coverage is unverified. The 1 October replacement scrape was held because of the same pagination issue and a different stay season. The site does not claim an improved rate or yield: no model, source price, occupancy or stored ROI changed. Investors are prompted to obtain dated property-level booking evidence and test lower rates before relying on a scenario.",
+    url: `${SITE_URL}/methodology`,
+    progressFile: ".tmp/website_progress_2026-10-02.md",
+  },
+  {
     date: "2026-09-30",
     area: "Investor navigation / audit discovery / mobile usability",
     title: "Find an audit by villa name or listing reference",
@@ -833,6 +842,12 @@ const completedImprovements = [
 const pendingImprovements = [
   {
     priority: "High",
+    owner: "Rate-data pipeline",
+    title: "Validate distinct properties before any nightly-rate or ROI update",
+    nextAction: "Fix Booking.com pagination and retain property identity per result. Count unique properties by area and bedroom tier, compare the same stay season as the active sample, and fail the update gate on repeated pages or insufficient distinct coverage. The 1 October scrape is held; do not publish its medians or rerun modeled yields from it.",
+  },
+  {
+    priority: "High",
     owner: "Free audit delivery / Supabase policy owner",
     title: "Verify free PDF delivery and lead-write policy end to end",
     nextAction: "Confirm the monitored sending mailbox, provider configuration and leads-table schema/RLS, then approve a synthetic address and test-villa request. A mocked provider receipt and generated synthetic PDF do not prove inbox delivery, lead persistence or account isolation. Do not query real investor leads or send unapproved emails.",
@@ -922,6 +937,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 2 22:10 UTC read-only checks pass with 2,481 audited listings, 2,207 modeled and 274 unmodeled; 38 physical-spec gaps and no duplicate URLs/slugs, scope leaks, unmodeled nonzero model values or yield-scenario mismatches. The live sitemap has 2,481 listing and 20 static URLs. The active 1 August rate cache has repeated result cards; raw card counts overstate distinct-property coverage. The 1 October replacement scrape was held and has not changed the published rate table or ROI.",
   "September 30 10:04 UTC strict read-only checks pass after the genuine 00:07:36 Phoenix scheduled refresh: 2,472 audited / 2,199 modeled / 273 unmodeled, 34 physical gaps, zero scope/value/scenario leaks and exactly 2,492 sitemap URLs. All 2,199 current modeled rows have positive stored nightly rates. The deployed missing-rate guard changes only how an incomplete future row is presented; it does not recalculate or write a source fact or yield. Sheets OAuth remains invalid_grant.",
   "September 30 04:03 UTC strict read-only checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The browsing fix changes filter/sort/display handling of missing values only; it does not recalculate or write any listing fact or ROI. The latest completed daily pipeline remains the September 29 Phoenix-midnight run, about 21 hours old at this checkpoint.",
   "Fresh September 29 22:02 UTC strict checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The free PDF release changes request eligibility, status and wording only. Its synthetic three-page PDF test retains the existing ROI calculations. No source fact, model input or investor record was changed by testing.",
@@ -1090,10 +1106,10 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Live",
-  title: "Audit search deployed and verified",
+  status: "Prepared",
+  title: "Rate-sample disclosure awaiting deployment",
   summary:
-    "Audit search is live in the 2,472-dossier ledger: buyers can find a known villa, area, source reference or pasted source URL while combining yield, risk, tenure and Saved filters. The field remains visible with mobile filters collapsed. After Vercel success, 63 synthetic browse checks at 320px, 390px and 1440px and a real RF11433 reference lookup pass; Saved 88/88, comparison 212/212 and intercepted newsletter 76/76 also pass live. Strict canonical/eight-category listing/exact 2,492-URL sitemap and 31 dashboard-access checks pass. The production build, 68-artifact audit, 44 Node checks and 27 Python regressions pass. September 30 data preflight confirms 2,472 audited rows, 34 physical gaps and zero unsupported scope/value leaks. No source fact, rate, occupancy, yield or investor record changed. Owner-approved email and lead-policy tests, clean occupancy evidence, Sheets OAuth, managed secrets and paid checks remain next. The GSC follow-up remains October 2-9.",
+    "October 2 rate-sample disclosure is staged for methodology, ROI guide and modeled listing pages. The 1 October rate refresh remains held; neither rates nor ROI were recalculated. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled and 38 physical gaps, with exact 2,501-URL sitemap coverage. Build, deployment and live page/privacy/mobile verification are pending. The repeat-card rate input needs property-identity deduplication and matched stay-season validation before any model change.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,

@@ -6,7 +6,7 @@ const SITE_URL = 'https://balivillatruth.com';
 const METHOD_FAQS = [
   {
     q: 'What is a good ROI for a Bali villa?',
-    a: 'After operating costs and lease depreciation, a credible Bali villa net yield is usually in the mid-single digits. Anything above 10% can be real, but it deserves extra diligence on build quality, lease years, occupancy, and nightly-rate assumptions.',
+    a: 'No single percentage establishes a good investment. Compare a modeled net yield with verified booking revenue, actual operating costs, total acquisition cost, remaining lease years, and a downside case. BVT publishes a screening estimate, not evidence of achieved return.',
   },
   {
     q: 'How does Bali Villa Truth calculate net yield?',
@@ -139,6 +139,14 @@ export default function Methodology() {
               neither input verifies the earnings of a particular villa.
             </p>
             <p>
+              <strong className="text-[color:var(--bvt-ink)]">Rate-sample limitation, identified 1 October 2026:</strong>{' '}
+              Booking.com pagination repeated result cards in the active August sample. Its count of scraped prices
+              therefore overstates distinct-property coverage, and some area-and-bedroom medians may be affected.
+              A newer October scrape was held because it also repeated pages and used a different stay season.
+              The published rate table and yields have not been replaced. Treat them as provisional screening inputs;
+              request dated property-level booking and expense records before underwriting a purchase.
+            </p>
+            <p>
               Exchange rates are fetched from <strong className="text-[color:var(--bvt-ink)]">ExchangeRate-API</strong> at the start of each pipeline run
               and used consistently throughout processing. The frontend also fetches live rates for display-time
               currency conversion.
@@ -158,7 +166,8 @@ export default function Methodology() {
             <Step num={1} title="Area + bedroom rate lookup">
               An eligible listing starts with a rate based on its area and bedroom count. We maintain a
               Booking.com-based rate model for 12 Bali areas across 5 bedroom tiers. The base values
-              are discounted platform asking-rate medians, not realized revenue or a property appraisal.
+              are discounted platform asking-rate medians with unverified distinct-property sample coverage,
+              not realized revenue or a property appraisal.
               Villas in the same supported area and bedroom tier share a base rate; discrete budget
               discounts can then lower it for cheaper properties.
             </Step>
@@ -379,14 +388,16 @@ export default function Methodology() {
                 Our occupancy estimates are derived from Booking.com review density — a proxy for demand,
                 not a direct measure of bookings. Review counts don&apos;t account for seasonality,
                 direct bookings (which skip OTAs entirely), or how long a property has been listed.
-                We show confidence levels so you can judge how much weight to give each estimate.
+                The March review-card sample has repeated results and malformed scores, so its coverage
+                cannot establish confidence in an area forecast. The published yield uses a separate shared 65% scenario.
               </LimitItem>
               <LimitItem title="True operating costs">
-                Our 40% estimate is a reasonable industry midpoint, but your actual costs depend on
+                Our standard 40% allowance is a screening assumption, not a verified industry midpoint. Actual costs depend on
                 management style, property age, staff arrangements, and platform mix.
               </LimitItem>
               <LimitItem title="Booking.com vs. actual rental performance">
-                Our rate model is based on listed rates on Booking.com, not actual bookings.
+                Our rate model is based on listed rates on Booking.com, not actual bookings. The active
+                sample contains repeated result cards, so its distinct-property coverage is unverified.
                 Actual rates may be lower (discounts, last-minute deals) or higher (direct bookings, premium guests).
               </LimitItem>
               <LimitItem title="Property condition and build quality">
@@ -429,8 +440,10 @@ export default function Methodology() {
             <p>
               Our listing pipeline runs periodically to capture new listings and asking-price changes.
               The active Booking.com rate sample is dated 1 August 2026; the review-density occupancy
-              sample is dated 7 March 2026. Neither is a live market feed. New samples should be applied
-              only after validation. Asking prices update when the source changes; the price-history event
+              sample is dated 7 March 2026. Neither is a live market feed. The 1 October rate refresh was
+              held after duplicate-page and stay-season checks; no new rates or yields were published from it.
+              New samples should be applied only after unique-property and comparable-stay validation.
+              Asking prices update when the source changes; the price-history event
               threshold is 5% for a material change, not every smaller move.
             </p>
             <p>
