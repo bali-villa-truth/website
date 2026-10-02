@@ -102,9 +102,9 @@ export default function Methodology() {
             <span className="text-[color:var(--bvt-accent)]">is calculated.</span>
           </h1>
           <p className="mt-8 max-w-[62ch] text-[17px] md:text-[19px] leading-[1.6] text-[color:var(--bvt-ink-body)]">
-            We show you every assumption behind every number. No hidden floors,
-            no inflated rates, no false precision. If we don&apos;t have real
-            data, we tell you — and we give you the tools to plug in your own.
+            We show the inputs behind each estimate and identify where source
+            evidence is incomplete. These are screening scenarios, not booked
+            performance or a forecast of what you will earn.
           </p>
           <div className="mt-6 flex flex-wrap gap-3 text-[14px]">
             <Link href="/guides/bali-villa-roi" className="link-editorial">

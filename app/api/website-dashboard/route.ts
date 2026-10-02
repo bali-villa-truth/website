@@ -31,8 +31,8 @@ const completedImprovements = [
     date: "2026-10-02",
     area: "Investor trust / rate provenance / ROI uncertainty",
     title: "Disclosed the repeated-card rate-sample limitation",
-    status: "Prepared; live verification pending",
-    why: "The methodology, ROI guide and modeled listing pages now explain that the active 1 August asking-rate sample contains repeated result cards, so raw observations are not independent properties and distinct-property coverage is unverified. The 1 October replacement scrape was held because of the same pagination issue and a different stay season. The site does not claim an improved rate or yield: no model, source price, occupancy or stored ROI changed. Investors are prompted to obtain dated property-level booking evidence and test lower rates before relying on a scenario.",
+    status: "Deployed and verified",
+    why: "The methodology, ROI guide and modeled listing pages now explain that the active 1 August asking-rate sample contains repeated result cards, so raw observations are not independent properties and distinct-property coverage is unverified. The 1 October replacement scrape was held because of the same pagination issue and a different stay season. The site does not claim an improved rate or yield: no model, source price, occupancy or stored ROI changed. Investors are prompted to obtain dated property-level booking evidence and test lower rates before relying on a scenario. The first deployment passed strict canonical, eight-category listing, exact 2,501-URL sitemap and 31 private-dashboard checks; 320px, 390px and desktop pages have no horizontal overflow. A final hero-copy correction and dashboard status update are being released together.",
     url: `${SITE_URL}/methodology`,
     progressFile: ".tmp/website_progress_2026-10-02.md",
   },
@@ -1100,16 +1100,16 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; unattended 2026-09-30 midnight full run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The September 30 unattended full run completed at 00:07:36 Phoenix time with 2,472 audited listings, five delisted and 34 flagged physical-spec gaps. Fresh strict read-only checks confirm no unsupported portfolio or outside-Bali model leakage. Eight representative listing categories pass and sitemap coverage is exact. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. Both six-hour heartbeat configurations remain ACTIVE. These local/app-dependent checkpoints are not uninterrupted 24/7 runtime.",
+    status: "Loaded; unattended 2026-10-02 midnight full run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 2 unattended run completed at 00:06:47 Phoenix time with 2,481 upserted listings, 11 marked delisted and 38 flagged physical-spec gaps. Eight representative listing categories and exact sitemap coverage pass. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
-  status: "Prepared",
-  title: "Rate-sample disclosure awaiting deployment",
+  status: "Live",
+  title: "Rate-sample limitation disclosed and verified",
   summary:
-    "October 2 rate-sample disclosure is staged for methodology, ROI guide and modeled listing pages. The 1 October rate refresh remains held; neither rates nor ROI were recalculated. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled and 38 physical gaps, with exact 2,501-URL sitemap coverage. Build, deployment and live page/privacy/mobile verification are pending. The repeat-card rate input needs property-identity deduplication and matched stay-season validation before any model change.",
+    "The October 2 rate-sample disclosure is live on methodology, the ROI guide and modeled listing pages. The 1 October rate refresh remains held; neither rates nor ROI were recalculated. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled and 38 physical gaps. The first deployment passed strict canonical SSR, eight listing categories, exact 2,501-URL sitemap coverage and 31 dashboard-access checks. The changed pages have no horizontal overflow at 320px, 390px or 1440px; the final hero-copy and dashboard update will be checked again after deployment. The repeat-card rate input needs property-identity deduplication and matched stay-season validation before any model change.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,
@@ -1125,6 +1125,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-02_rate_disclosure.json",
+    ".tmp/live_verification_2026-10-02_rate_disclosure.json",
+    ".tmp/listing_page_verification_2026-10-02_rate_disclosure.json",
+    ".tmp/sitemap_coverage_2026-10-02_rate_disclosure.json",
     ".tmp/listing_browse_2026-09-30_1606_live.json",
     ".tmp/saved_ui_2026-09-30_1606_live.json",
     ".tmp/comparison_ui_2026-09-30_1606_live.json",
@@ -1815,7 +1819,7 @@ const nextActions = [
   "Confirm newsletter sending/removal ownership and leads-table schema/RLS with owner access, then approve synthetic signup/removal tests. Mocked persistence/provider tests and qualified copy do not prove inbox delivery or historical record isolation; actual subscriber reads and outreach remain unauthorized.",
   "Confirm the contact mailbox is monitored and approve a delivery test before publishing a response-time or review-availability promise. The current links compose drafts only; no test email was sent.",
   "Refresh the Booking.com review sample with pagination, unique-property, and 0-10 score validation; review area-level changes and sample coverage before updating the occupancy model or investor ROI values.",
-  "Refresh and validate the Booking.com asking-rate sample; the current 1 August snapshot is dated and is not realized booking revenue. Do not advertise a monthly rate-refresh cadence without successful runs.",
+  "Fix Booking.com page-offset handling and retain property IDs before another asking-rate update. Reject repeated pages, compare a matched stay season, and require enough distinct properties per tier. The 1 October scrape remains held; do not use its raw-card count or proposed medians to recalculate yield.",
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
   "Reauthorize Google Sheets interactively; the September 29 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
@@ -2040,6 +2044,11 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-02.md",
+        ".tmp/dashboard_privacy_2026-10-02_rate_disclosure.json",
+        ".tmp/live_verification_2026-10-02_rate_disclosure.json",
+        ".tmp/listing_page_verification_2026-10-02_rate_disclosure.json",
+        ".tmp/sitemap_coverage_2026-10-02_rate_disclosure.json",
         ".tmp/listing_browse_2026-09-30_1606_live.json",
         ".tmp/dashboard_privacy_2026-09-30_search_release.json",
         ".tmp/listing_browse_2026-09-30_1606_local.json",
