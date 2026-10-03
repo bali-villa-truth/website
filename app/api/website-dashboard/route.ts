@@ -29,6 +29,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-10-03",
+    area: "Private dashboard / live inventory / measurement clarity",
+    title: "Show current listing URLs and fail health when the sitemap is unavailable",
+    status: "Prepared; live verification pending",
+    why: "The private website dashboard now counts listing URLs from each live canonical sitemap response, displays the total sitemap count separately, and explicitly says neither number is a Google indexed-page count. A failed or empty sitemap no longer appears as zero inventory under a green health summary; it becomes unavailable and fails a named live check. Dated model and pipeline counts remain historical snapshots. The stale Sep 25 indexing follow-up is replaced with a later non-overlapping exact-query measurement task after Oct 3 GSC confirmed the ROI guide and Nusa Dua indexed. No public ROI, source listing, sitemap content or Google action changed.",
+    url: `${SITE_URL}/website-dashboard`,
+    progressFile: ".tmp/website_progress_2026-10-03_1011.md",
+  },
+  {
+    date: "2026-10-03",
     area: "Investor trust / nightly-rate data safety",
     title: "Block rate-model updates without distinct-property evidence",
     status: "Local guard verified; dashboard deployed",
@@ -894,8 +903,8 @@ const pendingImprovements = [
   {
     priority: "High",
     owner: "Authenticated GSC",
-    title: "Recheck the September indexing queue",
-    nextAction: "The Sep 25 URL-prefix GSC pass inspected all 16 vetted URLs (11 indexing requests, 5 already indexed). Reinspect the guide and Nusa Dua hub in 7-14 days; a request does not prove indexing.",
+    title: "Measure ROI search visibility after confirmed indexation",
+    nextAction: "The Oct 3 read-only GSC check found the ROI guide and Nusa Dua indexed, while the exact bali villa roi query had zero impressions in the latest fully reported 28-day window. Do not re-request indexing or infer rank. Compare a non-overlapping fully reported 28-day window no earlier than Oct 29; recheck the stale aggregate Page indexing report no more than weekly starting Oct 10.",
   },
   {
     priority: "High",
@@ -946,6 +955,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 3 10:11 UTC read-only checks after the genuine local-midnight refresh: 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 physical gaps; no duplicate URLs/slugs, scope leaks or nonzero values on unmodeled rows. The canonical sitemap has 2,482 listing URLs plus 20 static URLs. The private dashboard now derives its live listing-URL metric from that sitemap response rather than presenting an older audit snapshot as today's inventory; the metric is not a Google indexed-page count.",
   "October 3 local rate-pipeline safety check: the active 1 August cache has 2,475 raw price observations but no property-identity records. The new verifier and --cached --update both exit 1 against it; rate_engine.py remains byte-for-byte unchanged. Synthetic tests cover repeated page cards, missing IDs, rate-record mismatch, thin tiers and a March versus November stay-season mismatch. This is a fail-closed write safeguard, not a claim that existing medians or occupancy are validated. Live read-only checks still show 2,481 audited rows, 2,207 modeled, 274 unmodeled, 38 physical gaps and exact 2,501-URL sitemap coverage.",
   "October 2 22:10 UTC read-only checks pass with 2,481 audited listings, 2,207 modeled and 274 unmodeled; 38 physical-spec gaps and no duplicate URLs/slugs, scope leaks, unmodeled nonzero model values or yield-scenario mismatches. The live sitemap has 2,481 listing and 20 static URLs. The active 1 August rate cache has repeated result cards; raw card counts overstate distinct-property coverage. The 1 October replacement scrape was held and has not changed the published rate table or ROI.",
   "September 30 10:04 UTC strict read-only checks pass after the genuine 00:07:36 Phoenix scheduled refresh: 2,472 audited / 2,199 modeled / 273 unmodeled, 34 physical gaps, zero scope/value/scenario leaks and exactly 2,492 sitemap URLs. All 2,199 current modeled rows have positive stored nightly rates. The deployed missing-rate guard changes only how an incomplete future row is presented; it does not recalculate or write a source fact or yield. Sheets OAuth remains invalid_grant.",
@@ -1110,16 +1120,16 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; unattended 2026-10-02 midnight full run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 2 unattended run completed at 00:06:47 Phoenix time with 2,481 upserted listings, 11 marked delisted and 38 flagged physical-spec gaps. Eight representative listing categories and exact sitemap coverage pass. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Loaded; 2026-10-03 midnight run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 3 run completed at 00:06:20 Phoenix time with 2,482 upserted listings, two marked delisted and 38 flagged physical-spec gaps. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
-  status: "Live",
-  title: "Rate-update safeguard recorded and verified",
+  status: "Prepared",
+  title: "Live-inventory dashboard update awaiting verification",
   summary:
-    "The local nightly-rate update guard is tested and its private dashboard record is live. Legacy identity-free caches and repeated or season-mismatched observations cannot update rate_engine.py; the 1 October refresh remains held. The existing modeled rates and yields have not changed. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled and 38 physical gaps. The first dashboard release passed 31 access/privacy checks, strict canonical and eight listing-category checks, and exact 2,501-URL sitemap coverage. Booking pagination and a new comparable property-level sample still require validation before any model change.",
+    "The private dashboard's live listing-URL and sitemap-health update is prepared but not yet verified on production. Its prior rate-update safeguard remains active locally; the 1 October rate refresh stays held and modeled rates/yields are unchanged. The October 3 10:11 UTC read-only preflight found 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 physical gaps, with 2,502 live sitemap URLs. The new dashboard metric will describe sitemap-listed dossiers, not Google indexed pages; dated model and pipeline counts stay labeled as snapshots.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/methodology`,
@@ -1839,7 +1849,7 @@ const nextActions = [
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
   "Reauthorize Google Sheets interactively; the September 29 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
-  "Reinspect the completed September 25 GSC queue in 7-14 days using the same URL-prefix property, and track whether the sitemap read count and exact-query ROI visibility change.",
+  "Do not repeat the completed September 25 indexing queue. The ROI guide and Nusa Dua were confirmed indexed on October 3, but exact bali villa roi impressions remained zero in the latest fully reported 28-day window. Recheck the stale aggregate indexing report no more than weekly starting October 10, and compare a non-overlapping exact-query window no earlier than October 29.",
   "Optionally move the rotated dashboard credentials to private Vercel environment variables, verify both logins, then remove the public digest fallbacks.",
   "Rotate the stale GitHub token in .env; the September 25 deploy used the existing authenticated GitHub CLI token for one process.",
   "Continue mobile checks after listing or filter changes, and assess a saved/shareable comparison workflow after confirming its user-data model.",
@@ -1912,6 +1922,10 @@ export async function GET() {
   ]);
   const coreResponses = responses.slice(0, CORE_PATHS.length);
   const preparedResponses = responses.slice(CORE_PATHS.length);
+  const sitemapUrls = sitemap.ok ? count(/<loc>/g, sitemap.text) : null;
+  const sitemapListingUrls = sitemap.ok
+    ? count(/<loc>https:\/\/balivillatruth\.com\/listing\//g, sitemap.text)
+    : null;
 
   const coreChecks = CORE_PATHS.map((item, index) => {
     const response = coreResponses[index];
@@ -1925,7 +1939,17 @@ export async function GET() {
       title: response.title,
       detail: missing.length === 0 ? "Expected markers found." : `Missing: ${missing.join(", ")}`,
     };
-  });
+  }).concat([{
+    name: "Live sitemap",
+    url: sitemap.url,
+    ok: sitemap.ok && sitemapUrls !== null && sitemapUrls > 0 && sitemapListingUrls !== null && sitemapListingUrls > 0,
+    status: sitemap.status,
+    ms: sitemap.ms,
+    title: sitemap.title,
+    detail: sitemap.ok && sitemapListingUrls !== null
+      ? `${sitemapListingUrls} listing URLs in the canonical sitemap; this does not measure Google indexation.`
+      : "Sitemap unavailable or no listing URLs found.",
+  }]);
 
   const preparedChecks = PREPARED_PATHS.map((item, index) => {
     const response = preparedResponses[index];
@@ -1946,7 +1970,6 @@ export async function GET() {
   });
 
   const homepage = coreResponses[0]?.text || "";
-  const sitemapUrls = count(/<loc>/g, sitemap.text);
   const healthOk = coreChecks.filter((check) => check.ok).length;
   const preparedLive = preparedChecks.filter((check) => check.live).length;
   const preparedBlocked = preparedChecks.filter((check) => check.deployBlocked).length;
@@ -1963,6 +1986,7 @@ export async function GET() {
         blockerCount: blockers.length,
         contentPages: contentPages.length,
         sitemapUrls,
+        sitemapListingUrls,
         healthOk,
         healthTotal: coreChecks.length,
         preparedLive,
@@ -2060,6 +2084,10 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-03_1011.md",
+        ".tmp/automation_freshness_2026-10-03_1011.json",
+        ".tmp/supabase_data_quality_verification_2026-10-03_1011.json",
+        ".tmp/live_verification_2026-10-03_1011.json",
         ".tmp/website_progress_2026-10-03.md",
         ".tmp/dashboard_privacy_2026-10-03_rate_guard_release.json",
         ".tmp/live_verification_2026-10-03_rate_guard_release.json",

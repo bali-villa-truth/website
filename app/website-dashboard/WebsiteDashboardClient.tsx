@@ -283,9 +283,11 @@ export default function WebsiteDashboardClient() {
           />
           <Metric
             icon={<BarChart3 size={20} />}
-            label="Sitemap URLs"
-            value={data ? `${data.summary.sitemapUrls}` : "-"}
-            detail="Read live from the canonical non-www sitemap."
+            label="Live listing URLs"
+            value={typeof data?.summary.sitemapListingUrls === "number" ? `${data.summary.sitemapListingUrls}` : "-"}
+            detail={typeof data?.summary.sitemapUrls === "number"
+              ? `${data.summary.sitemapUrls} total sitemap URLs. This is not a Google indexed-page count.`
+              : "Canonical sitemap unavailable; count withheld."}
           />
           <Metric
             icon={<AlertTriangle size={20} />}
