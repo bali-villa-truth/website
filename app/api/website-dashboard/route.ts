@@ -31,8 +31,8 @@ const completedImprovements = [
     date: "2026-10-03",
     area: "Investor trust / nightly-rate data safety",
     title: "Block rate-model updates without distinct-property evidence",
-    status: "Local guard verified; dashboard deployment pending",
-    why: "The local Booking.com rate scraper now records a stable property identifier and page offset beside each observation. Its --update path and the independent verifier reject legacy price-only caches, repeated cards, missing identities, thin property coverage and a stay month unlike the active November sample. The active 1 August cache fails this new eligibility gate as expected: an attempted cached update exits without changing rate_engine.py. This prevents an unverified refresh; it does not validate the existing rate table or repair Booking.com's repeated pagination. No nightly rate, modeled yield, source listing or investor record changed.",
+    status: "Local guard verified; dashboard deployed",
+    why: "The local Booking.com rate scraper now retains a hotel ID or canonical property path and page offset where a source card exposes them; unidentifiable cards cannot qualify an update. Its --update path and the independent verifier reject legacy price-only caches, repeated cards, missing identities, thin property coverage and a stay month unlike the active November sample. The active 1 August cache fails this eligibility gate as expected: an attempted cached update exits without changing rate_engine.py. This prevents an unverified refresh; it does not validate the existing rate table or repair Booking.com's repeated pagination. The first dashboard release passed 31 privacy/access checks, strict canonical and eight-category listing checks, and exact 2,501-URL sitemap coverage. No nightly rate, modeled yield, source listing or investor record changed.",
     url: `${SITE_URL}/methodology`,
     progressFile: ".tmp/website_progress_2026-10-03.md",
   },
@@ -1116,12 +1116,14 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Prepared",
-  title: "Rate-update safeguard awaiting dashboard verification",
+  status: "Live",
+  title: "Rate-update safeguard recorded and verified",
   summary:
-    "The local nightly-rate update guard is tested but its private dashboard record is awaiting production verification. Legacy identity-free caches and repeated or season-mismatched observations cannot update rate_engine.py; the 1 October refresh remains held. The existing modeled rates and yields have not changed. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled, 38 physical gaps and a 2,501-URL sitemap. Booking pagination and a new comparable property-level sample still require validation before any model change.",
+    "The local nightly-rate update guard is tested and its private dashboard record is live. Legacy identity-free caches and repeated or season-mismatched observations cannot update rate_engine.py; the 1 October refresh remains held. The existing modeled rates and yields have not changed. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled and 38 physical gaps. The first dashboard release passed 31 access/privacy checks, strict canonical and eight listing-category checks, and exact 2,501-URL sitemap coverage. Booking pagination and a new comparable property-level sample still require validation before any model change.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/methodology`,
+    `${SITE_URL}/guides/bali-villa-roi`,
     `${SITE_URL}/#listings-section`,
     `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
     `${SITE_URL}/api/unlock-audit`,
@@ -1135,6 +1137,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-03_rate_guard_release.json",
+    ".tmp/live_verification_2026-10-03_rate_guard_release.json",
+    ".tmp/listing_page_verification_2026-10-03_rate_guard_release.json",
+    ".tmp/sitemap_coverage_2026-10-03_rate_guard_release.json",
     ".tmp/dashboard_privacy_2026-10-02_final.json",
     ".tmp/live_verification_2026-10-02_final.json",
     ".tmp/listing_page_verification_2026-10-02_final.json",
@@ -2055,6 +2061,10 @@ export async function GET() {
       nextActions,
       progressFiles: [
         ".tmp/website_progress_2026-10-03.md",
+        ".tmp/dashboard_privacy_2026-10-03_rate_guard_release.json",
+        ".tmp/live_verification_2026-10-03_rate_guard_release.json",
+        ".tmp/listing_page_verification_2026-10-03_rate_guard_release.json",
+        ".tmp/sitemap_coverage_2026-10-03_rate_guard_release.json",
         ".tmp/automation_freshness_2026-10-03_0411.json",
         ".tmp/supabase_data_quality_verification_2026-10-03_0411.json",
         ".tmp/live_verification_2026-10-03_0411.json",
