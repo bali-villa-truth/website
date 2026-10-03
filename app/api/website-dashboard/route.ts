@@ -28,6 +28,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 
 const completedImprovements = [
   {
+    date: "2026-10-03",
+    area: "Investor trust / nightly-rate data safety",
+    title: "Block rate-model updates without distinct-property evidence",
+    status: "Local guard verified; dashboard deployment pending",
+    why: "The local Booking.com rate scraper now records a stable property identifier and page offset beside each observation. Its --update path and the independent verifier reject legacy price-only caches, repeated cards, missing identities, thin property coverage and a stay month unlike the active November sample. The active 1 August cache fails this new eligibility gate as expected: an attempted cached update exits without changing rate_engine.py. This prevents an unverified refresh; it does not validate the existing rate table or repair Booking.com's repeated pagination. No nightly rate, modeled yield, source listing or investor record changed.",
+    url: `${SITE_URL}/methodology`,
+    progressFile: ".tmp/website_progress_2026-10-03.md",
+  },
+  {
     date: "2026-10-02",
     area: "Investor trust / rate provenance / ROI uncertainty",
     title: "Disclosed the repeated-card rate-sample limitation",
@@ -844,7 +853,7 @@ const pendingImprovements = [
     priority: "High",
     owner: "Rate-data pipeline",
     title: "Validate distinct properties before any nightly-rate or ROI update",
-    nextAction: "Fix Booking.com pagination and retain property identity per result. Count unique properties by area and bedroom tier, compare the same stay season as the active sample, and fail the update gate on repeated pages or insufficient distinct coverage. The 1 October scrape is held; do not publish its medians or rerun modeled yields from it.",
+    nextAction: "The local write gate now rejects identity-free, repeated, thin and season-mismatched caches. Fix Booking.com pagination, validate real property identifiers and the rate/bedroom extraction against live cards, collect enough distinct properties in all 60 tiers for comparable November stays, then manually review medians and large deltas before any ROI refresh. The 1 October scrape remains held.",
   },
   {
     priority: "High",
@@ -937,6 +946,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 3 local rate-pipeline safety check: the active 1 August cache has 2,475 raw price observations but no property-identity records. The new verifier and --cached --update both exit 1 against it; rate_engine.py remains byte-for-byte unchanged. Synthetic tests cover repeated page cards, missing IDs, rate-record mismatch, thin tiers and a March versus November stay-season mismatch. This is a fail-closed write safeguard, not a claim that existing medians or occupancy are validated. Live read-only checks still show 2,481 audited rows, 2,207 modeled, 274 unmodeled, 38 physical gaps and exact 2,501-URL sitemap coverage.",
   "October 2 22:10 UTC read-only checks pass with 2,481 audited listings, 2,207 modeled and 274 unmodeled; 38 physical-spec gaps and no duplicate URLs/slugs, scope leaks, unmodeled nonzero model values or yield-scenario mismatches. The live sitemap has 2,481 listing and 20 static URLs. The active 1 August rate cache has repeated result cards; raw card counts overstate distinct-property coverage. The 1 October replacement scrape was held and has not changed the published rate table or ROI.",
   "September 30 10:04 UTC strict read-only checks pass after the genuine 00:07:36 Phoenix scheduled refresh: 2,472 audited / 2,199 modeled / 273 unmodeled, 34 physical gaps, zero scope/value/scenario leaks and exactly 2,492 sitemap URLs. All 2,199 current modeled rows have positive stored nightly rates. The deployed missing-rate guard changes only how an incomplete future row is presented; it does not recalculate or write a source fact or yield. Sheets OAuth remains invalid_grant.",
   "September 30 04:03 UTC strict read-only checks pass with 2,468 audited / 2,195 modeled / 273 unmodeled, 32 physical gaps, zero scope/value/scenario leaks and exactly 2,488 sitemap URLs. The browsing fix changes filter/sort/display handling of missing values only; it does not recalculate or write any listing fact or ROI. The latest completed daily pipeline remains the September 29 Phoenix-midnight run, about 21 hours old at this checkpoint.",
@@ -1106,10 +1116,10 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Live",
-  title: "Rate-sample limitation disclosed and verified",
+  status: "Prepared",
+  title: "Rate-update safeguard awaiting dashboard verification",
   summary:
-    "The October 2 rate-sample disclosure is live on methodology, the ROI guide and modeled listing pages. The 1 October rate refresh remains held; neither rates nor ROI were recalculated. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled and 38 physical gaps. The final public release passed strict canonical SSR, eight listing categories, exact 2,501-URL sitemap coverage and 31 dashboard-access checks. The changed pages have no horizontal overflow at 320px, 390px or 1440px. The repeat-card rate input needs property-identity deduplication and matched stay-season validation before any model change.",
+    "The local nightly-rate update guard is tested but its private dashboard record is awaiting production verification. Legacy identity-free caches and repeated or season-mismatched observations cannot update rate_engine.py; the 1 October refresh remains held. The existing modeled rates and yields have not changed. Fresh read-only checks show 2,481 audited listings, 2,207 modeled, 274 unmodeled, 38 physical gaps and a 2,501-URL sitemap. Booking pagination and a new comparable property-level sample still require validation before any model change.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/#listings-section`,
@@ -1819,7 +1829,7 @@ const nextActions = [
   "Confirm newsletter sending/removal ownership and leads-table schema/RLS with owner access, then approve synthetic signup/removal tests. Mocked persistence/provider tests and qualified copy do not prove inbox delivery or historical record isolation; actual subscriber reads and outreach remain unauthorized.",
   "Confirm the contact mailbox is monitored and approve a delivery test before publishing a response-time or review-availability promise. The current links compose drafts only; no test email was sent.",
   "Refresh the Booking.com review sample with pagination, unique-property, and 0-10 score validation; review area-level changes and sample coverage before updating the occupancy model or investor ROI values.",
-  "Fix Booking.com page-offset handling and retain property IDs before another asking-rate update. Reject repeated pages, compare a matched stay season, and require enough distinct properties per tier. The 1 October scrape remains held; do not use its raw-card count or proposed medians to recalculate yield.",
+  "Fix Booking.com page-offset handling and validate real property IDs/bedroom counts against source cards. The local write gate now rejects repeated, identity-free, thin and season-mismatched samples, but no fresh sample has passed it. Collect a comparable November-stay sample across all 60 tiers and manually review rate deltas before any yield recalculation.",
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
   "Reauthorize Google Sheets interactively; the September 29 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
@@ -2044,6 +2054,10 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-03.md",
+        ".tmp/automation_freshness_2026-10-03_0411.json",
+        ".tmp/supabase_data_quality_verification_2026-10-03_0411.json",
+        ".tmp/live_verification_2026-10-03_0411.json",
         ".tmp/website_progress_2026-10-02.md",
         ".tmp/dashboard_privacy_2026-10-02_final.json",
         ".tmp/live_verification_2026-10-02_final.json",
