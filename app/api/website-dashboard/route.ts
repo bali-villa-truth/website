@@ -31,7 +31,7 @@ const completedImprovements = [
     date: "2026-10-03",
     area: "Private dashboard / live inventory / measurement clarity",
     title: "Show current listing URLs and fail health when the sitemap is unavailable",
-    status: "Prepared; live verification pending",
+    status: "Deployed and verified",
     why: "The private website dashboard now counts listing URLs from each live canonical sitemap response, displays the total sitemap count separately, and explicitly says neither number is a Google indexed-page count. A failed or empty sitemap no longer appears as zero inventory under a green health summary; it becomes unavailable and fails a named live check. Dated model and pipeline counts remain historical snapshots. The stale Sep 25 indexing follow-up is replaced with a later non-overlapping exact-query measurement task after Oct 3 GSC confirmed the ROI guide and Nusa Dua indexed. No public ROI, source listing, sitemap content or Google action changed.",
     url: `${SITE_URL}/website-dashboard`,
     progressFile: ".tmp/website_progress_2026-10-03_1011.md",
@@ -1126,10 +1126,10 @@ const scheduledJobs = [
 ];
 
 const deploymentGate = {
-  status: "Prepared",
-  title: "Live-inventory dashboard update awaiting verification",
+  status: "Live",
+  title: "Live-inventory dashboard update verified",
   summary:
-    "The private dashboard's live listing-URL and sitemap-health update is prepared but not yet verified on production. Its prior rate-update safeguard remains active locally; the 1 October rate refresh stays held and modeled rates/yields are unchanged. The October 3 10:11 UTC read-only preflight found 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 physical gaps, with 2,502 live sitemap URLs. The new dashboard metric will describe sitemap-listed dossiers, not Google indexed pages; dated model and pipeline counts stay labeled as snapshots.",
+    "The October 3 dashboard release passed production privacy/access, canonical-page, eight-category listing and exact sitemap-coverage checks. The live sitemap contains 2,482 listing URLs and 20 static URLs; these are not Google indexed-page counts. The October 3 10:11 UTC read-only data preflight found 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 physical gaps. The local rate-update safeguard remains active, the October 1 rate refresh stays held, and published rates/yields are unchanged. Paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/methodology`,
@@ -1147,6 +1147,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-03_1011_release.json",
+    ".tmp/live_verification_2026-10-03_1011_release.json",
+    ".tmp/listing_page_verification_2026-10-03_1011_release.json",
+    ".tmp/sitemap_coverage_2026-10-03_1011_release.json",
     ".tmp/dashboard_privacy_2026-10-03_rate_guard_release.json",
     ".tmp/live_verification_2026-10-03_rate_guard_release.json",
     ".tmp/listing_page_verification_2026-10-03_rate_guard_release.json",
@@ -2085,6 +2089,10 @@ export async function GET() {
       nextActions,
       progressFiles: [
         ".tmp/website_progress_2026-10-03_1011.md",
+        ".tmp/dashboard_privacy_2026-10-03_1011_release.json",
+        ".tmp/live_verification_2026-10-03_1011_release.json",
+        ".tmp/listing_page_verification_2026-10-03_1011_release.json",
+        ".tmp/sitemap_coverage_2026-10-03_1011_release.json",
         ".tmp/automation_freshness_2026-10-03_1011.json",
         ".tmp/supabase_data_quality_verification_2026-10-03_1011.json",
         ".tmp/live_verification_2026-10-03_1011.json",
