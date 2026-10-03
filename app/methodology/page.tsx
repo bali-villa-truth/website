@@ -244,8 +244,8 @@ export default function Methodology() {
 
             <p>
               In the compare panel, you can adjust occupancy from 20% to 95% to stress-test how
-              different scenarios affect your returns. If you have on-the-ground knowledge that
-              Canggu villas book at 80%, plug that in — your local insight will always beat our model.
+              different scenarios change the modeled result. Use property-level booking records where
+              available; an area-level anecdote is not evidence that a particular villa will book at that rate.
             </p>
           </div>
         </section>
@@ -255,9 +255,10 @@ export default function Methodology() {
           <SectionHeading icon={<TrendingUp size={18} />} title="Net yield (the badge number)" />
           <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              The green, amber, or red badge on every listing shows the <strong className="text-[color:var(--bvt-ink)]">estimated net yield</strong> —
-              what percentage of the purchase price you&apos;d earn annually after all operating costs.
-              Here&apos;s the formula:
+              For an eligible listing, the <strong className="text-[color:var(--bvt-ink)]">estimated net-yield badge</strong> is
+              a modeled annual result divided by the audit purchase-price basis. It uses a standard operating-cost
+              allowance and, for leaseholds with a stated term, a noncash lease-value allowance. It is not an
+              earnings forecast and excludes tax, financing, and major works. Here&apos;s the formula:
             </p>
 
             <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-5 font-mono text-[12px] leading-[1.9] tabular-nums overflow-x-auto text-[color:var(--bvt-ink)]">
@@ -273,9 +274,9 @@ export default function Methodology() {
 
             <p>
               The USD price used in this calculation is fixed at the audit exchange rate; a display-time
-              currency conversion may differ. The crossed-out &ldquo;Gross&rdquo; percentage you see above the badge is the number many agents
-              quote — it ignores all operating costs and lease depreciation. We show it struck through so you can
-              see exactly how much those costs eat into your returns.
+              currency conversion may differ. The crossed-out &ldquo;Gross&rdquo; percentage above the badge is
+              modeled rental revenue divided by the audit price before operating costs and lease decay.
+              The difference shows how much the standard allowances change this screening scenario, not an actual loss.
             </p>
           </div>
         </section>
@@ -285,19 +286,20 @@ export default function Methodology() {
           <SectionHeading icon={<DollarSign size={18} />} title="Operating costs (40%)" />
           <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              We deduct 40% of gross rental revenue for operating expenses. This breaks down as:
+              The model deducts 40% of gross rental revenue as one pooled operating-cost allowance.
+              It does not calculate verified amounts for individual expense categories. Buyers should check:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <CostCard title="Property Management" pct="15%" desc="On-ground manager, cleaning, laundry, guest communication" />
-              <CostCard title="OTA / Booking Fees" pct="15%" desc="Airbnb, Booking.com, and other platform commissions" />
-              <CostCard title="Maintenance" pct="10%" desc="Pool care, garden, AC servicing, wifi, repairs" />
+              <CostCard title="Property management" desc="Staff, cleaning, laundry and guest communication" />
+              <CostCard title="Booking channels" desc="Platform commissions, payment fees and direct-booking costs" />
+              <CostCard title="Upkeep and utilities" desc="Pool, garden, air conditioning, internet and routine repairs" />
             </div>
 
             <p>
-              Is 40% exact? No — some well-managed villas run at 35%, others at 50%. It&apos;s a reasonable
-              industry midpoint. In the compare panel, you can adjust this between 20% and 60% to match
-              your own operating model.
+              The 40% load is a comparison assumption, not a measured market midpoint or a property budget.
+              Use owner statements, contracts and maintenance records to replace it with a property-specific
+              estimate. The compare panel lets you test operating-cost loads from 20% to 60%.
             </p>
           </div>
         </section>
@@ -311,8 +313,8 @@ export default function Methodology() {
               to use the land for a fixed number of years. When that lease expires, the asset reverts to the landowner.
             </p>
             <p>
-              We deduct an annual lease cost from net revenue for <strong className="text-[color:var(--bvt-ink)]">all leasehold properties</strong>,
-              calculated as:
+              For a modeled leasehold with a stated remaining term, we subtract a noncash annual
+              lease-value allowance from operating income, calculated as:
             </p>
 
             <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-4 font-mono text-[12px] tabular-nums text-[color:var(--bvt-ink)]">
@@ -322,7 +324,7 @@ export default function Methodology() {
             <p>
               This means a $300,000 villa with 20 years left on the lease has $15,000/year deducted
               from net revenue before calculating the yield. A villa with 10 years has $30,000/year deducted.
-              Shorter leases take a larger hit — as they should.
+              Shorter stated terms produce a larger allowance. An unstated term does not receive a numeric net yield.
             </p>
 
             <p>
@@ -345,9 +347,9 @@ export default function Methodology() {
 
             <div className="space-y-3">
               <FlagRow name="Short Lease" desc="Less than 15 years remaining on the lease. Lease depreciation significantly impacts returns." />
-              <FlagRow name="Budget Villa" desc="Asking price is below the 25th percentile for its area and bedroom tier. Nightly rate is discounted 30% from the area median to reflect that budget properties typically can't command median rates. Tooltip shows the exact discount." />
+              <FlagRow name="Budget Villa" desc="Asking price is below the 25th percentile for its area and bedroom tier. The model applies a 30% rate discount as a caution, not as verified rental performance." />
               <FlagRow name="High Yield" desc="Gross yield exceeds 20%. This could mean it's genuinely underpriced, or that the asking price doesn't reflect reality. Investigate the property directly." />
-              <FlagRow name="Optimistic Claim" desc="Gross yield is 15–20%. The gap between gross and net yield (after expenses and depreciation) is where investors lose money." />
+              <FlagRow name="Optimistic Claim" desc="Gross yield is 15–20%. The gap to modeled net yield shows the cost and lease allowances that a gross headline omits." />
             </div>
           </div>
         </section>
@@ -357,8 +359,8 @@ export default function Methodology() {
           <SectionHeading icon={<BarChart3 size={18} />} title="The compare panel (your sandbox)" />
           <div className="space-y-5 text-[15px] leading-[1.65] text-[color:var(--bvt-ink-body)] max-w-[68ch]">
             <p>
-              The badge shows our best estimate using the assumptions above. But those are <em>our</em> assumptions —
-              they might not match your reality.
+              The badge is a baseline screening scenario using the assumptions above. It is not a forecast
+              and may not match a particular villa&apos;s booking history or costs.
             </p>
             <p>
               The compare panel lets you select up to 5 villas and adjust three variables with sliders:
@@ -493,12 +495,11 @@ function InfoBox({ children }: { children: React.ReactNode }) {
   );
 }
 
-function CostCard({ title, pct, desc }: { title: string; pct: string; desc: string }) {
+function CostCard({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-4">
-      <div className="flex items-baseline justify-between mb-2 gap-2">
+      <div className="mb-2">
         <span className="label-micro text-[color:var(--bvt-ink)]">{title}</span>
-        <span className="text-[color:var(--bvt-accent)] font-mono tabular-nums font-bold text-[20px] leading-none">{pct}</span>
       </div>
       <p className="text-[12px] leading-[1.55] text-[color:var(--bvt-ink-muted)]">{desc}</p>
     </div>
