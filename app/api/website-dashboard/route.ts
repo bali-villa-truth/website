@@ -17,7 +17,7 @@ const CORE_PATHS = [
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
   { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage"] },
-  { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage"] },
+  { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap: https://balivillatruth.com/sitemap.xml"] },
@@ -27,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-03",
+    area: "Listing dossiers / occupancy evidence / investor trust",
+    title: "Labeled listing revenue and free-PDF scenarios as modeled, not realized cash flow",
+    status: "Deployed and verified",
+    why: "Modeled listing pages now say that 65% occupancy is BVT's shared screening assumption, not booked nights or an area average. Their breakdown labels gross revenue and the pooled 40% cost deduction as modeled, and the sensitivity note calls the free PDF a five-year illustration rather than a cashflow projection. The occupancy guide no longer treats an 80% case as plausible without property-level evidence. The ROI formula, rates, stored yields and source data did not change. The public release passed SSR/canonical checks, eight listing categories, exact sitemap coverage, dashboard privacy checks and 320px/390px/1440px browser checks without overflow or runtime errors.",
+    url: `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
+    progressFile: ".tmp/website_progress_2026-10-03_2213.md",
+  },
   {
     date: "2026-10-03",
     area: "Investor trust / methodology / downside clarity",
@@ -1136,9 +1145,9 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Methodology clarity and live inventory verified",
+  title: "Listing and methodology disclosure updates verified",
   summary:
-    "The October 3 public methodology correction and private live-inventory dashboard release passed production checks. The methodology now labels the 40% cost load as one unverified pooled allowance, not a market midpoint or property budget; the ROI math and published yields are unchanged. As of the October 3 16:12 UTC read-only preflight, 2,482 audited listings and 38 physical gaps remained within strict data gates; the live sitemap held 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 3 listing and occupancy-guide disclosure update passed production SSR, responsive, listing, privacy and exact sitemap checks. The free PDF is described as a modeled illustration rather than verified owner cash flow, and 65% occupancy is labeled as BVT's shared screening assumption. The earlier methodology correction labels 40% costs as one unverified pooled allowance. No ROI math, rates, yields or source data changed. As of the October 3 22:13 UTC read-only preflight, 2,482 audited listings and 38 physical gaps remained within strict data gates; the live sitemap had 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/methodology`,
@@ -1156,6 +1165,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-03_2213_release.json",
+    ".tmp/live_verification_2026-10-03_2213_release.json",
+    ".tmp/listing_page_verification_2026-10-03_2213_release.json",
+    ".tmp/sitemap_coverage_2026-10-03_2213_release.json",
     ".tmp/dashboard_privacy_2026-10-03_1612_release.json",
     ".tmp/live_verification_2026-10-03_1612_release.json",
     ".tmp/listing_page_verification_2026-10-03_1612_release.json",
@@ -2101,6 +2114,13 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-03_2213.md",
+        ".tmp/dashboard_privacy_2026-10-03_2213_release.json",
+        ".tmp/live_verification_2026-10-03_2213_release.json",
+        ".tmp/listing_page_verification_2026-10-03_2213_release.json",
+        ".tmp/sitemap_coverage_2026-10-03_2213_release.json",
+        ".tmp/automation_freshness_2026-10-03_2213.json",
+        ".tmp/supabase_data_quality_verification_2026-10-03_2213.json",
         ".tmp/website_progress_2026-10-03_1612.md",
         ".tmp/dashboard_privacy_2026-10-03_1612_release.json",
         ".tmp/live_verification_2026-10-03_1612_release.json",
