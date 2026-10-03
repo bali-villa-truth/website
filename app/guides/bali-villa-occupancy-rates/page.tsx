@@ -47,11 +47,11 @@ const modelRows = [
 const faqItems = [
   {
     q: "What occupancy rate should I assume for a Bali villa?",
-    a: "BVT's 65% badge assumption is a common comparison scenario, not a recommendation for every area. Build your own cases using villa type, seasonality, management plan, and verified property booking history before an offer.",
+    a: "BVT uses 65% as a shared screening assumption for eligible listing badges, not a measured area average or a recommendation for a particular villa. Build your own cases using villa type, seasonality, management plan, and verified property booking history before an offer.",
   },
   {
     q: "Is 80% occupancy realistic in Bali?",
-    a: "It can be realistic for some well-located, professionally operated villas, but it should not be treated as a default. At 80% occupancy the villa also needs enough nightly rate and margin after costs to justify the asking price.",
+    a: "Do not assume 80% is achievable for a specific villa without property-level booking evidence. Test the asking price against lower occupancy, realistic nightly rates, and costs before relying on a high-case scenario.",
   },
   {
     q: "Why does occupancy matter so much for ROI?",

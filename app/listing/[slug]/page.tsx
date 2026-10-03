@@ -658,7 +658,7 @@ export default async function ListingPage({ params }: Props) {
                     <div className="font-mono text-lg text-[color:var(--bvt-ink)]">{hasOccupancyModel ? `${occupancyPct}%` : "Not modeled"}</div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
                       {hasOccupancyModel
-                        ? `65% is a common comparison scenario, not booked nights. ${areaOccupancyPct !== null && usesReviewDensityProxy
+                        ? `65% is BVT's shared screening assumption, not booked nights or an area market average. ${areaOccupancyPct !== null && usesReviewDensityProxy
                             ? `A separate ${areaOccupancyPct}% area proxy from 7 Mar 2026 review cards is provisional and is not used in the yield badge.`
                             : `${occupancySource} is not property-level evidence.`} Request verified channel-manager data and test a lower-occupancy case.`
                         : "No occupancy estimate is applied outside the supported villa model. Request verified booking history before estimating returns."}
@@ -740,11 +740,11 @@ export default async function ListingPage({ params }: Props) {
                     </div>
                   )}
                   <div className="flex justify-between py-2 border-b border-slate-800">
-                    <span className="text-slate-400">Gross Revenue (annual)</span>
+                    <span className="text-slate-400">Modeled gross revenue (annual)</span>
                     <span className="font-medium">{hasNightlyRate ? `$${Math.round(grossRevenue).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
-                    <span className="text-slate-400">Standard Expenses (40%)</span>
+                    <span className="text-slate-400">Modeled operating-cost allowance (40%)</span>
                     <span className="font-medium text-red-400">{hasNightlyRate ? `−$${Math.round(expenses).toLocaleString("en-US")}` : "Not available"}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-800">
@@ -815,7 +815,7 @@ export default async function ListingPage({ params }: Props) {
                     </table>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-3">
-                    "Rate ±15%" stress-tests our nightly rate model. "Occ" rows are absolute occupancy points, not percentage-point shifts. The PDF audit extends this to a 5-year cashflow projection.
+                    "Rate ±15%" stress-tests our nightly rate model. "Occ" rows are absolute occupancy points, not percentage-point shifts. The free PDF shows a five-year modeled illustration, not verified owner cash flow.
                   </p>
                   <div className="mt-5 border-t border-slate-800 pt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="max-w-xl">
