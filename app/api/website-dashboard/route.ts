@@ -11,7 +11,7 @@ export const revalidate = 0;
 
 const CORE_PATHS = [
   { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "/listing/"] },
-  { name: "Methodology", path: "/methodology", expect: ["methodology", "40%"] },
+  { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage"] },
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
@@ -27,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-03",
+    area: "Investor trust / methodology / downside clarity",
+    title: "Removed unsupported cost splits and earnings promises from the methodology",
+    status: "Deployed and verified",
+    why: "The public methodology now states that 40% of modeled gross revenue is one pooled operating-cost screening allowance, not measured 15%/15%/10% fee categories or a verified market midpoint. It describes net yield as a modeled result, clarifies the noncash lease allowance and gross-to-net gap, and directs buyers to property-level booking and expense records. The 65% occupancy, 40% cost and lease formulas, rates, published yields and source listings were not changed. The local production build and 78 existing tests passed; production SSR and 320px/390px/1440px layouts, eight listing categories, exact 2,502-URL sitemap coverage, and dashboard privacy checks passed after the public deploy.",
+    url: `${SITE_URL}/methodology`,
+    progressFile: ".tmp/website_progress_2026-10-03_1612.md",
+  },
   {
     date: "2026-10-03",
     area: "Private dashboard / live inventory / measurement clarity",
@@ -1127,9 +1136,9 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Live-inventory dashboard update verified",
+  title: "Methodology clarity and live inventory verified",
   summary:
-    "The October 3 dashboard release passed production privacy/access, canonical-page, eight-category listing and exact sitemap-coverage checks. The live sitemap contains 2,482 listing URLs and 20 static URLs; these are not Google indexed-page counts. The October 3 10:11 UTC read-only data preflight found 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 physical gaps. The local rate-update safeguard remains active, the October 1 rate refresh stays held, and published rates/yields are unchanged. Paid checkout remains off pending owner-approved testing.",
+    "The October 3 public methodology correction and private live-inventory dashboard release passed production checks. The methodology now labels the 40% cost load as one unverified pooled allowance, not a market midpoint or property budget; the ROI math and published yields are unchanged. As of the October 3 16:12 UTC read-only preflight, 2,482 audited listings and 38 physical gaps remained within strict data gates; the live sitemap held 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/methodology`,
@@ -1147,6 +1156,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-03_1612_release.json",
+    ".tmp/live_verification_2026-10-03_1612_release.json",
+    ".tmp/listing_page_verification_2026-10-03_1612_release.json",
+    ".tmp/sitemap_coverage_2026-10-03_1612_release.json",
     ".tmp/dashboard_privacy_2026-10-03_1011_release.json",
     ".tmp/live_verification_2026-10-03_1011_release.json",
     ".tmp/listing_page_verification_2026-10-03_1011_release.json",
@@ -2088,6 +2101,13 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-03_1612.md",
+        ".tmp/dashboard_privacy_2026-10-03_1612_release.json",
+        ".tmp/live_verification_2026-10-03_1612_release.json",
+        ".tmp/listing_page_verification_2026-10-03_1612_release.json",
+        ".tmp/sitemap_coverage_2026-10-03_1612_release.json",
+        ".tmp/automation_freshness_2026-10-03_1612.json",
+        ".tmp/supabase_data_quality_verification_2026-10-03_1612.json",
         ".tmp/website_progress_2026-10-03_1011.md",
         ".tmp/dashboard_privacy_2026-10-03_1011_release.json",
         ".tmp/live_verification_2026-10-03_1011_release.json",
