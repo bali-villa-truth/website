@@ -16,7 +16,7 @@ const CORE_PATHS = [
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage"] },
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
-  { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage"] },
+  { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage", "one pooled 40% operating-cost allowance"] },
   { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
@@ -27,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-04",
+    area: "Operating-cost provenance / buyer due diligence",
+    title: "Removed unsupported management-fee percentages from the buyer guide",
+    status: "Deployed and verified",
+    why: "The management-fees guide now matches the methodology: BVT deducts one pooled 40% operating-cost allowance, not verified 15% management, 15% booking, and 10% upkeep buckets. The former percentage table is now a checklist of cost categories and documents to request; the FAQ and Article schema use the same disclosure. The guide also distinguishes modeled net yield from actual owner cash flow and noncash lease decay. No rate, occupancy, ROI formula, stored yield, source record, or sitemap URL changed. Production SSR, schema, 320px/390px/1440px layout, eight listing categories, exact sitemap coverage, and private access checks passed after release.",
+    url: `${SITE_URL}/guides/bali-villa-management-fees`,
+    progressFile: ".tmp/website_progress_2026-10-04_0414.md",
+  },
   {
     date: "2026-10-03",
     area: "Listing dossiers / occupancy evidence / investor trust",
@@ -1145,11 +1154,12 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Listing and methodology disclosure updates verified",
+  title: "Operating-cost guide disclosure verified",
   summary:
-    "The October 3 listing and occupancy-guide disclosure update passed production SSR, responsive, listing, privacy and exact sitemap checks. The free PDF is described as a modeled illustration rather than verified owner cash flow, and 65% occupancy is labeled as BVT's shared screening assumption. The earlier methodology correction labels 40% costs as one unverified pooled allowance. No ROI math, rates, yields or source data changed. As of the October 3 22:13 UTC read-only preflight, 2,482 audited listings and 38 physical gaps remained within strict data gates; the live sitemap had 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 4 management-fees guide release removed unsupported 15%/15%/10% cost allocations and now identifies BVT's 40% expense load as one pooled screening allowance. It offers document requests for each operating-cost category and distinguishes modeled yield from owner cash flow. The prior listing, occupancy, and methodology disclosures remain live. No ROI math, rates, yields or source data changed. The October 4 04:14 UTC read-only preflight found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/guides/bali-villa-management-fees`,
     `${SITE_URL}/methodology`,
     `${SITE_URL}/guides/bali-villa-roi`,
     `${SITE_URL}/#listings-section`,
@@ -1165,6 +1175,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-04_0414_release.json",
+    ".tmp/live_verification_2026-10-04_0414_release.json",
+    ".tmp/listing_page_verification_2026-10-04_0414_release.json",
+    ".tmp/sitemap_coverage_2026-10-04_0414_release.json",
     ".tmp/dashboard_privacy_2026-10-03_2213_release.json",
     ".tmp/live_verification_2026-10-03_2213_release.json",
     ".tmp/listing_page_verification_2026-10-03_2213_release.json",
@@ -2114,6 +2128,13 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-04_0414.md",
+        ".tmp/dashboard_privacy_2026-10-04_0414_release.json",
+        ".tmp/live_verification_2026-10-04_0414_release.json",
+        ".tmp/listing_page_verification_2026-10-04_0414_release.json",
+        ".tmp/sitemap_coverage_2026-10-04_0414_release.json",
+        ".tmp/automation_freshness_2026-10-04_0414.json",
+        ".tmp/supabase_data_quality_verification_2026-10-04_0414.json",
         ".tmp/website_progress_2026-10-03_2213.md",
         ".tmp/dashboard_privacy_2026-10-03_2213_release.json",
         ".tmp/live_verification_2026-10-03_2213_release.json",
