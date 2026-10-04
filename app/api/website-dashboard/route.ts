@@ -15,7 +15,7 @@ const CORE_PATHS = [
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary"] },
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage", "not an observed resale-price decline"] },
-  { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
+  { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage", "Twenty-five evidence checks for a real purchase decision"] },
   { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage", "one pooled 40% operating-cost allowance"] },
   { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
@@ -27,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-04",
+    area: "Due-diligence guide / buyer evidence / flag clarity",
+    title: "Made the due-diligence checklist evidence-first and clarified flags",
+    status: "Deployed and verified",
+    why: "The checklist previously called 25 questions red flags, treated modeled net yield like owner income, prescribed an unsupported 10-15-point occupancy rule and implied fewer automated flags meant safety. It now keeps 25 checks in five groups but asks for dated booking and payout records, actual cost documents, written tenure and permission evidence, independent physical review and a downside case. The FAQ distinguishes model assumptions from observed results and says neither a flag nor its absence is a verdict. Metadata and related-guide links use the same language. No ROI formula, occupancy/rate input, listing fact, stored yield or sitemap URL changed. Production build, 78 tests, 320px/390px/1440px local and live layout, canonical SSR/schema, eight listing categories, exact sitemap coverage and private access checks passed after the public release.",
+    url: `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
+    progressFile: ".tmp/website_progress_2026-10-04_2216.md",
+  },
   {
     date: "2026-10-04",
     area: "Leasehold guide / modeled yield / ownership due diligence",
@@ -1172,11 +1181,12 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Leasehold guide model-boundary and evidence disclosures verified",
+  title: "Due-diligence evidence checklist and flag disclosures verified",
   summary:
-    "The October 4 leasehold guide release distinguishes a noncash lease allowance from actual cash return or observed resale value, shows illustrative term sensitivity, and removes unsupported area-demand claims. Earlier ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. After the completed October 4 local-midnight pipeline, a 16:16 UTC read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 4 due-diligence guide release turns 25 questions into evidence requests, distinguishes modeled BVT inputs from actual owner results and clarifies that automated flags are not safety ratings. Earlier leasehold, ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. After the completed October 4 local-midnight pipeline, a 22:16 UTC read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
     `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
     `${SITE_URL}/guides/bali-villa-management-fees`,
     `${SITE_URL}/methodology`,
@@ -1194,6 +1204,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-04_2216_release.json",
+    ".tmp/live_verification_2026-10-04_2216_release.json",
+    ".tmp/listing_page_verification_2026-10-04_2216_release.json",
+    ".tmp/sitemap_coverage_2026-10-04_2216_release.json",
     ".tmp/dashboard_privacy_2026-10-04_1616_release.json",
     ".tmp/live_verification_2026-10-04_1616_release.json",
     ".tmp/listing_page_verification_2026-10-04_1616_release.json",
@@ -2080,6 +2094,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "The due-diligence guide now offers 25 requests for property-level revenue, cost, tenure, permission, condition and downside evidence. Its FAQ distinguishes BVT's modeled result from owner cash flow and says a low automated-flag count is not a safety rating.",
         "The leasehold guide now distinguishes BVT's noncash annual lease allowance from observed resale decline, legal title and cash-on-cash return. An explicitly illustrative 10/20/30-year comparison makes the model's term sensitivity inspectable without claiming market performance; ten area links remain browsing paths, not demand rankings.",
         "The live audit ledger supports direct name, area, source-reference and pasted-URL lookup across loaded dossiers, combining with risk, yield, tenure and Saved filters. A real RF11433 lookup and synthetic mobile/desktop checks pass.",
         "A missing nightly-rate input no longer becomes a fabricated bedroom-based estimate; unavailable yield is neutral N/A. The 8% shortcut names modeled screening yield rather than achieved return, and the lower-flag shortcut says absence of listed flags does not prove safety.",
@@ -2156,6 +2171,13 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-04_2216.md",
+        ".tmp/dashboard_privacy_2026-10-04_2216_release.json",
+        ".tmp/live_verification_2026-10-04_2216_release.json",
+        ".tmp/listing_page_verification_2026-10-04_2216_release.json",
+        ".tmp/sitemap_coverage_2026-10-04_2216_release.json",
+        ".tmp/automation_freshness_2026-10-04_2216.json",
+        ".tmp/supabase_data_quality_verification_2026-10-04_2216.json",
         ".tmp/website_progress_2026-10-04_1616.md",
         ".tmp/dashboard_privacy_2026-10-04_1616_release.json",
         ".tmp/live_verification_2026-10-04_1616_release.json",
