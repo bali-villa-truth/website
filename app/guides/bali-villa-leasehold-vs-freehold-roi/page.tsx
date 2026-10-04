@@ -7,11 +7,11 @@ const PAGE_URL = `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`;
 const faqItems = [
   {
     q: "Is leasehold or freehold better for Bali villa ROI?",
-    a: "Neither is automatically better. Leasehold can produce a stronger cash-on-cash yield when the entry price is low enough, but the remaining lease must be depreciated each year. Freehold usually costs more upfront but may preserve resale value better.",
+    a: "Neither is automatically better. Compare the asking price, supported rental assumptions, operating costs, remaining lease years, and documented ownership rights. BVT's net-yield badge is a screening estimate, not cash-on-cash return or a forecast of resale value.",
   },
   {
     q: "How does lease decay affect ROI?",
-    a: "Lease decay is the annual loss of economic value as the lease runs down. If a leasehold villa costs $300,000 and has 20 years left, a simple straight-line model treats about $15,000 per year as value decay before rental profit is counted.",
+    a: "BVT divides the audit price by stated remaining lease years and subtracts that noncash allowance from modeled operating income. At an illustrative $300,000 price and 20 years left, the allowance is $15,000 a year, or 5 percentage points of that price. It is not an observed resale-price decline or an annual cash bill.",
   },
   {
     q: "Should buyers trust extendable lease claims?",
@@ -37,12 +37,12 @@ const jsonLd = {
       "@type": "Article",
       "@id": `${PAGE_URL}#article`,
       mainEntityOfPage: PAGE_URL,
-      headline: "Bali Villa Leasehold vs Freehold ROI: The Real Yield Impact",
+      headline: "Bali Villa Leasehold vs Freehold ROI: Compare the Model and the Lease Term",
       description:
-        "A buyer-focused guide to how Bali villa leasehold and freehold structures affect ROI, net yield, depreciation, resale risk, and due diligence.",
+        "A buyer-focused guide to BVT's modeled lease allowance, remaining lease years, ownership evidence, and Bali villa due diligence.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-13",
-      dateModified: "2026-05-13",
+      dateModified: "2026-10-04",
       author: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       publisher: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       articleSection: "Bali Villa Investment",
@@ -66,20 +66,20 @@ const jsonLd = {
 };
 
 export const metadata: Metadata = {
-  title: "Bali Villa Leasehold vs Freehold ROI — Real Yield Impact",
+  title: "Bali Villa Leasehold vs Freehold ROI — Model and Lease Term",
   description:
-    "Bali villa leasehold vs freehold ROI explained: lease decay, net yield, resale risk, extension terms, and buyer due diligence before investing.",
+    "Compare Bali villa leasehold and freehold scenarios with BVT's noncash lease allowance, stated term, ownership evidence, and due diligence checks.",
   alternates: { canonical: PAGE_URL },
   openGraph: {
-    title: "Bali Villa Leasehold vs Freehold ROI — Real Yield Impact",
+    title: "Bali Villa Leasehold vs Freehold ROI — Model and Lease Term",
     description:
-      "How leasehold and freehold structures change Bali villa ROI, net yield, depreciation, and resale risk.",
+      "How stated lease years change BVT's modeled yield, and what ownership and extension evidence buyers still need.",
     url: PAGE_URL,
     type: "article",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bali Villa Leasehold vs Freehold ROI — Real Yield Impact",
+    title: "Bali Villa Leasehold vs Freehold ROI — Model and Lease Term",
     description:
       "Stress-test Bali villa leasehold and freehold returns before you buy.",
   },
@@ -148,45 +148,43 @@ export default function LeaseholdVsFreeholdRoiPage() {
               <h1 className="font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[44px] sm:text-[58px] md:text-[74px] lg:text-[88px]">
                 Bali villa leasehold vs freehold ROI.
                 <br />
-                <span className="text-[color:var(--bvt-accent)]">The yield changes when the clock is running.</span>
+                <span className="text-[color:var(--bvt-accent)]">Compare the income and the lease term.</span>
               </h1>
               <p className="mt-8 max-w-[68ch] text-[17px] md:text-[20px] leading-[1.62] text-[color:var(--bvt-ink-body)]">
-                Bali villa ROI is not only about nightly rates and occupancy. The
-                ownership structure changes the math. Leasehold villas can look
-                cheaper and higher-yielding at first glance, but the lease expires.
-                Freehold can preserve more long-term value, but the entry price is
-                usually higher. A serious buyer has to model both the income and the
-                asset decay.
+                Bali villa ROI depends on the audit price, modeled rental income,
+                operating costs, and the rights a buyer can actually document. For
+                a leasehold villa with a stated remaining term, BVT includes a
+                straight-line lease allowance in its screening yield. That is not
+                a measured fall in market value or a prediction of your cash flow.
               </p>
             </div>
             <aside className="lg:col-span-4 border-t border-[color:var(--bvt-hairline)] pt-6">
               <div className="label-micro mb-5">Fast answer</div>
               <p className="text-[15px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
-                Leasehold is not bad by default. It is bad when the price does not
-                compensate for the years disappearing. Freehold is not good by
-                default. It is weak when the premium is so high that realistic net
-                yield disappears.
+                Compare the same income and cost assumptions against the price and
+                remaining term. Then ask an independent lawyer to verify the title,
+                legal structure, and any extension right before treating a listing's
+                tenure label as established.
               </p>
             </aside>
           </div>
         </header>
 
-        <Section eyebrow="01 · The difference" title="Freehold asks what you own. Leasehold asks how much time is left.">
+        <Section eyebrow="01 · The difference" title="Confirm the rights, then compare the remaining years.">
           <p>
-            Buyers often compare Bali villas as if the only important variables are
-            price, bedrooms, location, and projected rental income. Those matter, but
-            tenure can change the entire investment case. A freehold-style asset is
-            usually priced for long-term control and resale optionality. A leasehold
-            asset is priced for a fixed number of years. When the lease expires, the
-            buyer's economic interest can fall away unless an extension has been
-            properly secured.
+            A listing's freehold or leasehold label is a starting point, not legal
+            proof of what a buyer can acquire. Ask for the underlying title,
+            agreement, stated end date, and any extension terms. An independent
+            lawyer should check the buyer's proposed structure and rights before
+            you use them in an investment decision.
           </p>
           <p>
-            That is why a cheap leasehold villa can produce a strong-looking Bali
-            villa ROI, while a more expensive freehold villa can look slower on cash
-            yield. The leasehold buyer may be paying less upfront, but part of the
-            investment is consumed each year. The freehold buyer may be paying a
-            premium, but may also be buying a stronger exit position.
+            In BVT's comparison, an eligible leasehold with a stated term receives
+            an annual noncash lease allowance. A listing modeled as freehold does
+            not. This difference changes the displayed screening yield; it does
+            not establish what either property will earn or sell for. Keep acquisition
+            costs, taxes, financing, major works, and actual resale terms in a
+            separate property-specific underwriting case.
           </p>
           <p>
             BVT's role is not to give legal advice. It is to make the investment math
@@ -200,26 +198,35 @@ export default function LeaseholdVsFreeholdRoiPage() {
           </p>
         </Section>
 
-        <Section eyebrow="02 · Lease decay" title="A leasehold villa is a rental asset and a melting asset at the same time.">
+        <Section eyebrow="02 · Lease decay" title="See what remaining years change in the model.">
           <p>
-            Lease decay is simple but often ignored. If a leasehold villa costs
-            $300,000 and has 20 years remaining, a straight-line model treats about
-            $15,000 per year as economic value decay. That does not mean the bank
-            account loses $15,000 in cash each year. It means the buyer is consuming
-            one year of the purchased lease term. When calculating true net yield,
-            that cost should sit beside management fees, maintenance, utilities,
-            vacancy, and platform commissions.
+            For a modeled leasehold, BVT divides its audit asking-price basis by
+            stated remaining lease years. If that price is $300,000 and 20 years
+            remain, the annual allowance is $15,000. It reduces BVT's modeled net
+            yield by 5 percentage points of the $300,000 basis. This is a noncash
+            model allowance, not an observed resale-price decline, tax deduction,
+            or annual payment to a landowner.
           </p>
           <p>
-            Without lease decay, a 20-year lease can look unfairly similar to a
-            35-year lease or freehold. With lease decay included, the shorter lease
-            has to be much cheaper or much more profitable to compete. This is why
-            BVT subtracts annual lease depreciation before showing net yield.
+            The published badge separately assumes 65% occupancy and one pooled
+            40% operating-cost load on modeled gross revenue. Neither is a verified
+            bill or booking history. The August nightly-rate sample also has
+            unverified distinct-property coverage, so replace all three inputs
+            with property evidence before treating the result as an investment case.
           </p>
           <div className="border border-[color:var(--bvt-hairline)] rounded-md p-5 bg-[color:var(--bvt-bg-elev)]">
-            <div className="label-micro mb-3">Simple lease decay example</div>
+            <div className="label-micro mb-3">Illustrative term sensitivity</div>
             <p className="font-mono text-[13px] md:text-[14px] leading-relaxed text-[color:var(--bvt-ink)]">
-              $300,000 purchase price / 20 remaining lease years = $15,000 annual lease decay
+              $300,000 audit price / 20 stated lease years = $15,000 annual allowance
+            </p>
+            <ul className="mt-4 space-y-1 text-[13px] md:text-[14px] leading-relaxed">
+              <li>10 years: $30,000 per year; 10 percentage points of price</li>
+              <li>20 years: $15,000 per year; 5 percentage points of price</li>
+              <li>30 years: $10,000 per year; about 3.3 percentage points of price</li>
+            </ul>
+            <p className="mt-3 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+              Only the term changes in this arithmetic example. It is not a listing,
+              an appraisal, or a forecast of resale proceeds.
             </p>
           </div>
         </Section>
@@ -233,54 +240,53 @@ export default function LeaseholdVsFreeholdRoiPage() {
             the same ROI treatment.
           </p>
           <p>
-            If extension terms are unclear, the conservative move is to underwrite
-            the villa only to the current lease end date. Any future extension is
-            upside, not base-case value. Buyers should ask who grants the extension,
+            If extension terms are unclear, test the purchase against the current
+            documented end date instead of assuming extra years in the base case.
+            Buyers should ask who grants the extension,
             how the price is calculated, when it can be exercised, what happens if
             the land changes hands, and whether the agreement survives disputes or
             succession issues.
           </p>
         </Section>
 
-        <Section eyebrow="04 · Freehold premium" title="Freehold can protect exit value, but it can also crush yield.">
+        <Section eyebrow="04 · Freehold premium" title="Do not count on appreciation to repair a weak income case.">
           <p>
-            Freehold-style pricing can make sense when the land is scarce, the
-            location is durable, and the buyer cares about long-term resale value.
-            But a freehold premium is not automatically smart. If a buyer pays so
-            much for the asset that realistic net rental income falls to a weak
-            yield, the investment may be more of a land appreciation bet than a
-            villa cashflow deal.
+            A listing described as freehold has no BVT lease allowance, but that
+            alone does not establish its buyer's legal rights, net cash return, or
+            resale value. Compare its total acquisition basis and evidence-backed
+            rental income with the leasehold alternative, then stress-test a lower
+            occupancy or nightly rate. Keep potential appreciation out of an income
+            comparison unless you have a separate, supportable exit case.
           </p>
           <p>
-            That is not necessarily wrong. Some buyers want lifestyle optionality,
-            long hold periods, or land exposure. The mistake is calling that same
-            deal a high-yield rental investment. BVT separates cash yield from the
-            story around long-term appreciation.
+            BVT does not value future land appreciation or verify a buyer's legal
+            structure. The same ownership label can describe different documents;
+            obtain independent legal and tax review before relying on it.
           </p>
         </Section>
 
-        <Section eyebrow="05 · Area context" title="The right tenure depends on the micro-market.">
+        <Section eyebrow="05 · Area context" title="Use location pages to find comparable dossiers.">
           <p>
-            In high-demand areas like <InlineLink href="/canggu">Canggu</InlineLink>,{" "}
-            <InlineLink href="/berawa">Berawa</InlineLink>, and{" "}
-            <InlineLink href="/pererenan">Pererenan</InlineLink>, buyers may accept
-            lower yields for liquidity and demand depth. In{" "}
-            <InlineLink href="/ubud">Ubud</InlineLink>, a leasehold villa's ROI
-            depends heavily on access, moisture, design, and wellness-market fit. In{" "}
+            Browse <InlineLink href="/canggu">Canggu</InlineLink>,{" "}
+            <InlineLink href="/berawa">Berawa</InlineLink>,{" "}
+            <InlineLink href="/pererenan">Pererenan</InlineLink>,{" "}
+            <InlineLink href="/ubud">Ubud</InlineLink>,{" "}
             <InlineLink href="/uluwatu">Uluwatu</InlineLink>,{" "}
-            <InlineLink href="/bingin">Bingin</InlineLink>, and{" "}
-            <InlineLink href="/ungasan">Ungasan</InlineLink>, off-plan risk and
-            seasonality can matter as much as tenure. In{" "}
+            <InlineLink href="/bingin">Bingin</InlineLink>,{" "}
+            <InlineLink href="/ungasan">Ungasan</InlineLink>,{" "}
             <InlineLink href="/sanur">Sanur</InlineLink>,{" "}
             <InlineLink href="/seminyak">Seminyak</InlineLink>, and{" "}
-            <InlineLink href="/nusa-dua">Nusa Dua</InlineLink>, buyer profile and
-            management strategy can shift the right answer.
+            <InlineLink href="/nusa-dua">Nusa Dua</InlineLink> to find current
+            dossiers by area. Match the stated tenure, remaining years, price,
+            bedroom count, and model-scope notes before comparing displayed yields.
+            These pages are browsing routes, not verified rankings of demand,
+            liquidity, safety, or achieved rental performance.
           </p>
           <p>
-            The practical rule is this: compare tenure, price, and net yield together.
-            A cheap leasehold with strong demand and enough years left can outperform
-            an overpriced freehold. A short lease with vague extension terms can turn
-            a glossy ROI claim into a poor risk-adjusted investment.
+            A short stated lease or vague extension changes the questions to ask,
+            even when a listing's gross yield looks attractive. Start with the
+            documents and test downside assumptions rather than inferring a safer
+            investment from an area name or tenure label.
           </p>
         </Section>
 
@@ -298,7 +304,7 @@ export default function LeaseholdVsFreeholdRoiPage() {
                 <li>Get the lease agreement and any extension option in writing.</li>
                 <li>Model lease decay before comparing net yield.</li>
                 <li>Verify actual rental statements instead of relying on projected occupancy.</li>
-                <li>Compare the villa with audited listings in the same area and bedroom tier.</li>
+                <li>Compare with modeled dossiers in the same area and bedroom tier; note where ROI is not modeled.</li>
               </ol>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3">
                 <Link href="/guides/bali-villa-roi" className="link-editorial text-[14px]">
