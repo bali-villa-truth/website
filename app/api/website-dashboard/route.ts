@@ -13,7 +13,7 @@ const CORE_PATHS = [
   { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "/listing/"] },
   { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
-  { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage"] },
+  { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary"] },
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
   { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage", "one pooled 40% operating-cost allowance"] },
@@ -27,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-04",
+    area: "ROI guide / model-scope clarity / investor navigation",
+    title: "Distinguished modeled villa audits from out-of-scope examples in the ROI guide",
+    status: "Deployed and verified",
+    why: "The ROI guide previously called a two-unit property a high-yield example and described an apartment as a net-cash-flow comparison, although both live dossiers correctly say ROI Not Modeled. Its example links now identify three modeled villas and two out-of-scope assets; the FAQ describes the 40% cost and lease allowances as modeled rather than owner-paid expenses. Unsupported area-performance claims were removed while all ten location links remain. No ROI calculation, input, stored yield, source record, or sitemap URL changed. After release, all five destinations matched their labels, canonical SSR and FAQ schema passed, eight representative listing categories and exact sitemap coverage passed, and 320px/390px/1440px layouts had no overflow or browser errors.",
+    url: `${SITE_URL}/guides/bali-villa-roi`,
+    progressFile: ".tmp/website_progress_2026-10-04_1014.md",
+  },
   {
     date: "2026-10-04",
     area: "Operating-cost provenance / buyer due diligence",
@@ -1147,16 +1156,16 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; 2026-10-03 midnight run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 3 run completed at 00:06:20 Phoenix time with 2,482 upserted listings, two marked delisted and 38 flagged physical-spec gaps. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Loaded; 2026-10-04 midnight run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 4 run completed at 00:06:06 Phoenix time with 2,482 upserted listings, zero marked delisted and 38 flagged physical-spec gaps. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Operating-cost guide disclosure verified",
+  title: "ROI guide model-scope and cost disclosures verified",
   summary:
-    "The October 4 management-fees guide release removed unsupported 15%/15%/10% cost allocations and now identifies BVT's 40% expense load as one pooled screening allowance. It offers document requests for each operating-cost category and distinguishes modeled yield from owner cash flow. The prior listing, occupancy, and methodology disclosures remain live. No ROI math, rates, yields or source data changed. The October 4 04:14 UTC read-only preflight found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 4 ROI guide release now labels three modeled villa examples and two assets whose ROI is not modeled, while avoiding unsupported area-demand claims and calling the 40% cost and lease allowances modeled. The earlier management-fees, listing, occupancy, and methodology disclosures remain live. No ROI math, rates, yields or source data changed. After the completed October 4 local-midnight pipeline, a 10:14 UTC read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-management-fees`,
@@ -1175,6 +1184,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-04_1014_release.json",
+    ".tmp/live_verification_2026-10-04_1014_release.json",
+    ".tmp/listing_page_verification_2026-10-04_1014_release.json",
+    ".tmp/sitemap_coverage_2026-10-04_1014_release.json",
     ".tmp/dashboard_privacy_2026-10-04_0414_release.json",
     ".tmp/live_verification_2026-10-04_0414_release.json",
     ".tmp/listing_page_verification_2026-10-04_0414_release.json",
@@ -2128,6 +2141,13 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-04_1014.md",
+        ".tmp/dashboard_privacy_2026-10-04_1014_release.json",
+        ".tmp/live_verification_2026-10-04_1014_release.json",
+        ".tmp/listing_page_verification_2026-10-04_1014_release.json",
+        ".tmp/sitemap_coverage_2026-10-04_1014_release.json",
+        ".tmp/automation_freshness_2026-10-04_1014.json",
+        ".tmp/supabase_data_quality_verification_2026-10-04_1014.json",
         ".tmp/website_progress_2026-10-04_0414.md",
         ".tmp/dashboard_privacy_2026-10-04_0414_release.json",
         ".tmp/live_verification_2026-10-04_0414_release.json",
