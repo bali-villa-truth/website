@@ -7,33 +7,33 @@ const PAGE_URL = `${SITE_URL}/guides/bali-villa-management-fees`;
 const costRows = [
   {
     label: "Property management",
-    bvtModel: "15% of gross rental revenue",
     why: "Local guest operations, owner reporting, staff coordination, issue handling, cleaning oversight, and listing management.",
+    evidence: "Signed management agreement, fee schedule, exclusions, and monthly owner statements.",
   },
   {
     label: "OTA and booking costs",
-    bvtModel: "15% of gross rental revenue",
     why: "Platform commissions, payment costs, promotional discounts, channel management, and the reality that not every booking arrives direct.",
+    evidence: "Channel-manager exports, platform invoices, and payout reconciliations.",
   },
   {
     label: "Maintenance, utilities, and reserve",
-    bvtModel: "10% of gross rental revenue",
     why: "Pool, garden, AC, linens, internet, utilities, small repairs, repainting, replacement furniture, and tropical-climate wear.",
+    evidence: "Utility bills, repair ledger, staff costs, and a dated replacement budget.",
   },
 ];
 
 const faqItems = [
   {
     q: "What management fee should Bali villa buyers assume?",
-    a: "BVT does not claim one exact market fee for every property. For comparison, our stress test reserves 15% of gross rental revenue for management and operations oversight, then adds booking costs and maintenance reserve separately.",
+    a: "BVT does not assume a separate management-fee percentage. Its public screen deducts one pooled 40% operating-cost allowance. Ask for the manager's written fee schedule and exclusions, then reconcile it with booking, staffing, utility, repair, and reserve records before underwriting a property.",
   },
   {
     q: "Why does BVT use a 40% operating-cost load?",
-    a: "The 40% load is a conservative standardization tool. It helps buyers compare listings after management, booking costs, maintenance, utilities, and replacement reserve instead of relying on gross revenue.",
+    a: "The 40% load is BVT's shared comparison assumption, not a measured market midpoint or a verified budget for an individual villa. It keeps management, booking, upkeep, utilities, and reserve risk visible while buyers seek property-specific records.",
   },
   {
     q: "Can a villa operate below 40% costs?",
-    a: "Some villas may operate below the BVT stress-test load, especially with strong direct bookings or hands-on owner management. Buyers should still model the downside because underestimating costs is one of the easiest ways to overpay.",
+    a: "A villa may cost less or more than 40% of gross rent to operate. Do not lower the assumption based on an agent quote alone; request a full-year owner statement, fee contracts, bills, and repair history, then test a higher-cost case too.",
   },
   {
     q: "Are taxes and legal costs included?",
@@ -60,7 +60,7 @@ const jsonLd = {
         "A buyer-focused guide to Bali villa management fees, booking costs, maintenance reserve, utilities, and why BVT stress-tests net yield after a 40% operating-cost load.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-14",
-      dateModified: "2026-05-14",
+      dateModified: "2026-10-04",
       author: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       publisher: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       articleSection: "Bali Villa Investment",
@@ -170,20 +170,20 @@ export default function BaliVillaManagementFeesPage() {
                 <span className="text-[color:var(--bvt-accent)]">The quiet cost behind net yield.</span>
               </h1>
               <p className="mt-8 max-w-[68ch] text-[17px] md:text-[20px] leading-[1.62] text-[color:var(--bvt-ink-body)]">
-                Many Bali villa listings sell the dream with gross rental revenue.
-                Investors live with net owner income. Management, booking costs,
+                Many Bali villa listings lead with gross rental revenue.
+                Investors need to understand the costs behind it. Management, booking costs,
                 maintenance, utilities, staff coordination, and replacement reserve
-                can turn a headline ROI into a much thinner return. BVT models that
-                gap before calling a villa attractive.
+                can make an apparent return much thinner. BVT's public model screens
+                that gap; it does not verify a villa's actual owner income.
               </p>
             </div>
             <aside className="lg:col-span-4 border-t border-[color:var(--bvt-hairline)] pt-6">
               <div className="label-micro mb-5">BVT stress test</div>
               <p className="font-mono text-[34px] leading-none text-[color:var(--bvt-ink)]">40%</p>
               <p className="mt-4 text-[15px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
-                BVT reserves 40% of gross rental revenue for operating costs in the
-                public audit model. It is a standard comparison load, not a promise
-                that every villa will cost exactly 40% to operate.
+                BVT deducts one pooled 40% allowance from modeled gross rental revenue
+                for operating costs. It is a comparison assumption, not a verified
+                expense budget or a measured market midpoint.
               </p>
             </aside>
           </div>
@@ -191,8 +191,10 @@ export default function BaliVillaManagementFeesPage() {
 
         <Section eyebrow="01 · Gross vs net" title="A villa can be busy and still underperform.">
           <p>
-            Gross ROI starts with rental revenue. Net yield asks what remains after
-            the villa actually runs. A villa with high nightly rates still needs
+            Gross yield starts with modeled rental revenue before expenses. BVT's
+            net-yield screen deducts the pooled cost allowance and, for leaseholds,
+            a noncash lease-decay allowance. Actual owner cash flow needs property
+            records. A villa with high nightly rates still needs
             guest handling, cleaning, laundry, OTA fees, utilities, pool and garden
             care, maintenance, repairs, replacement furniture, owner reporting, and
             slow-month resilience.
@@ -206,22 +208,20 @@ export default function BaliVillaManagementFeesPage() {
 
         <Section eyebrow="02 · The BVT load" title="The 40% expense load is a consistency rule.">
           <p>
-            BVT uses a standardized 40% operating-cost load so buyers can compare
-            listings through the same lens. The model currently reserves 15% for
-            property management, 15% for OTA and booking costs, and 10% for
-            maintenance, utilities, and reserve. The point is not to predict every
-            invoice. The point is to stop an optimistic brochure from pretending the
-            villa has no friction.
+            BVT deducts one pooled 40% operating-cost allowance so buyers can compare
+            listings through the same lens. It does not calculate or verify separate
+            management, booking, or maintenance percentages. The categories below are
+            diligence prompts, not additional deductions on top of the 40%.
           </p>
           <div className="md:hidden space-y-3">
             {costRows.map((row) => (
               <div key={row.label} className="border border-[color:var(--bvt-hairline)] rounded-md bg-[color:var(--bvt-bg-elev)] p-4">
                 <div className="label-micro mb-3">{row.label}</div>
-                <div className="font-mono text-[14px] leading-relaxed text-[color:var(--bvt-accent)]">
-                  {row.bvtModel}
-                </div>
-                <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                <p className="text-[13px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
                   {row.why}
+                </p>
+                <p className="mt-3 text-[13px] leading-relaxed text-[color:var(--bvt-ink-body)]">
+                  <strong>Request:</strong> {row.evidence}
                 </p>
               </div>
             ))}
@@ -231,25 +231,25 @@ export default function BaliVillaManagementFeesPage() {
               <thead className="bg-[color:var(--bvt-bg-elev)] text-[color:var(--bvt-ink-muted)]">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Cost bucket</th>
-                  <th className="px-4 py-3 font-semibold">BVT public model</th>
-                  <th className="px-4 py-3 font-semibold">What it is trying to protect against</th>
+                  <th className="px-4 py-3 font-semibold">What to verify</th>
+                  <th className="px-4 py-3 font-semibold">Evidence to request</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[color:var(--bvt-hairline)]">
                 {costRows.map((row) => (
                   <tr key={row.label} className="align-top">
                     <td className="px-4 py-4 font-semibold text-[color:var(--bvt-ink)]">{row.label}</td>
-                    <td className="px-4 py-4 font-mono text-[color:var(--bvt-accent)]">{row.bvtModel}</td>
                     <td className="px-4 py-4 text-[color:var(--bvt-ink-muted)] leading-relaxed">{row.why}</td>
+                    <td className="px-4 py-4 text-[color:var(--bvt-ink-body)] leading-relaxed">{row.evidence}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <p>
-            A buyer can replace those assumptions with property-specific numbers
-            once the seller provides reliable evidence. Until then, a consistent
-            stress test is safer than accepting a perfect-case expense line.
+            Replace the pooled allowance with a property-specific expense case only
+            when the seller provides reliable records. Reconcile a full year's gross
+            bookings to owner payouts, then test higher costs as well as lower ones.
           </p>
         </Section>
 
