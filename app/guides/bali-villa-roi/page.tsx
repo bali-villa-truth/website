@@ -19,29 +19,29 @@ const areaLinks = [
 
 const flagshipAudits = [
   {
-    href: "/listing/2-units-villa-with-total-5-bedrooms-for-sale-freehold-in-pandawa-near-pandawa-beach-rf6636",
-    label: "Pandawa 5-bed freehold audit",
-    detail: "A high-yield example where price per bedroom and area rate assumptions matter.",
-  },
-  {
     href: "/listing/charming-contemporary-3-bedroom-villa-for-sale-leasehold-and-rent-in-kutuh-ra016",
     label: "Kutuh 3-bed leasehold audit",
-    detail: "Shows why lease years must be deducted before calling a deal attractive.",
+    detail: "Modeled villa: see how a noncash lease allowance changes the screening yield.",
   },
   {
     href: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131",
     label: "Nusa Dua 3-bed family villa audit",
-    detail: "A useful comparison for resort-market assumptions and lower-volatility demand.",
+    detail: "Modeled villa: test the rate, occupancy, and cost assumptions before relying on the yield.",
   },
   {
     href: "/listing/off-plan-elegant-affordable-3-bedroom-mediterranean-villas-for-sale-in-nusa-dua-rf9193",
     label: "Nusa Dua off-plan 3-bed audit",
-    detail: "A good reminder to separate projected yield from construction and delivery risk.",
+    detail: "Modeled scenario: construction and delivery risk are not priced into the yield.",
+  },
+  {
+    href: "/listing/2-units-villa-with-total-5-bedrooms-for-sale-freehold-in-pandawa-near-pandawa-beach-rf6636",
+    label: "Pandawa multi-unit audit",
+    detail: "ROI not modeled: two units need verified unit-level economics before comparison.",
   },
   {
     href: "/listing/cozy-2-bedroom-apartment-for-sale-leasehold-in-bali-seminyak-ff021",
-    label: "Seminyak 2-bed leasehold audit",
-    detail: "Useful for checking mature-market pricing against true net cashflow.",
+    label: "Seminyak apartment audit",
+    detail: "ROI not modeled: the villa model does not cover this apartment.",
   },
 ];
 
@@ -52,7 +52,7 @@ const faqItems = [
   },
   {
     q: "Why is net yield lower than agent ROI?",
-    a: "Agent ROI often uses gross rental revenue divided by purchase price. Net yield subtracts the operating costs that actually come out of the owner's pocket, then subtracts annual lease depreciation for leasehold villas.",
+    a: "A gross ROI claim may divide projected rental revenue by the asking price without costs. BVT's modeled net yield instead deducts one pooled 40% operating-cost allowance and, for leasehold, a noncash lease-decay allowance. Neither deduction verifies an owner's actual bills or cash flow; ask for property records.",
   },
   {
     q: "Does leasehold reduce Bali villa ROI?",
@@ -60,7 +60,7 @@ const faqItems = [
   },
   {
     q: "Which Bali areas are best for ROI?",
-    a: "There is no single best area. Canggu and Berawa offer deep demand but high prices. Uluwatu and Bingin can command high nightly rates but are more seasonal. Sanur and Nusa Dua can be steadier. The right answer depends on price, lease years, occupancy, and management quality.",
+    a: "There is no verified best area in BVT's model. The shared 65% occupancy scenario does not rank area performance, and provisional review-density proxies are not booked nights. Compare asking price, lease terms, access, and property-level booking records for villas you can actually inspect.",
   },
   {
     q: "How should buyers use Bali Villa Truth before making an offer?",
@@ -87,7 +87,7 @@ const guideJsonLd = {
         "A buyer-focused guide to Bali villa ROI, net yield, occupancy, leasehold decay, management fees, and due diligence for villa investors.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-13",
-      dateModified: "2026-09-26",
+      dateModified: "2026-10-04",
       author: {
         "@type": "Organization",
         name: "Bali Villa Truth",
@@ -133,7 +133,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Bali Villa ROI: 2026 Net Yield Guide for Buyers",
     description:
-      "A practical guide to real Bali villa ROI: net yield, expenses, occupancy, lease decay, and due diligence before buying.",
+      "A practical guide to modeled Bali villa ROI: net yield, expenses, occupancy, lease decay, and due diligence before buying.",
     url: PAGE_URL,
     type: "article",
   },
@@ -232,7 +232,7 @@ export default function BaliVillaRoiGuidePage() {
           </div>
         </header>
 
-        <Section eyebrow="01 · Definition" title="Gross ROI is the easy number. Net yield is the honest one.">
+        <Section eyebrow="01 · Definition" title="Gross yield starts the comparison. Net yield tests the costs.">
           <p>
             Most villa pitches begin with a headline return: 12%, 15%, sometimes
             20% or more. The problem is that the headline often uses gross rental
@@ -326,12 +326,12 @@ export default function BaliVillaRoiGuidePage() {
           </p>
         </Section>
 
-        <Section eyebrow="04 · Occupancy" title="Location sets the ceiling, but assumptions decide the deal.">
+        <Section eyebrow="04 · Occupancy" title="Occupancy needs property-level evidence.">
           <p>
             Occupancy is the input that can make almost any spreadsheet look good.
             A villa that looks average at 55% occupancy can look excellent at 80%.
-            The question is whether that occupancy is normal for the area, the
-            micro-location, the villa quality, the rate, and the management plan.
+            The question is whether booking records support it for the specific
+            villa, its rate, and its management plan.
           </p>
           <p>
             BVT uses the same 65% occupancy scenario for published yield comparisons;
@@ -347,19 +347,18 @@ export default function BaliVillaRoiGuidePage() {
             </InlineLink>.
           </p>
           <p>
-            Area matters. <InlineLink href="/canggu">Canggu</InlineLink>,{" "}
-            <InlineLink href="/berawa">Berawa</InlineLink>, and{" "}
-            <InlineLink href="/pererenan">Pererenan</InlineLink> have deep rental
-            demand but expensive entry prices. <InlineLink href="/uluwatu">Uluwatu</InlineLink>{" "}
-            and <InlineLink href="/bingin">Bingin</InlineLink> can support premium
-            nightly rates but carry more seasonality and off-plan risk.{" "}
-            <InlineLink href="/seminyak">Seminyak</InlineLink> is mature and
-            competitive. <InlineLink href="/sanur">Sanur</InlineLink>,{" "}
+            Compare listings in <InlineLink href="/canggu">Canggu</InlineLink>,{" "}
+            <InlineLink href="/berawa">Berawa</InlineLink>,{" "}
+            <InlineLink href="/pererenan">Pererenan</InlineLink>,{" "}
+            <InlineLink href="/uluwatu">Uluwatu</InlineLink>,{" "}
+            <InlineLink href="/bingin">Bingin</InlineLink>,{" "}
+            <InlineLink href="/seminyak">Seminyak</InlineLink>,{" "}
+            <InlineLink href="/sanur">Sanur</InlineLink>,{" "}
             <InlineLink href="/nusa-dua">Nusa Dua</InlineLink>,{" "}
             <InlineLink href="/ubud">Ubud</InlineLink>, and{" "}
-            <InlineLink href="/ungasan">Ungasan</InlineLink> each have different
-            demand curves. The right area is the one where the price, lease, rate,
-            and buyer strategy line up.
+            <InlineLink href="/ungasan">Ungasan</InlineLink> by price, tenure, and
+            source detail. These area hubs are browsing paths, not verified
+            rankings of occupancy, nightly rate, or investment safety.
           </p>
         </Section>
 
@@ -367,9 +366,9 @@ export default function BaliVillaRoiGuidePage() {
           <p>
             A strong Bali villa ROI analysis should not be a cheerleader. It should
             be an argument against your own excitement. BVT flags short leases,
-            off-plan listings, unusually low prices, missing data, unrealistic
-            nightly-rate assumptions, and cases where yield appears to depend on
-            everything going right.
+            off-plan listings, unusually low prices, and missing or unsupported
+            data. The nightly-rate sample and shared occupancy scenario are model
+            limitations even when a listing has no specific flag.
           </p>
           <p>
             Off-plan villas deserve special care. A render can show a finished
@@ -396,7 +395,7 @@ export default function BaliVillaRoiGuidePage() {
             <li>
               Open the full audit page for any villa that looks interesting. Read
               the net-yield breakdown, sensitivity table, flags, and comparable
-              listings before treating the ROI as real.
+              listings before treating the estimate as evidence of owner returns.
             </li>
             <li>
               Compare nearby markets. A Canggu villa should be compared with Berawa
@@ -452,10 +451,14 @@ export default function BaliVillaRoiGuidePage() {
             <div className="lg:col-span-4">
               <div className="label-micro mb-4">Live audits</div>
               <h2 className="font-display text-[32px] md:text-[44px] leading-[1.02] tracking-[-0.02em] text-[color:var(--bvt-ink)]">
-                Example villa ROI audits.
+                Example audit dossiers.
               </h2>
             </div>
             <div className="lg:col-span-8 space-y-3">
+              <p className="text-[15px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
+                The last two assets are outside BVT's villa ROI model. An unavailable
+                yield is a model boundary, not a zero return.
+              </p>
               {flagshipAudits.map((audit) => (
                 <Link
                   key={audit.href}
