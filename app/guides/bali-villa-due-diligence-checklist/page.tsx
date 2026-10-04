@@ -8,51 +8,51 @@ const checklist = [
   {
     group: "ROI math",
     items: [
-      "Compare agent gross ROI with BVT net yield after operating costs.",
-      "Ask for channel-manager exports, not screenshots or verbal revenue claims.",
-      "Stress-test occupancy 10 to 15 points below the seller's assumption.",
-      "Check whether nightly rates come from comparable villas in the same area and bedroom tier.",
-      "Model management fees, OTA commissions, utilities, maintenance, replacement reserve, taxes, and vacancy.",
+      "Identify whether each quoted return is gross revenue, modeled net yield, or verified owner cash flow; BVT's badge is a screening estimate.",
+      "Request dated property-level booked nights, realized nightly revenue, cancellations, and payout records; reconcile them to the claimed period.",
+      "Test lower occupancy and nightly-rate scenarios against those records; BVT's published 65% occupancy is a shared assumption, not booked nights.",
+      "Ask how any comparable nightly rates were selected and dated. BVT's August asking-rate sample has unverified distinct-property coverage.",
+      "Replace BVT's pooled 40% cost allowance with property-specific management, platform, utility, upkeep, tax, and major-works evidence.",
     ],
   },
   {
     group: "Lease and ownership",
     items: [
-      "Confirm freehold, leasehold, or company ownership structure with an independent notaris.",
-      "For leasehold, verify exact years remaining, extension rights, extension price, and who can grant the extension.",
-      "Treat vague 'extendable' language as unpriced risk until it is written and reviewed.",
-      "Model straight-line lease decay before calling the yield attractive.",
-      "Check whether the buyer can legally use the proposed ownership structure.",
+      "Have independent qualified counsel verify the seller's title documents and the rights available under the buyer's proposed structure.",
+      "For a leasehold, obtain the signed agreement and confirm the start date, end date, remaining years, and parties entitled to grant an extension.",
+      "Ask counsel to review written extension terms and pricing; do not include an unpriced or informal extension in a base case.",
+      "Separate BVT's noncash straight-line lease allowance from actual lease payments, operating bills, and any observed resale value.",
+      "Confirm with independent legal and tax advisers whether the proposed holding structure, use, and transfer terms work for this buyer.",
     ],
   },
   {
     group: "Legal and permits",
     items: [
-      "Verify land certificate, zoning, access road, building approval, and rental licensing status.",
-      "Check that the built villa matches the approved drawings and permitted use.",
-      "Confirm there are no undisclosed liens, disputes, family claims, or boundary issues.",
-      "Use independent counsel; do not rely only on the seller's lawyer, agent, or developer.",
-      "Confirm tax obligations and transfer costs before agreeing to headline price.",
+      "Ask independent counsel to check title, land-use classification, documented access, building approvals, and the permissions needed for the intended rental use.",
+      "Compare the existing or proposed building with approved plans and permitted use; ask which deviations require a remedy.",
+      "Request searches and documents for encumbrances, disputes, competing claims, boundaries, and access rights rather than relying on seller assurances.",
+      "Have your own adviser review the sale or lease agreement, payment conditions, and remedies before any deposit or commitment.",
+      "Obtain a written estimate of transaction costs and buyer-specific tax obligations; BVT's yield badge excludes them.",
     ],
   },
   {
     group: "Physical asset",
     items: [
-      "Inspect waterproofing, drainage, roof, pool shell, electrical, plumbing, AC, and structural condition.",
-      "Budget for near-term capex if furniture, linens, pool equipment, or appliances are tired.",
-      "Check access during rain, parking, noise, construction nearby, and neighbor constraints.",
-      "For off-plan villas, verify developer track record, escrow mechanics, penalties, and staged-payment protections.",
-      "Confirm the villa can be cleaned, staffed, and maintained to the nightly-rate level assumed in the model.",
+      "Commission an independent condition inspection covering drainage, waterproofing, roof, pool, electrical, plumbing, cooling, and structural concerns.",
+      "Price near-term repairs and replacement of furniture, linens, equipment, and appliances separately from routine operating costs.",
+      "Visit the property and check access, parking, noise, nearby works, and drainage in conditions relevant to its use.",
+      "For off-plan villas, review delivery milestones, payment protection, change orders, delay remedies, and the developer's completed projects.",
+      "Get staffing, cleaning, utilities, and maintenance proposals that fit the intended service standard; do not assume the modeled nightly rate is achievable.",
     ],
   },
   {
     group: "Exit and downside",
     items: [
-      "Ask who the likely resale buyer is and what comparable exits have actually achieved.",
-      "Check whether the lease will still be financeable or attractive after five to ten years.",
-      "Model a slower sale, lower occupancy, higher repair year, and weaker nightly rate before making an offer.",
-      "Prefer a lower offer backed by evidence over a high yield that only works in the brochure case.",
-      "Keep all investment decisions separate from lifestyle desire; both matter, but they are not the same math.",
+      "Ask for documented completed sales if available; do not treat current asking listings as achieved exit prices.",
+      "For a leasehold, model the remaining term at a possible exit date and ask advisers about transfer restrictions and likely buyer requirements.",
+      "Run a downside case with lower booked nights and rates, higher costs, a major repair, and a longer selling period.",
+      "Calculate total acquisition cash required and the return under that downside case before deciding what, if anything, to offer.",
+      "Keep personal-use value separate from rental income and resale assumptions; BVT does not price lifestyle benefits.",
     ],
   },
 ];
@@ -60,15 +60,15 @@ const checklist = [
 const faqItems = [
   {
     q: "What is the biggest red flag in a Bali villa listing?",
-    a: "The biggest red flag is usually a return claim that does not separate gross revenue from true owner net income. Buyers should ask what costs were excluded and whether lease decay was modeled.",
+    a: "There is no universal biggest flag. A return claim without dated property-level revenue, cost, and tenure evidence deserves scrutiny. Ask whether it is gross, modeled net, or verified owner cash flow; BVT does not verify actual earnings.",
   },
   {
     q: "Is a flagged villa always a bad investment?",
-    a: "No. A flag means the assumption needs verification or pricing adjustment. A short lease, off-plan villa, or budget build can still be viable if the purchase price compensates for the risk.",
+    a: "No. A BVT flag is a prompt to investigate a source fact or model assumption, not a verdict. Fewer flags do not prove legal, physical, or financial safety; unresolved findings need independent review.",
   },
   {
     q: "Should buyers rely on agent occupancy numbers?",
-    a: "Only after seeing verifiable property-level data. Occupancy should be checked against channel-manager reports, booking calendars, reviews, and comparable villas in the same area.",
+    a: "Request dated property-level booking exports and payout records for a stated period. Review counts or area anecdotes do not verify occupied nights, and BVT's 65% yield scenario is an assumption rather than observed occupancy.",
   },
   {
     q: "Does BVT replace a lawyer or notaris?",
@@ -90,12 +90,12 @@ const jsonLd = {
       "@type": "Article",
       "@id": `${PAGE_URL}#article`,
       mainEntityOfPage: PAGE_URL,
-      headline: "Bali Villa Due Diligence Checklist: 25 Red Flags Before You Buy",
+      headline: "Bali Villa Due Diligence Checklist: 25 Evidence Checks for Buyers",
       description:
-        "A practical due diligence checklist for Bali villa investors covering ROI math, leasehold risk, permits, legal review, physical inspection, and downside scenarios.",
+        "Twenty-five evidence requests for Bali villa buyers covering modeled ROI, lease terms, permissions, physical inspection, and downside scenarios.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-13",
-      dateModified: "2026-05-13",
+      dateModified: "2026-10-04",
       author: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       publisher: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       articleSection: "Bali Villa Investment",
@@ -119,20 +119,20 @@ const jsonLd = {
 };
 
 export const metadata: Metadata = {
-  title: "Bali Villa Due Diligence Checklist: 25 Red Flags",
+  title: "Bali Villa Due Diligence Checklist: 25 Evidence Checks",
   description:
-    "Bali villa due diligence checklist for investors: ROI math, leasehold risk, permits, title, build quality, occupancy, management fees, and downside scenarios.",
+    "Twenty-five Bali villa evidence checks for modeled ROI, lease terms, permissions, condition, operating costs, and downside risk.",
   alternates: { canonical: PAGE_URL },
   openGraph: {
-    title: "Bali Villa Due Diligence Checklist: 25 Red Flags",
+    title: "Bali Villa Due Diligence Checklist: 25 Evidence Checks",
     description:
-      "A practical checklist for stress-testing Bali villa listings before deposits, legal review, and negotiation.",
+      "Ask for property-level records, independent reviews, and downside evidence before relying on a villa listing.",
     url: PAGE_URL,
     type: "article",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bali Villa Due Diligence Checklist: 25 Red Flags",
+    title: "Bali Villa Due Diligence Checklist: 25 Evidence Checks",
     description:
       "Before buying a Bali villa, verify the math, lease, permits, legal structure, asset condition, and downside case.",
   },
@@ -168,21 +168,21 @@ export default function BaliVillaDueDiligenceChecklistPage() {
         <header className="mb-14 md:mb-20">
           <div className="flex items-center gap-3 mb-6">
             <span className="h-px w-10 bg-[color:var(--bvt-accent)]" aria-hidden />
-            <span className="label-micro">Buyer guide · red flags</span>
+            <span className="label-micro">Buyer guide · evidence checks</span>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-end">
             <div className="lg:col-span-8">
               <h1 className="font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[44px] sm:text-[58px] md:text-[74px] lg:text-[88px]">
                 Bali villa due diligence checklist.
                 <br />
-                <span className="text-[color:var(--bvt-accent)]">The red flags to verify before you buy.</span>
+                <span className="text-[color:var(--bvt-accent)]">The evidence to request before you buy.</span>
               </h1>
               <p className="mt-8 max-w-[68ch] text-[17px] md:text-[20px] leading-[1.62] text-[color:var(--bvt-ink-body)]">
-                A good Bali villa investment can survive conservative assumptions.
-                A weak one often depends on a perfect brochure: high occupancy,
-                low costs, easy lease extension, no capex, and a clean exit. Use
-                this checklist to separate the math worth investigating from the
-                claims that need a lower offer or a hard no.
+                A listing is a starting claim, not a completed diligence file.
+                Request the records behind revenue, costs, rights, permissions,
+                physical condition, and possible exit terms. Where evidence is
+                missing, mark the conclusion unknown rather than filling it with
+                an optimistic assumption.
               </p>
             </div>
             <aside className="lg:col-span-4 border-t border-[color:var(--bvt-hairline)] pt-6">
@@ -206,11 +206,12 @@ export default function BaliVillaDueDiligenceChecklistPage() {
             </div>
             <div className="lg:col-span-8 space-y-5 text-[15px] md:text-[16px] leading-[1.75] text-[color:var(--bvt-ink-body)]">
               <p>
-                The most common mistake in Bali villa investing is treating a
-                headline ROI as if it were a bank statement. A seller may quote
-                gross rental revenue, omit management fees, ignore OTA commissions,
-                skip maintenance, assume high occupancy, and treat lease extension
-                as automatic. Each omission makes the return look cleaner than it is.
+                A headline ROI is not a bank statement. Ask whether a number is
+                gross revenue, an owner's actual cash result, or a modeled scenario.
+                BVT's badge uses shared occupancy and pooled operating-cost
+                assumptions plus a noncash lease allowance where applicable. It
+                excludes financing, tax, and major works; it does not establish
+                what this villa has earned.
               </p>
               <p>
                 On BVT, start with the <InlineLink href="/guides/bali-villa-roi">Bali villa ROI guide</InlineLink>,
@@ -227,7 +228,7 @@ export default function BaliVillaDueDiligenceChecklistPage() {
             <div className="lg:col-span-4">
               <div className="label-micro mb-4">02 · Checklist</div>
               <h2 className="font-display text-[32px] md:text-[44px] leading-[1.02] tracking-[-0.02em] text-[color:var(--bvt-ink)]">
-                The 25 checks that keep optimistic listings honest.
+                Twenty-five evidence checks for a real purchase decision.
               </h2>
             </div>
             <div className="lg:col-span-8 space-y-6">
@@ -257,21 +258,20 @@ export default function BaliVillaDueDiligenceChecklistPage() {
             <div className="lg:col-span-4">
               <div className="label-micro mb-4">03 · Red flags</div>
               <h2 className="font-display text-[32px] md:text-[44px] leading-[1.02] tracking-[-0.02em] text-[color:var(--bvt-ink)]">
-                Flags are not verdicts. They are negotiation and diligence prompts.
+                Flags are questions, not safety ratings.
               </h2>
             </div>
             <div className="lg:col-span-8 space-y-5 text-[15px] md:text-[16px] leading-[1.75] text-[color:var(--bvt-ink-body)]">
               <p>
-                A flagged villa can still be investable. The question is whether
-                the price compensates for the risk. A short lease needs a lower
-                price or written extension terms. An off-plan villa needs stronger
-                developer protections. A budget build needs more capex reserve and
-                a lower nightly-rate assumption.
+                A short lease, off-plan status, or budget-rate adjustment calls
+                for specific documents and an independent review. A flag does not
+                establish that a deal is bad; absence of a flag does not establish
+                that title, condition, bookings, or resale prospects are sound.
               </p>
               <p>
-                Use BVT's risk shortcuts on the homepage to compare the cleanest
-                dossiers against the highest-risk ones. The gap often tells you
-                more than a single listing page can.
+                Use the homepage risk shortcuts to find dossiers with fewer or
+                more automated flags, then read each listing's missing-value and
+                model-scope notes. Do not infer safety from a low flag count.
               </p>
             </div>
           </div>
@@ -282,17 +282,17 @@ export default function BaliVillaDueDiligenceChecklistPage() {
             <div className="lg:col-span-4">
               <div className="label-micro mb-4">04 · Next steps</div>
               <h2 className="font-display text-[32px] md:text-[44px] leading-[1.02] tracking-[-0.02em] text-[color:var(--bvt-ink)]">
-                Turn the checklist into an offer strategy.
+                Take the next evidence step.
               </h2>
             </div>
             <div className="lg:col-span-8 grid sm:grid-cols-2 gap-4">
               {[
                 { href: "/", label: "Browse the audit ledger", copy: "Filter by yield, tenure, price, and risk view." },
                 { href: "/guides/bali-villa-roi", label: "Read the ROI guide", copy: "Understand gross yield, net yield, expenses, and occupancy." },
-                { href: "/guides/bali-villa-leasehold-vs-freehold-roi", label: "Model lease decay", copy: "See how ownership structure changes true return." },
-                { href: "/guides/bali-villa-management-fees", label: "Check operating costs", copy: "Model management, booking, maintenance, utilities, and reserve before offer." },
-                { href: "/guides/bali-villa-occupancy-rates", label: "Stress-test occupancy", copy: "Check whether booked-night assumptions are supported by area demand and records." },
-                { href: "/contact", label: "Request a custom review", copy: "Use when a specific deal needs deeper human diligence." },
+                { href: "/guides/bali-villa-leasehold-vs-freehold-roi", label: "Review lease terms", copy: "Separate the noncash model allowance from documented legal rights." },
+                { href: "/guides/bali-villa-management-fees", label: "Check operating costs", copy: "Replace the pooled model allowance with property-level bills and contracts." },
+                { href: "/guides/bali-villa-occupancy-rates", label: "Stress-test occupancy", copy: "Use dated booking records, not an area proxy, to assess occupied nights." },
+                { href: "/contact", label: "Ask about a custom review", copy: "Send the listing and questions; scope and availability need confirmation." },
               ].map((card) => (
                 <Link
                   key={card.href}
