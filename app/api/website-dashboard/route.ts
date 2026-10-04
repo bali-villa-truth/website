@@ -14,7 +14,7 @@ const CORE_PATHS = [
   { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary"] },
-  { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage"] },
+  { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage", "not an observed resale-price decline"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage"] },
   { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage", "one pooled 40% operating-cost allowance"] },
   { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
@@ -27,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-04",
+    area: "Leasehold guide / modeled yield / ownership due diligence",
+    title: "Separated the lease allowance from real cash flow and resale value",
+    status: "Deployed and verified",
+    why: "The leasehold guide previously called a straight-line model allowance an annual value loss, described the modeled badge as cash-on-cash or true net yield, and implied area demand and liquidity rankings without supporting evidence. It now explains that an eligible leasehold's audit price divided by stated years is a noncash screening allowance, not an observed resale decline, cash bill or verified owner return. A clearly illustrative $300,000 example shows the arithmetic across 10, 20 and 30 years; all ten location links remain but no area is ranked. The guide asks for title, extension and property-level booking evidence. No formula, model input, source listing, stored yield or sitemap URL changed. The production build, 78 tests, local and live 320px/390px/1440px layout, canonical SSR/schema, eight listing categories, exact sitemap coverage and dashboard privacy checks passed after release.",
+    url: `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
+    progressFile: ".tmp/website_progress_2026-10-04_1616.md",
+  },
   {
     date: "2026-10-04",
     area: "ROI guide / model-scope clarity / investor navigation",
@@ -1163,11 +1172,12 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "ROI guide model-scope and cost disclosures verified",
+  title: "Leasehold guide model-boundary and evidence disclosures verified",
   summary:
-    "The October 4 ROI guide release now labels three modeled villa examples and two assets whose ROI is not modeled, while avoiding unsupported area-demand claims and calling the 40% cost and lease allowances modeled. The earlier management-fees, listing, occupancy, and methodology disclosures remain live. No ROI math, rates, yields or source data changed. After the completed October 4 local-midnight pipeline, a 10:14 UTC read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 4 leasehold guide release distinguishes a noncash lease allowance from actual cash return or observed resale value, shows illustrative term sensitivity, and removes unsupported area-demand claims. Earlier ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. After the completed October 4 local-midnight pipeline, a 16:16 UTC read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
     `${SITE_URL}/guides/bali-villa-management-fees`,
     `${SITE_URL}/methodology`,
     `${SITE_URL}/guides/bali-villa-roi`,
@@ -1184,6 +1194,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-04_1616_release.json",
+    ".tmp/live_verification_2026-10-04_1616_release.json",
+    ".tmp/listing_page_verification_2026-10-04_1616_release.json",
+    ".tmp/sitemap_coverage_2026-10-04_1616_release.json",
     ".tmp/dashboard_privacy_2026-10-04_1014_release.json",
     ".tmp/live_verification_2026-10-04_1014_release.json",
     ".tmp/listing_page_verification_2026-10-04_1014_release.json",
@@ -1905,7 +1919,7 @@ const nextActions = [
   "Fix Booking.com page-offset handling and validate real property IDs/bedroom counts against source cards. The local write gate now rejects repeated, identity-free, thin and season-mismatched samples, but no fresh sample has passed it. Collect a comparable November-stay sample across all 60 tiers and manually review rate deltas before any yield recalculation.",
   "Verify the next local-midnight BHI run parses the structured source payload and passes listing, physical-field, Supabase, listing-page, and strict sitemap gates before trusting refreshed investor data.",
   "Spot-check the corrected outside-Bali listing pages on mobile and confirm that occupancy, ROI, schema region, and breadcrumbs no longer imply a Bali model.",
-  "Reauthorize Google Sheets interactively; the September 29 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
+  "Reauthorize Google Sheets interactively; the October 4 midnight pipeline completed for Supabase but the private Sheet still returned OAuth invalid_grant.",
   "Do not repeat the completed September 25 indexing queue. The ROI guide and Nusa Dua were confirmed indexed on October 3, but exact bali villa roi impressions remained zero in the latest fully reported 28-day window. Recheck the stale aggregate indexing report no more than weekly starting October 10, and compare a non-overlapping exact-query window no earlier than October 29.",
   "Optionally move the rotated dashboard credentials to private Vercel environment variables, verify both logins, then remove the public digest fallbacks.",
   "Rotate the stale GitHub token in .env; the September 25 deploy used the existing authenticated GitHub CLI token for one process.",
@@ -2066,6 +2080,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "The leasehold guide now distinguishes BVT's noncash annual lease allowance from observed resale decline, legal title and cash-on-cash return. An explicitly illustrative 10/20/30-year comparison makes the model's term sensitivity inspectable without claiming market performance; ten area links remain browsing paths, not demand rankings.",
         "The live audit ledger supports direct name, area, source-reference and pasted-URL lookup across loaded dossiers, combining with risk, yield, tenure and Saved filters. A real RF11433 lookup and synthetic mobile/desktop checks pass.",
         "A missing nightly-rate input no longer becomes a fabricated bedroom-based estimate; unavailable yield is neutral N/A. The 8% shortcut names modeled screening yield rather than achieved return, and the lower-flag shortcut says absence of listed flags does not prove safety.",
         "Yield shortlists now require a modeled figure: 0.0% is a real result, while an unavailable ROI is not zero. Missing ROI and land-area ratios no longer lead ascending sorts, and the asking-price ratio names its land-area denominator.",
@@ -2141,6 +2156,13 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-04_1616.md",
+        ".tmp/dashboard_privacy_2026-10-04_1616_release.json",
+        ".tmp/live_verification_2026-10-04_1616_release.json",
+        ".tmp/listing_page_verification_2026-10-04_1616_release.json",
+        ".tmp/sitemap_coverage_2026-10-04_1616_release.json",
+        ".tmp/automation_freshness_2026-10-04_1616.json",
+        ".tmp/supabase_data_quality_verification_2026-10-04_1616.json",
         ".tmp/website_progress_2026-10-04_1014.md",
         ".tmp/dashboard_privacy_2026-10-04_1014_release.json",
         ".tmp/live_verification_2026-10-04_1014_release.json",
