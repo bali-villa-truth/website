@@ -18,8 +18,8 @@ const FALLBACK_RATES: Record<string, number> = { USD: 1, IDR: 16782, AUD: 1.53, 
 
 type HomeClientProps = {
   initialListings?: any[];
-  initialTotalCount?: number;
-  initialFlaggedCount?: number;
+  initialTotalCount?: number | null;
+  initialFlaggedCount?: number | null;
 };
 
 // Indonesian real estate glossary for foreign buyers
@@ -257,14 +257,14 @@ function NewsletterBlock() {
 
 export default function HomeClient({
   initialListings = [],
-  initialTotalCount = 0,
-  initialFlaggedCount = 0,
+  initialTotalCount = null,
+  initialFlaggedCount = null,
 }: HomeClientProps) {
   const [listings, setListings] = useState<any[]>(initialListings);
   const [loading, setLoading] = useState(initialListings.length === 0);
   const [inventoryFailed, setInventoryFailed] = useState(false);
   const [hasFullDataset, setHasFullDataset] = useState(
-    initialTotalCount > 0 && initialListings.length >= initialTotalCount
+    initialTotalCount !== null && initialTotalCount > 0 && initialListings.length >= initialTotalCount
   );
   const [hoveredRoi, setHoveredRoi] = useState<number | null>(null);
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
@@ -881,7 +881,8 @@ export default function HomeClient({
 
   const computedFlaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
   const auditedCount = hasFullDataset ? listings.length : (initialTotalCount || listings.length);
-  const flaggedCount = hasFullDataset ? computedFlaggedCount : (initialFlaggedCount || computedFlaggedCount);
+  const verifiedAuditedCount = hasFullDataset ? listings.length : initialTotalCount;
+  const verifiedFlaggedCount = initialFlaggedCount ?? (hasFullDataset ? computedFlaggedCount : null);
 
   const clearListingFilters = () => {
     setListingSearch('');
@@ -987,7 +988,7 @@ export default function HomeClient({
               </h1>
               <p className="mt-8 md:mt-10 max-w-[52ch] text-[17px] md:text-[19px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
                 Bali Villa Truth is the independent audit bureau for Bali villa investors.
-                We stress-test 2,000+ asking prices using modeled operating costs,
+                We review source asking prices using modeled operating costs,
                 a shared 65% occupancy screening scenario, and lease decay. Each eligible
                 listing shows the inputs behind its estimated net yield.
               </p>
@@ -998,18 +999,16 @@ export default function HomeClient({
               <div className="border-t border-[color:var(--bvt-hairline)] pt-6 space-y-5">
                 <div>
                   <div className="font-mono tabular-nums text-[28px] md:text-[32px] text-[color:var(--bvt-ink)] leading-none">
-                    {auditedCount > 0 ? auditedCount.toLocaleString() : '2,000'}
-                    <span className="text-[color:var(--bvt-accent)]">+</span>
+                    {verifiedAuditedCount === null ? '—' : verifiedAuditedCount.toLocaleString()}
                   </div>
-                  <div className="label-micro mt-2">Listings reviewed</div>
+                  <div className="label-micro mt-2">{verifiedAuditedCount === null ? 'Listing count unavailable' : 'Listings reviewed'}</div>
                 </div>
                 <div className="h-px bg-[color:var(--bvt-hairline)]" />
                 <div>
                   <div className="font-mono tabular-nums text-[28px] md:text-[32px] text-[color:var(--bvt-ink)] leading-none">
-                    {flaggedCount > 0 ? flaggedCount.toLocaleString() : '400'}
-                    <span className="text-[color:var(--bvt-accent)]">+</span>
+                    {verifiedFlaggedCount === null ? '—' : verifiedFlaggedCount.toLocaleString()}
                   </div>
-                  <div className="label-micro mt-2">Listings with flags</div>
+                  <div className="label-micro mt-2">{verifiedFlaggedCount === null ? 'Flag count unavailable' : 'Listings with flags'}</div>
                 </div>
                 <div className="h-px bg-[color:var(--bvt-hairline)]" />
                 <div>
@@ -1145,8 +1144,8 @@ export default function HomeClient({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-end">
           <h2 className="md:col-span-8 font-display text-[color:var(--bvt-ink)] leading-[0.98] tracking-[-0.02em] text-[36px] sm:text-[48px] md:text-[64px]">
-            Every villa,{" "}
-            <span className="text-[color:var(--bvt-accent)]">audited.</span>
+            Every listing,{" "}
+            <span className="text-[color:var(--bvt-accent)]">reviewed.</span>
           </h2>
           <p className="md:col-span-4 text-[15px] leading-[1.7] text-[color:var(--bvt-ink-muted)]">
             Filter by location, yield band, or lease structure. Each listing shows its source-check date, modeled assumptions, and diligence flags; unsupported assets have no ROI estimate.
@@ -1362,7 +1361,7 @@ export default function HomeClient({
             <div className="flex items-center gap-1.5">
                 <ShieldAlert size={11} className="text-[color:var(--bvt-warn)]" strokeWidth={1.5}/>
                 <span className="label-micro !text-[color:var(--bvt-warn)]">
-                  <span className="font-mono tabular-nums">{flaggedCount}</span> flagged
+                  {verifiedFlaggedCount === null ? 'Flag count unavailable' : <><span className="font-mono tabular-nums">{verifiedFlaggedCount.toLocaleString()}</span> flagged</>}
                 </span>
             </div>
             <button onClick={() => setShowMap(!showMap)} className={`hidden md:flex items-center gap-1.5 text-[11px] font-medium transition-colors ${showMap ? 'text-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)]'}`}>

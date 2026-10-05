@@ -9,7 +9,7 @@ const SITE_URL = "https://balivillatruth.com";
 export const metadata: Metadata = {
   title: "Bali Villa ROI Audits — Stress-Tested Net Yields",
   description:
-    "Independent Bali villa ROI audits across 2,000+ listings. Stress-test net yield, occupancy, management fees, lease decay, and red flags before buying a villa in Bali.",
+    "Independent Bali villa listing reviews and modeled ROI audits. Examine net yield assumptions, occupancy, operating costs, lease terms, and diligence flags before buying.",
   alternates: {
     canonical: SITE_URL,
   },
@@ -82,7 +82,7 @@ function dedupeListings(rows: any[]) {
 async function getHomeSeedData() {
   const supabase = getSupabase();
   if (!supabase) {
-    return { listings: [], totalCount: 0, flaggedCount: 0 };
+    return { listings: [], totalCount: null, flaggedCount: null };
   }
 
   const base = supabase
@@ -131,8 +131,8 @@ async function getHomeSeedData() {
 
   return {
     listings: dedupeListings(featuredResult.data || []).slice(0, 50),
-    totalCount: countResult.count || 0,
-    flaggedCount: flaggedResult.count || 0,
+    totalCount: countResult.error ? null : countResult.count,
+    flaggedCount: flaggedResult.error ? null : flaggedResult.count,
   };
 }
 
