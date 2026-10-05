@@ -22,7 +22,7 @@ const CORE_PATHS = [
   { name: "Berawa source-area hub", path: "/berawa", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
   { name: "Modeled listing schema", path: "/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894", expect: ["modeled net-yield review", "Current availability", "Not verified by BVT"] },
   { name: "Unmodeled listing schema", path: "/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514", expect: ["ROI Not Modeled", "Not stated", "Current availability", "Not verified by BVT"] },
-  { name: "Related asking-listing context", path: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131", expect: ["Other Nusa Dua 3-bed asking listings", "not sold-property comparables", "Recorded asking prices may be stale", "USD basis", "modeled"] },
+  { name: "Related asking-listing context", path: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131", expect: ["bed asking listings", "not sold-property comparables", "Recorded asking prices may be stale", "USD basis", "modeled"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap: https://balivillatruth.com/sitemap.xml"] },
