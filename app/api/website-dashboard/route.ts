@@ -20,6 +20,8 @@ const CORE_PATHS = [
   { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
   { name: "Uluwatu source-area hub", path: "/uluwatu", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
   { name: "Berawa source-area hub", path: "/berawa", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
+  { name: "Modeled listing schema", path: "/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894", expect: ["modeled net-yield review", "Current availability", "Not verified by BVT"] },
+  { name: "Unmodeled listing schema", path: "/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514", expect: ["ROI Not Modeled", "Not stated", "Current availability", "Not verified by BVT"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap: https://balivillatruth.com/sitemap.xml"] },
@@ -29,6 +31,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-05",
+    area: "Listing structured data / investor trust / model scope",
+    title: "Removed unverified sale availability and false villa audits from listing schema",
+    status: "Deployed and verified",
+    why: "Listing JSON-LD had marked sampled properties InStock without verifying current availability. A hotel outside the supported single-villa model and without a safe bedroom count was described to crawlers as a 0-bedroom villa with an independent net-yield audit. The schema now omits sale offers and availability claims, labels availability unverified, uses an audit USD price basis only when positive, and describes model scope and unknown bedrooms accurately. The visible dossiers and ROI calculations did not change. Production build, 80 tests, 14 local and live representative listing-page/schema checks, phone/desktop local layout, canonical site, exact 2,503-URL sitemap and private access checks passed after release.",
+    url: `${SITE_URL}/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514`,
+    progressFile: ".tmp/website_progress_2026-10-05_1618.md",
+  },
   {
     date: "2026-10-05",
     area: "Location hubs / source provenance / ROI scope",
@@ -1029,6 +1040,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 5 listing-schema correction: current sale availability is not verified by BVT and should not appear as InStock. The live representative verifier now checks 14 modeled/unmodeled/physical-gap examples for absent Offer claims, honest ROI scope, and unknown-bedroom labels; this is a sample, not proof that every source listing is currently available. Actual owner bookings, title and source sale status still require independent evidence.",
   "October 3 10:11 UTC read-only checks after the genuine local-midnight refresh: 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 physical gaps; no duplicate URLs/slugs, scope leaks or nonzero values on unmodeled rows. The canonical sitemap has 2,482 listing URLs plus 20 static URLs. The private dashboard now derives its live listing-URL metric from that sitemap response rather than presenting an older audit snapshot as today's inventory; the metric is not a Google indexed-page count.",
   "October 3 local rate-pipeline safety check: the active 1 August cache has 2,475 raw price observations but no property-identity records. The new verifier and --cached --update both exit 1 against it; rate_engine.py remains byte-for-byte unchanged. Synthetic tests cover repeated page cards, missing IDs, rate-record mismatch, thin tiers and a March versus November stay-season mismatch. This is a fail-closed write safeguard, not a claim that existing medians or occupancy are validated. Live read-only checks still show 2,481 audited rows, 2,207 modeled, 274 unmodeled, 38 physical gaps and exact 2,501-URL sitemap coverage.",
   "October 2 22:10 UTC read-only checks pass with 2,481 audited listings, 2,207 modeled and 274 unmodeled; 38 physical-spec gaps and no duplicate URLs/slugs, scope leaks, unmodeled nonzero model values or yield-scenario mismatches. The live sitemap has 2,481 listing and 20 static URLs. The active 1 August rate cache has repeated result cards; raw card counts overstate distinct-property coverage. The 1 October replacement scrape was held and has not changed the published rate table or ROI.",
@@ -1201,11 +1213,12 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Ten location hubs now distinguish source-area matches from verified addresses",
+  title: "Listing schema now distinguishes modeled audits from unsupported assets",
   summary:
-    "The October 5 location-hub release removes unsupported area price and rate bands and comparative claims, exposes the source labels behind each hub, and distinguishes modeled yield from unavailable ROI. Earlier homepage, due-diligence, leasehold, ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. The latest strict read-only check found 2,483 audited listings and 38 flagged physical gaps; exact live sitemap coverage was 2,483 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 5 listing-schema release removes unverified InStock sale claims and false single-villa/net-yield descriptions for unsupported assets. A 14-page representative live check covers modeled, unmodeled and missing-physical-data cases; it is not a property-availability audit. Earlier location-hub, homepage, guide, listing and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. The latest strict read-only check found 2,483 audited listings and 38 flagged physical gaps; exact live sitemap coverage was 2,483 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514`,
     `${SITE_URL}/uluwatu`,
     `${SITE_URL}/berawa`,
     `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
@@ -1226,6 +1239,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-05_1618_release.json",
+    ".tmp/live_verification_2026-10-05_1618_release.json",
+    ".tmp/listing_page_verification_2026-10-05_1618_release.json",
+    ".tmp/sitemap_coverage_2026-10-05_1618_release.json",
     ".tmp/dashboard_privacy_2026-10-05_1017_release.json",
     ".tmp/live_verification_2026-10-05_1017_release.json",
     ".tmp/listing_page_verification_2026-10-05_1017_release.json",
@@ -2124,6 +2141,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Listing machine-readable data no longer asserts that a source property is currently in stock or that an unsupported hotel has a modeled villa net yield. Unknown bedroom counts stay unknown, and the USD figure is labeled as an audit price basis rather than a BVT sale offer.",
         "Ten location hubs now state which source-area labels feed each page, without presenting those matches as verified exact addresses. Unsupported area price/rate bands and performance comparisons are gone; cards distinguish modeled net yield from an unavailable ROI, and each hub discloses BVT's shared screening assumptions.",
         "Homepage inventory and flagged-listing totals now show exact measured counts, not inflated plus-sign claims or hardcoded fallback numbers. When a count is unavailable, the page says so; the ledger also distinguishes reviewed listings from those eligible for modeled ROI.",
         "The due-diligence guide now offers 25 requests for property-level revenue, cost, tenure, permission, condition and downside evidence. Its FAQ distinguishes BVT's modeled result from owner cash flow and says a low automated-flag count is not a safety rating.",
@@ -2151,6 +2169,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The modeled-villa and unmodeled-hotel listing dossiers passed local Chromium checks at 320px, 390px and 1440px without horizontal overflow or page errors after the schema-only change; visible layouts and ROI calculations were unchanged.",
         "All ten location hubs passed local 320px and 390px overflow checks. After release, Uluwatu, Berawa and Sanur passed 320px, 390px and 1440px Chromium checks without horizontal overflow or browser page errors; all ten live SSR pages retained 20 listing links and self-canonical URLs.",
         "Search is visible with the mobile filter drawer closed. Local and live 320px, 390px and 1440px synthetic checks pass 63/63 for lookup, no-result, combined-filter and reset behavior, with no overflow or browser errors; phone and desktop screenshots were inspected. A real source-reference lookup passed at 390px.",
         "The missing-rate guard passes 33 local and live synthetic browse checks at 320px, 390px and desktop; unavailable yield is neutral N/A with a RATE MISSING label, not a favorable colored result or fabricated nightly figure. Mobile and desktop screenshots were inspected; no overflow or runtime error.",
@@ -2204,6 +2223,12 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-05_1618.md",
+        ".tmp/dashboard_privacy_2026-10-05_1618_release.json",
+        ".tmp/live_verification_2026-10-05_1618_release.json",
+        ".tmp/listing_page_verification_2026-10-05_1618_release.json",
+        ".tmp/sitemap_coverage_2026-10-05_1618_release.json",
+        ".tmp/automation_freshness_2026-10-05_1618.json",
         ".tmp/website_progress_2026-10-05_1017.md",
         ".tmp/dashboard_privacy_2026-10-05_1017_release.json",
         ".tmp/live_verification_2026-10-05_1017_release.json",
