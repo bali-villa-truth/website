@@ -359,6 +359,9 @@ export default async function ListingPage({ params }: Props) {
   const priceUsd = Math.round(getPriceUSD(listing)) || null;
   const yieldValue = modeledYield(listing);
   const roi = yieldValue !== null ? yieldValue.toFixed(1) : null;
+  const roiTone = yieldValue === null
+    ? "text-slate-400"
+    : yieldValue >= 5 ? "text-emerald-400" : yieldValue >= 0 ? "text-amber-400" : "text-red-400";
   const flags: string[] = listing.flags ? listing.flags.split(",").filter(Boolean) : [];
   const sourceLeaseYears = Number(listing.lease_years) || 0;
   const leaseTermNotStated = flags.includes("LEASE_TERM_NOT_STATED") || (isLeaseholdListing(listing) && sourceLeaseYears === 0);
@@ -624,9 +627,7 @@ export default async function ListingPage({ params }: Props) {
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
                     <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Net yield</div>
-                    <div className={`font-mono text-lg ${
-                      Number(roi) >= 5 ? "text-emerald-400" : Number(roi) >= 0 ? "text-amber-400" : "text-red-400"
-                    }`}>
+                    <div className={`font-mono text-lg ${roiTone}`}>
                       {roiDisplay}
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
@@ -766,9 +767,7 @@ export default async function ListingPage({ params }: Props) {
                   )}
                   <div className="flex justify-between py-3 bg-slate-800/50 rounded-lg px-3 -mx-1">
                     <span className="font-bold">Estimated Net Yield</span>
-                    <span className={`font-bold text-lg ${
-                      Number(roi) >= 5 ? "text-emerald-400" : Number(roi) >= 0 ? "text-amber-400" : "text-red-400"
-                    }`}>
+                    <span className={`font-bold text-lg ${roiTone}`}>
                       {roiDisplay}
                     </span>
                   </div>
@@ -843,9 +842,9 @@ export default async function ListingPage({ params }: Props) {
               {/* Comparable listings */}
               {comps.length > 0 && (
                 <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-2">Comparable {listing.location} {listing.bedrooms}-bed listings</h2>
+                  <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-2">Other {listing.location} {listing.bedrooms}-bed asking listings</h2>
                   <p className="text-xs text-slate-500 mb-4">
-                    Same area, same bedroom count — a quick sanity check on price and yield.
+                    Same source-area label and bedroom count, not sold-property comparables. Recorded asking prices may be stale; tenure, condition, build stage, and modeled rate assumptions may differ. Review each dossier before comparing yields.
                   </p>
                   <div className="grid sm:grid-cols-3 gap-3">
                     {comps.map((c: any) => {
@@ -868,13 +867,15 @@ export default async function ListingPage({ params }: Props) {
                             </div>
                             <div className="text-sm font-semibold line-clamp-2 mb-2">{cName}</div>
                             <div className="flex items-center justify-between">
-                              <span className="text-xs text-slate-400">${cPrice.toLocaleString("en-US")}</span>
-                              {cRoi !== null && (
+                              <span className="text-xs text-slate-400">{cPrice > 0 ? `$${cPrice.toLocaleString("en-US")} USD basis` : "Price N/A"}</span>
+                              {cRoi !== null ? (
                                 <span className={`text-xs font-bold ${
                                   Number(cRoi) >= 5 ? "text-emerald-400" : Number(cRoi) >= 0 ? "text-amber-400" : "text-red-400"
                                 }`}>
-                                  {cRoi}%
+                                  {cRoi}% modeled
                                 </span>
+                              ) : (
+                                <span className="text-xs text-slate-400">ROI N/A</span>
                               )}
                             </div>
                           </div>
@@ -921,9 +922,7 @@ export default async function ListingPage({ params }: Props) {
 
                 <div className="text-center py-4 border-t border-b border-slate-800 mb-4">
                   <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Stress-Tested Net Yield</p>
-                  <p className={`text-4xl font-extrabold ${
-                    Number(roi) >= 5 ? "text-emerald-400" : Number(roi) >= 0 ? "text-amber-400" : "text-red-400"
-                  }`}>
+                  <p className={`text-4xl font-extrabold ${roiTone}`}>
                     {roiDisplay}
                   </p>
                 </div>
