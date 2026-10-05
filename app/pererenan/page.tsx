@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "pererenan",
   name: "Pererenan",
-  tagline: "The quieter Canggu bet with rising supply risk",
+  tagline: "Test the address behind the Canggu comparison",
   intro:
-    "Pererenan attracts buyers who want Canggu rental demand without Berawa-level intensity. The area can work well for design-led villas with calm surroundings and beach access, but the investment case depends on not overpaying for the 'next Canggu' story. Our Pererenan audits model estimated nightly rates, a shared 65% occupancy scenario, 40% operating costs, and lease decay so buyers can separate gross from net yield.",
+    "Pererenan and Seseh appear as source location labels on this page. Neither label proves the precise address, guest access or achievable rental income. BVT's shared scenario helps compare asking prices, but the investment case needs property-level booking evidence, operating bills and a verified lease.",
   pros: [
-    "Strong overflow demand from Canggu with a calmer guest experience",
-    "Lifestyle appeal for longer-stay renters and remote workers",
-    "Some pockets still price below prime Berawa and Batu Bolong",
-    "Good fit for boutique villas with privacy and strong design",
+    "Confirm the exact street, beach route and vehicle access",
+    "Ask for dated guest bookings and owner payouts",
+    "Compare asking prices with similar villas, not a nearby area's name",
+    "Check the inclusions and condition of any design-led fit-out",
   ],
   cons: [
-    "Rapid construction can undermine the quiet-neighborhood premium",
-    "Some listings price in future appreciation before income supports it",
-    "Road access and traffic vary materially by micro-location",
-    "Lease extensions need careful diligence before assuming exit value",
+    "Inspect nearby construction and permits before pricing a quiet setting",
+    "Exclude hoped-for appreciation from the current net-yield estimate",
+    "Visit the access road at different times rather than using a map alone",
+    "Verify extension rights and pricing before modeling an exit",
   ],
-  priceBand: "$180k - $1.1M USD",
-  nightlyBand: "$110 - $330 / night",
   matchLocations: ["Pererenan", "Seseh"],
   neighbors: [
     { slug: "canggu", name: "Canggu" },
@@ -32,12 +30,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Pererenan Villa Investment ROI — Net Yield Audits",
   description:
-    "Independent Pererenan villa investment analysis. Compare audited net yields, lease risk, operating costs, and red flags for Pererenan and Seseh villas.",
+    "Review Pererenan and Seseh source listings. Compare modeled yield assumptions, lease terms and property evidence without treating area labels as verified addresses.",
   alternates: { canonical: "https://balivillatruth.com/pererenan" },
   openGraph: {
     title: "Pererenan Villa Investment ROI — Net Yield Audits",
     description:
-      "Stress-tested Pererenan villa yields for buyers who want conservative math before investing.",
+      "Pererenan-area villa research with source-location and modeled-yield assumptions visible.",
     url: "https://balivillatruth.com/pererenan",
   },
 };

@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "seminyak",
   name: "Seminyak",
-  tagline: "Mature market, yields under pressure",
+  tagline: "Check condition, costs and the exact street",
   intro:
-    "Seminyak was Bali's first tourism hotspot and it shows — mature infrastructure, established restaurants, and the most consistent year-round demand on the island. The flip side: prices per square meter are among the highest, older build stock needs capex, and gross yields rarely match Canggu once expenses are loaded. Our audit is particularly strict on renovation-needed listings and the often-optimistic nightly rates agents quote based on pre-2020 comps.",
+    "Seminyak, Kerobokan and Petitenget source labels cover different streets and property conditions. A central-sounding label does not establish a nightly rate, occupancy or renovation budget. Inspect the exact villa and request dated booking records, current operating bills and a professional condition report before relying on its modeled yield.",
   pros: [
-    "Most consistent year-round occupancy of any Bali area we track",
-    "Deep ecosystem — restaurants, spas, retail within walking distance",
-    "Prime freehold plots still exist for serious buyers",
-    "Rental agency competition keeps management fees below Canggu's",
+    "Verify walking routes and street noise from the actual property",
+    "Ask for dated bookings and payouts across a full year",
+    "Check title claims and buyer eligibility with independent counsel",
+    "Obtain written management quotes for this particular villa",
   ],
   cons: [
-    "Highest price-per-sqm on the island; yields suffer once you load expenses",
-    "Aging build stock — many listings need $30-80k of capex in year one",
-    "Traffic and congestion are real problems for premium renter appeal",
-    "Leasehold remainders of 15 years are common; watch the depreciation",
+    "Compare asking price per measured land area only where size is verified",
+    "Budget repairs from an independent survey, not a generic capex figure",
+    "Check access, noise and neighboring construction at guest-use times",
+    "Read the stated lease term and extension terms before modeling value",
   ],
-  priceBand: "$350k – $2.5M USD",
-  nightlyBand: "$150 – $500 / night",
   matchLocations: ["Seminyak", "Kerobokan", "Petitenget"],
   neighbors: [
     { slug: "canggu", name: "Canggu" },
@@ -32,12 +30,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Seminyak Villa Investments — Audited ROI Analysis",
   description:
-    "Independent ROI audit of Seminyak and Kerobokan villa investments. Net yields after the 40% expense load, lease depreciation, and red-flag detection on every audited Seminyak-area listing.",
+    "Independent review of Seminyak-area villa listings. Examine modeled net yield, building condition, operating-cost assumptions and lease terms.",
   alternates: { canonical: "https://balivillatruth.com/seminyak" },
   openGraph: {
     title: "Seminyak Villa Investments — Audited ROI Analysis",
     description:
-      "Mature-market Seminyak yields, audited without the brokerage spin.",
+      "Seminyak-area listings with building-condition, lease and modeled-yield questions for buyers.",
     url: "https://balivillatruth.com/seminyak",
   },
 };

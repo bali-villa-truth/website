@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "berawa",
   name: "Berawa",
-  tagline: "Premium Canggu pricing, tighter underwriting required",
+  tagline: "Check the premium, not the postcode",
   intro:
-    "Berawa sits in the most expensive part of the Canggu rental corridor: beach clubs, international schools, short-stay demand, and fast resale liquidity. The same demand that supports strong nightly rates also pushes land and villa asking prices into thin-yield territory. Our Berawa audits stress-test whether the rental premium survives 40% operating costs, short lease terms, and the competition from new investor-grade villas coming online every season.",
+    "The source groups Berawa-area properties under a broader Canggu label. A match here does not establish a Berawa address or a rental premium. Verify the map pin, dated property-level bookings and payouts, operating bills, and the remaining lease before treating a seller's asking price as an income case.",
   pros: [
-    "High nightly rates supported by beach-club tourism and long-stay expats",
-    "Strong resale liquidity compared with quieter Bali submarkets",
-    "Premium guest profile can support better ADR for finished, well-managed villas",
-    "Deep management ecosystem makes professional operation easier to source",
+    "Confirm the exact address, access and walkability on site",
+    "Request property-level booked nights and guest payouts by month",
+    "Compare independent management quotes and included services",
+    "Check what the asking price includes, including furnishings and transfer costs",
   ],
   cons: [
-    "Entry prices are high, so small underwriting errors can erase net yield",
-    "Traffic and construction noise can affect guest reviews and occupancy",
-    "Short leaseholds are common and can materially dilute returns",
-    "Many new builds make brochure ROI claims that need aggressive verification",
+    "Test a lower occupancy and rate case against the asking price",
+    "Inspect traffic, construction noise and neighboring permits at the property",
+    "Read the signed lease and extension-price terms with independent counsel",
+    "Treat developer revenue projections as unverified until backed by records",
   ],
-  priceBand: "$250k - $1.5M USD",
-  nightlyBand: "$140 - $400 / night",
   // BHI stores Berawa-area listings under the broader "Canggu" label.
   matchLocations: ["Canggu"],
   neighbors: [
@@ -33,12 +31,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Berawa Villa Investment ROI — Independent Audits",
   description:
-    "Independent Berawa villa investment audits. Stress-tested net yields, lease depreciation, management costs, and red flags for Berawa villas near Canggu.",
+    "Review Canggu-labeled source listings that may be in Berawa. Verify the exact address, modeled yield assumptions, costs and lease terms before buying.",
   alternates: { canonical: "https://balivillatruth.com/berawa" },
   openGraph: {
     title: "Berawa Villa Investment ROI — Independent Audits",
     description:
-      "Net-yield audits for Berawa villas. Built for buyers who want the math before the sales pitch.",
+      "Berawa-area listing research with source-label limits and modeled yield assumptions made visible.",
     url: "https://balivillatruth.com/berawa",
   },
 };

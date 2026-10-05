@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import ThumbImg from "@/app/_components/ThumbImg";
+import { modeledNetYield } from "@/app/_lib/listingBrowse";
 
 /**
  * Shared server component for location pages: /canggu, /uluwatu, etc.
@@ -23,10 +24,6 @@ export type AreaConfig = {
   pros: string[];
   // 3-4 honest risks/cons
   cons: string[];
-  // Typical price band (USD)
-  priceBand: string;
-  // Typical nightly rate ballpark
-  nightlyBand: string;
   // Which Supabase location values count as "in this area"
   matchLocations: string[];
   // Neighboring areas for internal linking
@@ -60,22 +57,21 @@ function formatUsd(last_price_idr: number, price_description?: string | null): s
 async function getAreaListings(cfg: AreaConfig, max = 20) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return { listings: [], totalCount: 0 };
+  if (!url || !key) return { listings: [], totalCount: null };
   const supabase = createClient(url, key);
-  const { data, count } = await supabase
+  const { data, count, error } = await supabase
     .from("listings_tracker")
-    .select("id, slug, villa_name, location, last_price, bedrooms, projected_roi, thumbnail_url, flags, price_description", { count: "exact" })
+    .select("id, slug, villa_name, location, last_price, bedrooms, projected_roi, est_nightly_rate, rate_source, thumbnail_url, flags, price_description", { count: "exact" })
     .eq("status", "audited")
     .gt("last_price", 0)
     .in("location", cfg.matchLocations)
-    .order("projected_roi", { ascending: false })
+    .order("projected_roi", { ascending: false, nullsFirst: false })
     .limit(max);
-  return { listings: data || [], totalCount: count || data?.length || 0 };
+  return { listings: error ? [] : data || [], totalCount: error ? null : count };
 }
 
 export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
   const { listings, totalCount } = await getAreaListings(cfg);
-  const count = totalCount || listings.length;
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -143,18 +139,18 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
             <aside className="lg:col-span-4 lg:pb-4">
               <div className="border-t border-[color:var(--bvt-hairline)] pt-6 space-y-5">
                 <div className="flex items-baseline justify-between gap-4">
-                  <span className="label-micro">Price band</span>
-                  <span className="font-mono tabular-nums text-[15px] text-[color:var(--bvt-ink)]">{cfg.priceBand}</span>
+                  <span className="label-micro">Source-area matches</span>
+                  <span className="font-mono tabular-nums text-[15px] text-[color:var(--bvt-ink)]">{totalCount === null ? "Unavailable" : totalCount.toLocaleString()}</span>
                 </div>
                 <div className="h-px bg-[color:var(--bvt-hairline)]" />
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="label-micro">Nightly rate</span>
-                  <span className="font-mono tabular-nums text-[15px] text-[color:var(--bvt-ink)]">{cfg.nightlyBand}</span>
+                <div>
+                  <div className="label-micro mb-2">Source location labels</div>
+                  <div className="text-[14px] leading-relaxed text-[color:var(--bvt-ink)]">{cfg.matchLocations.join(", ")}</div>
                 </div>
                 <div className="h-px bg-[color:var(--bvt-hairline)]" />
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="label-micro">Audited</span>
-                  <span className="font-mono tabular-nums text-[15px] text-[color:var(--bvt-ink)]">{count} villas</span>
+                <div>
+                  <div className="label-micro mb-2">BVT screening scenario</div>
+                  <div className="text-[14px] leading-relaxed text-[color:var(--bvt-ink)]">65% occupancy · 40% pooled operating costs</div>
                 </div>
               </div>
             </aside>
@@ -167,7 +163,7 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
             <div>
               <div className="flex items-center gap-3 mb-5">
                 <span className="h-px w-8 bg-[color:var(--bvt-accent)]" aria-hidden />
-                <span className="label-micro">Why investors like {cfg.name}</span>
+                <span className="label-micro">What to verify in {cfg.name}</span>
               </div>
               <ul className="divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)]">
                 {cfg.pros.map((p, i) => (
@@ -183,7 +179,7 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
             <div>
               <div className="flex items-center gap-3 mb-5">
                 <span className="h-px w-8 bg-[color:var(--bvt-warn)]" aria-hidden />
-                <span className="label-micro">What we&apos;d stress-test</span>
+                <span className="label-micro">Risks to test</span>
               </div>
               <ul className="divide-y divide-[color:var(--bvt-hairline)] border-t border-[color:var(--bvt-hairline)]">
                 {cfg.cons.map((c, i) => (
@@ -210,11 +206,10 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
             </div>
             <div className="lg:col-span-8 space-y-4 text-[15px] md:text-[16px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
               <p>
-                Every {cfg.name} villa audit uses the same Bali villa ROI model:
-                estimated nightly rate, a shared 65% occupancy scenario, a 40% operating-cost load,
-                and lease depreciation for leasehold villas. That keeps {cfg.name}
-                yields comparable with Canggu, Uluwatu, Seminyak, Sanur, and the
-                rest of the BVT ledger.
+                For eligible single-villa listings, BVT applies the same screening model:
+                an estimated nightly rate, a shared 65% occupancy scenario, one pooled 40%
+                operating-cost allowance, and a noncash lease allowance where applicable.
+                These are comparison assumptions, not measured {cfg.name} occupancy or verified owner income.
               </p>
               <div className="flex flex-wrap gap-x-6 gap-y-3">
                 <Link href="/guides/bali-villa-roi" className="link-editorial text-[14px]">
@@ -237,8 +232,11 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
             <div>
               <div className="label-micro mb-2">The ledger</div>
               <h2 className="font-display text-[color:var(--bvt-ink)] text-[32px] md:text-[40px] leading-tight tracking-[-0.02em]">
-                Audited villas in {cfg.name}
+                Source-area listings for {cfg.name}
               </h2>
+              <p className="mt-2 max-w-[62ch] text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
+                Source labels can cover neighboring places. Check the address and model eligibility in each dossier; only the first 20 matches appear here.
+              </p>
             </div>
             <Link
               href="/"
@@ -248,14 +246,13 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
             </Link>
           </div>
 
-          {count === 0 ? (
+          {listings.length === 0 ? (
             <div className="border border-[color:var(--bvt-hairline)] rounded-md p-10 text-center">
-              <div className="label-micro mb-3">Awaiting scrape</div>
+              <div className="label-micro mb-3">{totalCount === null ? "Listings unavailable" : "No source-area matches"}</div>
               <p className="text-[15px] text-[color:var(--bvt-ink-body)] max-w-[50ch] mx-auto">
-                We haven&apos;t finished auditing {cfg.name} listings yet — check
-                back next week after our re-scrape runs, or{" "}
+                {totalCount === null ? "We could not confirm the current area inventory. Try the full ledger or check again later." : "No current audited listings match these source location labels. You can"}{" "}
                 <Link href="/" className="link-editorial">
-                  browse all audited villas
+                  browse all audited listings
                 </Link>
                 .
               </p>
@@ -263,9 +260,11 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((v: any) => {
-                const roi = Number(v.projected_roi) || 0;
+                const roi = modeledNetYield(v);
                 const roiColor =
-                  roi >= 8
+                  roi === null
+                    ? "text-[color:var(--bvt-ink-muted)]"
+                    : roi >= 8
                     ? "text-[color:var(--bvt-good)]"
                     : roi >= 5
                     ? "text-[color:var(--bvt-accent)]"
@@ -313,10 +312,10 @@ export default async function AreaPage({ cfg }: { cfg: AreaConfig }) {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className={`font-mono tabular-nums text-[22px] leading-none ${roiColor}`}>
-                            {roi.toFixed(1)}%
+                          <div className={`font-mono tabular-nums leading-none ${roi === null ? "text-[15px]" : "text-[22px]"} ${roiColor}`}>
+                            {roi === null ? "Not modeled" : `${roi.toFixed(1)}%`}
                           </div>
-                          <div className="label-micro mt-1.5">Net ROI</div>
+                          <div className="label-micro mt-1.5">{roi === null ? "ROI model" : "Modeled net yield"}</div>
                         </div>
                       </div>
                     </div>

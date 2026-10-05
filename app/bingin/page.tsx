@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "bingin",
   name: "Bingin",
-  tagline: "Boutique surf demand, unforgiving micro-locations",
+  tagline: "Exact access matters more than the area label",
   intro:
-    "Bingin is one of Bali's most emotionally compelling villa markets: surf, cliffs, sunset dining, and a guest base willing to pay for design and views. It is also a market where the wrong access road, lease term, or build constraint can destroy the underwriting. Our Bingin audits compare asking prices against realistic nightly rates and conservative operating costs so buyers can understand whether the premium is supported by income.",
+    "The source files potential Bingin-area villas under broader Bukit labels, so this page is a discovery list rather than a verified Bingin boundary. Before underwriting a property, confirm the exact address, road and stair access, title and building permissions, and property-level rental records. A view or design premium needs evidence in the actual asking price and bookings.",
   pros: [
-    "Strong brand demand from surf, wedding, and boutique-travel guests",
-    "Scarce view-driven inventory can support premium ADR",
-    "Uluwatu area momentum improves resale narrative",
-    "High design sensitivity rewards genuinely differentiated villas",
+    "Verify the advertised view, access and guest route in person",
+    "Ask for dated booking and payout records for this property",
+    "Compare the villa with similar-size, similar-access rentals",
+    "Check whether design features are included in the asking price",
   ],
   cons: [
-    "Access, parking, stairs, and noise vary dramatically by exact location",
-    "Cliff and zoning constraints need serious local due diligence",
-    "Small sample sizes make occupancy estimates less certain",
-    "Premium asking prices can outrun achievable net yield",
+    "Confirm vehicle access, parking, stairs and noise at the exact plot",
+    "Have independent advisers review land, cliff and building permissions",
+    "Treat thin comparable samples as uncertain, not a market average",
+    "Stress-test the asking-price premium against lower bookings and higher costs",
   ],
-  priceBand: "$220k - $1.4M USD",
-  nightlyBand: "$130 - $450 / night",
   // BHI stores Bingin-area inventory under broader Bukit labels.
   matchLocations: ["Uluwatu", "Ungasan", "Pandawa"],
   neighbors: [
@@ -33,12 +31,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Bingin Villa Investment ROI — Independent Net Yield Audits",
   description:
-    "Independent Bingin villa investment audits. Stress-test net yield, cliff-area risk, lease terms, occupancy assumptions, and red flags before buying.",
+    "Review broader Bukit-labeled source listings that may be near Bingin. Check exact access, land rights, modeled yield assumptions and property-level bookings.",
   alternates: { canonical: "https://balivillatruth.com/bingin" },
   openGraph: {
     title: "Bingin Villa Investment ROI — Independent Net Yield Audits",
     description:
-      "Audited Bingin villa yields with conservative operating costs and lease-depreciation math.",
+      "Bingin-area villa research with address, access, lease and modeled-yield questions made visible.",
     url: "https://balivillatruth.com/bingin",
   },
 };

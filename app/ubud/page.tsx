@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "ubud",
   name: "Ubud",
-  tagline: "Wellness demand with distance and access trade-offs",
+  tagline: "Access and upkeep change the property case",
   intro:
-    "Ubud villas can produce strong guest demand when the product matches the market: privacy, jungle outlooks, wellness positioning, and thoughtful design. The risk is that Ubud is not one market. A villa near restaurants and retreats underwrites differently from a remote jungle property with difficult access. Our Ubud audits stress-test Bali villa ROI through nightly rates, occupancy, operating costs, and lease depreciation so buyers can compare the income case across very different micro-locations.",
+    "An Ubud label alone says little about the road, building condition or rental history of a specific villa. Compare the exact access, maintenance needs and property-level guest records before accepting a view or wellness premium. BVT's shared model is a screening comparison, not an Ubud occupancy estimate.",
   pros: [
-    "Global wellness and retreat demand supports differentiated villas",
-    "Privacy, views, and larger land parcels can justify premium rates",
-    "Less beach-driven seasonality than some coastal markets",
-    "Strong fit for owner-use plus rental hybrid strategies",
+    "Confirm advertised views, privacy and access on site",
+    "Request property bookings and payouts rather than an area rate claim",
+    "Compare land area and build condition using measured documents",
+    "If planning owner use, model blocked nights separately from rentals",
   ],
   cons: [
-    "Remote access can limit occupancy and increase management friction",
-    "Moisture, maintenance, and jungle setting can raise operating costs",
-    "Rates vary sharply by design quality and proximity to central Ubud",
-    "Not every guest wants a long drive from beaches or airport access",
+    "Check vehicle access, travel times and emergency access at the plot",
+    "Inspect moisture, drainage and maintenance with a qualified professional",
+    "Test a lower rate against similar-condition property evidence",
+    "Verify whether management quotes cover transport and remote servicing",
   ],
-  priceBand: "$160k - $1.3M USD",
-  nightlyBand: "$90 - $380 / night",
   matchLocations: ["Ubud"],
   neighbors: [
     { slug: "sanur", name: "Sanur" },
@@ -32,12 +30,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Ubud Villa Investment ROI — Independent Yield Audits",
   description:
-    "Independent Ubud villa investment audits for Bali villa ROI buyers. Compare stress-tested net yields, occupancy assumptions, management costs, lease decay, and red flags.",
+    "Review Ubud villa asking listings with modeled net yield, shared occupancy assumptions, access, maintenance and lease questions clearly separated.",
   alternates: { canonical: "https://balivillatruth.com/ubud" },
   openGraph: {
     title: "Ubud Villa Investment ROI — Independent Yield Audits",
     description:
-      "Net-yield analysis for Ubud villas, built for buyers who need conservative math before investing.",
+      "Ubud villa research with access, maintenance and modeled-yield assumptions to verify.",
     url: "https://balivillatruth.com/ubud",
   },
 };

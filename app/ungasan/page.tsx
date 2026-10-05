@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "ungasan",
   name: "Ungasan",
-  tagline: "The Bukit's emerging investor corridor",
+  tagline: "Check the build and the source location label",
   intro:
-    "Ungasan sits on the elevated Bukit Peninsula between Uluwatu's cliff villas and Jimbaran's beach crescent. Over the last three years it has become the largest bucket of new-build investor inventory outside Canggu — bigger plots, lower price-per-sqm than Uluwatu, and developers targeting the $200-600k foreign-buyer bracket. That scale comes with risk: off-plan execution, generic 'HIGH YIELD' marketing, and construction quality variance we flag aggressively.",
+    "This page draws from Ungasan, Pecatu and Jimbaran source labels, which can refer to distinct plots and buyer propositions. Do not infer an Ungasan address or rental premium from the grouping. For each villa, verify the site, construction stage, title, utility access and property-level income evidence before relying on a developer yield claim.",
   pros: [
-    "Lower price-per-sqm than neighboring Uluwatu or Jimbaran",
-    "Larger plots — room for a pool, garden, and meaningful guest space",
-    "Proximity to Uluwatu's rental demand without the cliff-land premium",
-    "Community of new-build owners means operational knowledge is shared",
+    "Confirm the actual land and built areas from plans and a site visit",
+    "Inspect the usable outdoor space and guest access",
+    "Request bookings and payouts for completed comparable villas",
+    "Compare management quotes with the same inclusions and service level",
   ],
   cons: [
-    "Very high share of off-plan listings — delivery risk is the dominant flag",
-    "Nightly rate models that assume 'near Uluwatu' premiums often overshoot",
-    "Infrastructure (water, roads) lags the pace of construction in parts",
-    "Resale liquidity is untested — inventory is newer than a typical hold cycle",
+    "For off-plan assets, verify permits, build milestones and deposit protections",
+    "Do not import an Uluwatu nightly rate without like-for-like property evidence",
+    "Check water, road and utility capacity at the exact plot",
+    "Treat exit value as uncertain without comparable completed sales",
   ],
-  priceBand: "$180k – $900k USD",
-  nightlyBand: "$120 – $400 / night",
   matchLocations: ["Ungasan", "Pecatu", "Jimbaran"],
   neighbors: [
     { slug: "uluwatu", name: "Uluwatu" },
@@ -32,12 +30,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Ungasan Villa Investments — Audited ROI Analysis",
   description:
-    "Independent ROI audit of Ungasan and Bukit Peninsula villa investments. Off-plan risk flags, conservative nightly-rate modeling, and net yield analysis on every audited Ungasan listing.",
+    "Review Ungasan-area source listings with off-plan, address and modeled-yield assumptions clearly labeled. Verify property-level income and build evidence.",
   alternates: { canonical: "https://balivillatruth.com/ungasan" },
   openGraph: {
     title: "Ungasan Villa Investments — Audited ROI Analysis",
     description:
-      "Bukit Peninsula villas audited with a suspicious eye on off-plan claims.",
+      "Ungasan-area villa research with off-plan evidence, exact-location and modeled-yield questions.",
     url: "https://balivillatruth.com/ungasan",
   },
 };

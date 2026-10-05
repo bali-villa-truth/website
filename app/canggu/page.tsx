@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "canggu",
   name: "Canggu",
-  tagline: "High-demand, high-yield, high-competition",
+  tagline: "Compare the property, not the area story",
   intro:
-    "Canggu is the engine of Bali's modern villa rental market — a ribbon of surf beaches, co-working cafes, and boutique hotels running north from Seminyak. Daily rates and occupancy are the strongest on the island, but so is the supply of new-build investor villas. Our audit flags the ones chasing yield with short leases, inflated nightly rates, and unrealistic occupancy assumptions.",
+    "This source-area page groups Canggu with nearby labels such as Berawa and Pererenan. Those labels are useful for browsing, not proof of street-level demand or a verified address. Compare asking prices, lease documents, dated property bookings and actual operating costs before relying on a modeled yield.",
   pros: [
-    "Highest nightly rates in Bali outside Ubud's super-luxury tier",
-    "Year-round demand — digital nomads through rainy season, tourists through dry",
-    "Deepest rental agency ecosystem makes outsourcing management viable",
-    "Resale liquidity is stronger than any other area we track",
+    "Confirm the map pin and property access rather than relying on the area tag",
+    "Request month-by-month booked nights and payout records",
+    "Compare management offers using written fee and service schedules",
+    "Check the proposed buyer structure and lease with independent counsel",
   ],
   cons: [
-    "New-build inventory glut is pushing occupancy down below the brochure numbers",
-    "Traffic, noise, and construction can hurt guest reviews — site visits matter",
-    "Leaseholds of 20-25 years are common here — watch the depreciation math",
-    "Land prices rising faster than achievable yields in Berawa and Pererenan",
+    "Test whether new nearby supply changes the property's booking case",
+    "Inspect traffic, drainage, noise and construction at the exact address",
+    "Verify the remaining lease years and priced extension terms",
+    "Check the downside case before accepting a brochure ROI or resale claim",
   ],
-  priceBand: "$180k – $1.2M USD",
-  nightlyBand: "$120 – $350 / night",
   matchLocations: ["Canggu", "Berawa", "Pererenan", "Echo Beach"],
   neighbors: [
     { slug: "seminyak", name: "Seminyak" },
@@ -32,12 +30,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Canggu Villa Investments — Audited ROI Analysis",
   description:
-    "Independent ROI audit of Canggu villa investments. Net yields, lease depreciation, red flags, and sensitivity analysis on every audited Canggu, Berawa, and Pererenan villa.",
+    "Browse Canggu-area source listings, including neighboring labels. Check modeled yield eligibility, lease terms, operating-cost assumptions and exact location.",
   alternates: { canonical: "https://balivillatruth.com/canggu" },
   openGraph: {
     title: "Canggu Villa Investments — Audited ROI Analysis",
     description:
-      "Stress-tested net yields on every audited Canggu villa. Built for buyers, not brokers.",
+      "Canggu-area listing research with modeled yield and source-location limits made clear.",
     url: "https://balivillatruth.com/canggu",
   },
 };

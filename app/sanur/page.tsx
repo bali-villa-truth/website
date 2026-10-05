@@ -4,23 +4,21 @@ import AreaPage, { AreaConfig } from "@/app/_lib/AreaPage";
 const cfg: AreaConfig = {
   slug: "sanur",
   name: "Sanur",
-  tagline: "Slower demand, steadier fundamentals",
+  tagline: "Check the long-stay case property by property",
   intro:
-    "Sanur is Bali's quiet coast — older tourism infrastructure, family-friendly, less nightlife, and a long-stay retiree demographic that keeps occupancy respectable without the nightly-rate volatility of Canggu or Uluwatu. That profile means lower gross yields on paper but often a cleaner net picture: less competition for new guests, lower OTA fees, and a renter base that stays 2-4 weeks instead of 3 nights. Good for buyers who prize stability over headline yield numbers.",
+    "This source-area page includes Sanur, Denpasar and Renon labels, which should not be treated as one rental market. If a seller pitches long stays or stable occupancy, request the property's dated bookings, stay lengths, payouts and actual management costs. Check the address, building condition and permitted rental use before comparing net-yield scenarios.",
   pros: [
-    "Long-stay renter base reduces OTA commissions and turnover costs",
-    "Lower entry prices than Canggu or Seminyak for comparable build quality",
-    "Traffic and congestion are meaningfully better than the west coast",
-    "New Nusa Penida ferry port has quietly boosted mid-season demand",
+    "Check the actual mix of nightly and longer stays in owner records",
+    "Compare asking prices only with similar-size and similar-condition villas",
+    "Confirm guest access and travel times at the exact address",
+    "Request the current management, cleaning and booking fee schedule",
   ],
   cons: [
-    "Nightly rates plateau lower — gross yields are weaker on paper",
-    "Buyer pool for resale is narrower; exit takes longer",
-    "Older building stock dominates — capex budgets matter",
-    "Limited walk-to nightlife means the Airbnb-only crowd is a harder sell",
+    "Do not infer an area occupancy or rate from a few long-stay examples",
+    "Treat resale speed as unknown without comparable completed sales",
+    "Commission an independent building and maintenance review",
+    "Verify the buyer profile with property records, not lifestyle assumptions",
   ],
-  priceBand: "$180k – $900k USD",
-  nightlyBand: "$80 – $300 / night",
   matchLocations: ["Sanur", "Denpasar", "Renon"],
   neighbors: [
     { slug: "canggu", name: "Canggu" },
@@ -32,12 +30,12 @@ const cfg: AreaConfig = {
 export const metadata: Metadata = {
   title: "Sanur Villa Investments — Audited ROI Analysis",
   description:
-    "Independent ROI audit of Sanur villa investments. Net yields, lease depreciation, and long-stay occupancy modeling on every audited Sanur-area listing.",
+    "Independent review of Sanur-area villa listings. Compare modeled net yield, lease terms and long-stay claims against property-level evidence.",
   alternates: { canonical: "https://balivillatruth.com/sanur" },
   openGraph: {
     title: "Sanur Villa Investments — Audited ROI Analysis",
     description:
-      "Steady-coast Sanur yields, audited with the long-stay renter base in mind.",
+      "Sanur-area villa asking prices and modeled yields, with long-stay claims to verify.",
     url: "https://balivillatruth.com/sanur",
   },
 };
