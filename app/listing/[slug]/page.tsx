@@ -297,32 +297,33 @@ function buildJsonLd(listing: any, slug: string) {
   const outsideBali = String(listing.rate_source || "").includes("non_bali") || location === "Other Indonesian Islands";
   const hub = locationHub(location);
   const yieldValue = modeledYield(listing);
+  const bedrooms = Number(listing.bedrooms);
+  const bedroomLabel = Number.isFinite(bedrooms) && bedrooms > 0 ? `${bedrooms}-bedroom ` : "";
+  const scopeDescription = outsideBali
+    ? "ROI not modeled: outside the Bali villa model scope."
+    : yieldValue !== null
+      ? "BVT provides an independent modeled net-yield review, not verified owner income."
+      : "BVT has not modeled ROI for this asset.";
 
   const realEstate = {
     "@type": "RealEstateListing",
     name: niceName,
     url: `https://balivillatruth.com/listing/${slug}`,
-    description: outsideBali
-      ? `${listing.bedrooms}-bedroom property in ${location}, Indonesia. Bali villa ROI model not applied.`
-      : `${listing.bedrooms}-bedroom villa in ${location}, Indonesia. Independent net yield audit by Bali Villa Truth.`,
+    description: `${bedroomLabel}${yieldValue !== null ? "villa" : "property"} in ${location}, Indonesia. Source listing reviewed by Bali Villa Truth. ${scopeDescription}`,
     image: listing.thumbnail_url || undefined,
-    offers: {
-      "@type": "Offer",
-      price: priceUsd,
-      priceCurrency: "USD",
-      availability: "https://schema.org/InStock",
-    },
     address: {
       "@type": "PostalAddress",
       ...(outsideBali ? {} : { addressLocality: location, addressRegion: "Bali" }),
       addressCountry: "ID",
     },
     additionalProperty: [
-      { "@type": "PropertyValue", name: "Bedrooms", value: listing.bedrooms },
+      { "@type": "PropertyValue", name: "Bedrooms", value: bedroomLabel ? bedrooms : "Not stated" },
       { "@type": "PropertyValue", name: "Land Size", value: listing.land_size ? `${listing.land_size} m²` : "N/A" },
       { "@type": "PropertyValue", name: "Building Size", value: listing.building_size ? `${listing.building_size} m²` : "N/A" },
       { "@type": "PropertyValue", name: "Net Yield (Estimated)", value: yieldValue !== null ? `${yieldValue.toFixed(1)}%` : "N/A" },
       { "@type": "PropertyValue", name: "Tenure", value: tenureSchemaValue(listing) },
+      ...(priceUsd > 0 ? [{ "@type": "PropertyValue", name: "Audit price basis (USD)", value: priceUsd }] : []),
+      { "@type": "PropertyValue", name: "Current availability", value: "Not verified by BVT" },
     ],
   };
 
