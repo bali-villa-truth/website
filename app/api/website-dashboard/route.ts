@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const CORE_PATHS = [
-  { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "/listing/"] },
+  { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "We review source asking prices", "Every listing,", "/listing/"] },
   { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary"] },
@@ -27,6 +27,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-05",
+    area: "Homepage inventory counts / modeled-scope clarity",
+    title: "Removed inflated and invented homepage inventory counters",
+    status: "Deployed and verified",
+    why: "The homepage had appended a plus sign to exact database counts and could display hardcoded 2,000/400 totals when count data was unavailable. A failed flag-count query could also fall back to a partial featured-listing sample. It now shows exact measured counts, preserves a real zero, and labels an unavailable count explicitly. The ledger heading no longer implies that every reviewed listing has a modeled ROI. No listing, rate, occupancy, ROI calculation, stored yield, or sitemap URL changed. The production build, 78 tests, local/live 320px/390px/1440px layout, canonical SSR, eight listing categories, exact sitemap coverage and private access checks passed after the public release.",
+    url: SITE_URL,
+    progressFile: ".tmp/website_progress_2026-10-05_0416.md",
+  },
   {
     date: "2026-10-04",
     area: "Due-diligence guide / buyer evidence / flag clarity",
@@ -1181,9 +1190,9 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Due-diligence evidence checklist and flag disclosures verified",
+  title: "Homepage exact inventory counts and unavailable-state disclosures verified",
   summary:
-    "The October 4 due-diligence guide release turns 25 questions into evidence requests, distinguishes modeled BVT inputs from actual owner results and clarifies that automated flags are not safety ratings. Earlier leasehold, ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. After the completed October 4 local-midnight pipeline, a 22:16 UTC read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 5 homepage release shows exact measured inventory and flag counts without a misleading plus sign, does not invent fallback totals when a count query fails, and distinguishes reviewed listings from modeled ROI. Earlier due-diligence, leasehold, ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. The latest read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
@@ -1204,6 +1213,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-05_0416_release.json",
+    ".tmp/live_verification_2026-10-05_0416_release.json",
+    ".tmp/listing_page_verification_2026-10-05_0416_release.json",
+    ".tmp/sitemap_coverage_2026-10-05_0416_release.json",
     ".tmp/dashboard_privacy_2026-10-04_2216_release.json",
     ".tmp/live_verification_2026-10-04_2216_release.json",
     ".tmp/listing_page_verification_2026-10-04_2216_release.json",
@@ -2094,6 +2107,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Homepage inventory and flagged-listing totals now show exact measured counts, not inflated plus-sign claims or hardcoded fallback numbers. When a count is unavailable, the page says so; the ledger also distinguishes reviewed listings from those eligible for modeled ROI.",
         "The due-diligence guide now offers 25 requests for property-level revenue, cost, tenure, permission, condition and downside evidence. Its FAQ distinguishes BVT's modeled result from owner cash flow and says a low automated-flag count is not a safety rating.",
         "The leasehold guide now distinguishes BVT's noncash annual lease allowance from observed resale decline, legal title and cash-on-cash return. An explicitly illustrative 10/20/30-year comparison makes the model's term sensitivity inspectable without claiming market performance; ten area links remain browsing paths, not demand rankings.",
         "The live audit ledger supports direct name, area, source-reference and pasted-URL lookup across loaded dossiers, combining with risk, yield, tenure and Saved filters. A real RF11433 lookup and synthetic mobile/desktop checks pass.",
@@ -2171,6 +2185,12 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-05_0416.md",
+        ".tmp/dashboard_privacy_2026-10-05_0416_release.json",
+        ".tmp/live_verification_2026-10-05_0416_release.json",
+        ".tmp/listing_page_verification_2026-10-05_0416_release.json",
+        ".tmp/sitemap_coverage_2026-10-05_0416_release.json",
+        ".tmp/automation_freshness_2026-10-05_0416.json",
         ".tmp/website_progress_2026-10-04_2216.md",
         ".tmp/dashboard_privacy_2026-10-04_2216_release.json",
         ".tmp/live_verification_2026-10-04_2216_release.json",
