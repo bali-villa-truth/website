@@ -18,6 +18,8 @@ const CORE_PATHS = [
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage", "Twenty-five evidence checks for a real purchase decision"] },
   { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage", "one pooled 40% operating-cost allowance"] },
   { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
+  { name: "Uluwatu source-area hub", path: "/uluwatu", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
+  { name: "Berawa source-area hub", path: "/berawa", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap: https://balivillatruth.com/sitemap.xml"] },
@@ -27,6 +29,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-05",
+    area: "Location hubs / source provenance / ROI scope",
+    title: "Replaced unsupported area bands and claims across ten location hubs",
+    status: "Deployed and verified",
+    why: "All ten location hubs now identify the source-area labels used for discovery and distinguish them from verified property addresses. Fixed unsourced asking-price and nightly-rate bands, comparative demand and yield claims, and other unverified area assertions were removed. The pages disclose the shared 65% occupancy and pooled 40% cost screening assumptions; eligible listing cards show modeled net yield and label missing ROI Not modeled instead of 0.0%. A failed area query no longer looks like a confirmed zero-match area. The production build, 78 tests, all-ten local and live SSR checks, live 320px/390px/1440px representative layouts, eight listing categories, exact 2,503-URL sitemap coverage and private dashboard access checks passed. No source listing, rate, occupancy input, ROI formula or stored yield changed.",
+    url: `${SITE_URL}/uluwatu`,
+    progressFile: ".tmp/website_progress_2026-10-05_1017.md",
+  },
   {
     date: "2026-10-05",
     area: "Homepage inventory counts / modeled-scope clarity",
@@ -1183,18 +1194,20 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; 2026-10-04 midnight run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 4 run completed at 00:06:06 Phoenix time with 2,482 upserted listings, zero marked delisted and 38 flagged physical-spec gaps. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Loaded; 2026-10-05 midnight run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 5 run completed at 00:06:24 Phoenix time with 2,483 audited listings and 38 flagged physical-spec gaps in subsequent strict read-only checks. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Homepage exact inventory counts and unavailable-state disclosures verified",
+  title: "Ten location hubs now distinguish source-area matches from verified addresses",
   summary:
-    "The October 5 homepage release shows exact measured inventory and flag counts without a misleading plus sign, does not invent fallback totals when a count query fails, and distinguishes reviewed listings from modeled ROI. Earlier due-diligence, leasehold, ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. The latest read-only check found 2,482 audited listings and 38 flagged physical gaps within strict gates; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 5 location-hub release removes unsupported area price and rate bands and comparative claims, exposes the source labels behind each hub, and distinguishes modeled yield from unavailable ROI. Earlier homepage, due-diligence, leasehold, ROI, management-fees, listing, occupancy and methodology disclosures remain live. No ROI math, rate, occupancy, yield or source data changed. The latest strict read-only check found 2,483 audited listings and 38 flagged physical gaps; exact live sitemap coverage was 2,483 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/uluwatu`,
+    `${SITE_URL}/berawa`,
     `${SITE_URL}/guides/bali-villa-due-diligence-checklist`,
     `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
     `${SITE_URL}/guides/bali-villa-management-fees`,
@@ -1213,6 +1226,10 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-05_1017_release.json",
+    ".tmp/live_verification_2026-10-05_1017_release.json",
+    ".tmp/listing_page_verification_2026-10-05_1017_release.json",
+    ".tmp/sitemap_coverage_2026-10-05_1017_release.json",
     ".tmp/dashboard_privacy_2026-10-05_0416_release.json",
     ".tmp/live_verification_2026-10-05_0416_release.json",
     ".tmp/listing_page_verification_2026-10-05_0416_release.json",
@@ -2107,6 +2124,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Ten location hubs now state which source-area labels feed each page, without presenting those matches as verified exact addresses. Unsupported area price/rate bands and performance comparisons are gone; cards distinguish modeled net yield from an unavailable ROI, and each hub discloses BVT's shared screening assumptions.",
         "Homepage inventory and flagged-listing totals now show exact measured counts, not inflated plus-sign claims or hardcoded fallback numbers. When a count is unavailable, the page says so; the ledger also distinguishes reviewed listings from those eligible for modeled ROI.",
         "The due-diligence guide now offers 25 requests for property-level revenue, cost, tenure, permission, condition and downside evidence. Its FAQ distinguishes BVT's modeled result from owner cash flow and says a low automated-flag count is not a safety rating.",
         "The leasehold guide now distinguishes BVT's noncash annual lease allowance from observed resale decline, legal title and cash-on-cash return. An explicitly illustrative 10/20/30-year comparison makes the model's term sensitivity inspectable without claiming market performance; ten area links remain browsing paths, not demand rankings.",
@@ -2133,6 +2151,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "All ten location hubs passed local 320px and 390px overflow checks. After release, Uluwatu, Berawa and Sanur passed 320px, 390px and 1440px Chromium checks without horizontal overflow or browser page errors; all ten live SSR pages retained 20 listing links and self-canonical URLs.",
         "Search is visible with the mobile filter drawer closed. Local and live 320px, 390px and 1440px synthetic checks pass 63/63 for lookup, no-result, combined-filter and reset behavior, with no overflow or browser errors; phone and desktop screenshots were inspected. A real source-reference lookup passed at 390px.",
         "The missing-rate guard passes 33 local and live synthetic browse checks at 320px, 390px and desktop; unavailable yield is neutral N/A with a RATE MISSING label, not a favorable colored result or fabricated nightly figure. Mobile and desktop screenshots were inspected; no overflow or runtime error.",
         "Synthetic browsing checks pass 24/24 locally and live at 320px, 390px and desktop for 0% filters, ascending/descending yield, missing-last land-price sorting, and no overflow or runtime errors. Saved 88/88, comparison 212/212 and newsletter 76/76 regressions pass locally and live; live mobile and desktop screenshots were inspected.",
@@ -2185,6 +2204,12 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-05_1017.md",
+        ".tmp/dashboard_privacy_2026-10-05_1017_release.json",
+        ".tmp/live_verification_2026-10-05_1017_release.json",
+        ".tmp/listing_page_verification_2026-10-05_1017_release.json",
+        ".tmp/sitemap_coverage_2026-10-05_1017_release.json",
+        ".tmp/automation_freshness_2026-10-05_1017.json",
         ".tmp/website_progress_2026-10-05_0416.md",
         ".tmp/dashboard_privacy_2026-10-05_0416_release.json",
         ".tmp/live_verification_2026-10-05_0416_release.json",
