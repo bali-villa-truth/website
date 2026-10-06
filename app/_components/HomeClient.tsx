@@ -288,8 +288,6 @@ export default function HomeClient({
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
   const [hoveredListingUrl, setHoveredListingUrl] = useState<string | null>(null);
-  const [priceHistory, setPriceHistory] = useState<Record<string, Array<{price_usd: number, recorded_at: string}>>>({});
-  const [hoveredPriceBadge, setHoveredPriceBadge] = useState<number | null>(null);
 
   // --- THEME ---
   // The 2026-04-16 redesign committed fully to a cream-on-dark editorial
@@ -473,20 +471,6 @@ export default function HomeClient({
         setHasFullDataset(true);
       }
       
-      // Fetch price history for listings with price changes
-      const { data: historyData } = await supabase
-        .from('price_history')
-        .select('listing_url, price_usd, recorded_at')
-        .order('recorded_at', { ascending: true });
-      if (historyData && historyData.length > 0) {
-        const grouped: Record<string, Array<{price_usd: number, recorded_at: string}>> = {};
-        for (const row of historyData) {
-          if (!grouped[row.listing_url]) grouped[row.listing_url] = [];
-          grouped[row.listing_url].push({ price_usd: row.price_usd, recorded_at: row.recorded_at });
-        }
-        setPriceHistory(grouped);
-      }
-
       setLoading(false);
     }
     fetchData();
@@ -563,16 +547,9 @@ export default function HomeClient({
     return `${displayCurrency} ${Math.round(value).toLocaleString()}`;
   };
 
-  // --- Price change badge: show ↓12% or ↑5% when previous_price exists ---
-  const getPriceChangeBadge = (villa: any): { text: string; direction: 'down' | 'up' | null } => {
-    const prev = Number(villa.previous_price) || 0;
-    const curr = Number(villa.last_price) || 0;
-    if (!prev || !curr || prev === curr) return { text: '', direction: null };
-    const pctChange = ((curr - prev) / prev) * 100;
-    if (Math.abs(pctChange) < 1) return { text: '', direction: null }; // Ignore tiny changes
-    const direction = pctChange < 0 ? 'down' : 'up';
-    const symbol = direction === 'down' ? '↓' : '↑';
-    return { text: `${symbol} ${Math.abs(pctChange).toFixed(0)}%`, direction };
+  const hasTrackedPriceChange = (villa: any): boolean => {
+    const previous = Number(villa.previous_price);
+    return !!villa.slug && Number.isFinite(previous) && previous > 0;
   };
 
   const highRiskPipelineFlags = new Set(['SHORT_LEASE', 'OFF_PLAN', 'EXTREME_BUDGET', 'MULTI_UNIT_MODEL_UNSUPPORTED']);
@@ -591,60 +568,6 @@ export default function HomeClient({
     'MULTI_UNIT',
     'MULTI_UNIT_MODEL_UNSUPPORTED',
   ]);
-
-  // --- Mini sparkline SVG for price history ---
-  const PriceSparkline = ({ url, currentPriceUsd }: { url: string; currentPriceUsd: number }) => {
-    const history = priceHistory[url];
-    if (!history || history.length < 1) return null;
-
-    // Build data points: history entries + current price
-    const points = [...history.map(h => ({ price: h.price_usd, date: h.recorded_at.slice(0, 10) }))];
-    // Add current price as latest point if different from last history entry
-    const lastHistoryPrice = points[points.length - 1]?.price || 0;
-    if (currentPriceUsd > 0 && Math.abs(currentPriceUsd - lastHistoryPrice) > 100) {
-      points.push({ price: currentPriceUsd, date: new Date().toISOString().slice(0, 10) });
-    }
-
-    if (points.length < 2) return null;
-
-    const prices = points.map(p => p.price);
-    const minP = Math.min(...prices);
-    const maxP = Math.max(...prices);
-    const range = maxP - minP || 1;
-
-    const w = 160, h = 50, pad = 4;
-    const stepX = (w - pad * 2) / (points.length - 1);
-
-    const pathPoints = points.map((p, i) => {
-      const x = pad + i * stepX;
-      const y = pad + (1 - (p.price - minP) / range) * (h - pad * 2);
-      return `${x},${y}`;
-    });
-    const linePath = `M ${pathPoints.join(' L ')}`;
-
-    const isDown = prices[prices.length - 1] < prices[0];
-    const color = isDown ? '#8fb89c' : '#c07b5c'; // BVT good / bad tokens
-
-    return (
-      <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-2 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] shadow-xl p-3" style={{ width: w + 24 }}>
-        <p className="text-[9px] text-[color:var(--bvt-ink-muted)] mb-1.5 tracking-[0.14em] uppercase font-medium">Price History</p>
-        <svg width={w} height={h} className="block">
-          <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          {points.map((p, i) => (
-            <circle key={i} cx={pad + i * stepX} cy={pad + (1 - (p.price - minP) / range) * (h - pad * 2)} r={i === points.length - 1 ? 3 : 1.8} fill={i === points.length - 1 ? color : '#6a7585'} stroke={i === points.length - 1 ? '#0a0e16' : 'none'} strokeWidth={1} />
-          ))}
-        </svg>
-        <div className="flex justify-between text-[8px] text-[color:var(--bvt-ink-faint)] mt-1 font-mono tabular-nums tracking-wide">
-          <span>{points[0].date}</span>
-          <span>{points[points.length - 1].date}</span>
-        </div>
-        <div className="flex justify-between text-[10px] mt-0.5 font-mono tabular-nums">
-          <span className="text-[color:var(--bvt-ink-muted)]">${Math.round(prices[0]).toLocaleString()}</span>
-          <span style={{ color }}>${Math.round(prices[prices.length - 1]).toLocaleString()}</span>
-        </div>
-      </div>
-    );
-  };
 
   // --- Use the stored model input only; a missing rate must not become an invented estimate. ---
   const getDisplayNightly = (villa: any): number => {
@@ -1507,6 +1430,9 @@ export default function HomeClient({
                     <div className="py-3 pr-3">
                       <div className="label-micro mb-1">Price</div>
                       <div className="font-mono text-[13px] tabular-nums text-[color:var(--bvt-ink)]">{formatPriceInCurrency(villa)}</div>
+                      {hasTrackedPriceChange(villa) && (
+                        <Link data-price-change-link href={`/listing/${villa.slug}`} title="BVT detected a source-feed price difference. Confirm the current ask in the full audit." className="mt-1 inline-block text-[10px] leading-tight text-[color:var(--bvt-ink-muted)] underline underline-offset-2 hover:text-[color:var(--bvt-accent)]">Change noted</Link>
+                      )}
                     </div>
                     <div className="py-3 px-3 border-l border-[color:var(--bvt-hairline)]">
                       <div className="label-micro mb-1">Net Yield</div>
@@ -1719,25 +1645,9 @@ export default function HomeClient({
                         <td className="py-6 px-3 align-middle">
                          <div className="flex items-center gap-2 flex-wrap">
                            <span className="font-mono tabular-nums text-[14px] text-[color:var(--bvt-ink)]">{formatPriceInCurrency(villa)}</span>
-                           {(() => {
-                             const badge = getPriceChangeBadge(villa);
-                             if (!badge.direction) return null;
-                             const hasHistory = priceHistory[villa.url] && priceHistory[villa.url].length >= 1;
-                             return (
-                               <span className={`relative font-mono tabular-nums text-[10px] cursor-help ${
-                                 badge.direction === 'down'
-                                   ? 'text-[color:var(--bvt-good)]'
-                                   : 'text-[color:var(--bvt-bad)]'
-                               }`}
-                               onMouseEnter={() => setHoveredPriceBadge(villa.id)}
-                               onMouseLeave={() => setHoveredPriceBadge(null)}>
-                                 {badge.direction === 'down' ? '▾' : '▴'} {badge.text}
-                                 {hasHistory && hoveredPriceBadge === villa.id && (
-                                   <PriceSparkline url={villa.url} currentPriceUsd={getPriceUSD(villa)} />
-                                 )}
-                               </span>
-                             );
-                           })()}
+                           {hasTrackedPriceChange(villa) && (
+                             <Link data-price-change-link href={`/listing/${villa.slug}`} title="BVT detected a source-feed price difference. Confirm the current ask in the full audit." className="text-[10px] leading-tight text-[color:var(--bvt-ink-muted)] underline underline-offset-2 hover:text-[color:var(--bvt-accent)]">Change noted</Link>
+                           )}
                          </div>
                          <div className="mt-1 font-mono tabular-nums text-[11px] text-[color:var(--bvt-ink-dim)]">
                            {getPricePerSqm(villa)} <span className="text-[color:var(--bvt-ink-faint)] normal-case tracking-normal">/land m²</span>
