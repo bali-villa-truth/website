@@ -685,7 +685,7 @@ export default function HomeClient({
   };
 
   // --- RED FLAGS: Read pre-computed flags from pipeline + add client-side checks ---
-  // Three levels: 'danger' (red) = deal-breaker risk, 'warning' (amber) = caution,
+  // Three levels: 'danger' (red) = priority diligence, 'warning' (amber) = caution,
   // 'assumed' (blue) = missing source data or a disclosed model assumption
   type RedFlag = { level: 'warning' | 'danger' | 'assumed'; label: string; detail: string };
 
@@ -740,7 +740,13 @@ export default function HomeClient({
       flags.push({ level: 'assumed', label: 'Model Not Applied', detail: `This looks like an apartment/penthouse unit, hotel, resort, apartment building, or multi-unit portfolio. BVT does not apply the single-villa ROI model until unit-level revenue, expenses, occupancy, and management structure are verified.` });
     }
 
-    if (pipelineFlags.includes('BUDGET_VILLA')) {
+    if (pipelineFlags.includes('OFF_PLAN')) {
+      flags.push({ level: 'danger', label: 'Off Plan', detail: 'The source markets this listing as off-plan or pre-construction. A modeled yield is not an operating track record. Verify build status, approvals, delivery terms, developer obligations, and any rental evidence before underwriting it.' });
+    }
+
+    if (pipelineFlags.includes('EXTREME_BUDGET')) {
+      flags.push({ level: 'danger', label: 'Price Outlier', detail: 'The asking-price basis falls in BVT\'s extreme-low model tier and the modeled nightly rate is adjusted. This is not evidence of a bargain or a defect. Verify the price per unit, title, condition, permits, and comparable properties.' });
+    } else if (pipelineFlags.includes('BUDGET_VILLA')) {
       const beds = Number(villa.bedrooms) || 1;
       const ppr = Math.round(priceUSD / beds);
       flags.push({ level: 'warning', label: 'Budget Villa', detail: `The audit-price basis is about $${ppr.toLocaleString()} per bedroom. BVT flags this listing as budget-priced under its area/bedroom rate rules; that does not establish build quality or guest demand. Check comparable sales, condition, and likely repairs.` });
