@@ -154,12 +154,13 @@ async function getComps(listing: any, max = 3) {
   return comps;
 }
 
-async function getPriceHistory(listingId: number) {
+async function getPriceHistory(listingUrl: string | null | undefined) {
+  if (!listingUrl) return [];
   const { data } = await supabase
     .from("price_history")
     .select("price_usd, recorded_at")
-    .eq("listing_id", listingId)
-    .order("recorded_at", { ascending: true })
+    .eq("listing_url", listingUrl)
+    .order("recorded_at", { ascending: false })
     .limit(50);
   return data || [];
 }
@@ -350,7 +351,7 @@ export default async function ListingPage({ params }: Props) {
   // Parallel fetch for comps + price history (non-blocking for the main audit)
   const [comps, priceHistory] = await Promise.all([
     getComps(listing, 3),
-    getPriceHistory(listing.id),
+    getPriceHistory(listing.url),
   ]);
 
   const jsonLd = buildJsonLd(listing, slug);
@@ -409,11 +410,14 @@ export default async function ListingPage({ params }: Props) {
   }
   const combinedDownsideYield = yieldAt(0.85, 50, 0.5);
 
-  // Price history: compute delta from first → current
-  const priceHistSorted = priceHistory.slice().sort((a: any, b: any) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-  const firstPrice = priceHistSorted[0]?.price_usd || null;
-  const currentPrice = priceUsd;
-  const priceDelta = firstPrice && currentPrice ? ((currentPrice - firstPrice) / firstPrice) * 100 : null;
+  const priceHistSorted = priceHistory
+    .filter((entry: any) => Number(entry.price_usd) > 0 && Number.isFinite(Date.parse(entry.recorded_at)))
+    .sort((a: any, b: any) => Date.parse(a.recorded_at) - Date.parse(b.recorded_at));
+  const earlierLoggedPrice = Number(priceHistSorted[0]?.price_usd) || null;
+  const latestLoggedPrice = Number(priceHistSorted[priceHistSorted.length - 1]?.price_usd) || null;
+  const priceDelta = earlierLoggedPrice && latestLoggedPrice
+    ? ((latestLoggedPrice - earlierLoggedPrice) / earlierLoggedPrice) * 100
+    : null;
 
   // The source timestamp must not advance during a no-scrape model correction.
   const lastAuditedISO = listing.last_crawled_at || null;
@@ -521,35 +525,33 @@ export default async function ListingPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Price history (only if we have >1 observation) */}
-              {priceHistSorted.length > 1 && firstPrice && currentPrice && (
+              {/* Price change log is keyed by source URL; old snapshots may be logged at detection time. */}
+              {priceHistSorted.length > 1 && earlierLoggedPrice && latestLoggedPrice && (
                 <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
-                  <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-3">Price history</h2>
-                  <div className="flex items-center gap-4 text-sm">
+                  <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-1">Logged price change</h2>
+                  <p className="text-xs text-slate-500 mb-3">Latest change logged {new Date(priceHistSorted[priceHistSorted.length - 1].recorded_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
                     <div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">First tracked</div>
-                      <div className="font-medium">${Math.round(firstPrice).toLocaleString("en-US")}</div>
-                      <div className="text-[10px] text-slate-500">{new Date(priceHistSorted[0].recorded_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
+                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Earlier logged USD basis</div>
+                      <div className="font-medium">${Math.round(earlierLoggedPrice).toLocaleString("en-US")}</div>
                     </div>
-                    <div className="text-slate-500">→</div>
+                    <div className="hidden sm:block text-slate-500">→</div>
                     <div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Now</div>
-                      <div className="font-medium">${Math.round(currentPrice).toLocaleString("en-US")}</div>
+                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Latest logged USD basis</div>
+                      <div className="font-medium">${Math.round(latestLoggedPrice).toLocaleString("en-US")}</div>
                     </div>
                     {priceDelta !== null && (
-                      <div className="ml-auto">
-                        <div className={`text-xs uppercase tracking-wider mb-0.5 ${priceDelta < 0 ? "text-emerald-400" : "text-amber-400"}`}>Change</div>
-                        <div className={`font-bold text-lg ${priceDelta < 0 ? "text-emerald-400" : "text-amber-400"}`}>
+                      <div className="sm:ml-auto">
+                        <div className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">USD-basis difference</div>
+                        <div className="font-bold text-lg text-slate-200">
                           {priceDelta > 0 ? "+" : ""}{priceDelta.toFixed(1)}%
                         </div>
                       </div>
                     )}
                   </div>
-                  {priceDelta !== null && priceDelta <= -5 && (
-                    <p className="text-xs text-emerald-400 mt-3">
-                      The tracked asking price is at least 5% below the first observation. Confirm the current source ask and currency before drawing a conclusion.
-                    </p>
-                  )}
+                  <p className="text-xs text-slate-500 mt-3">
+                    The earlier value may be logged when a change is detected, not when it first appeared. USD equivalents can also move with exchange rates. Confirm the current source ask, currency, and availability before drawing a conclusion.
+                  </p>
                 </section>
               )}
 
