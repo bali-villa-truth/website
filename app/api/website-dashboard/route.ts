@@ -35,6 +35,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-10-06",
+    area: "Risk-filter explanations / investor due diligence / mobile browsing",
+    title: "Show why off-plan and extreme-price listings enter the risk review",
+    status: "Deployed and verified",
+    why: "The High-risk review filter already selected OFF_PLAN and EXTREME_BUDGET rows, but the homepage omitted those reasons from its visible flags. The October 6 audited snapshot has 543 off-plan and 18 extreme-budget flags. Phone cards and desktop rows now show Off Plan or Price Outlier with diligence explanations; the outlier replaces the overlapping generic budget badge. The text identifies source/model signals, not a verdict on construction status, a bargain, or a defect. Production build, 37 Python and 47 Node checks, 78 local and live browser assertions at 320px/390px/1440px, two real mobile listing spot checks, 14 representative dossiers, exact 2,502-URL sitemap and private access checks passed after the public release. No source flag, rate, yield, model input or cloud row changed.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-10-06_2225.md",
+  },
+  {
+    date: "2026-10-06",
     area: "Homepage price-change clarity / mobile browsing / data provenance",
     title: "Replaced the homepage price trend with a neutral audit link",
     status: "Deployed and verified",
@@ -1084,6 +1093,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 6 flag-display correction: the audited snapshot contains 543 OFF_PLAN and 18 EXTREME_BUDGET pipeline flags, but the ledger formerly hid both reasons even when its risk filter selected those rows. The homepage now displays those source/model signals without altering the flags or ranking. OFF_PLAN is inferred from source listing language, and the extreme-low price tier is model-relative; neither establishes build completion, a bargain, or a property defect.",
   "October 6 price-change ledger correction: previous_price can remain after a detected change and is not proof of an original first-seen asking date or seller discount. The homepage no longer uses it for a colored percentage or a partial price-history graph. The dossier retains the dated USD-basis log and its FX, source-currency, and observation-date caveats. No source fact or ROI result was recalculated; original-observed-at and source-currency fields remain pipeline work.",
   "October 6 post-refresh checks: 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 flagged physical-spec gaps. The canonical sitemap has 2,482 listing URLs plus 20 static URLs, with no missing or extra listing URLs. The homepage cost-copy release changed no listing facts, stored yields, rate/occupancy assumptions or ROI arithmetic. A 2,482-row read-only scenario replay found no modeled-yield mismatch; this does not verify actual owner expenses or independent rate-sample coverage.",
   "October 6 price-history contract: the table has 3,625 rows keyed by listing_url, not listing_id. The listing page now reads matched source URLs and labels snapshots as logged USD price bases. The prior value may be timestamped at change detection rather than first observation, and the USD difference may reflect FX as well as source-ask movement. A longer provenance-rich timeline requires verified source-currency and observed-at fields; do not infer current availability or a seller discount from the log.",
@@ -1227,6 +1237,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "High-risk review now explains two previously hidden matching reasons in both phone cards and desktop rows: Off Plan and Price Outlier. The extreme-price row does not repeat the generic Budget Villa badge. Live synthetic filter checks passed at 320px, 390px and 1440px; two current real listings showed the corresponding badges at 390px without horizontal overflow. These are diligence prompts, not a complete safety assessment.",
   "A price change now has the same neutral dossier link in the phone card and desktop ledger, without a green/red bargain cue or a graph built from a partial log. Live synthetic browsing passed 69 assertions at 320px, 390px and 1440px, including the absence of a homepage price-history request. The dated details are available in the dossier; source ask and sale availability still need independent confirmation.",
   "The 2,472-dossier ledger previously had no direct name/reference lookup. The live search now combines with the existing filters and is visible on narrow phones; synthetic and one real reference lookup pass production checks.",
   "Previously, the 0%+ net-yield filter treated unmodeled rows as zero and ascending yield/land-price sorts placed missing values first. The live fix distinguishes real modeled 0.0% from absent ROI and keeps missing values last; local and production synthetic browser checks pass.",
@@ -1262,11 +1273,13 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Homepage price changes now lead to dated audit evidence",
+  title: "Risk-filtered listings now explain their off-plan and price signals",
   summary:
-    "The October 6 homepage release replaced a green/red price percentage and a partial, sometimes synthetic price trend with a neutral Change noted link to the full listing dossier on phones and desktops. It does not establish a seller discount or when the earlier ask was first observed. The pooled-cost explanation and listing price-history caveats remain live. No ROI math, rate, occupancy, yield or source data changed. The latest verified inventory is 2,482 audited listings; exact live sitemap coverage is 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 6 homepage release makes Off Plan and Price Outlier reasons visible when the risk filter selects those listings, on phones and desktops. These are source/model diligence prompts, not a verified build-status, bargain, defect or safety rating. The neutral price-change link and pooled-cost explanation remain live. No ROI math, rate, occupancy, yield, source flag or cloud data changed. The latest verified inventory is 2,482 audited listings; exact live sitemap coverage is 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/listing/off-plan-2-bedroom-villa-for-sale-leasehold-in-bali-canggu-kayu-tulang-rf7654b`,
+    `${SITE_URL}/listing/5-bedroom-villa-for-sale-freehold-in-bali-gianyar-tampak-siring-ar007`,
     `${SITE_URL}/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407`,
     `${SITE_URL}/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514`,
     `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131`,
@@ -1290,6 +1303,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-06_2225_release.json",
+    ".tmp/live_verification_2026-10-06_2225_release.json",
+    ".tmp/listing_page_verification_2026-10-06_2225_release.json",
+    ".tmp/sitemap_coverage_2026-10-06_2225_release.json",
+    ".tmp/listing_browse_2026-10-06_2225_release.json",
+    ".tmp/supabase_data_quality_verification_2026-10-06_2225_release.json",
     ".tmp/dashboard_privacy_2026-10-06_1623_release.json",
     ".tmp/live_verification_2026-10-06_1623_release.json",
     ".tmp/listing_page_verification_2026-10-06_1623_release.json",
