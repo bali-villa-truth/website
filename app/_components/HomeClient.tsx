@@ -744,14 +744,6 @@ export default function HomeClient({
     return factorsStr.split(' | ').filter(f => f.trim());
   };
 
-  // --- BVT NET ROI: Cost breakdown shown in tooltip (matches pipeline's 40% expense load) ---
-  const COST_BREAKDOWN = {
-    mgmt: { label: 'Property Management', rate: 0.15, note: 'On-ground manager, cleaning, laundry' },
-    ota: { label: 'OTA / Booking Fees', rate: 0.15, note: 'Airbnb/Booking.com commissions' },
-    maint: { label: 'Maintenance & Utilities', rate: 0.10, note: 'Pool, garden, AC, wifi, repairs' },
-  };
-  const TOTAL_COST_RATIO = Object.values(COST_BREAKDOWN).reduce((sum, c) => sum + c.rate, 0); // 0.40
-
 
 
   // --- DYNAMIC ROI: User-adjustable calculation for compare panel ---
@@ -1825,7 +1817,7 @@ export default function HomeClient({
                                         <div className="text-[color:var(--bvt-ink-body)] text-[9px] space-y-1 leading-relaxed">
                                           <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">${nightly}/night</span> <span className="text-[color:var(--bvt-ink-muted)]">— based on Booking.com market data for {villa.location || 'this area'}, {villa.bedrooms || '?'}-bed villas</span></div>
                                           <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">{Math.round(365 * occupancy)} nights/yr</span> <span className="text-[color:var(--bvt-ink-muted)]">(65% comparison scenario, not booked nights)</span></div>
-                                          <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">40% operating costs</span> <span className="text-[color:var(--bvt-ink-muted)]">(mgmt 15% · OTA 15% · maintenance 10%)</span></div>
+                                          <div><span className="text-[color:var(--bvt-good)] font-mono tabular-nums">40% pooled cost allowance</span> <span className="text-[color:var(--bvt-ink-muted)]">(screening assumption, not verified property expenses)</span></div>
                                           <div className="text-[color:var(--bvt-ink-muted)]">Gross/net yields use the stored USD price at audit FX; display currency may convert at a newer rate.</div>
                                         </div>
                                         <p className="text-[color:var(--bvt-ink-muted)] text-[9px] flex items-center gap-1.5 mt-2"><SlidersHorizontal size={9} strokeWidth={1.5} className="text-[color:var(--bvt-ink-faint)]"/> Select villas with the checkbox to adjust these assumptions</p>
@@ -2054,17 +2046,7 @@ export default function HomeClient({
                   {/* Expense Load */}
                   <div>
                     <div className="flex justify-between items-baseline mb-3">
-                      <label htmlFor="compare-expense" className="label-micro relative group/expense inline-flex items-center gap-1.5">
-                        Expense Load
-                        <Info size={11} className="text-[color:var(--bvt-ink-faint)] group-hover/expense:text-[color:var(--bvt-accent)] cursor-help transition-colors" />
-                        <span className="invisible group-hover/expense:visible absolute top-full left-0 mt-2 w-64 bg-[color:var(--bvt-bg)] border border-[color:var(--bvt-hairline-2)] text-[color:var(--bvt-ink-body)] text-[11px] leading-relaxed px-3 py-2.5 shadow-xl z-50 pointer-events-none font-normal normal-case tracking-normal">
-                          <span className="font-medium text-[color:var(--bvt-accent)] block mb-1.5 tracking-[0.1em] uppercase text-[10px]">What&apos;s included</span>
-                          {Object.entries(COST_BREAKDOWN).map(([key, cost]) => (
-                            <span key={key} className="flex justify-between py-0.5"><span className="text-[color:var(--bvt-ink-body)]">{cost.label}</span><span className="text-[color:var(--bvt-bad)] font-mono tabular-nums">{(cost.rate * 100).toFixed(0)}%</span></span>
-                          ))}
-                          <span className="block mt-1.5 pt-1.5 border-t border-[color:var(--bvt-hairline)] text-[color:var(--bvt-ink-muted)]">Mgmt, OTA commissions, pool, garden, AC, wifi, repairs.</span>
-                        </span>
-                      </label>
+                      <label htmlFor="compare-expense" className="label-micro">Expense Load</label>
                       <span className="font-mono tabular-nums text-[15px] font-medium text-[color:var(--bvt-accent)]">{sliderExpense}%</span>
                     </div>
                     <input
@@ -2079,6 +2061,7 @@ export default function HomeClient({
                       <span className="text-[color:var(--bvt-ink-muted)] uppercase tracking-[0.14em] font-medium">BVT · {BVT_DEFAULTS.expense}%</span>
                       <span>60%</span>
                     </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--bvt-ink-muted)]">BVT&apos;s 40% default is one pooled cost screen, not a property fee quote. Verify management, booking, staffing, utilities, repairs, taxes and reserves from the villa&apos;s records.</p>
                   </div>
                 </div>
 
