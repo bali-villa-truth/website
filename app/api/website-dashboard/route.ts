@@ -35,6 +35,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-10-06",
+    area: "Homepage ROI explanation / comparison / mobile due diligence",
+    title: "Removed invented operating-cost splits from the audit ledger",
+    status: "Deployed and verified",
+    why: "The homepage still described BVT's pooled 40% operating-cost screen as 15% management, 15% booking fees and 10% maintenance, contradicting the corrected methodology and implying property-level evidence BVT does not have. The ledger ROI detail now names one pooled cost allowance, and the comparison calculator shows a visible phone-friendly note asking buyers to verify actual expense records. No model input, ROI arithmetic, listing data or fee quote changed. Production build, 37 Python and 46 Node checks, 218 live calculator checks across 320px/390px/1440px, 14 representative dossiers, exact 2,502-URL sitemap coverage and dashboard privacy passed after the public release.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-10-06_1021.md",
+  },
+  {
+    date: "2026-10-06",
     area: "Listing price provenance / investor due diligence / mobile layout",
     title: "Restored price-change evidence with honest observation dates",
     status: "Deployed and verified",
@@ -1061,11 +1070,12 @@ const blockers = [
   {
     blocker: "Google Sheets push",
     status: "Blocked by expired OAuth token",
-    note: "The September 30 midnight full run still hit invalid_grant, then continued to Supabase because local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
+    note: "The October 6 local-midnight run still hit invalid_grant, then continued to Supabase after local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
   },
 ];
 
 const dataQualityIssues = [
+  "October 6 post-refresh checks: 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 flagged physical-spec gaps. The canonical sitemap has 2,482 listing URLs plus 20 static URLs, with no missing or extra listing URLs. The homepage cost-copy release changed no listing facts, stored yields, rate/occupancy assumptions or ROI arithmetic. A 2,482-row read-only scenario replay found no modeled-yield mismatch; this does not verify actual owner expenses or independent rate-sample coverage.",
   "October 6 price-history contract: the table has 3,625 rows keyed by listing_url, not listing_id. The listing page now reads matched source URLs and labels snapshots as logged USD price bases. The prior value may be timestamped at change detection rather than first observation, and the USD difference may reflect FX as well as source-ask movement. A longer provenance-rich timeline requires verified source-currency and observed-at fields; do not infer current availability or a seller discount from the log.",
   "October 5 listing-display correction: an absent modeled yield is neutral N/A on the dossier, not a zero-yield color. Related cards identify USD audit price basis and modeled yield, and warn that the recorded asking price may be stale; they are not verified sales comps. The live representative check covers 14 dossier types, not property-level asking-price freshness or achieved rentals.",
   "October 5 listing-schema correction: current sale availability is not verified by BVT and should not appear as InStock. The live representative verifier now checks 14 modeled/unmodeled/physical-gap examples for absent Offer claims, honest ROI scope, and unknown-bedroom labels; this is a sample, not proof that every source listing is currently available. Actual owner bookings, title and source sale status still require independent evidence.",
@@ -1234,16 +1244,16 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; 2026-10-05 midnight run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 5 run completed at 00:06:24 Phoenix time with 2,483 audited listings and 38 flagged physical-spec gaps in subsequent strict read-only checks. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Loaded; 2026-10-06 midnight run completed",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 6 run completed at 00:06:53 Phoenix time with 2,482 audited listings and 38 flagged physical-spec gaps in subsequent strict read-only checks. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Logged asking-price changes are visible with provenance caveats",
+  title: "Homepage cost assumptions now match the investor methodology",
   summary:
-    "The October 6 listing release restores price-change evidence that a wrong database key had hidden. A real audited Canggu dossier now shows logged earlier and latest USD bases, a neutral difference and explicit date/FX/source-availability caveats; assets without history show no panel. This is a detected change log, not a verified original-price timeline or seller-discount claim. The previous neutral-N/A and asking-listing corrections remain live. No ROI math, rate, occupancy, yield or source data changed. The latest strict read-only check found 2,483 audited listings and 38 flagged physical gaps; exact live sitemap coverage was 2,483 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 6 homepage release removed invented 15%/15%/10% fee buckets from the ledger and comparison calculator. The 40% deduction is a pooled screening allowance, not a verified property expense or management quote; buyers are directed to obtain actual records. The logged-price, neutral-N/A and asking-listing corrections remain live. No ROI math, rate, occupancy, yield or source data changed. The latest strict read-only check found 2,482 audited listings and 38 flagged physical gaps; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407`,
@@ -1269,6 +1279,11 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-06_1021_release.json",
+    ".tmp/live_verification_2026-10-06_1021_release.json",
+    ".tmp/listing_page_verification_2026-10-06_1021_release.json",
+    ".tmp/sitemap_coverage_2026-10-06_1021_release.json",
+    ".tmp/comparison_ui_2026-10-06_1021_release.json",
     ".tmp/dashboard_privacy_2026-10-06_0421_release.json",
     ".tmp/live_verification_2026-10-06_0421_release.json",
     ".tmp/listing_page_verification_2026-10-06_0421_release.json",
@@ -2179,6 +2194,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "The homepage ledger and comparison calculator no longer assign BVT's pooled 40% cost allowance to unsupported management, booking and upkeep percentages. The calculator's expense-evidence note is visible on phones; buyers are prompted to inspect actual property records before relying on a scenario.",
         "Matched price-history logs now appear on listing dossiers instead of being silently hidden by a nonexistent database key. The panel names earlier and latest logged USD bases, dates change detection, uses a neutral percentage, and warns that original observation time, FX effects, source ask and sale availability need independent verification.",
         "An unavailable listing ROI now appears as neutral N/A in every yield location, not in the amber style for a real modeled zero. Related cards are disclosed as source asking listings with possibly stale recorded prices; their price basis, modeled yields and missing ROI are explicit rather than implying verified sale comparables.",
         "Listing machine-readable data no longer asserts that a source property is currently in stock or that an unsupported hotel has a modeled villa net yield. Unknown bedroom counts stay unknown, and the USD figure is labeled as an audit price basis rather than a BVT sale offer.",
@@ -2209,6 +2225,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The corrected comparison calculator passed 218 live checks across 320px, 390px and 1440px with current audited rows. The pooled-cost note is visible without hover, and the 390px screenshot shows readable wrapping; no document overflow or browser errors occurred.",
         "The restored live price-change panel passed Chromium at 320px, 390px and 1440px without horizontal overflow or page errors. Logged values stack on narrow phones without a dangling connector, while the desktop connector remains visible.",
         "The live unmodeled hotel and modeled Nusa Dua villa dossiers passed 320px, 390px and 1440px Chromium checks after the related-card release, with no horizontal overflow. Neutral N/A and the stale-ask note were present in their relevant views; the related section remains readable on narrow phones.",
         "The modeled-villa and unmodeled-hotel listing dossiers passed local Chromium checks at 320px, 390px and 1440px without horizontal overflow or page errors after the schema-only change; visible layouts and ROI calculations were unchanged.",
@@ -2233,6 +2250,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "The calculator retains the compact research layout while replacing a hover-only fee table with a short inline evidence note. No extra card, new color system or decorative treatment was added.",
         "The new search input follows the existing compact ledger labels, hairline input and Lucide icon style; it adds no decorative card and fits 320px.",
         "The existing dense investor ledger is retained; the price-per-area label now makes the land denominator and asking-price basis explicit without adding a decorative panel.",
         "The free PDF form retains the established compact listing layout, with a clear two-line submitted status and delivery caveat on narrow screens rather than a promotional delivery promise.",
@@ -2247,6 +2265,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "The homepage cost-copy correction adds no endpoint, dependency or calculation; it removes a tooltip table and uses already rendered comparison controls. The production build passes, with no speed or engagement gain claimed.",
         "Price history reuses the existing parallel listing-page fetch and reads at most 50 latest change rows by source URL. The production build passes; no measured speed or conversion gain is claimed.",
         "The listing copy and yield-tone fix uses existing page data and adds no fetch, dependency or ROI recalculation. The production build passes; no speed or engagement improvement is claimed.",
         "Search runs on the already loaded listing array with no new endpoint, dependency or model calculation. The production build passes; no speed or engagement improvement is claimed.",
@@ -2267,6 +2286,14 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-06_1021.md",
+        ".tmp/comparison_ui_2026-10-06_1021_release.json",
+        ".tmp/comparison_math_2026-10-06_1021.json",
+        ".tmp/dashboard_privacy_2026-10-06_1021_release.json",
+        ".tmp/live_verification_2026-10-06_1021_release.json",
+        ".tmp/listing_page_verification_2026-10-06_1021_release.json",
+        ".tmp/sitemap_coverage_2026-10-06_1021_release.json",
+        ".tmp/automation_freshness_2026-10-06_1021.json",
         ".tmp/website_progress_2026-10-06_0421.md",
         ".tmp/dashboard_privacy_2026-10-06_0421_release.json",
         ".tmp/live_verification_2026-10-06_0421_release.json",
