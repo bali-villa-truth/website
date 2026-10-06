@@ -35,6 +35,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-10-06",
+    area: "Homepage price-change clarity / mobile browsing / data provenance",
+    title: "Replaced the homepage price trend with a neutral audit link",
+    status: "Deployed and verified",
+    why: "The ledger used a retained previous_price value to color a percentage as a bargain or increase and drew a sparkline from only the first page of the price-history log, sometimes adding a synthetic point dated today. Neither display established when the earlier source ask was first observed, and USD movement can include currency effects. Desktop and mobile now show a neutral Change noted link to the listing dossier's dated, caveated evidence; the homepage no longer fetches or graphs the partial log. Production build, 37 Python and 46 Node tests, 69 live browse assertions at 320px/390px/1440px, 14 representative dossiers, exact 2,502-URL sitemap coverage and private dashboard checks passed. No source fact, model input, ROI result or cloud record changed.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-10-06_1623.md",
+  },
+  {
+    date: "2026-10-06",
     area: "Homepage ROI explanation / comparison / mobile due diligence",
     title: "Removed invented operating-cost splits from the audit ledger",
     status: "Deployed and verified",
@@ -1075,6 +1084,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 6 price-change ledger correction: previous_price can remain after a detected change and is not proof of an original first-seen asking date or seller discount. The homepage no longer uses it for a colored percentage or a partial price-history graph. The dossier retains the dated USD-basis log and its FX, source-currency, and observation-date caveats. No source fact or ROI result was recalculated; original-observed-at and source-currency fields remain pipeline work.",
   "October 6 post-refresh checks: 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 flagged physical-spec gaps. The canonical sitemap has 2,482 listing URLs plus 20 static URLs, with no missing or extra listing URLs. The homepage cost-copy release changed no listing facts, stored yields, rate/occupancy assumptions or ROI arithmetic. A 2,482-row read-only scenario replay found no modeled-yield mismatch; this does not verify actual owner expenses or independent rate-sample coverage.",
   "October 6 price-history contract: the table has 3,625 rows keyed by listing_url, not listing_id. The listing page now reads matched source URLs and labels snapshots as logged USD price bases. The prior value may be timestamped at change detection rather than first observation, and the USD difference may reflect FX as well as source-ask movement. A longer provenance-rich timeline requires verified source-currency and observed-at fields; do not infer current availability or a seller discount from the log.",
   "October 5 listing-display correction: an absent modeled yield is neutral N/A on the dossier, not a zero-yield color. Related cards identify USD audit price basis and modeled yield, and warn that the recorded asking price may be stale; they are not verified sales comps. The live representative check covers 14 dossier types, not property-level asking-price freshness or achieved rentals.",
@@ -1217,6 +1227,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "A price change now has the same neutral dossier link in the phone card and desktop ledger, without a green/red bargain cue or a graph built from a partial log. Live synthetic browsing passed 69 assertions at 320px, 390px and 1440px, including the absence of a homepage price-history request. The dated details are available in the dossier; source ask and sale availability still need independent confirmation.",
   "The 2,472-dossier ledger previously had no direct name/reference lookup. The live search now combines with the existing filters and is visible on narrow phones; synthetic and one real reference lookup pass production checks.",
   "Previously, the 0%+ net-yield filter treated unmodeled rows as zero and ascending yield/land-price sorts placed missing values first. The live fix distinguishes real modeled 0.0% from absent ROI and keeps missing values last; local and production synthetic browser checks pass.",
   "The free PDF request now keeps the address after uncertain failures and only displays a submitted-for-sending status after a provider receipt. The 5-year teaser is a modeled scenario, not a cashflow guarantee. Real mailbox receipt and lead-table persistence still need owner-approved checks.",
@@ -1251,9 +1262,9 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Homepage cost assumptions now match the investor methodology",
+  title: "Homepage price changes now lead to dated audit evidence",
   summary:
-    "The October 6 homepage release removed invented 15%/15%/10% fee buckets from the ledger and comparison calculator. The 40% deduction is a pooled screening allowance, not a verified property expense or management quote; buyers are directed to obtain actual records. The logged-price, neutral-N/A and asking-listing corrections remain live. No ROI math, rate, occupancy, yield or source data changed. The latest strict read-only check found 2,482 audited listings and 38 flagged physical gaps; exact live sitemap coverage was 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 6 homepage release replaced a green/red price percentage and a partial, sometimes synthetic price trend with a neutral Change noted link to the full listing dossier on phones and desktops. It does not establish a seller discount or when the earlier ask was first observed. The pooled-cost explanation and listing price-history caveats remain live. No ROI math, rate, occupancy, yield or source data changed. The latest verified inventory is 2,482 audited listings; exact live sitemap coverage is 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407`,
@@ -1279,6 +1290,11 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-06_1623_release.json",
+    ".tmp/live_verification_2026-10-06_1623_release.json",
+    ".tmp/listing_page_verification_2026-10-06_1623_release.json",
+    ".tmp/sitemap_coverage_2026-10-06_1623_release.json",
+    ".tmp/listing_browse_2026-10-06_1623_release.json",
     ".tmp/dashboard_privacy_2026-10-06_1021_release.json",
     ".tmp/live_verification_2026-10-06_1021_release.json",
     ".tmp/listing_page_verification_2026-10-06_1021_release.json",
