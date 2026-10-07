@@ -5,6 +5,7 @@ import Link from "next/link";
 import ListingClient from "./ListingClient";
 import ThumbImg from "@/app/_components/ThumbImg";
 import MobileAuditBar from "@/app/_components/MobileAuditBar";
+import { MATERIAL_PIPELINE_FLAGS } from "@/app/_lib/listingBrowse";
 
 // Server-side Supabase client (uses service key for SSR, falls back to anon)
 const supabase = createClient(
@@ -104,13 +105,13 @@ function bedsBathsLabel(raw?: string | null): string {
 const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slate"; tip: string }> = {
   SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "The source records fewer than 15 years remaining. A shorter term increases BVT's noncash lease-value allowance; verify the signed expiry and extension terms." },
   BUDGET_VILLA: { label: "BUDGET VILLA", tone: "amber", tip: "The asking price is low for the model tier or below the $50,000-per-bedroom screen. Check the reason for the price and whether the modeled nightly rate is supportable." },
-  NEAR_BUDGET: { label: "NEAR BUDGET", tone: "amber", tip: "The asking price is near the lower end of the area and bedroom tier. BVT applies a cautious rate adjustment; verify property-level bookings." },
+  NEAR_BUDGET: { label: "NEAR BUDGET", tone: "slate", tip: "The asking price is near the lower end of the area and bedroom tier. This is a model-tier note, not a property defect; verify property-level bookings." },
   HIGH_YIELD: { label: "HIGH YIELD", tone: "amber", tip: "A high modeled gross yield needs independent rate, occupancy, cost, and asking-price evidence before it can be treated as achievable." },
   OPTIMISTIC_CLAIM: { label: "OPTIMISTIC CLAIM", tone: "amber", tip: "A high modeled gross yield can narrow after operating costs and any lease allowance. Request actual operating records." },
   INFLATED_ROI: { label: "HIGH MODEL YIELD", tone: "amber", tip: "The unadjusted modeled nightly rate implies more than 20% operating yield before any lease allowance. This is not a seller-reported result; check comparable rates and actual bookings." },
   OPTIMISTIC_ROI: { label: "ELEVATED MODEL YIELD", tone: "amber", tip: "The unadjusted modeled nightly rate implies more than 15% operating yield before any lease allowance. Test lower rates and occupancy." },
   RATE_PRICE_GAP: { label: "RATE / PRICE GAP", tone: "amber", tip: "At 65% occupancy, the modeled rate implies over 30% gross yield on an asking price below $200,000. Verify the asking price and property-level booking evidence." },
-  OFF_PLAN: { label: "OFF PLAN", tone: "red", tip: "Property is not yet built. Higher risk: construction delays, specification changes, developer default." },
+  OFF_PLAN: { label: "OFF PLAN", tone: "red", tip: "The source markets this listing as off-plan or pre-construction. BVT has not verified build status, approvals, delivery terms, or an operating rental history; check these independently." },
   EXTREME_BUDGET: { label: "EXTREME BUDGET", tone: "red", tip: "The asking price is far below the model tier. The nightly rate is heavily adjusted; investigate title, permits, condition, and comparable sales without assuming a particular defect." },
   MULTI_UNIT: { label: "MULTI UNIT", tone: "amber", tip: "Listing covers multiple units — per-unit economics may differ from the headline figure." },
   MULTI_UNIT_MODEL_UNSUPPORTED: { label: "MODEL NOT APPLIED", tone: "red", tip: "BVT does not apply its single-villa ROI model to apartment/penthouse units, hotels, resorts, apartment buildings, or villa portfolios without verified unit-level revenue and expense data." },
@@ -364,6 +365,7 @@ export default async function ListingPage({ params }: Props) {
     ? "text-slate-400"
     : yieldValue >= 5 ? "text-emerald-400" : yieldValue >= 0 ? "text-amber-400" : "text-red-400";
   const flags: string[] = listing.flags ? listing.flags.split(",").filter(Boolean) : [];
+  const reviewFlags = flags.filter((flag) => MATERIAL_PIPELINE_FLAGS.some((material) => material === flag.trim().toUpperCase()));
   const sourceLeaseYears = Number(listing.lease_years) || 0;
   const leaseTermNotStated = flags.includes("LEASE_TERM_NOT_STATED") || (isLeaseholdListing(listing) && sourceLeaseYears === 0);
   const leaseType = isLeaseholdListing(listing)
@@ -684,20 +686,25 @@ export default async function ListingPage({ params }: Props) {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-800 bg-slate-950/35 p-3">
-                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Red flags</div>
+                    <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Review flags</div>
                     <div className="font-mono text-lg text-[color:var(--bvt-ink)]">
-                      {flags.length > 0 ? `${flags.length} flagged` : "None surfaced"}
+                      {reviewFlags.length > 0 ? `${reviewFlags.length} to review` : "None surfaced"}
                     </div>
                     <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                      {flags.length > 0
-                        ? "Flags are prompts for diligence, not automatic rejections."
-                        : "No material pipeline flags surfaced, but legal, title, permit, and condition checks still matter."}
+                      {reviewFlags.length > 0
+                        ? "Review flags are diligence prompts, not automatic rejections or a safety rating."
+                        : "No material review flags surfaced; legal, title, permit, and condition checks still matter."}
                     </p>
+                    {flags.length > reviewFlags.length && (
+                      <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+                        Other source/model markers below are not counted in the homepage review filter.
+                      </p>
+                    )}
                   </div>
                 </div>
                 {flags.length > 0 && (
                   <div className="mt-5 border-t border-slate-800 pt-4">
-                    <h3 className="text-sm font-semibold text-[color:var(--bvt-ink)] mb-3">What the flags mean</h3>
+                    <h3 className="text-sm font-semibold text-[color:var(--bvt-ink)] mb-3">What the source and model markers mean</h3>
                     <ul className="space-y-3">
                       {flags.map((flag: string) => {
                         const key = flag.trim().toUpperCase().replace(/\s+/g, "_");
