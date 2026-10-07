@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const CORE_PATHS = [
-  { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "We review source asking prices", "Every listing,", "/listing/"] },
+  { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "We review source asking prices", "Every listing,", "Listings with review flags", "/listing/"] },
   { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary"] },
@@ -33,6 +33,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-07",
+    area: "Homepage review-count accuracy / browsing / investor trust",
+    title: "Matched the review count to the listings the filter actually shows",
+    status: "Deployed and verified",
+    why: "The October 6 audited snapshot had 1,369 rows with any pipeline flag, but only 1,192 entered the material-review filter. The other 177 carried only NEAR_BUDGET, an informational tier marker. The homepage now counts the same shared material flags used by its filter, labels the number and controls as review prompts, and calls the priority queue a review rather than a safety verdict. The public production build, 37 Python and 48 Node checks, 84 local and live browser assertions at 320px/390px/1440px, 14 representative dossiers, exact 2,502-URL sitemap and private access checks passed. No listing flag, ROI input, source record, rate, occupancy, published yield or cloud row changed.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-10-07_0425.md",
+  },
   {
     date: "2026-10-06",
     area: "Risk-filter explanations / investor due diligence / mobile browsing",
@@ -1093,6 +1102,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 7 review-count correction: 1,369 of 2,482 audited rows had any pipeline flag in the October 6 snapshot, but only 1,192 had a material-review flag. The 177-row difference consists of NEAR_BUDGET-only rows. The homepage count and review filter now share one flag definition; neither a flag nor its absence establishes property safety. This changed presentation and filtering labels, not source records, model inputs or stored yields.",
   "October 6 flag-display correction: the audited snapshot contains 543 OFF_PLAN and 18 EXTREME_BUDGET pipeline flags, but the ledger formerly hid both reasons even when its risk filter selected those rows. The homepage now displays those source/model signals without altering the flags or ranking. OFF_PLAN is inferred from source listing language, and the extreme-low price tier is model-relative; neither establishes build completion, a bargain, or a property defect.",
   "October 6 price-change ledger correction: previous_price can remain after a detected change and is not proof of an original first-seen asking date or seller discount. The homepage no longer uses it for a colored percentage or a partial price-history graph. The dossier retains the dated USD-basis log and its FX, source-currency, and observation-date caveats. No source fact or ROI result was recalculated; original-observed-at and source-currency fields remain pipeline work.",
   "October 6 post-refresh checks: 2,482 audited listings, 2,208 modeled, 274 unmodeled and 38 flagged physical-spec gaps. The canonical sitemap has 2,482 listing URLs plus 20 static URLs, with no missing or extra listing URLs. The homepage cost-copy release changed no listing facts, stored yields, rate/occupancy assumptions or ROI arithmetic. A 2,482-row read-only scenario replay found no modeled-yield mismatch; this does not verify actual owner expenses or independent rate-sample coverage.",
@@ -1237,6 +1247,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "The homepage's review count now matches the Review flags only queue; No review flags is its complement and Priority review is a subset of source/model diligence prompts, not a safety ranking. Live synthetic filter checks passed at 320px, 390px and 1440px without horizontal overflow.",
   "High-risk review now explains two previously hidden matching reasons in both phone cards and desktop rows: Off Plan and Price Outlier. The extreme-price row does not repeat the generic Budget Villa badge. Live synthetic filter checks passed at 320px, 390px and 1440px; two current real listings showed the corresponding badges at 390px without horizontal overflow. These are diligence prompts, not a complete safety assessment.",
   "A price change now has the same neutral dossier link in the phone card and desktop ledger, without a green/red bargain cue or a graph built from a partial log. Live synthetic browsing passed 69 assertions at 320px, 390px and 1440px, including the absence of a homepage price-history request. The dated details are available in the dossier; source ask and sale availability still need independent confirmation.",
   "The 2,472-dossier ledger previously had no direct name/reference lookup. The live search now combines with the existing filters and is visible on narrow phones; synthetic and one real reference lookup pass production checks.",
@@ -1273,9 +1284,9 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Risk-filtered listings now explain their off-plan and price signals",
+  title: "Homepage review count matches its browse filter",
   summary:
-    "The October 6 homepage release makes Off Plan and Price Outlier reasons visible when the risk filter selects those listings, on phones and desktops. These are source/model diligence prompts, not a verified build-status, bargain, defect or safety rating. The neutral price-change link and pooled-cost explanation remain live. No ROI math, rate, occupancy, yield, source flag or cloud data changed. The latest verified inventory is 2,482 audited listings; exact live sitemap coverage is 2,482 listing and 20 static URLs. Sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 7 homepage release counts the same material-review flags used by its browse filter: 1,192 of 2,482 audited rows in the October 6 snapshot. The earlier 1,369 count included 177 NEAR_BUDGET-only rows that the filter excludes. Review labels are diligence prompts, not a safety verdict. Off Plan and Price Outlier explanations, the neutral price-change link and pooled-cost note remain live. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,482 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/off-plan-2-bedroom-villa-for-sale-leasehold-in-bali-canggu-kayu-tulang-rf7654b`,
@@ -1303,6 +1314,11 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-07_0425_release.json",
+    ".tmp/live_verification_2026-10-07_0425_release.json",
+    ".tmp/listing_page_verification_2026-10-07_0425_release.json",
+    ".tmp/sitemap_coverage_2026-10-07_0425_release.json",
+    ".tmp/listing_browse_2026-10-07_0425_release.json",
     ".tmp/dashboard_privacy_2026-10-06_2225_release.json",
     ".tmp/live_verification_2026-10-06_2225_release.json",
     ".tmp/listing_page_verification_2026-10-06_2225_release.json",
@@ -2234,7 +2250,7 @@ export async function GET() {
         "An unavailable listing ROI now appears as neutral N/A in every yield location, not in the amber style for a real modeled zero. Related cards are disclosed as source asking listings with possibly stale recorded prices; their price basis, modeled yields and missing ROI are explicit rather than implying verified sale comparables.",
         "Listing machine-readable data no longer asserts that a source property is currently in stock or that an unsupported hotel has a modeled villa net yield. Unknown bedroom counts stay unknown, and the USD figure is labeled as an audit price basis rather than a BVT sale offer.",
         "Ten location hubs now state which source-area labels feed each page, without presenting those matches as verified exact addresses. Unsupported area price/rate bands and performance comparisons are gone; cards distinguish modeled net yield from an unavailable ROI, and each hub discloses BVT's shared screening assumptions.",
-        "Homepage inventory and flagged-listing totals now show exact measured counts, not inflated plus-sign claims or hardcoded fallback numbers. When a count is unavailable, the page says so; the ledger also distinguishes reviewed listings from those eligible for modeled ROI.",
+        "Homepage inventory and material-review totals now show exact measured counts, not inflated plus-sign claims or hardcoded fallback numbers. The review count uses the same flag set as the browse filter, excluding informational NEAR_BUDGET-only rows; neither the presence nor absence of a review flag is a safety verdict. When a count is unavailable, the page says so.",
         "The due-diligence guide now offers 25 requests for property-level revenue, cost, tenure, permission, condition and downside evidence. Its FAQ distinguishes BVT's modeled result from owner cash flow and says a low automated-flag count is not a safety rating.",
         "The leasehold guide now distinguishes BVT's noncash annual lease allowance from observed resale decline, legal title and cash-on-cash return. An explicitly illustrative 10/20/30-year comparison makes the model's term sensitivity inspectable without claiming market performance; ten area links remain browsing paths, not demand rankings.",
         "The live audit ledger supports direct name, area, source-reference and pasted-URL lookup across loaded dossiers, combining with risk, yield, tenure and Saved filters. A real RF11433 lookup and synthetic mobile/desktop checks pass.",
