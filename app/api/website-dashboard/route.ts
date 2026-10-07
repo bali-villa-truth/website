@@ -38,6 +38,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-10-07",
+    area: "Listing details / missing derived data / mobile trust",
+    title: "Removed a stray zero from unmodeled apartment details",
+    status: "Deployed and verified",
+    why: "A live one-bedroom apartment has price_per_room=0 because BVT withholds its single-villa model. A JSX numeric condition rendered that zero as loose text between Tenure and the correction link, inviting a false price interpretation. The dossier now shows optional price-per-bedroom and land-price fields only when their numeric inputs are positive. An apartment regression check, 40 Python and 48 Node tests, 20 representative live dossiers, 320px/390px/1440px local and live layout checks, canonical crawl files, exact 2,503-URL sitemap coverage and private access checks passed. The source asking price, stored zero field, rate, occupancy, ROI calculation and cloud row did not change.",
+    url: `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
+    progressFile: ".tmp/website_progress_2026-10-07_2228.md",
+  },
+  {
+    date: "2026-10-07",
     area: "Listing data clarity / model scope / mobile due diligence",
     title: "Stopped presenting a single apartment as verified multiple units",
     status: "Deployed and verified",
@@ -1129,6 +1138,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 7 optional-field display correction: a single apartment's stored price_per_room=0 is a model-scope placeholder, not a $0 per-bedroom asking price. JSX rendered that numeric zero as loose text in Property Details. Optional derived-price and land-price rows now require positive numeric inputs; the stored values and ROI remain unchanged. The real apartment dossier and representative-page regression check pass.",
   "October 7 source-title flag semantics: a live one-bedroom apartment carries both MULTI_UNIT and MULTI_UNIT_MODEL_UNSUPPORTED because the current pipeline uses MULTI_UNIT for unsupported apartment/hospitality patterns as well as multiple-unit titles. The dossier now labels that marker UNIT-TYPE REVIEW, not proof of multiple rentable units. The stored flag has not been migrated; a typed asset/category signal and verified unit count remain future pipeline work.",
   "October 7 post-refresh read-only check: 2,483 audited listings, 2,209 modeled scenarios, 274 unmodeled, 39 flagged physical-spec gaps and zero duplicate URL/slug, scope or unmodeled-value violations. The canonical sitemap has 2,483 listing plus 20 static URLs with no missing or extra paths. A NEAR_BUDGET-only marker is model context rather than a material review flag; OFF_PLAN is source marketing, not verified construction status. The display correction did not alter source facts, model inputs or stored ROI.",
   "October 7 review-count correction: 1,369 of 2,482 audited rows had any pipeline flag in the October 6 snapshot, but only 1,192 had a material-review flag. The 177-row difference consists of NEAR_BUDGET-only rows. The homepage count and review filter now share one flag definition; neither a flag nor its absence establishes property safety. This changed presentation and filtering labels, not source records, model inputs or stored yields.",
@@ -1276,6 +1286,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "A loose 0 no longer appears beside Tenure and the correction links on the one-bedroom apartment dossier. The existing compact Property Details layout remains intact; local and live 320px, 390px and 1440px checks found no overflow or page errors.",
   "A one-bedroom apartment dossier no longer says that its listing covers multiple units. The source-title screen and model exclusion have separate, readable explanations; the real apartment passed local and live 320px, 390px and 1440px checks with no overflow or page errors.",
   "Listing audit notes now distinguish a material-review count from additional source/model markers, so a near-budget-only dossier no longer says it has a red flag. Off-plan copy requests build-status and delivery evidence without asserting an unverified stage. Two real dossiers passed phone and desktop checks at 320px, 390px and 1440px, with no horizontal overflow or page errors.",
   "The homepage's review count now matches the Review flags only queue; No review flags is its complement and Priority review is a subset of source/model diligence prompts, not a safety ranking. Live synthetic filter checks passed at 320px, 390px and 1440px without horizontal overflow.",
@@ -1315,9 +1326,9 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Apartment unit-type notes distinguish source patterns from verified unit counts",
+  title: "Unmodeled apartment details no longer display a stray zero",
   summary:
-    "The October 7 apartment release stops calling a title-screened one-bedroom apartment verified multi-unit inventory. Its UNIT-TYPE REVIEW note asks buyers to confirm what is being sold while the single-villa ROI model stays withheld. Earlier near-budget and off-plan disclosure corrections remain live. The homepage's material-review count and filter remain aligned at 1,193 in the refreshed 2,483-listing inventory. These are diligence prompts, not a safety verdict. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,483 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 7 listing release removes a loose 0 from an unmodeled apartment's details. The zero was a stored derived-field placeholder, not a verified asking price; optional price/land rows now require positive numeric values. Earlier apartment unit-type, near-budget and off-plan disclosure corrections remain live. The homepage's material-review count and filter remain aligned at 1,193 in the refreshed 2,483-listing inventory. These are diligence prompts, not a safety verdict. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,483 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
@@ -2283,6 +2294,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Unmodeled apartment details no longer print a raw zero for an unavailable derived price-per-bedroom field. Positive optional ratios remain visible, while zero or missing model inputs are not presented as investment facts.",
         "Single-apartment dossiers now explain that a source-title unit-type screen is not proof of multiple rentable units. BVT withholds single-villa ROI for these assets and asks buyers to verify what the asking price includes and obtain unit-level operating records before underwriting.",
         "Listing audits now count only material-review flags while still explaining informational source/model markers. OFF_PLAN remains a source claim until construction status, approvals and delivery are independently verified; neither a flag nor its absence is a safety verdict.",
         "The homepage ledger and comparison calculator no longer assign BVT's pooled 40% cost allowance to unsupported management, booking and upkeep percentages. The calculator's expense-evidence note is visible on phones; buyers are prompted to inspect actual property records before relying on a scenario.",
@@ -2316,6 +2328,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The real one-bedroom apartment's Property Details passed local and live Chromium at 320px, 390px and 1440px after the bare-zero fix. The correction links and tenure stay readable, with no horizontal overflow or page errors; the 390px details screenshot was inspected.",
         "The real one-bedroom apartment dossier passed local and live Chromium at 320px, 390px and 1440px after the unit-type disclosure change; the explanatory note wraps within the phone width, with no document overflow or page errors. The 390px note screenshot was inspected.",
         "The corrected comparison calculator passed 218 live checks across 320px, 390px and 1440px with current audited rows. The pooled-cost note is visible without hover, and the 390px screenshot shows readable wrapping; no document overflow or browser errors occurred.",
         "The restored live price-change panel passed Chromium at 320px, 390px and 1440px without horizontal overflow or page errors. Logged values stack on narrow phones without a dangling connector, while the desktop connector remains visible.",
@@ -2342,6 +2355,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "The optional-field correction preserves the compact Property Details grid and removes only a stray text node; it adds no decorative card, badge or visual treatment.",
         "The apartment correction keeps the existing compact audit-card layout and badge palette, changing only source/model language so the investor can scan the note without an extra panel.",
         "The calculator retains the compact research layout while replacing a hover-only fee table with a short inline evidence note. No extra card, new color system or decorative treatment was added.",
         "The new search input follows the existing compact ledger labels, hairline input and Lucide icon style; it adds no decorative card and fits 320px.",
@@ -2358,6 +2372,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "The listing correction replaces two JSX truthiness guards with numeric comparisons. It adds no endpoint, dependency, data fetch or ROI work; the production build passes, with no measured speed or engagement claim.",
         "The unit-type clarification changes listing copy and a representative-page verifier only. It adds no network fetch, dependency or model work; the production build passes, with no measured speed or engagement claim.",
         "The homepage cost-copy correction adds no endpoint, dependency or calculation; it removes a tooltip table and uses already rendered comparison controls. The production build passes, with no speed or engagement gain claimed.",
         "Price history reuses the existing parallel listing-page fetch and reads at most 50 latest change rows by source URL. The production build passes; no measured speed or conversion gain is claimed.",
@@ -2380,6 +2395,10 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-07_2228.md",
+        ".tmp/listing_page_verification_2026-10-07_2228_public.json",
+        ".tmp/live_verification_2026-10-07_2228_public.json",
+        ".tmp/sitemap_coverage_2026-10-07_2228_public.json",
         ".tmp/website_progress_2026-10-07_1628.md",
         ".tmp/listing_page_verification_2026-10-07_1628_public.json",
         ".tmp/live_verification_2026-10-07_1628_public.json",
