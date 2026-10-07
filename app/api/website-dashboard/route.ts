@@ -26,6 +26,7 @@ const CORE_PATHS = [
   { name: "Logged price change disclosure", path: "/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407", expect: ["Logged price change", "Earlier logged USD basis", "Latest logged USD basis", "USD-basis difference", "when it first appeared"] },
   { name: "Near-budget informational marker", path: "/listing/1-bedroom-bohemian-villa-for-sale-in-tumbak-bayuh-pererenan-rf6003b", expect: ["Review flags", "No material review flags surfaced", "Other source/model markers below are not counted"] },
   { name: "Off-plan source-claim disclosure", path: "/listing/3-bedroom-off-plan-villa-with-ricefield-view-for-sale-in-cemagi-rf11223", expect: ["The source markets this listing as off-plan or pre-construction", "has not verified build status"] },
+  { name: "Apartment unit-type disclosure", path: "/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a", expect: ["UNIT-TYPE REVIEW", "does not prove there is more than one rentable unit", "MODEL NOT APPLIED"] },
   { name: "SEO dashboard privacy", path: "/seo-dashboard", expect: ["SEO dashboard locked", "noindex"] },
   { name: "Website dashboard privacy", path: "/website-dashboard", expect: ["Website dashboard locked", "noindex"] },
   { name: "Robots", path: "/robots.txt", expect: ["Sitemap: https://balivillatruth.com/sitemap.xml"] },
@@ -35,6 +36,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-07",
+    area: "Listing data clarity / model scope / mobile due diligence",
+    title: "Stopped presenting a single apartment as verified multiple units",
+    status: "Deployed and verified",
+    why: "The pipeline adds MULTI_UNIT to unsupported apartment titles as well as actual multi-unit/portfolio titles. A live one-bedroom apartment therefore showed MULTI UNIT and claimed the listing covered multiple units. Its dossier now calls this a UNIT-TYPE REVIEW based on source-title patterns, says the unit count is unverified, and explains why the single-villa ROI model is withheld. A new real-apartment regression check, 40 Python and 48 Node tests, 20 representative live dossiers, 320px/390px/1440px local and live layout checks, canonical crawl files, exact 2,503-URL sitemap coverage and private access checks passed. No source flag, unit count, rate, occupancy, ROI calculation, stored yield or cloud row changed.",
+    url: `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
+    progressFile: ".tmp/website_progress_2026-10-07_1628.md",
+  },
   {
     date: "2026-10-07",
     area: "Listing audit / flag meaning / mobile investor due diligence",
@@ -1012,6 +1022,12 @@ const completedImprovements = [
 const pendingImprovements = [
   {
     priority: "Medium",
+    owner: "Audit flag pipeline",
+    title: "Separate unsupported asset type from verified multiple-unit count",
+    nextAction: "MULTI_UNIT currently accompanies single-apartment titles when the single-villa model is withheld. Keep the investor-facing wording as a title-based screen. Before changing stored flags, define a distinct asset-type/possible-portfolio contract, test actual one-unit apartments against multi-unit listings, and verify downstream filters, dashboards and historical data without inventing unit counts.",
+  },
+  {
+    priority: "Medium",
     owner: "Price-history pipeline",
     title: "Record original price observation time and currency before showing a longer trend",
     nextAction: "Current change events write the prior value one second before the detected new value; that timestamp is not when the earlier ask first appeared. Define and verify source-currency and original-observed-at fields for future events before presenting a historical timeline or claiming a seller discount. Do not backfill guessed dates or rewrite existing history.",
@@ -1113,6 +1129,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 7 source-title flag semantics: a live one-bedroom apartment carries both MULTI_UNIT and MULTI_UNIT_MODEL_UNSUPPORTED because the current pipeline uses MULTI_UNIT for unsupported apartment/hospitality patterns as well as multiple-unit titles. The dossier now labels that marker UNIT-TYPE REVIEW, not proof of multiple rentable units. The stored flag has not been migrated; a typed asset/category signal and verified unit count remain future pipeline work.",
   "October 7 post-refresh read-only check: 2,483 audited listings, 2,209 modeled scenarios, 274 unmodeled, 39 flagged physical-spec gaps and zero duplicate URL/slug, scope or unmodeled-value violations. The canonical sitemap has 2,483 listing plus 20 static URLs with no missing or extra paths. A NEAR_BUDGET-only marker is model context rather than a material review flag; OFF_PLAN is source marketing, not verified construction status. The display correction did not alter source facts, model inputs or stored ROI.",
   "October 7 review-count correction: 1,369 of 2,482 audited rows had any pipeline flag in the October 6 snapshot, but only 1,192 had a material-review flag. The 177-row difference consists of NEAR_BUDGET-only rows. The homepage count and review filter now share one flag definition; neither a flag nor its absence establishes property safety. This changed presentation and filtering labels, not source records, model inputs or stored yields.",
   "October 6 flag-display correction: the audited snapshot contains 543 OFF_PLAN and 18 EXTREME_BUDGET pipeline flags, but the ledger formerly hid both reasons even when its risk filter selected those rows. The homepage now displays those source/model signals without altering the flags or ranking. OFF_PLAN is inferred from source listing language, and the extreme-low price tier is model-relative; neither establishes build completion, a bargain, or a property defect.",
@@ -1259,6 +1276,7 @@ const pipelineGuardrails = [
 ];
 
 const uxIssues = [
+  "A one-bedroom apartment dossier no longer says that its listing covers multiple units. The source-title screen and model exclusion have separate, readable explanations; the real apartment passed local and live 320px, 390px and 1440px checks with no overflow or page errors.",
   "Listing audit notes now distinguish a material-review count from additional source/model markers, so a near-budget-only dossier no longer says it has a red flag. Off-plan copy requests build-status and delivery evidence without asserting an unverified stage. Two real dossiers passed phone and desktop checks at 320px, 390px and 1440px, with no horizontal overflow or page errors.",
   "The homepage's review count now matches the Review flags only queue; No review flags is its complement and Priority review is a subset of source/model diligence prompts, not a safety ranking. Live synthetic filter checks passed at 320px, 390px and 1440px without horizontal overflow.",
   "High-risk review now explains two previously hidden matching reasons in both phone cards and desktop rows: Off Plan and Price Outlier. The extreme-price row does not repeat the generic Budget Villa badge. Live synthetic filter checks passed at 320px, 390px and 1440px; two current real listings showed the corresponding badges at 390px without horizontal overflow. These are diligence prompts, not a complete safety assessment.",
@@ -1297,11 +1315,12 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Listing review notes distinguish source claims from verified facts",
+  title: "Apartment unit-type notes distinguish source patterns from verified unit counts",
   summary:
-    "The October 7 listing release stops counting NEAR_BUDGET-only model notes as material review flags on dossiers and describes OFF_PLAN as source marketing until build status is independently checked. The homepage's shared review count and browse filter remain aligned at 1,193 in the refreshed 2,483-listing inventory. These are diligence prompts, not a safety verdict. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,483 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 7 apartment release stops calling a title-screened one-bedroom apartment verified multi-unit inventory. Its UNIT-TYPE REVIEW note asks buyers to confirm what is being sold while the single-villa ROI model stays withheld. Earlier near-budget and off-plan disclosure corrections remain live. The homepage's material-review count and filter remain aligned at 1,193 in the refreshed 2,483-listing inventory. These are diligence prompts, not a safety verdict. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,483 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
     `${SITE_URL}/listing/off-plan-2-bedroom-villa-for-sale-leasehold-in-bali-canggu-kayu-tulang-rf7654b`,
     `${SITE_URL}/listing/5-bedroom-villa-for-sale-freehold-in-bali-gianyar-tampak-siring-ar007`,
     `${SITE_URL}/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407`,
@@ -2094,6 +2113,7 @@ const contentPages = [
 ];
 
 const nextActions = [
+  "Separate the title-based unsupported-asset screen from a verified multiple-unit count in the pipeline. A single apartment currently carries MULTI_UNIT alongside the model-scope flag; the public dossier now avoids claiming multiple units, but stored semantics and downstream consumers still need an evidence-gated contract review.",
   "Approve a synthetic free-audit request using a monitored test address and review the leads-table schema/RLS. The synthetic three-page PDF and mocked receipt prove code behavior, not delivery or lead persistence; avoid real investor records and unapproved emails.",
   "Review the owner's Supabase schema and RLS policy for older favorite records with approved synthetic users, not real investor records. The browser import is removed, but server isolation and historical deletion remain unverified. Do not reintroduce email-only sync.",
   "Confirm newsletter sending/removal ownership and leads-table schema/RLS with owner access, then approve synthetic signup/removal tests. Mocked persistence/provider tests and qualified copy do not prove inbox delivery or historical record isolation; actual subscriber reads and outreach remain unauthorized.",
@@ -2263,6 +2283,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Single-apartment dossiers now explain that a source-title unit-type screen is not proof of multiple rentable units. BVT withholds single-villa ROI for these assets and asks buyers to verify what the asking price includes and obtain unit-level operating records before underwriting.",
         "Listing audits now count only material-review flags while still explaining informational source/model markers. OFF_PLAN remains a source claim until construction status, approvals and delivery are independently verified; neither a flag nor its absence is a safety verdict.",
         "The homepage ledger and comparison calculator no longer assign BVT's pooled 40% cost allowance to unsupported management, booking and upkeep percentages. The calculator's expense-evidence note is visible on phones; buyers are prompted to inspect actual property records before relying on a scenario.",
         "Matched price-history logs now appear on listing dossiers instead of being silently hidden by a nonexistent database key. The panel names earlier and latest logged USD bases, dates change detection, uses a neutral percentage, and warns that original observation time, FX effects, source ask and sale availability need independent verification.",
@@ -2295,6 +2316,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The real one-bedroom apartment dossier passed local and live Chromium at 320px, 390px and 1440px after the unit-type disclosure change; the explanatory note wraps within the phone width, with no document overflow or page errors. The 390px note screenshot was inspected.",
         "The corrected comparison calculator passed 218 live checks across 320px, 390px and 1440px with current audited rows. The pooled-cost note is visible without hover, and the 390px screenshot shows readable wrapping; no document overflow or browser errors occurred.",
         "The restored live price-change panel passed Chromium at 320px, 390px and 1440px without horizontal overflow or page errors. Logged values stack on narrow phones without a dangling connector, while the desktop connector remains visible.",
         "The live unmodeled hotel and modeled Nusa Dua villa dossiers passed 320px, 390px and 1440px Chromium checks after the related-card release, with no horizontal overflow. Neutral N/A and the stale-ask note were present in their relevant views; the related section remains readable on narrow phones.",
@@ -2320,6 +2342,7 @@ export async function GET() {
         "Listing page assumption notes use a one-column mobile grid before moving to two columns.",
       ],
       styleDesignImprovements: [
+        "The apartment correction keeps the existing compact audit-card layout and badge palette, changing only source/model language so the investor can scan the note without an extra panel.",
         "The calculator retains the compact research layout while replacing a hover-only fee table with a short inline evidence note. No extra card, new color system or decorative treatment was added.",
         "The new search input follows the existing compact ledger labels, hairline input and Lucide icon style; it adds no decorative card and fits 320px.",
         "The existing dense investor ledger is retained; the price-per-area label now makes the land denominator and asking-price basis explicit without adding a decorative panel.",
@@ -2335,6 +2358,7 @@ export async function GET() {
         "Avoided broker-style hype and framed outputs as estimates, not guarantees.",
       ],
       performanceChecks: [
+        "The unit-type clarification changes listing copy and a representative-page verifier only. It adds no network fetch, dependency or model work; the production build passes, with no measured speed or engagement claim.",
         "The homepage cost-copy correction adds no endpoint, dependency or calculation; it removes a tooltip table and uses already rendered comparison controls. The production build passes, with no speed or engagement gain claimed.",
         "Price history reuses the existing parallel listing-page fetch and reads at most 50 latest change rows by source URL. The production build passes; no measured speed or conversion gain is claimed.",
         "The listing copy and yield-tone fix uses existing page data and adds no fetch, dependency or ROI recalculation. The production build passes; no speed or engagement improvement is claimed.",
@@ -2356,6 +2380,10 @@ export async function GET() {
       contentPages,
       nextActions,
       progressFiles: [
+        ".tmp/website_progress_2026-10-07_1628.md",
+        ".tmp/listing_page_verification_2026-10-07_1628_public.json",
+        ".tmp/live_verification_2026-10-07_1628_public.json",
+        ".tmp/sitemap_coverage_2026-10-07_1628_public.json",
         ".tmp/website_progress_2026-10-06_1021.md",
         ".tmp/comparison_ui_2026-10-06_1021_release.json",
         ".tmp/comparison_math_2026-10-06_1021.json",
