@@ -587,7 +587,7 @@ export default async function ListingPage({ params }: Props) {
                       {tenureDisplay}
                     </span>
                   </div>
-                  {listing.price_per_room && listing.price_per_room > 0 && (
+                  {Number(listing.price_per_room) > 0 && (
                     <div>
                       <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Price / Bedroom</span>
                       <span className="font-medium">${Math.round(listing.price_per_room).toLocaleString("en-US")}</span>
@@ -936,7 +936,7 @@ export default async function ListingPage({ params }: Props) {
                   </p>
                 </div>
 
-                {listing.land_size && (
+                {Number(listing.land_size) > 0 && (
                   <div className="flex justify-between text-sm py-2">
                     <span className="text-slate-500">Price / m² (land)</span>
                     <span className="font-medium">
