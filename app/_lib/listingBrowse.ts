@@ -5,6 +5,13 @@ type ListingYield = {
   flags?: string | null;
 };
 
+export const MATERIAL_PIPELINE_FLAGS = [
+  'SHORT_LEASE', 'OFF_PLAN', 'EXTREME_BUDGET', 'BUDGET_VILLA',
+  'OPTIMISTIC_ROI', 'INFLATED_ROI', 'RATE_PRICE_GAP', 'MISSING_DATA',
+  'BEDROOM_COUNT_NOT_STATED', 'PHYSICAL_DATA_INCOMPLETE',
+  'NON_BALI_LOCATION', 'MULTI_UNIT', 'MULTI_UNIT_MODEL_UNSUPPORTED',
+] as const;
+
 export function getPipelineFlags(listing: { flags?: string | null }): string[] {
   return (listing.flags || "").split(",").map((flag) => flag.trim()).filter(Boolean);
 }

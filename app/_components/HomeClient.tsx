@@ -7,7 +7,7 @@ import { BvtLockup } from './BvtSeal';
 import { calculateComparisonScenario } from '@/app/_lib/comparisonModel';
 import { COMPARISON_STORAGE_KEY, MAX_COMPARISON_VILLAS, normalizeComparisonIds, parseComparisonSelection } from '@/app/_lib/comparisonSelection';
 import { SAVED_STORAGE_KEY, parseSavedSelection } from '@/app/_lib/savedSelection';
-import { compareKnownNumbers, getPipelineFlags, isRoiUnmodeled, matchesListingSearch, modeledNetYield, pricePerLandSqm } from '@/app/_lib/listingBrowse';
+import { MATERIAL_PIPELINE_FLAGS, compareKnownNumbers, getPipelineFlags, isRoiUnmodeled, matchesListingSearch, modeledNetYield, pricePerLandSqm } from '@/app/_lib/listingBrowse';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -553,21 +553,7 @@ export default function HomeClient({
   };
 
   const highRiskPipelineFlags = new Set(['SHORT_LEASE', 'OFF_PLAN', 'EXTREME_BUDGET', 'MULTI_UNIT_MODEL_UNSUPPORTED']);
-  const materialPipelineFlags = new Set([
-    'SHORT_LEASE',
-    'OFF_PLAN',
-    'EXTREME_BUDGET',
-    'BUDGET_VILLA',
-    'OPTIMISTIC_ROI',
-    'INFLATED_ROI',
-    'RATE_PRICE_GAP',
-    'MISSING_DATA',
-    'BEDROOM_COUNT_NOT_STATED',
-    'PHYSICAL_DATA_INCOMPLETE',
-    'NON_BALI_LOCATION',
-    'MULTI_UNIT',
-    'MULTI_UNIT_MODEL_UNSUPPORTED',
-  ]);
+  const materialPipelineFlags = new Set<string>(MATERIAL_PIPELINE_FLAGS);
 
   // --- Use the stored model input only; a missing rate must not become an invented estimate. ---
   const getDisplayNightly = (villa: any): number => {
@@ -800,7 +786,7 @@ export default function HomeClient({
     return 'text-[color:var(--bvt-warn)]';
   };
 
-  const computedFlaggedCount = listings.filter(v => getRedFlags(v).length > 0).length;
+  const computedFlaggedCount = listings.filter(v => getPipelineFlags(v).some(flag => materialPipelineFlags.has(flag))).length;
   const auditedCount = hasFullDataset ? listings.length : (initialTotalCount || listings.length);
   const verifiedAuditedCount = hasFullDataset ? listings.length : initialTotalCount;
   const verifiedFlaggedCount = initialFlaggedCount ?? (hasFullDataset ? computedFlaggedCount : null);
@@ -929,7 +915,7 @@ export default function HomeClient({
                   <div className="font-mono tabular-nums text-[28px] md:text-[32px] text-[color:var(--bvt-ink)] leading-none">
                     {verifiedFlaggedCount === null ? '—' : verifiedFlaggedCount.toLocaleString()}
                   </div>
-                  <div className="label-micro mt-2">{verifiedFlaggedCount === null ? 'Flag count unavailable' : 'Listings with flags'}</div>
+                  <div className="label-micro mt-2">{verifiedFlaggedCount === null ? 'Review count unavailable' : 'Listings with review flags'}</div>
                 </div>
                 <div className="h-px bg-[color:var(--bvt-hairline)]" />
                 <div>
@@ -1162,12 +1148,12 @@ export default function HomeClient({
                     </select>
                 </div>
                 <div>
-                    <label className="label-micro block mb-1.5">Risk View</label>
+                    <label className="label-micro block mb-1.5">Review flags</label>
                     <select value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] py-2 outline-none cursor-pointer transition-colors">
                         <option value="All" className="bg-[color:var(--bvt-bg)]">All</option>
-                        <option value="Clear" className="bg-[color:var(--bvt-bg)]">No material flags</option>
-                        <option value="Flagged" className="bg-[color:var(--bvt-bg)]">Flagged only</option>
-                        <option value="HighRisk" className="bg-[color:var(--bvt-bg)]">High risk only</option>
+                        <option value="Clear" className="bg-[color:var(--bvt-bg)]">No review flags</option>
+                        <option value="Flagged" className="bg-[color:var(--bvt-bg)]">Review flags only</option>
+                        <option value="HighRisk" className="bg-[color:var(--bvt-bg)]">Priority review</option>
                     </select>
                 </div>
                 <div>
@@ -1282,7 +1268,7 @@ export default function HomeClient({
             <div className="flex items-center gap-1.5">
                 <ShieldAlert size={11} className="text-[color:var(--bvt-warn)]" strokeWidth={1.5}/>
                 <span className="label-micro !text-[color:var(--bvt-warn)]">
-                  {verifiedFlaggedCount === null ? 'Flag count unavailable' : <><span className="font-mono tabular-nums">{verifiedFlaggedCount.toLocaleString()}</span> flagged</>}
+                  {verifiedFlaggedCount === null ? 'Review count unavailable' : <><span className="font-mono tabular-nums">{verifiedFlaggedCount.toLocaleString()}</span> review flags</>}
                 </span>
             </div>
             <button onClick={() => setShowMap(!showMap)} className={`hidden md:flex items-center gap-1.5 text-[11px] font-medium transition-colors ${showMap ? 'text-[color:var(--bvt-accent)]' : 'text-[color:var(--bvt-ink-muted)] hover:text-[color:var(--bvt-ink)]'}`}>

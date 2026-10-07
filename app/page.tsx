@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import HomeClient from "./_components/HomeClient";
+import { MATERIAL_PIPELINE_FLAGS } from "./_lib/listingBrowse";
 
 export const revalidate = 3600;
 
@@ -101,7 +102,7 @@ async function getHomeSeedData() {
     .not("slug", "is", null)
     .not("slug", "eq", "")
     .not("flags", "is", null)
-    .not("flags", "eq", "");
+    .or(MATERIAL_PIPELINE_FLAGS.map((flag) => `flags.ilike.%${flag}%`).join(","));
 
   const featured = supabase
     .from("listings_tracker")
