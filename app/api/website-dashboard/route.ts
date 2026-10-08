@@ -23,6 +23,7 @@ const CORE_PATHS = [
   { name: "Modeled listing schema", path: "/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894", expect: ["modeled net-yield review", "Current availability", "Not verified by BVT"] },
   { name: "Unmodeled listing schema", path: "/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514", expect: ["ROI Not Modeled", "Not stated", "Current availability", "Not verified by BVT"] },
   { name: "Related asking-listing context", path: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131", expect: ["bed asking listings", "not sold-property comparables", "Recorded asking prices may be stale", "USD basis", "Modeled Net Yield", "View downside scenarios", "Combined downside screen"] },
+  { name: "Listing sensitivity table orientation", path: "/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292", expect: ["Modeled net yield by nightly rate and occupancy scenario", "column headings are occupancy levels", "Combined downside screen"] },
   { name: "Logged price change disclosure", path: "/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407", expect: ["Logged price change", "Earlier logged USD basis", "Latest logged USD basis", "USD-basis difference", "when it first appeared"] },
   { name: "Near-budget informational marker", path: "/listing/1-bedroom-bohemian-villa-for-sale-in-tumbak-bayuh-pererenan-rf6003b", expect: ["Review flags", "No material review flags surfaced", "Other source/model markers below are not counted"] },
   { name: "Off-plan source-claim disclosure", path: "/listing/3-bedroom-off-plan-villa-with-ricefield-view-for-sale-in-cemagi-rf11223", expect: ["The source markets this listing as off-plan or pre-construction", "has not verified build status"] },
@@ -36,6 +37,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-08",
+    area: "Mobile listing usability / downside-table clarity",
+    title: "Made listing actions scroll normally on phones and clarified scenario columns",
+    status: "Deployed and verified",
+    why: "A 320px listing card clipped its last controls inside a nested scroll area. Modeled and unmodeled dossiers now let the price/action card expand in normal page flow below desktop width, while desktop keeps its sticky panel. The sensitivity table now names its rate rows and occupancy columns correctly and includes accessible row/column headers and a caption. Local and live modeled-villa and unsupported-apartment checks passed at 320px, 390px and 1440px without page overflow; 20 representative live dossiers, canonical public checks, exact 2,486-listing/20-static sitemap coverage and 33/33 private-access checks also passed. No source fact, rate, occupancy, price, ROI result or cloud row changed. The separate RFW292 unit-count correction is still pending the next full data refresh.",
+    url: `${SITE_URL}/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292#sensitivity-analysis`,
+    progressFile: ".tmp/website_progress_2026-10-08_1629.md",
+  },
   {
     date: "2026-10-08",
     area: "Private dashboard / refresh accuracy / investor trust",
@@ -1352,9 +1362,9 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Modeled-yield release verified; inventory shown separately",
+  title: "Mobile listing controls and scenario table verified",
   summary:
-    "The October 8 listing release labels the headline result as a modeled screening yield, shows its 65% occupancy and 40% cost assumptions beside the number, and links to separately calculated downside cases. Unsupported assets remain N/A without a scenario link. Earlier apartment zero and unit-type corrections remain live. Inventory changes daily: use the separately fetched sitemap-listed dossier count and dated pipeline verification, not release-copy totals, for current coverage. Sitemap inclusion is not Google indexation. One resort-living source title still carries a false MULTI_UNIT cue in live data; its local detector fix is pending the next quality-gated refresh. The October 1 rate replacement remains held and paid checkout remains off pending owner-approved testing.",
+    "Listing price and action controls now use normal page scrolling on phones, without an inner scroll that hides the bottom of the card. Desktop keeps its sticky panel. The modeled-yield sensitivity table names rate rows and occupancy columns correctly; its lower-rate, lower-occupancy and higher-cost cases remain estimates, not verified returns. Unsupported assets remain N/A without a scenario link. Use the separately fetched sitemap-listed dossier count and dated pipeline verification for coverage; sitemap inclusion is not Google indexation. One resort-living title still carries a false MULTI_UNIT cue in live data, pending the next quality-gated full refresh. The October 1 rate replacement remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131#sensitivity-analysis`,
@@ -2321,6 +2331,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "On phones, the listing price and free-audit actions now follow the main page scroll rather than clipping inside a second scroll area. The modeled sensitivity table labels nightly-rate rows and occupancy columns correctly, with accessible headers and a caption; no scenario result changed.",
         "Listing dossiers now label the prominent figure as a modeled screening net yield, expose its 65% occupancy and 40% operating-cost assumptions beside it, and jump to the separate sensitivity and combined-downside cases. Unsupported assets say not modeled rather than implying a stress-tested result.",
         "Unmodeled apartment details no longer print a raw zero for an unavailable derived price-per-bedroom field. Positive optional ratios remain visible, while zero or missing model inputs are not presented as investment facts.",
         "Single-apartment dossiers now explain that a source-title unit-type screen is not proof of multiple rentable units. BVT withholds single-villa ROI for these assets and asks buyers to verify what the asking price includes and obtain unit-level operating records before underwriting.",
@@ -2356,6 +2367,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "After the October 8 listing release, a modeled Nusa Dua villa and unsupported Canggu apartment passed local and live 320px, 390px and 1440px checks. Both phone cards are fully in normal page flow with no nested card scroll, while desktop remains sticky; the modeled table has rate rows, occupancy columns and no horizontal page overflow. A live 320px card screenshot was inspected.",
         "The modeled Nusa Dua villa and unsupported Canggu apartment passed local and live 320px, 390px and 1440px checks after the baseline/downside disclosure release: the correct headline appears, only the modeled page has a working sensitivity link, and neither page has horizontal overflow. The modeled 390px assumption panel was visually inspected.",
         "The real one-bedroom apartment's Property Details passed local and live Chromium at 320px, 390px and 1440px after the bare-zero fix. The correction links and tenure stay readable, with no horizontal overflow or page errors; the 390px details screenshot was inspected.",
         "The real one-bedroom apartment dossier passed local and live Chromium at 320px, 390px and 1440px after the unit-type disclosure change; the explanatory note wraps within the phone width, with no document overflow or page errors. The 390px note screenshot was inspected.",
