@@ -22,7 +22,7 @@ const CORE_PATHS = [
   { name: "Berawa source-area hub", path: "/berawa", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
   { name: "Modeled listing schema", path: "/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894", expect: ["modeled net-yield review", "Current availability", "Not verified by BVT"] },
   { name: "Unmodeled listing schema", path: "/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514", expect: ["ROI Not Modeled", "Not stated", "Current availability", "Not verified by BVT"] },
-  { name: "Related asking-listing context", path: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131", expect: ["bed asking listings", "not sold-property comparables", "Recorded asking prices may be stale", "USD basis", "modeled"] },
+  { name: "Related asking-listing context", path: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131", expect: ["bed asking listings", "not sold-property comparables", "Recorded asking prices may be stale", "USD basis", "Modeled Net Yield", "View downside scenarios", "Combined downside screen"] },
   { name: "Logged price change disclosure", path: "/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407", expect: ["Logged price change", "Earlier logged USD basis", "Latest logged USD basis", "USD-basis difference", "when it first appeared"] },
   { name: "Near-budget informational marker", path: "/listing/1-bedroom-bohemian-villa-for-sale-in-tumbak-bayuh-pererenan-rf6003b", expect: ["Review flags", "No material review flags surfaced", "Other source/model markers below are not counted"] },
   { name: "Off-plan source-claim disclosure", path: "/listing/3-bedroom-off-plan-villa-with-ricefield-view-for-sale-in-cemagi-rf11223", expect: ["The source markets this listing as off-plan or pre-construction", "has not verified build status"] },
@@ -36,6 +36,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-08",
+    area: "Listing ROI interpretation / downside navigation / mobile trust",
+    title: "Separated the modeled headline yield from its downside scenarios",
+    status: "Deployed and verified",
+    why: "The dossier's most prominent number was labeled Stress-Tested Net Yield even though it showed BVT's standard 65% occupancy and 40% operating-cost screening case. It now says Modeled Net Yield, states those assumptions beside the number, and links directly to sensitivity and combined-downside cases. Unsupported apartments say Net Yield Not Modeled and have no scenario link. A new regression check, 41 Python and 48 comparison-model Node tests, 20 representative local and live dossiers, 320px/390px/1440px modeled and unmodeled checks, canonical crawl files, exact sitemap coverage and private access checks passed. No source ask, rate, occupancy, lease term, cost input, stored ROI or cloud row changed.",
+    url: `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131`,
+    progressFile: ".tmp/website_progress_2026-10-08_0428.md",
+  },
   {
     date: "2026-10-07",
     area: "Listing details / missing derived data / mobile trust",
@@ -1326,11 +1335,12 @@ const scheduledJobs = [
 
 const deploymentGate = {
   status: "Live",
-  title: "Unmodeled apartment details no longer display a stray zero",
+  title: "Modeled yield and downside cases are clearly distinguished",
   summary:
-    "The October 7 listing release removes a loose 0 from an unmodeled apartment's details. The zero was a stored derived-field placeholder, not a verified asking price; optional price/land rows now require positive numeric values. Earlier apartment unit-type, near-budget and off-plan disclosure corrections remain live. The homepage's material-review count and filter remain aligned at 1,193 in the refreshed 2,483-listing inventory. These are diligence prompts, not a safety verdict. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,483 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 8 listing release relabels the headline result as a modeled screening yield, shows its 65% occupancy and 40% cost assumptions beside the number, and links to the separately calculated downside cases. Unsupported assets remain N/A without a scenario link. The earlier apartment zero and unit-type corrections remain live. The homepage's material-review count and filter remain aligned at 1,193 in the refreshed 2,483-listing inventory; flags are diligence prompts, not safety verdicts. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,483 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131#sensitivity-analysis`,
     `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
     `${SITE_URL}/listing/off-plan-2-bedroom-villa-for-sale-leasehold-in-bali-canggu-kayu-tulang-rf7654b`,
     `${SITE_URL}/listing/5-bedroom-villa-for-sale-freehold-in-bali-gianyar-tampak-siring-ar007`,
@@ -2294,6 +2304,7 @@ export async function GET() {
       pipelineGuardrails,
       uxIssues,
       investorValueImprovements: [
+        "Listing dossiers now label the prominent figure as a modeled screening net yield, expose its 65% occupancy and 40% operating-cost assumptions beside it, and jump to the separate sensitivity and combined-downside cases. Unsupported assets say not modeled rather than implying a stress-tested result.",
         "Unmodeled apartment details no longer print a raw zero for an unavailable derived price-per-bedroom field. Positive optional ratios remain visible, while zero or missing model inputs are not presented as investment facts.",
         "Single-apartment dossiers now explain that a source-title unit-type screen is not proof of multiple rentable units. BVT withholds single-villa ROI for these assets and asks buyers to verify what the asking price includes and obtain unit-level operating records before underwriting.",
         "Listing audits now count only material-review flags while still explaining informational source/model markers. OFF_PLAN remains a source claim until construction status, approvals and delivery are independently verified; neither a flag nor its absence is a safety verdict.",
@@ -2328,6 +2339,7 @@ export async function GET() {
         "The live occupancy-rates guide explains how booked-night assumptions can inflate or weaken ROI math and what booking records investors should request.",
       ],
       mobileUsabilityChecks: [
+        "The modeled Nusa Dua villa and unsupported Canggu apartment passed local and live 320px, 390px and 1440px checks after the baseline/downside disclosure release: the correct headline appears, only the modeled page has a working sensitivity link, and neither page has horizontal overflow. The modeled 390px assumption panel was visually inspected.",
         "The real one-bedroom apartment's Property Details passed local and live Chromium at 320px, 390px and 1440px after the bare-zero fix. The correction links and tenure stay readable, with no horizontal overflow or page errors; the 390px details screenshot was inspected.",
         "The real one-bedroom apartment dossier passed local and live Chromium at 320px, 390px and 1440px after the unit-type disclosure change; the explanatory note wraps within the phone width, with no document overflow or page errors. The 390px note screenshot was inspected.",
         "The corrected comparison calculator passed 218 live checks across 320px, 390px and 1440px with current audited rows. The pooled-cost note is visible without hover, and the 390px screenshot shows readable wrapping; no document overflow or browser errors occurred.",
