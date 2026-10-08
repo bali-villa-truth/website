@@ -38,6 +38,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-10-08",
+    area: "Private dashboard / refresh accuracy / investor trust",
+    title: "Separated live inventory totals from dated release evidence",
+    status: "Deployed and verified",
+    why: "After the October 8 scheduled refresh, the live sitemap contained 2,486 audited listing URLs while this dashboard's release summary still presented October 7's 2,483/1,193 snapshot as current. The release gate now describes what was shipped without frozen inventory totals, points readers to the separately fetched live sitemap count, and dates the local job verification. The October 8 pipeline independently passed 2,486-row quality and exact 2,506-URL sitemap checks; this dashboard edit did not run a second refresh or change listing facts, rates, occupancy or ROI. One resort-living title's false unit-count cue is fixed in the local detector and awaits the next quality-gated refresh; it is not claimed as live.",
+    url: `${SITE_URL}/website-dashboard`,
+    progressFile: ".tmp/website_progress_2026-10-08_1028.md",
+  },
+  {
+    date: "2026-10-08",
     area: "Listing ROI interpretation / downside navigation / mobile trust",
     title: "Separated the modeled headline yield from its downside scenarios",
     status: "Deployed and verified",
@@ -1041,6 +1050,12 @@ const pendingImprovements = [
   {
     priority: "Medium",
     owner: "Audit flag pipeline",
+    title: "Verify the resort-living unit-count correction after the next scheduled refresh",
+    nextAction: "RFW292 is a modeled two-bedroom villa whose title says Elegant Resort Living; the current live row still has MULTI_UNIT from the old keyword detector. Local tests now ignore that marketing phrase unless another explicit unit or hospitality signal exists. Today's 2,486-row snapshot shows exactly this one inferred-count difference, with no model-scope change. At the next genuine quality-gated full refresh, confirm its stored multi_unit_count and MULTI_UNIT flag clear, while actual resorts and portfolios remain screened. Do not treat the local code change as already published data.",
+  },
+  {
+    priority: "Medium",
+    owner: "Audit flag pipeline",
     title: "Separate unsupported asset type from verified multiple-unit count",
     nextAction: "MULTI_UNIT currently accompanies single-apartment titles when the single-villa model is withheld. Keep the investor-facing wording as a title-based screen. Before changing stored flags, define a distinct asset-type/possible-portfolio contract, test actual one-unit apartments against multi-unit listings, and verify downstream filters, dashboards and historical data without inventing unit counts.",
   },
@@ -1142,11 +1157,13 @@ const blockers = [
   {
     blocker: "Google Sheets push",
     status: "Blocked by expired OAuth token",
-    note: "The October 6 local-midnight run still hit invalid_grant, then continued to Supabase after local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
+    note: "The October 8 local-midnight run still hit invalid_grant, then continued to Supabase after local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
   },
 ];
 
 const dataQualityIssues = [
+  "October 8 source-title screen follow-up: RFW292 is a modeled two-bedroom villa marketed as Elegant Resort Living. The old detector inferred two units solely from the word resort, although that phrase does not establish an actual resort or unit count. The local detector now excludes that phrase while preserving explicit unit and hotel/resort signals; 43 Python tests pass and today's 2,486-row snapshot shows only this one inferred-count difference. The stored live flag/count is unchanged until the next quality-gated refresh. No rate, occupancy or ROI model was changed.",
+  "October 8 scheduled inventory snapshot: the genuine local-midnight pipeline completed with 2,486 audited/upserted rows, 2,212 modeled scenarios, 274 unmodeled rows, 39 disclosed physical-spec gaps and exact 2,486 listing plus 20 static sitemap URLs. This is dated verification; the dashboard's separate sitemap-listing metric is fetched live and is not a Google indexed-page count. Google Sheets still requires OAuth reauthorization.",
   "October 7 optional-field display correction: a single apartment's stored price_per_room=0 is a model-scope placeholder, not a $0 per-bedroom asking price. JSX rendered that numeric zero as loose text in Property Details. Optional derived-price and land-price rows now require positive numeric inputs; the stored values and ROI remain unchanged. The real apartment dossier and representative-page regression check pass.",
   "October 7 source-title flag semantics: a live one-bedroom apartment carries both MULTI_UNIT and MULTI_UNIT_MODEL_UNSUPPORTED because the current pipeline uses MULTI_UNIT for unsupported apartment/hospitality patterns as well as multiple-unit titles. The dossier now labels that marker UNIT-TYPE REVIEW, not proof of multiple rentable units. The stored flag has not been migrated; a typed asset/category signal and verified unit count remain future pipeline work.",
   "October 7 post-refresh read-only check: 2,483 audited listings, 2,209 modeled scenarios, 274 unmodeled, 39 flagged physical-spec gaps and zero duplicate URL/slug, scope or unmodeled-value violations. The canonical sitemap has 2,483 listing plus 20 static URLs with no missing or extra paths. A NEAR_BUDGET-only marker is model context rather than a material review flag; OFF_PLAN is source marketing, not verified construction status. The display correction did not alter source facts, model inputs or stored ROI.",
@@ -1328,16 +1345,16 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Loaded; 2026-10-07 midnight run completed",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The October 7 run completed at 00:06:46 Phoenix time with 2,483 audited listings and 39 flagged physical-spec gaps in subsequent strict read-only checks. This is the most recently verified run, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Verified 2026-10-08; host state not live",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. A local October 8 00:06:39 Phoenix completion log and strict reports recorded 2,486 audited listings, 39 disclosed physical-spec gaps, and exact 2,486 listing plus 20 static sitemap coverage. This is a dated host verification, not a live job-status feed; the sitemap count above is fetched when this dashboard loads. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Modeled yield and downside cases are clearly distinguished",
+  title: "Modeled-yield release verified; inventory shown separately",
   summary:
-    "The October 8 listing release relabels the headline result as a modeled screening yield, shows its 65% occupancy and 40% cost assumptions beside the number, and links to the separately calculated downside cases. Unsupported assets remain N/A without a scenario link. The earlier apartment zero and unit-type corrections remain live. The homepage's material-review count and filter remain aligned at 1,193 in the refreshed 2,483-listing inventory; flags are diligence prompts, not safety verdicts. No ROI math, rate, occupancy, yield, source flag or cloud data changed. Exact live sitemap coverage is 2,483 listing and 20 static URLs; sitemap-listed pages are not Google indexed-page counts. The October 1 rate refresh remains held and paid checkout remains off pending owner-approved testing.",
+    "The October 8 listing release labels the headline result as a modeled screening yield, shows its 65% occupancy and 40% cost assumptions beside the number, and links to separately calculated downside cases. Unsupported assets remain N/A without a scenario link. Earlier apartment zero and unit-type corrections remain live. Inventory changes daily: use the separately fetched sitemap-listed dossier count and dated pipeline verification, not release-copy totals, for current coverage. Sitemap inclusion is not Google indexation. One resort-living source title still carries a false MULTI_UNIT cue in live data; its local detector fix is pending the next quality-gated refresh. The October 1 rate replacement remains held and paid checkout remains off pending owner-approved testing.",
   requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131#sensitivity-analysis`,
