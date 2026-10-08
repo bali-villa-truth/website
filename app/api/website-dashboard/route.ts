@@ -11,7 +11,7 @@ export const revalidate = 0;
 
 const CORE_PATHS = [
   { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "We review source asking prices", "Every listing,", "Listings with review flags", "/listing/"] },
-  { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint"] },
+  { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint", "screening_years", "not a cash expense or an observed change in resale value"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary"] },
   { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage", "not an observed resale-price decline"] },
@@ -24,6 +24,7 @@ const CORE_PATHS = [
   { name: "Unmodeled listing schema", path: "/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514", expect: ["ROI Not Modeled", "Not stated", "Current availability", "Not verified by BVT"] },
   { name: "Related asking-listing context", path: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131", expect: ["bed asking listings", "not sold-property comparables", "Recorded asking prices may be stale", "USD basis", "Modeled Net Yield", "View downside scenarios", "Combined downside screen"] },
   { name: "Listing sensitivity table orientation", path: "/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292", expect: ["Modeled net yield by nightly rate and occupancy scenario", "column headings are occupancy levels", "Combined downside screen"] },
+  { name: "Source-listed lease period disclosure", path: "/listing/brand-new-2-bedroom-investment-villa-for-sale-leasehold-in-ungasan-rf7624b", expect: ["26yr source-listed", "Signed commencement, expiry and extension rights are unverified", "not a payment or measured resale-value loss"] },
   { name: "Logged price change disclosure", path: "/listing/modern-tropical-1-bedroom-villa-for-sale-in-canggu-residential-side-rf11407", expect: ["Logged price change", "Earlier logged USD basis", "Latest logged USD basis", "USD-basis difference", "when it first appeared"] },
   { name: "Near-budget informational marker", path: "/listing/1-bedroom-bohemian-villa-for-sale-in-tumbak-bayuh-pererenan-rf6003b", expect: ["Review flags", "No material review flags surfaced", "Other source/model markers below are not counted"] },
   { name: "Off-plan source-claim disclosure", path: "/listing/3-bedroom-off-plan-villa-with-ricefield-view-for-sale-in-cemagi-rf11223", expect: ["The source markets this listing as off-plan or pre-construction", "has not verified build status"] },
@@ -37,6 +38,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-08",
+    area: "Leasehold ROI explanation / source provenance / investor trust",
+    title: "Stopped presenting a source-listed lease period as verified remaining years",
+    status: "Deployed and verified",
+    why: "BHI labels a villa's 26 years as a Leasehold Period, not a signed remaining term. Listing dossiers now identify stated years as source-listed and explain that BVT uses them only as an illustrative denominator. The methodology explains the noncash allowance and the 15-year proxy when a modeled leasehold lacks a period; neither is an observed resale-value decline. Its old claim that a missing period receives no numeric yield contradicted the auditor and was removed. The public release passed a production build, 44 Python checks, 12 representative local and live dossiers, mobile/desktop SSR checks, exact sitemap coverage and private-access checks. No source value, modeled result, ROI input, cloud row or verified legal term changed.",
+    url: `${SITE_URL}/methodology`,
+    progressFile: ".tmp/website_progress_2026-10-08_2231.md",
+  },
   {
     date: "2026-10-08",
     area: "Mobile listing usability / downside-table clarity",
@@ -1058,6 +1068,12 @@ const completedImprovements = [
 
 const pendingImprovements = [
   {
+    priority: "High",
+    owner: "Source-data / tenure model",
+    title: "Verify signed lease dates before treating a listed period as remaining years",
+    nextAction: "The BHI Leasehold Period field is not a signed commencement or expiry date. Obtain independent tenure documents and extension terms where possible, then decide whether the data pipeline needs separate source_period and verified_remaining_years fields before changing any ROI denominator. Do not backfill or infer signed years from marketing copy.",
+  },
+  {
     priority: "Medium",
     owner: "Audit flag pipeline",
     title: "Verify the resort-living unit-count correction after the next scheduled refresh",
@@ -1172,6 +1188,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 8 lease-period provenance: BHI labels RF7624B's 26 years Leasehold Period; BVT has no signed commencement, expiry or extension terms. The public dossier and methodology now disclose that the source-listed period is used as an illustrative denominator, not verified remaining years or measured annual depreciation. The auditor's missing-term 15-year proxy remains unchanged. A separate verified_remaining_years field and document review are future pipeline work; no source fact or stored ROI was altered.",
   "October 8 source-title screen follow-up: RFW292 is a modeled two-bedroom villa marketed as Elegant Resort Living. The old detector inferred two units solely from the word resort, although that phrase does not establish an actual resort or unit count. The local detector now excludes that phrase while preserving explicit unit and hotel/resort signals; 43 Python tests pass and today's 2,486-row snapshot shows only this one inferred-count difference. The stored live flag/count is unchanged until the next quality-gated refresh. No rate, occupancy or ROI model was changed.",
   "October 8 scheduled inventory snapshot: the genuine local-midnight pipeline completed with 2,486 audited/upserted rows, 2,212 modeled scenarios, 274 unmodeled rows, 39 disclosed physical-spec gaps and exact 2,486 listing plus 20 static sitemap URLs. This is dated verification; the dashboard's separate sitemap-listing metric is fetched live and is not a Google indexed-page count. Google Sheets still requires OAuth reauthorization.",
   "October 7 optional-field display correction: a single apartment's stored price_per_room=0 is a model-scope placeholder, not a $0 per-bedroom asking price. JSX rendered that numeric zero as loose text in Property Details. Optional derived-price and land-price rows now require positive numeric inputs; the stored values and ROI remain unchanged. The real apartment dossier and representative-page regression check pass.",
