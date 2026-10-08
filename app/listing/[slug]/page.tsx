@@ -609,7 +609,7 @@ export default async function ListingPage({ params }: Props) {
                 <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-3">How to read this audit</h2>
                 <p className="text-xs text-slate-500 mb-4 leading-relaxed">
                   {hasNightlyRate
-                    ? "BVT treats the ROI number as a stress-tested estimate, not a promise. Check whether the assumptions survive negotiation, lower occupancy, and lease decay."
+                    ? "The headline net yield is BVT's modeled screening scenario, not verified rental performance or a promise. Compare the lower-rate, lower-occupancy and higher-cost cases below before relying on it."
                     : "This property is outside the supported ROI model. No rental rate, occupancy, or yield estimate is available; verify the asset and source details before making an investment case."}
                 </p>
                 {yieldValue === 0 && (
@@ -729,7 +729,7 @@ export default async function ListingPage({ params }: Props) {
                 <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-4">Net Yield Breakdown</h2>
                 <p className="text-xs text-slate-500 mb-4">
                   {hasNightlyRate
-                    ? "This stress-test applies stated assumptions to this listing. "
+                    ? "This baseline screening result applies stated assumptions to this listing; downside cases follow below. "
                     : "BVT has not modeled ROI for this listing; the figures below are unavailable until the asset is in scope. "}
                   <Link href="/methodology" className="text-[#d4943a] hover:text-[#e5a84d] underline">
                     Full methodology →
@@ -785,7 +785,7 @@ export default async function ListingPage({ params }: Props) {
 
               {/* Sensitivity table */}
               {priceUsd && nightlyRate > 0 && (
-                <section className="bg-slate-900 rounded-xl border border-slate-800 p-5">
+                <section id="sensitivity-analysis" className="bg-slate-900 rounded-xl border border-slate-800 p-5">
                   <h2 className="font-display text-[22px] tracking-[-0.01em] text-[color:var(--bvt-ink)] mb-2">Sensitivity analysis</h2>
                   <p className="text-xs text-slate-500 mb-4">
                     What happens to net yield if the nightly rate is off by ±15%, or occupancy differs from the shared {occupancyPct}% scenario?
@@ -930,10 +930,16 @@ export default async function ListingPage({ params }: Props) {
                 </div>
 
                 <div className="text-center py-4 border-t border-b border-slate-800 mb-4">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Stress-Tested Net Yield</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">{yieldValue !== null ? "Modeled Net Yield" : "Net Yield Not Modeled"}</p>
                   <p className={`text-4xl font-extrabold ${roiTone}`}>
                     {roiDisplay}
                   </p>
+                  {yieldValue !== null && (
+                    <div className="mt-2 text-xs text-slate-400 leading-relaxed">
+                      <p>65% occupancy · 40% operating-cost allowance{leaseDepreciation > 0 ? " · noncash lease allowance" : ""}</p>
+                      <a href="#sensitivity-analysis" className="inline-block mt-2 text-[#d4943a] hover:text-[#e5a84d] underline underline-offset-2">View downside scenarios</a>
+                    </div>
+                  )}
                 </div>
 
                 {Number(listing.land_size) > 0 && (
