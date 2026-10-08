@@ -792,11 +792,12 @@ export default async function ListingPage({ params }: Props) {
                   </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
+                      <caption className="sr-only">Modeled net yield by nightly rate and occupancy scenario</caption>
                       <thead>
                         <tr>
-                          <th className="text-left text-xs uppercase tracking-wider text-slate-500 font-semibold p-2"></th>
+                          <th scope="col" className="text-left text-xs uppercase tracking-wider text-slate-500 font-semibold p-2">Rate</th>
                           {occPoints.map((op) => (
-                            <th key={op} className="text-center text-xs uppercase tracking-wider text-slate-500 font-semibold p-2">
+                            <th key={op} scope="col" className="text-center text-xs uppercase tracking-wider text-slate-500 font-semibold p-2">
                               Occ {op}%
                             </th>
                           ))}
@@ -805,9 +806,9 @@ export default async function ListingPage({ params }: Props) {
                       <tbody>
                         {rateMultipliers.map((m) => {
                           const label = m === 1 ? "Est. rate" : m < 1 ? `Rate −15%` : `Rate +15%`;
-                          return (
-                            <tr key={m} className="border-t border-slate-800">
-                              <td className="p-2 text-xs font-semibold text-slate-400">{label}</td>
+                            return (
+                              <tr key={m} className="border-t border-slate-800">
+                              <th scope="row" className="p-2 text-left text-xs font-semibold text-slate-400">{label}</th>
                               {occPoints.map((op) => {
                                 const y = yieldAt(m, op);
                                 const color = y == null ? "text-slate-500" : y >= 5 ? "text-emerald-400" : y >= 0 ? "text-amber-400" : "text-red-400";
@@ -824,7 +825,7 @@ export default async function ListingPage({ params }: Props) {
                     </table>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-3">
-                    "Rate ±15%" stress-tests our nightly rate model. "Occ" rows are absolute occupancy points, not percentage-point shifts. The free PDF shows a five-year modeled illustration, not verified owner cash flow.
+                    "Rate ±15%" rows stress-test our nightly rate model. "Occ" column headings are occupancy levels, not percentage-point shifts. The free PDF shows a five-year modeled illustration, not verified owner cash flow.
                   </p>
                   <div className="mt-5 border-t border-slate-800 pt-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="max-w-xl">
@@ -912,15 +913,10 @@ export default async function ListingPage({ params }: Props) {
               </div>
             </div>
 
-            {/* RIGHT: Price card + CTA
-                The card is taller than a typical viewport (price + yield +
-                actions + email form + Deep Audit). We keep the whole block
-                visible as the user scrolls the main column by pinning it
-                (sticky top-[4.5rem]) and giving it an internal scroll when it
-                exceeds the viewport (max-h + overflow-y-auto). `sidebar-scroll`
-                is a hairline-styled scrollbar defined in globals.css. */}
+            {/* RIGHT: Price card + CTA. On desktop it stays beside the audit;
+                on mobile it uses normal page scroll to keep every action reachable. */}
             <div className="space-y-4">
-              <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 sticky top-[4.5rem] max-h-[calc(100vh-5.5rem)] overflow-y-auto sidebar-scroll">
+              <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 md:sticky md:top-[4.5rem] md:max-h-[calc(100vh-5.5rem)] md:overflow-y-auto sidebar-scroll">
                 <div className="text-center mb-4">
                   <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Price basis for yield</p>
                   <p className="text-3xl font-extrabold">
