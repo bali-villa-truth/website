@@ -103,7 +103,7 @@ function bedsBathsLabel(raw?: string | null): string {
 
 // Human-readable labels + tooltips for flags (aligns with /methodology page)
 const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slate"; tip: string }> = {
-  SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "The source records fewer than 15 years remaining. A shorter term increases BVT's noncash lease-value allowance; verify the signed expiry and extension terms." },
+  SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "The source lists a lease period under 15 years; BVT has not verified the signed remaining term. A shorter modeled term increases the noncash lease-value allowance. Check the expiry and extension terms." },
   BUDGET_VILLA: { label: "BUDGET VILLA", tone: "amber", tip: "The asking price is low for the model tier or below the $50,000-per-bedroom screen. Check the reason for the price and whether the modeled nightly rate is supportable." },
   NEAR_BUDGET: { label: "NEAR BUDGET", tone: "slate", tip: "The asking price is near the lower end of the area and bedroom tier. This is a model-tier note, not a property defect; verify property-level bookings." },
   HIGH_YIELD: { label: "HIGH YIELD", tone: "amber", tip: "A high modeled gross yield needs independent rate, occupancy, cost, and asking-price evidence before it can be treated as achievable." },
@@ -115,7 +115,7 @@ const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slat
   EXTREME_BUDGET: { label: "EXTREME BUDGET", tone: "red", tip: "The asking price is far below the model tier. The nightly rate is heavily adjusted; investigate title, permits, condition, and comparable sales without assuming a particular defect." },
   MULTI_UNIT: { label: "UNIT-TYPE REVIEW", tone: "amber", tip: "The source title matches BVT's apartment, hospitality, or multiple-unit screen. This does not prove there is more than one rentable unit. Confirm the asset type, unit count, and what the asking price includes." },
   MULTI_UNIT_MODEL_UNSUPPORTED: { label: "MODEL NOT APPLIED", tone: "red", tip: "BVT withholds its single-villa ROI model for this title-based apartment, hospitality, or portfolio screen. Verify the asset type and obtain unit-level revenue, expense, and occupancy records before underwriting." },
-  LEASE_TERM_NOT_STATED: { label: "LEASE TERM NOT STATED", tone: "amber", tip: "Source listing is leasehold but does not state the remaining lease term. Verify the actual term and extension price before underwriting." },
+  LEASE_TERM_NOT_STATED: { label: "LEASE TERM NOT STATED", tone: "amber", tip: "The source does not state a lease period. BVT uses an illustrative 15-year denominator for the modeled yield; verify the signed remaining term and extension price before underwriting." },
   BEDROOM_COUNT_NOT_STATED: { label: "BEDROOM COUNT NOT STATED", tone: "amber", tip: "Source listing does not expose a safe bedroom count. BVT does not model ROI until the bedroom/unit count is verified." },
   PHYSICAL_DATA_INCOMPLETE: { label: "PHYSICAL DATA INCOMPLETE", tone: "amber", tip: "Source listing is missing one or more physical specs such as bathrooms, land size, or building size." },
   NON_BALI_LOCATION: { label: "OUTSIDE BALI MODEL", tone: "amber", tip: "This source listing is outside Bali. BVT keeps it visible but does not model Bali villa ROI for it." },
@@ -207,7 +207,7 @@ function isFreeholdListing(listing: any): boolean {
 function tenureLabel(listing: any): string {
   const years = Number(listing.lease_years) || 0;
   if (isLeaseholdListing(listing)) {
-    return years > 0 ? `Leasehold (${years}yr)` : "Leasehold (term not stated)";
+    return years > 0 ? `Leasehold (${years}yr source-listed)` : "Leasehold (term not stated)";
   }
   if (isFreeholdListing(listing)) return "Freehold";
   return "Tenure not stated";
@@ -216,7 +216,7 @@ function tenureLabel(listing: any): string {
 function tenureSchemaValue(listing: any): string {
   const years = Number(listing.lease_years) || 0;
   if (isLeaseholdListing(listing)) {
-    return years > 0 ? `Leasehold — ${years} years` : "Leasehold — term not stated";
+    return years > 0 ? `Leasehold — ${years} years source-listed; remaining term unverified` : "Leasehold — term not stated";
   }
   if (isFreeholdListing(listing)) return "Freehold";
   return "Tenure not stated";
@@ -679,7 +679,7 @@ export default async function ListingPage({ params }: Props) {
                       {leaseDepreciation > 0
                         ? leaseTermNotStated
                           ? `Source lease term not stated. BVT uses an illustrative ${leaseYearsForMath}-year term for this noncash ROI allowance, not a verified expiry or resale forecast. Verify the signed term before investing.`
-                          : `${sourceLeaseYears} years recorded as remaining. This noncash screening allowance is not a payment or resale forecast. Have extension rights and costs legally reviewed.`
+                          : `The source lists a ${sourceLeaseYears}-year lease period, which BVT uses as an illustrative remaining-term denominator. Signed commencement, expiry and extension rights are unverified. This noncash allowance is not a payment or measured resale-value loss.`
                         : hasNightlyRate
                           ? "Modeled as freehold/no finite lease term in the source data."
                           : "The ROI model is not applied to this listing; verify any lease term independently."}

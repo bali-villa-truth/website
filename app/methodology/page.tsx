@@ -14,7 +14,7 @@ const METHOD_FAQS = [
   },
   {
     q: 'Why is leasehold depreciation included?',
-    a: 'A leasehold villa is a wasting asset. If a villa costs $300,000 and has 20 lease years left, roughly $15,000 of value decays each year before rental income is considered. Ignoring that cost makes short leases look artificially profitable.',
+    a: 'A finite lease can expire, so BVT subtracts an illustrative noncash allowance when comparing yields. It divides asking price by the source-listed lease period, or by 15 years if no period is stated. This is not an observed annual resale-value decline. The signed remaining term and extension cost need independent verification.',
   },
   {
     q: 'Are the occupancy rates actual booking data?',
@@ -32,7 +32,7 @@ const HOWTO_STEPS = [
   'Apply a shared 65% occupancy scenario; show the provisional area proxy separately.',
   'Calculate gross annual rental revenue from nightly rate, occupancy, and 365 nights.',
   'Subtract a 40% operating expense load for management, booking fees, utilities, and maintenance.',
-  'Subtract annual lease depreciation for leasehold villas.',
+  'Subtract a noncash lease-value allowance using the source-listed period, or an illustrative 15 years when no period is stated.',
   'Divide the adjusted annual revenue by asking price to produce estimated net yield.',
 ];
 
@@ -257,7 +257,7 @@ export default function Methodology() {
             <p>
               For an eligible listing, the <strong className="text-[color:var(--bvt-ink)]">estimated net-yield badge</strong> is
               a modeled annual result divided by the audit purchase-price basis. It uses a standard operating-cost
-              allowance and, for leaseholds with a stated term, a noncash lease-value allowance. It is not an
+              allowance and, for leaseholds, a noncash lease-value allowance. It is not an
               earnings forecast and excludes tax, financing, and major works. Here&apos;s the formula:
             </p>
 
@@ -267,10 +267,16 @@ export default function Methodology() {
               <div>expenses = gross_revenue × 40%</div>
               <div>net_revenue = gross_revenue − expenses</div>
               <div className="mt-3 text-[color:var(--bvt-accent)]">{`// For leaseholds only:`}</div>
-              <div>lease_cost = asking_price / remaining_years</div>
+              <div>lease_cost = asking_price / screening_years</div>
               <div>adjusted_revenue = net_revenue − lease_cost</div>
               <div className="mt-3 text-[color:var(--bvt-accent)] font-bold">net_yield = (adjusted_revenue / asking_price) × 100</div>
             </div>
+
+            <p>
+              For leaseholds, screening_years is the source-listed lease period or an illustrative 15 years
+              if the period is missing. BVT has not verified how many years remain under the signed agreement.
+              The allowance is not a cash expense or an observed change in resale value.
+            </p>
 
             <p>
               The USD price used in this calculation is fixed at the audit exchange rate; a display-time
@@ -313,23 +319,25 @@ export default function Methodology() {
               to use the land for a fixed number of years. When that lease expires, the asset reverts to the landowner.
             </p>
             <p>
-              For a modeled leasehold with a stated remaining term, we subtract a noncash annual
+              For a modeled leasehold, we subtract an illustrative noncash annual
               lease-value allowance from operating income, calculated as:
             </p>
 
             <div className="bg-[color:var(--bvt-bg-elev)] border border-[color:var(--bvt-hairline)] rounded-md p-4 font-mono text-[12px] tabular-nums text-[color:var(--bvt-ink)]">
-              annual_lease_cost = asking_price / remaining_lease_years
+              annual_lease_cost = asking_price / screening_years
             </div>
 
             <p>
-              This means a $300,000 villa with 20 years left on the lease has $15,000/year deducted
-              from net revenue before calculating the yield. A villa with 10 years has $30,000/year deducted.
-              Shorter stated terms produce a larger allowance. An unstated term does not receive a numeric net yield.
+              At a $300,000 asking price, a source-listed 20-year period produces a $15,000/year
+              screening allowance; a listed 10-year period produces $30,000/year. These are model
+              deductions, not payments or measured annual market-value losses. When the source lists
+              no period, the model uses an illustrative 15 years and flags the missing term. The signed
+              commencement date, remaining years, expiry and extension cost are not verified by BVT.
             </p>
 
             <p>
               Freehold properties (rare for foreign buyers in Bali) don&apos;t have this deduction.
-              Properties with fewer than 15 years remaining are additionally flagged with a{' '}
+              Properties with a source-listed period under 15 years are additionally flagged with a{' '}
               <span className="inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-sm text-[10px] font-semibold tracking-wider bg-[color:var(--bvt-accent)]/15 text-[color:var(--bvt-accent)] border border-[color:var(--bvt-accent)]/30 uppercase">Short Lease</span>{' '}
               warning badge.
             </p>
@@ -346,7 +354,7 @@ export default function Methodology() {
             </p>
 
             <div className="space-y-3">
-              <FlagRow name="Short Lease" desc="Less than 15 years remaining on the lease. Lease depreciation significantly impacts returns." />
+              <FlagRow name="Short Lease" desc="Source-listed lease period is under 15 years; signed remaining years are unverified. A shorter model denominator increases the noncash allowance." />
               <FlagRow name="Budget Villa" desc="Asking price is below the 25th percentile for its area and bedroom tier. The model applies a 30% rate discount as a caution, not as verified rental performance." />
               <FlagRow name="High Yield" desc="Gross yield exceeds 20%. This could mean it's genuinely underpriced, or that the asking price doesn't reflect reality. Investigate the property directly." />
               <FlagRow name="Optimistic Claim" desc="Gross yield is 15–20%. The gap to modeled net yield shows the cost and lease allowances that a gross headline omits." />
