@@ -40,6 +40,15 @@ const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; bloc
 const completedImprovements = [
   {
     date: "2026-10-09",
+    area: "Listing data quality / source-title screening",
+    title: "Cleared an unsupported multi-unit warning from a modeled villa",
+    status: "Production data refreshed and verified",
+    why: "The genuine October 9 Phoenix-midnight quality-gated pipeline refreshed 2,488 audited listings. RFW292, a two-bedroom villa marketed as Elegant Resort Living, no longer carries MULTI_UNIT solely because its title contains resort. Its public dossier now shows the NEAR_BUDGET and OFF_PLAN notes without a multi-unit warning and retains a modeled net-yield scenario. A real boutique hotel, RF4943, remains flagged and unmodeled; the independent 2,488-row verifier found zero multi-unit scope violations and exact 2,488-listing plus 20-static sitemap coverage. This corrects a title-based data screen, not a verified property unit count, nightly rate, occupancy input or ROI calculation.",
+    url: `${SITE_URL}/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292`,
+    progressFile: ".tmp/website_progress_2026-10-09_1033.md",
+  },
+  {
+    date: "2026-10-09",
     area: "Indexable ROI guides / lease-term provenance / investor trust",
     title: "Aligned both ROI guides with the source-listed lease-period model",
     status: "Deployed and verified",
@@ -1080,19 +1089,13 @@ const pendingImprovements = [
     priority: "High",
     owner: "Local automation / disk headroom",
     title: "Restore comfortable disk margin before the next full scrape",
-    nextAction: "The 9 October 04:32 UTC checkpoint started at 1,612 MB free, fell to about 450 MB during preview dependency restoration, and recovered to about 1,094 MB after clearing only preview packages and npm cache. This is above the unchanged 1,024 MB preflight but leaves a thin margin for tonight's Phoenix-midnight scrape. Recheck the guard immediately before the scheduled run; free more space only from clearly regenerable BVT artifacts or with owner approval for unrelated caches. Do not lower the guard or run a forced pipeline on low disk.",
+    nextAction: "The October 9 09:02 UTC close check found 875 MB free, below the unchanged 1,024 MB pipeline guard. The 10:33 UTC check recovered to about 1,057 MB, leaving only a narrow margin. Recheck immediately before the next Phoenix-midnight scrape; free space only from clearly regenerable BVT artifacts or with owner approval for unrelated caches. Do not lower the guard or force a pipeline on low disk.",
   },
   {
     priority: "High",
     owner: "Source-data / tenure model",
     title: "Verify signed lease dates before treating a listed period as remaining years",
     nextAction: "The BHI Leasehold Period field is not a signed commencement or expiry date. Obtain independent tenure documents and extension terms where possible, then decide whether the data pipeline needs separate source_period and verified_remaining_years fields before changing any ROI denominator. Do not backfill or infer signed years from marketing copy.",
-  },
-  {
-    priority: "Medium",
-    owner: "Audit flag pipeline",
-    title: "Verify the resort-living unit-count correction after the next scheduled refresh",
-    nextAction: "RFW292 is a modeled two-bedroom villa whose title says Elegant Resort Living; the current live row still has MULTI_UNIT from the old keyword detector. Local tests now ignore that marketing phrase unless another explicit unit or hospitality signal exists. Today's 2,486-row snapshot shows exactly this one inferred-count difference, with no model-scope change. At the next genuine quality-gated full refresh, confirm its stored multi_unit_count and MULTI_UNIT flag clear, while actual resorts and portfolios remain screened. Do not treat the local code change as already published data.",
   },
   {
     priority: "Medium",
@@ -1176,6 +1179,11 @@ const pendingImprovements = [
 
 const blockers = [
   {
+    blocker: "Daily pipeline disk margin",
+    status: "Near the unchanged 1,024 MB preflight guard",
+    note: "The October 9 midnight run completed, but free space fell to 875 MB during the later SEO checkpoint and was about 1,057 MB at the 10:33 UTC website checkpoint. The next scheduled run must pass its own preflight; unrelated app caches need owner approval before removal. The local machine does not provide uninterrupted 24/7 execution.",
+  },
+  {
     blocker: "Free audit delivery and lead-write verification",
     status: "Owner confirmation and test approval required",
     note: "The request route and UI now distinguish provider acceptance from inbox delivery and disclose best-effort lead recording. Mocked and intercepted tests do not verify Resend delivery, real mailbox receipt, Supabase RLS or a stored lead. No real email or lead write was attempted.",
@@ -1198,13 +1206,14 @@ const blockers = [
   {
     blocker: "Google Sheets push",
     status: "Blocked by expired OAuth token",
-    note: "The October 8 local-midnight run still hit invalid_grant, then continued to Supabase after local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
+    note: "The October 9 local-midnight run still hit invalid_grant, then continued to Supabase after local quality gates passed. Regenerate token.json interactively on the Mac before Sheets export can recover.",
   },
 ];
 
 const dataQualityIssues = [
+  "October 9 post-refresh verification: the genuine full pipeline upserted 2,488 audited listings and marked nine delisted. Independent checks found 2,214 modeled, 274 unmodeled, 39 disclosed physical-spec gaps, zero modeled-yield scenario mismatches, zero multi-unit scope violations and exact 2,488 listing plus 20 static sitemap paths. RFW292's resort-living false MULTI_UNIT screen cleared in production data and its public dossier, while real boutique hotel RF4943 remains flagged and unmodeled. These are screening checks, not proof of verified unit count, actual bookings or current sale availability. Sheets export still needs OAuth reauthorization.",
   "October 8 lease-period provenance: BHI labels RF7624B's 26 years Leasehold Period; BVT has no signed commencement, expiry or extension terms. The public dossier and methodology now disclose that the source-listed period is used as an illustrative denominator, not verified remaining years or measured annual depreciation. The auditor's missing-term 15-year proxy remains unchanged. A separate verified_remaining_years field and document review are future pipeline work; no source fact or stored ROI was altered.",
-  "October 8 source-title screen follow-up: RFW292 is a modeled two-bedroom villa marketed as Elegant Resort Living. The old detector inferred two units solely from the word resort, although that phrase does not establish an actual resort or unit count. The local detector now excludes that phrase while preserving explicit unit and hotel/resort signals; 43 Python tests pass and today's 2,486-row snapshot shows only this one inferred-count difference. The stored live flag/count is unchanged until the next quality-gated refresh. No rate, occupancy or ROI model was changed.",
+  "October 8 source-title screen follow-up, resolved October 9: RFW292 is a modeled two-bedroom villa marketed as Elegant Resort Living. The old detector inferred two units solely from the word resort, although that phrase does not establish an actual resort or unit count. The local detector excludes that phrase while preserving explicit unit and hotel/resort signals; the next full quality-gated refresh cleared the false live flag. No rate, occupancy or ROI model was changed.",
   "October 8 scheduled inventory snapshot: the genuine local-midnight pipeline completed with 2,486 audited/upserted rows, 2,212 modeled scenarios, 274 unmodeled rows, 39 disclosed physical-spec gaps and exact 2,486 listing plus 20 static sitemap URLs. This is dated verification; the dashboard's separate sitemap-listing metric is fetched live and is not a Google indexed-page count. Google Sheets still requires OAuth reauthorization.",
   "October 7 optional-field display correction: a single apartment's stored price_per_room=0 is a model-scope placeholder, not a $0 per-bedroom asking price. JSX rendered that numeric zero as loose text in Property Details. Optional derived-price and land-price rows now require positive numeric inputs; the stored values and ROI remain unchanged. The real apartment dossier and representative-page regression check pass.",
   "October 7 source-title flag semantics: a live one-bedroom apartment carries both MULTI_UNIT and MULTI_UNIT_MODEL_UNSUPPORTED because the current pipeline uses MULTI_UNIT for unsupported apartment/hospitality patterns as well as multiple-unit titles. The dossier now labels that marker UNIT-TYPE REVIEW, not proof of multiple rentable units. The stored flag has not been migrated; a typed asset/category signal and verified unit count remain future pipeline work.",
@@ -1387,17 +1396,17 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Verified 2026-10-08; host state not live",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. A local October 8 00:06:39 Phoenix completion log and strict reports recorded 2,486 audited listings, 39 disclosed physical-spec gaps, and exact 2,486 listing plus 20 static sitemap coverage. This is a dated host verification, not a live job-status feed; the sitemap count above is fetched when this dashboard loads. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Verified 2026-10-09; host state not live",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The genuine October 9 00:06:35 Phoenix completion log and strict reports recorded 2,488 audited listings, 39 disclosed physical-spec gaps, and exact 2,488 listing plus 20 static sitemap coverage. This is dated host verification, not a live job-status feed; the sitemap count above is fetched when this dashboard loads. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The next run must still pass the unchanged disk guard. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Mobile listing controls and scenario table verified",
+  title: "October 9 data refresh and investor checks verified",
   summary:
-    "Listing price and action controls now use normal page scrolling on phones, without an inner scroll that hides the bottom of the card. Desktop keeps its sticky panel. The modeled-yield sensitivity table names rate rows and occupancy columns correctly; its lower-rate, lower-occupancy and higher-cost cases remain estimates, not verified returns. Unsupported assets remain N/A without a scenario link. Use the separately fetched sitemap-listed dossier count and dated pipeline verification for coverage; sitemap inclusion is not Google indexation. One resort-living title still carries a false MULTI_UNIT cue in live data, pending the next quality-gated full refresh. The October 1 rate replacement remains held and paid checkout remains off pending owner-approved testing.",
-  requiredAction: "Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
+    "The October 9 full quality-gated refresh published 2,488 audited listings and cleared RFW292's false multi-unit warning without changing its modeled scenario. A real hotel remains unmodeled, and independent scope, scenario and exact sitemap checks pass. Listing controls and downside-table headings remain usable on phones; scenario outputs are estimates, not verified returns. Use the separately fetched sitemap-listed dossier count and dated pipeline verification for coverage; sitemap inclusion is not Google indexation. The October 1 rate replacement remains held, paid checkout remains off, and the next local pipeline depends on disk headroom passing its preflight.",
+  requiredAction: "Restore a comfortable disk margin before the next daily run without lowering the 1,024 MB guard. Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131#sensitivity-analysis`,
     `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
