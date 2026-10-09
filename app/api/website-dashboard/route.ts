@@ -1418,6 +1418,7 @@ const deploymentGate = {
     "Modeled listing titles and search descriptions now distinguish scenario net yield from verified income, and describe the lease allowance as noncash. Unsupported assets still say ROI Not Modeled. The October 9 full quality-gated refresh published 2,488 audited listings and cleared RFW292's false multi-unit warning; independent scope, scenario and exact sitemap checks passed. Use the separately fetched sitemap-listed dossier count and dated pipeline verification for coverage; sitemap inclusion is not Google indexation. The October 1 rate replacement remains held, paid checkout remains off, and the next local pipeline is disk-blocked until its unchanged preflight passes.",
   requiredAction: "Restore a comfortable disk margin before the next daily run without lowering the 1,024 MB guard. Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
+    `${SITE_URL}/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292`,
     `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131#sensitivity-analysis`,
     `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
     `${SITE_URL}/listing/off-plan-2-bedroom-villa-for-sale-leasehold-in-bali-canggu-kayu-tulang-rf7654b`,
@@ -1445,6 +1446,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-09_1633.json",
+    ".tmp/live_verification_2026-10-09_1633.json",
+    ".tmp/listing_page_verification_2026-10-09_1633.json",
+    ".tmp/sitemap_coverage_2026-10-09_1633.json",
+    ".tmp/supabase_data_quality_verification_2026-10-09_1033.json",
+    ".tmp/automation_freshness_2026-10-09_1633.json",
     ".tmp/dashboard_privacy_2026-10-07_1026_release.json",
     ".tmp/live_verification_2026-10-07_1026_release.json",
     ".tmp/listing_page_verification_2026-10-07_1026_release.json",
