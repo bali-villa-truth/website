@@ -20,7 +20,7 @@ const CORE_PATHS = [
   { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
   { name: "Uluwatu source-area hub", path: "/uluwatu", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
   { name: "Berawa source-area hub", path: "/berawa", expect: ["Source-area matches", "Source location labels", "65%", "40%"] },
-  { name: "Modeled listing schema", path: "/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894", expect: ["modeled net-yield review", "Current availability", "Not verified by BVT"] },
+  { name: "Modeled listing schema", path: "/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894", expect: ["modeled net-yield review", "Current availability", "Not verified by BVT", "Source listing card seen", "A source-card observation date is not independent verification"] },
   { name: "Unmodeled listing schema", path: "/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514", expect: ["ROI Not Modeled", "Not stated", "Current availability", "Not verified by BVT"] },
   { name: "Related asking-listing context", path: "/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131", expect: ["bed asking listings", "not sold-property comparables", "Recorded asking prices may be stale", "USD basis", "Modeled Net Yield", "View downside scenarios", "Combined downside screen"] },
   { name: "Listing sensitivity table orientation", path: "/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292", expect: ["Modeled net yield by nightly rate and occupancy scenario", "column headings are occupancy levels", "Combined downside screen"] },
@@ -38,6 +38,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-09",
+    area: "Listing-data provenance / investor due diligence",
+    title: "Separated source-card observation from verified property details",
+    status: "Deployed and verified",
+    why: "The displayed crawl time came from the current BHI listing-card scrape, but BVT can preserve missing bathrooms, land and build sizes from an earlier matched verified scrape. A label saying Source checked today could imply those details and current sale status were reverified. Dossiers now say Source listing card seen, and the visible caveat explains that the timestamp does not independently verify availability or carried-forward physical fields. A regression test and a live dashboard probe protect the wording. This changes presentation only; no timestamp, physical fact, price, rate, occupancy, stored yield or ROI calculation changed.",
+    url: `${SITE_URL}/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292`,
+    progressFile: ".tmp/website_progress_2026-10-09_2234.md",
+  },
   {
     date: "2026-10-09",
     area: "Listing search metadata / modeled-return clarity",
@@ -1098,7 +1107,7 @@ const pendingImprovements = [
     priority: "High",
     owner: "Local automation / disk headroom",
     title: "Restore comfortable disk margin before the next full scrape",
-    nextAction: "The October 9 16:33 UTC strict preflight failed at 256 MB free, far below the unchanged 1,024 MB pipeline guard. A roughly 1 GB regenerable Playwright browser cache is a possible cleanup target, but it may be shared by other browser tests and owner approval was requested; nothing was deleted. Add storage or approve that specific cleanup, then recheck before the next Phoenix-midnight scrape. Do not lower the guard or force a pipeline on low disk.",
+    nextAction: "The October 9 16:33 UTC strict preflight failed at 256 MB free, but the 22:34 UTC check passed at 3,087.7 MB without any cleanup by this checkpoint. The cause of the swing is unknown. Recheck immediately before the next Phoenix-midnight scrape; preserve the unchanged 1,024 MB guard and do not assume this recovered margin will persist. No shared cache was deleted, and cleanup approval is not needed while headroom remains adequate.",
   },
   {
     priority: "High",
@@ -1189,8 +1198,8 @@ const pendingImprovements = [
 const blockers = [
   {
     blocker: "Daily pipeline disk margin",
-    status: "Below the unchanged 1,024 MB preflight guard",
-    note: "The October 9 midnight run completed, but free space fell to 256 MB at the 16:33 UTC website checkpoint. The next scheduled run must pass its own preflight. Owner approval is pending for removing the regenerable shared Playwright browser cache; no cache was deleted, and no scrape was forced. The local machine does not provide uninterrupted 24/7 execution.",
+    status: "Volatile; latest check passed the 1,024 MB guard",
+    note: "The October 9 midnight run completed, but free space fell to 256 MB at 16:33 UTC and later recovered to 3,087.7 MB at 22:34 UTC without cleanup by this checkpoint. The cause is unknown. The next scheduled run must pass its own unchanged preflight; no shared cache was deleted and no scrape was forced. The local machine does not provide uninterrupted 24/7 execution.",
   },
   {
     blocker: "Free audit delivery and lead-write verification",
@@ -1220,6 +1229,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 9 source-date provenance: last_crawled_at is populated from the BHI index-card scraped_at value, while the pipeline can carry missing bathrooms/land/build sizes from an earlier matched verified scrape. The public header now labels the date as a source listing-card observation, and the visible disclaimer says it does not independently verify sale availability or carried-forward physical details. The underlying timestamps and fields were not rewritten.",
   "October 9 listing search metadata correction: modeled dossier titles now qualify their numeric yield as Modeled Net Yield, and descriptions identify the shared occupancy/cost scenario plus any noncash lease allowance. This avoids suggesting an observed owner return or measured resale-value decay. It is a presentation change, not a new rate sample, model recalculation, source-price verification or property-level booking audit.",
   "October 9 post-refresh verification: the genuine full pipeline upserted 2,488 audited listings and marked nine delisted. Independent checks found 2,214 modeled, 274 unmodeled, 39 disclosed physical-spec gaps, zero modeled-yield scenario mismatches, zero multi-unit scope violations and exact 2,488 listing plus 20 static sitemap paths. RFW292's resort-living false MULTI_UNIT screen cleared in production data and its public dossier, while real boutique hotel RF4943 remains flagged and unmodeled. These are screening checks, not proof of verified unit count, actual bookings or current sale availability. Sheets export still needs OAuth reauthorization.",
   "October 8 lease-period provenance: BHI labels RF7624B's 26 years Leasehold Period; BVT has no signed commencement, expiry or extension terms. The public dossier and methodology now disclose that the source-listed period is used as an illustrative denominator, not verified remaining years or measured annual depreciation. The auditor's missing-term 15-year proxy remains unchanged. A separate verified_remaining_years field and document review are future pipeline work; no source fact or stored ROI was altered.",
@@ -1406,19 +1416,20 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Last completed 2026-10-09; next preflight disk-blocked",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The genuine October 9 00:06:35 Phoenix completion log and strict reports recorded 2,488 audited listings, 39 disclosed physical-spec gaps, and exact 2,488 listing plus 20 static sitemap coverage. The job remains loaded, but the separate October 9 16:33 UTC preflight failed at 256 MB free against its unchanged 1,024 MB guard; this is dated host verification, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Last completed 2026-10-09; next preflight pending",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The genuine October 9 00:06:35 Phoenix completion log and strict reports recorded 2,488 audited listings, 39 disclosed physical-spec gaps, and exact 2,488 listing plus 20 static sitemap coverage. The job remains loaded; a separate October 9 22:34 UTC preflight passed at 3,087.7 MB free after an earlier low-disk failure, so the next run must still pass its own unchanged 1,024 MB guard. This is dated host verification, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Modeled-yield listing metadata and current data verified",
+  title: "Source-card provenance and modeled-yield wording verified",
   summary:
-    "Modeled listing titles and search descriptions now distinguish scenario net yield from verified income, and describe the lease allowance as noncash. Unsupported assets still say ROI Not Modeled. The October 9 full quality-gated refresh published 2,488 audited listings and cleared RFW292's false multi-unit warning; independent scope, scenario and exact sitemap checks passed. Use the separately fetched sitemap-listed dossier count and dated pipeline verification for coverage; sitemap inclusion is not Google indexation. The October 1 rate replacement remains held, paid checkout remains off, and the next local pipeline is disk-blocked until its unchanged preflight passes.",
-  requiredAction: "Restore a comfortable disk margin before the next daily run without lowering the 1,024 MB guard. Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
+    "Dossiers now label the crawl time as a source listing-card observation and explain that it does not reverify sale availability or carried-forward physical fields. Modeled listing titles and search descriptions distinguish scenario net yield from verified income and describe the lease allowance as noncash; unsupported assets still say ROI Not Modeled. The October 9 full quality-gated refresh published 2,488 audited listings and cleared RFW292's false multi-unit warning. Use the separately fetched sitemap-listed dossier count and dated pipeline verification for coverage; sitemap inclusion is not Google indexation. The rate replacement remains held and paid checkout remains off. Disk headroom recovered at the latest check, but the next local pipeline must pass its own unchanged preflight.",
+  requiredAction: "Recheck disk immediately before the next daily run and preserve the 1,024 MB guard if headroom falls again. Keep paid checkout off until an owner-approved end-to-end test and report/policy review. Continue strict production checks after deploys. Validate a fresh occupancy sample before any model change; reauthorize Google Sheets interactively and rotate the stale .env GitHub token separately.",
   affectedUrls: [
     `${SITE_URL}/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292`,
+    `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
     `${SITE_URL}/listing/3-bedroom-family-villa-for-sale-freehold-in-bali-nusa-dua-fm131#sensitivity-analysis`,
     `${SITE_URL}/listing/1-bedroom-apartment-for-sale-and-rent-in-canggu-berawa-rf863a`,
     `${SITE_URL}/listing/off-plan-2-bedroom-villa-for-sale-leasehold-in-bali-canggu-kayu-tulang-rf7654b`,
@@ -1446,6 +1457,11 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/dashboard_privacy_2026-10-09_2234.json",
+    ".tmp/live_verification_2026-10-09_2234.json",
+    ".tmp/listing_page_verification_2026-10-09_2234.json",
+    ".tmp/sitemap_coverage_2026-10-09_2234.json",
+    ".tmp/automation_freshness_2026-10-09_2234.json",
     ".tmp/dashboard_privacy_2026-10-09_1633.json",
     ".tmp/live_verification_2026-10-09_1633.json",
     ".tmp/listing_page_verification_2026-10-09_1633.json",

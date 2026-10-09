@@ -478,10 +478,10 @@ export default async function ListingPage({ params }: Props) {
               {lastAuditedRel && (
                 <>
                   <span>•</span>
-                  <span title={lastAuditedISO || ""}>Source checked {lastAuditedRel}</span>
+                  <span title={lastAuditedISO || ""}>Source listing card seen {lastAuditedRel}</span>
                 </>
               )}
-              {!lastAuditedRel && <span>Source check date not available</span>}
+              {!lastAuditedRel && <span>Source card observation date unavailable</span>}
             </div>
 
             {/* FLAGS */}
@@ -907,6 +907,7 @@ export default async function ListingPage({ params }: Props) {
                 {hasNightlyRate
                   ? "This is an automated stress-test using modeled nightly rates and estimated occupancy, not actual rental data for this property. Verify every assumption independently. "
                   : "BVT has not modeled rental yield for this asset. The source details and flags are for screening only; request verified rental, title, and lease evidence before investing. "}
+                A source-card observation date is not independent verification of sale availability or any physical fields carried forward from an earlier scrape.{" "}
                 <Link href="/methodology" className="underline hover:text-amber-300">
                   Read our full methodology →
                 </Link>
