@@ -13,8 +13,8 @@ const CORE_PATHS = [
   { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "We review source asking prices", "Every listing,", "Listings with review flags", "/listing/"] },
   { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint", "screening_years", "not a cash expense or an observed change in resale value"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
-  { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary"] },
-  { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage", "not an observed resale-price decline"] },
+  { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary", "source-listed 20-year period", "not a measured annual fall in resale value"] },
+  { name: "Leasehold/freehold guide", path: "/guides/bali-villa-leasehold-vs-freehold-roi", expect: ["leasehold", "FAQPage", "not an observed resale-price decline", "source-listed lease period", "not proof of how many years remain today"] },
   { name: "Due diligence guide", path: "/guides/bali-villa-due-diligence-checklist", expect: ["due diligence checklist", "FAQPage", "Twenty-five evidence checks for a real purchase decision"] },
   { name: "Management fees guide", path: "/guides/bali-villa-management-fees", expect: ["Bali villa management fees", "FAQPage", "one pooled 40% operating-cost allowance"] },
   { name: "Occupancy rates guide", path: "/guides/bali-villa-occupancy-rates", expect: ["Bali villa occupancy rates", "FAQPage", "not a measured area average"] },
@@ -38,6 +38,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-09",
+    area: "Indexable ROI guides / lease-term provenance / investor trust",
+    title: "Aligned both ROI guides with the source-listed lease-period model",
+    status: "Deployed and verified",
+    why: "The ROI guide and leasehold/freehold guide still treated source-listed lease years as verified remaining years after the dossier and methodology were corrected. The main FAQ also described a straight-line allowance as measured annual value decay. Both guides and their FAQ schema now explain the source-listed period, the illustrative 15-year fallback for modeled leaseholds without a period, and the need for signed commencement, expiry and extension evidence. The guide release reached Vercel success and passed canonical SSR/schema, 320px/390px/1440px layout, 12 listing-category, exact sitemap and private-access checks. No model arithmetic, stored yield, source record, cloud row or indexing claim changed. Local production build was skipped because disk headroom fell below the pipeline guard during dependency restoration; Vercel compiled the text-only release remotely.",
+    url: `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`,
+    progressFile: ".tmp/website_progress_2026-10-09_0432.md",
+  },
   {
     date: "2026-10-08",
     area: "Leasehold ROI explanation / source provenance / investor trust",
@@ -1067,6 +1076,12 @@ const completedImprovements = [
 ];
 
 const pendingImprovements = [
+  {
+    priority: "High",
+    owner: "Local automation / disk headroom",
+    title: "Restore comfortable disk margin before the next full scrape",
+    nextAction: "The 9 October 04:32 UTC checkpoint started at 1,612 MB free, fell to about 450 MB during preview dependency restoration, and recovered to about 1,094 MB after clearing only preview packages and npm cache. This is above the unchanged 1,024 MB preflight but leaves a thin margin for tonight's Phoenix-midnight scrape. Recheck the guard immediately before the scheduled run; free more space only from clearly regenerable BVT artifacts or with owner approval for unrelated caches. Do not lower the guard or run a forced pipeline on low disk.",
+  },
   {
     priority: "High",
     owner: "Source-data / tenure model",
