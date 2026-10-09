@@ -260,10 +260,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // (audit · yield) lives in the tail; the "| Bali Villa Truth" brand suffix is
   // added automatically by the root layout's title template.
   const title = yieldValue !== null
-    ? `${niceName} — Audit · ${roi} Net Yield`
+    ? `${niceName} — Audit · ${roi} Modeled Net Yield`
     : `${niceName} — ROI Not Modeled`;
   const description = yieldValue !== null
-    ? `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location}, analyzed at ${priceUsd} at audit FX. Estimated net yield: ${roi} under a 65% occupancy scenario after 40% operating costs and any lease decay. Review the assumptions.`
+    ? `Independent audit: ${niceName}. ${beds}-bedroom ${leaseType.toLowerCase()} villa in ${location}, analyzed at ${priceUsd} at audit FX. Modeled net yield: ${roi} at 65% occupancy, after a pooled 40% operating-cost allowance and any noncash lease allowance. Verify the assumptions.`
     : `Source listing review: ${niceName} in ${location}, USD price equivalent ${priceUsd}. BVT has not modeled ROI for this asset; check the listing's scope and diligence flags before estimating returns.`;
 
   return {
