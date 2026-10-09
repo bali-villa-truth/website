@@ -7,11 +7,11 @@ const PAGE_URL = `${SITE_URL}/guides/bali-villa-leasehold-vs-freehold-roi`;
 const faqItems = [
   {
     q: "Is leasehold or freehold better for Bali villa ROI?",
-    a: "Neither is automatically better. Compare the asking price, supported rental assumptions, operating costs, remaining lease years, and documented ownership rights. BVT's net-yield badge is a screening estimate, not cash-on-cash return or a forecast of resale value.",
+    a: "Neither is automatically better. Compare the asking price, supported rental assumptions, operating costs, signed remaining lease years, and documented ownership rights. Source-listed periods need verification. BVT's net-yield badge is a screening estimate, not cash-on-cash return or a forecast of resale value.",
   },
   {
     q: "How does lease decay affect ROI?",
-    a: "BVT divides the audit price by stated remaining lease years and subtracts that noncash allowance from modeled operating income. At an illustrative $300,000 price and 20 years left, the allowance is $15,000 a year, or 5 percentage points of that price. It is not an observed resale-price decline or an annual cash bill.",
+    a: "BVT divides the audit price by the source-listed lease period, or by an illustrative 15 years when no period is stated, and subtracts that noncash allowance from modeled operating income. At a $300,000 price and a listed 20-year period, the allowance is $15,000 a year, or 5 percentage points of that price. The signed remaining term is unverified; this is not an observed resale-price decline or an annual cash bill.",
   },
   {
     q: "Should buyers trust extendable lease claims?",
@@ -39,10 +39,10 @@ const jsonLd = {
       mainEntityOfPage: PAGE_URL,
       headline: "Bali Villa Leasehold vs Freehold ROI: Compare the Model and the Lease Term",
       description:
-        "A buyer-focused guide to BVT's modeled lease allowance, remaining lease years, ownership evidence, and Bali villa due diligence.",
+        "A buyer-focused guide to BVT's modeled lease allowance, source-listed lease periods, signed-term evidence, and Bali villa due diligence.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-13",
-      dateModified: "2026-10-04",
+      dateModified: "2026-10-09",
       author: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       publisher: { "@type": "Organization", name: "Bali Villa Truth", url: SITE_URL },
       articleSection: "Bali Villa Investment",
@@ -153,24 +153,25 @@ export default function LeaseholdVsFreeholdRoiPage() {
               <p className="mt-8 max-w-[68ch] text-[17px] md:text-[20px] leading-[1.62] text-[color:var(--bvt-ink-body)]">
                 Bali villa ROI depends on the audit price, modeled rental income,
                 operating costs, and the rights a buyer can actually document. For
-                a leasehold villa with a stated remaining term, BVT includes a
-                straight-line lease allowance in its screening yield. That is not
-                a measured fall in market value or a prediction of your cash flow.
+                a modeled leasehold villa, BVT includes a straight-line lease
+                allowance using the source-listed period or a disclosed 15-year
+                proxy when no period is stated. That is not a measured fall in
+                market value or a prediction of your cash flow.
               </p>
             </div>
             <aside className="lg:col-span-4 border-t border-[color:var(--bvt-hairline)] pt-6">
               <div className="label-micro mb-5">Fast answer</div>
               <p className="text-[15px] leading-[1.7] text-[color:var(--bvt-ink-body)]">
                 Compare the same income and cost assumptions against the price and
-                remaining term. Then ask an independent lawyer to verify the title,
-                legal structure, and any extension right before treating a listing's
-                tenure label as established.
+                source-listed period. Then ask an independent lawyer to verify
+                the signed remaining term, title, legal structure, and any
+                extension right before treating a listing's tenure label as established.
               </p>
             </aside>
           </div>
         </header>
 
-        <Section eyebrow="01 · The difference" title="Confirm the rights, then compare the remaining years.">
+        <Section eyebrow="01 · The difference" title="Confirm the rights before relying on lease years.">
           <p>
             A listing's freehold or leasehold label is a starting point, not legal
             proof of what a buyer can acquire. Ask for the underlying title,
@@ -198,14 +199,17 @@ export default function LeaseholdVsFreeholdRoiPage() {
           </p>
         </Section>
 
-        <Section eyebrow="02 · Lease decay" title="See what remaining years change in the model.">
+        <Section eyebrow="02 · Lease decay" title="See what a listed period changes in the model.">
           <p>
             For a modeled leasehold, BVT divides its audit asking-price basis by
-            stated remaining lease years. If that price is $300,000 and 20 years
-            remain, the annual allowance is $15,000. It reduces BVT's modeled net
+            the source-listed lease period, or by an illustrative 15 years if no
+            period is stated. If that price is $300,000 and the source lists 20 years,
+            the annual allowance is $15,000. It reduces BVT's modeled net
             yield by 5 percentage points of the $300,000 basis. This is a noncash
             model allowance, not an observed resale-price decline, tax deduction,
-            or annual payment to a landowner.
+            or annual payment to a landowner. BVT has not verified the signed
+            commencement or expiry date, so the listed period is not proof of
+            how many years remain today.
           </p>
           <p>
             The published badge separately assumes 65% occupancy and one pooled
@@ -217,7 +221,7 @@ export default function LeaseholdVsFreeholdRoiPage() {
           <div className="border border-[color:var(--bvt-hairline)] rounded-md p-5 bg-[color:var(--bvt-bg-elev)]">
             <div className="label-micro mb-3">Illustrative term sensitivity</div>
             <p className="font-mono text-[13px] md:text-[14px] leading-relaxed text-[color:var(--bvt-ink)]">
-              $300,000 audit price / 20 stated lease years = $15,000 annual allowance
+              $300,000 audit price / 20 source-listed lease years = $15,000 annual allowance
             </p>
             <ul className="mt-4 space-y-1 text-[13px] md:text-[14px] leading-relaxed">
               <li>10 years: $30,000 per year; 10 percentage points of price</li>
@@ -277,7 +281,7 @@ export default function LeaseholdVsFreeholdRoiPage() {
             <InlineLink href="/sanur">Sanur</InlineLink>,{" "}
             <InlineLink href="/seminyak">Seminyak</InlineLink>, and{" "}
             <InlineLink href="/nusa-dua">Nusa Dua</InlineLink> to find current
-            dossiers by area. Match the stated tenure, remaining years, price,
+            dossiers by area. Match the stated tenure, source-listed period, price,
             bedroom count, and model-scope notes before comparing displayed yields.
             These pages are browsing routes, not verified rankings of demand,
             liquidity, safety, or achieved rental performance.

@@ -56,7 +56,7 @@ const faqItems = [
   },
   {
     q: "Does leasehold reduce Bali villa ROI?",
-    a: "Yes. A leasehold villa is a wasting asset unless the lease can be extended on known terms. If a villa costs $300,000 and has 20 years remaining, roughly $15,000 of value decays each year before rental profit is counted.",
+    a: "BVT's modeled net yield deducts a noncash lease-value allowance for leaseholds. At a $300,000 audit price and a source-listed 20-year period, that allowance is $15,000 a year. It is not measured annual resale-value loss or a cash bill. Verify the signed remaining term and extension cost before underwriting.",
   },
   {
     q: "Which Bali areas are best for ROI?",
@@ -64,7 +64,7 @@ const faqItems = [
   },
   {
     q: "How should buyers use Bali Villa Truth before making an offer?",
-    a: "Use the audit ledger to compare asking price, estimated net yield, price per square meter, lease years, flags, and comparable villas. Then verify property-level revenue, licenses, build quality, and lease documents with independent professionals before committing.",
+    a: "Use the audit ledger to compare asking price, estimated net yield, price per square meter, source-listed lease years, flags, and similar asking listings. Then verify property-level revenue, licenses, build quality, and signed lease documents with independent professionals before committing.",
   },
 ];
 
@@ -87,7 +87,7 @@ const guideJsonLd = {
         "A buyer-focused guide to Bali villa ROI, net yield, occupancy, leasehold decay, management fees, and due diligence for villa investors.",
       image: `${SITE_URL}/og-image.png`,
       datePublished: "2026-05-13",
-      dateModified: "2026-10-04",
+      dateModified: "2026-10-09",
       author: {
         "@type": "Organization",
         name: "Bali Villa Truth",
@@ -299,26 +299,27 @@ export default function BaliVillaRoiGuidePage() {
           </p>
         </Section>
 
-        <Section eyebrow="03 · Leasehold" title="Lease decay can turn a good-looking villa into a mediocre deal.">
+        <Section eyebrow="03 · Leasehold" title="How a listed lease period changes the modeled yield.">
           <p>
-            Many foreign buyers in Bali buy long leases rather than direct freehold
-            title. A leasehold villa can still be a smart investment, but the math is
-            different. If a villa costs $300,000 and has 20 lease years left, the
-            asset is economically burning about $15,000 per year before rental profit
-            is counted. Ignoring that decay makes short leases look far better than
-            they are.
+            A source listing may state a lease period without proving when the signed
+            lease begins or expires. BVT uses that listed period as an illustrative
+            denominator for its noncash lease-value allowance. At a $300,000 audit
+            price and a listed 20-year period, the allowance is $15,000 per year in
+            the screening model. That is not a measured annual fall in resale value,
+            an owner payment, or proof that 20 years remain today.
           </p>
           <p>
-            Lease extensions can change the picture, but only when the extension
-            terms are real, documented, and priced. A verbal "extendable" note should
-            not be treated as cashflow. In BVT audits, leasehold depreciation is
-            deducted every year so a 17-year lease is not compared casually with a
-            freehold villa or a 35-year lease.
+            Documented extension rights and costs can change a buyer's own case; a
+            verbal "extendable" note is not evidence of extra years or cash flow.
+            Where a modeled leasehold has no source-listed period, BVT uses an
+            illustrative 15-year denominator and flags the missing term. Compare
+            any modeled result with the signed commencement date, expiry, and
+            extension agreement before treating it as decision-grade.
           </p>
           <p>
-            This is one of BVT's clearest advantages over generic Bali villa ROI
-            calculators. Lease decay is not cosmetic. It is central to the buyer's
-            exit, refinancing options, resale value, and actual annual return.
+            A finite lease can matter to a buyer's exit and financing options, but
+            BVT's straight-line allowance does not predict either outcome or the
+            property's actual annual return.
             For the full tenure breakdown, read the{" "}
             <InlineLink href="/guides/bali-villa-leasehold-vs-freehold-roi">
               Bali villa leasehold vs freehold ROI guide
