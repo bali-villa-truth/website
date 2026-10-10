@@ -101,6 +101,11 @@ function bedsBathsLabel(raw?: string | null): string {
   return `${beds > 0 ? `${beds} Bed` : "Bedrooms not stated"} / ${baths > 0 ? `${baths} Bath` : "Bathrooms not stated"}`;
 }
 
+function plausiblePhysicalSize(value: unknown): number | null {
+  const size = Number(value);
+  return Number.isFinite(size) && size >= 20 ? size : null;
+}
+
 // Human-readable labels + tooltips for flags (aligns with /methodology page)
 const FLAG_LABELS: Record<string, { label: string; tone: "red" | "amber" | "slate"; tip: string }> = {
   SHORT_LEASE: { label: "SHORT LEASE", tone: "amber", tip: "The source lists a lease period under 15 years; BVT has not verified the signed remaining term. A shorter modeled term increases the noncash lease-value allowance. Check the expiry and extension terms." },
@@ -300,6 +305,8 @@ function buildJsonLd(listing: any, slug: string) {
   const hub = locationHub(location);
   const yieldValue = modeledYield(listing);
   const bedrooms = Number(listing.bedrooms);
+  const landSqm = plausiblePhysicalSize(listing.land_size);
+  const buildingSqm = plausiblePhysicalSize(listing.building_size);
   const bedroomLabel = Number.isFinite(bedrooms) && bedrooms > 0 ? `${bedrooms}-bedroom ` : "";
   const scopeDescription = outsideBali
     ? "ROI not modeled: outside the Bali villa model scope."
@@ -320,8 +327,8 @@ function buildJsonLd(listing: any, slug: string) {
     },
     additionalProperty: [
       { "@type": "PropertyValue", name: "Bedrooms", value: bedroomLabel ? bedrooms : "Not stated" },
-      { "@type": "PropertyValue", name: "Land Size", value: listing.land_size ? `${listing.land_size} m²` : "N/A" },
-      { "@type": "PropertyValue", name: "Building Size", value: listing.building_size ? `${listing.building_size} m²` : "N/A" },
+      { "@type": "PropertyValue", name: "Land Size", value: landSqm !== null ? `${landSqm} m²` : Number(listing.land_size) > 0 ? "Needs verification" : "N/A" },
+      { "@type": "PropertyValue", name: "Building Size", value: buildingSqm !== null ? `${buildingSqm} m²` : Number(listing.building_size) > 0 ? "Needs verification" : "N/A" },
       { "@type": "PropertyValue", name: "Net Yield (Estimated)", value: yieldValue !== null ? `${yieldValue.toFixed(1)}%` : "N/A" },
       { "@type": "PropertyValue", name: "Tenure", value: tenureSchemaValue(listing) },
       ...(priceUsd > 0 ? [{ "@type": "PropertyValue", name: "Audit price basis (USD)", value: priceUsd }] : []),
@@ -359,6 +366,11 @@ export default async function ListingPage({ params }: Props) {
   const niceName = toTitleCase(listing.villa_name || "");
 
   const priceUsd = Math.round(getPriceUSD(listing)) || null;
+  const landSqm = plausiblePhysicalSize(listing.land_size);
+  const buildingSqm = plausiblePhysicalSize(listing.building_size);
+  const physicalSizeUnderReview =
+    (Number(listing.land_size) > 0 && landSqm === null) ||
+    (Number(listing.building_size) > 0 && buildingSqm === null);
   const yieldValue = modeledYield(listing);
   const roi = yieldValue !== null ? yieldValue.toFixed(1) : null;
   const roiTone = yieldValue === null
@@ -575,11 +587,11 @@ export default async function ListingPage({ params }: Props) {
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Land Size</span>
-                    <span className="font-medium">{Number(listing.land_size) > 0 ? `${listing.land_size} m²` : "Not stated"}</span>
+                    <span className="font-medium">{landSqm !== null ? `${landSqm} m²` : Number(listing.land_size) > 0 ? "Needs verification" : "Not stated"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Building Size</span>
-                    <span className="font-medium">{Number(listing.building_size) > 0 ? `${listing.building_size} m²` : "Not stated"}</span>
+                    <span className="font-medium">{buildingSqm !== null ? `${buildingSqm} m²` : Number(listing.building_size) > 0 ? "Needs verification" : "Not stated"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-xs uppercase tracking-wider mb-1">Tenure</span>
@@ -597,6 +609,11 @@ export default async function ListingPage({ params }: Props) {
                 <p className="mt-4 text-xs text-slate-400 leading-relaxed">
                   Bathroom, land and building figures are source-derived. When a newer listing card omits one, BVT may retain a previously observed value from the same matched listing. Separate observation dates for these fields are not stored. Confirm current figures against plans and title documents.
                 </p>
+                {physicalSizeUnderReview && (
+                  <p className="mt-2 text-xs text-amber-300 leading-relaxed">
+                    A stored area figure is under review. BVT has withheld it and related per-m² math until the source measurement is reconciled.
+                  </p>
+                )}
                 <div className="mt-5 pt-4 border-t border-slate-800 flex flex-wrap gap-x-5 gap-y-3 text-xs">
                   <Link href={`/contact?listing=${encodeURIComponent(slug)}&reason=correction`} className="text-[color:var(--bvt-accent)] underline underline-offset-4 py-2">
                     Report a listing-data error
@@ -942,11 +959,11 @@ export default async function ListingPage({ params }: Props) {
                   )}
                 </div>
 
-                {Number(listing.land_size) > 0 && (
+                {landSqm !== null && (
                   <div className="flex justify-between text-sm py-2">
                     <span className="text-slate-500">Price / m² (land)</span>
                     <span className="font-medium">
-                      ${priceUsd && listing.land_size ? Math.round(priceUsd / Number(listing.land_size)).toLocaleString("en-US") : "—"}
+                      ${priceUsd ? Math.round(priceUsd / landSqm).toLocaleString("en-US") : "—"}
                     </span>
                   </div>
                 )}
