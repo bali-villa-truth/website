@@ -62,7 +62,7 @@ function FAQSection() {
     },
     {
       q: 'How is your ROI different from the one on the listing page?',
-      a: "Agent ROI often starts with gross rental revenue divided by asking price. BVT models a 40% operating-cost allowance and, for leasehold properties, annual lease value decay. The resulting net-yield estimate is not cash-on-cash return or a forecast of money paid to you; verify actual costs, bookings, taxes, and financing separately.",
+      a: "Agent ROI often starts with gross rental revenue divided by asking price. BVT models a 40% operating-cost allowance and, for leaseholds, a noncash straight-line lease-value allowance. That allowance uses a source-listed period or a disclosed fallback, not measured resale depreciation. Net yield is not cash-on-cash return or a forecast of money paid to you; verify actual costs, bookings, taxes, and financing separately.",
     },
     {
       q: 'Can foreigners own property in Bali?',
@@ -747,11 +747,11 @@ export default function HomeClient({
     }
 
     if (pipelineFlags.includes('INFLATED_ROI') && nightly > 0) {
-      flags.push({ level: 'warning', label: 'High Gross Yield', detail: `The modeled gross yield is ${grossRoi.toFixed(0)}% under a 65% occupancy scenario. It excludes operating costs and lease decay. The published net estimate is ${netRoiPipeline.toFixed(1)}%; verify the nightly rate, asset condition, and lease term before relying on it.` });
+      flags.push({ level: 'warning', label: 'High Gross Yield', detail: `The modeled gross yield is ${grossRoi.toFixed(0)}% under a 65% occupancy scenario. It excludes operating costs and any noncash lease allowance. The published net estimate is ${netRoiPipeline.toFixed(1)}%; verify the nightly rate, asset condition, and lease term before relying on it.` });
     }
 
     if (pipelineFlags.includes('OPTIMISTIC_ROI') && nightly > 0) {
-      flags.push({ level: 'warning', label: 'Gross vs Net', detail: `Modeled gross yield is ${grossRoi.toFixed(0)}% at 65% occupancy; gross excludes operating costs and lease decay. The published net estimate is ${netRoiPipeline.toFixed(1)}%. Test lower occupancy and obtain actual operating records.` });
+      flags.push({ level: 'warning', label: 'Gross vs Net', detail: `Modeled gross yield is ${grossRoi.toFixed(0)}% at 65% occupancy; gross excludes operating costs and any noncash lease allowance. The published net estimate is ${netRoiPipeline.toFixed(1)}%. Test lower occupancy and obtain actual operating records.` });
     }
 
     if (pipelineFlags.includes('RATE_PRICE_GAP') && nightly > 0) {
@@ -896,7 +896,7 @@ export default function HomeClient({
               <p className="mt-8 md:mt-10 max-w-[52ch] text-[17px] md:text-[19px] leading-[1.55] text-[color:var(--bvt-ink-body)]">
                 Bali Villa Truth is the independent audit bureau for Bali villa investors.
                 We review source asking prices using modeled operating costs,
-                a shared 65% occupancy screening scenario, and lease decay. Each eligible
+                a shared 65% occupancy screening scenario, and a noncash lease allowance. Each eligible
                 listing shows the inputs behind its estimated net yield.
               </p>
             </div>
@@ -1740,7 +1740,7 @@ export default function HomeClient({
                                             <span className="text-[color:var(--bvt-warn)] font-mono tabular-nums">-{leaseDepreciation.toFixed(1)}%/yr</span>
                                           </div>
                                           {depCostAnnual > 0 && (
-                                            <div className="text-[color:var(--bvt-ink-muted)] text-[9px] mt-0.5">About ${depCostAnnual.toLocaleString()}/yr of modeled lease-value erosion, not a cash expense. Actual resale value depends on the contract and market.</div>
+                                            <div className="text-[color:var(--bvt-ink-muted)] text-[9px] mt-0.5">About ${depCostAnnual.toLocaleString()}/yr of noncash lease-value allowance, not measured resale loss or a cash expense. Actual resale value depends on the contract and market.</div>
                                           )}
                                         </>
                                       );
@@ -2094,7 +2094,7 @@ export default function HomeClient({
                           <tr className="border-b border-[color:var(--bvt-hairline-2)] bg-[color:var(--bvt-good)]/[0.06]">
                             <td className="py-3 pr-4 text-[color:var(--bvt-good)] text-[13px]">
                               <span className="font-serif italic">Pre-lease yield</span>
-                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">After operating costs, before lease decay</span>
+                              <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] tracking-[0.12em] uppercase mt-0.5 font-sans not-italic">After operating costs, before noncash lease allowance</span>
                             </td>
 	                            {results.map(r => {
 	                              const priceUSD = getAuditPriceUSD(compareVillas.find(v => v.id === r.id));
@@ -2120,7 +2120,7 @@ export default function HomeClient({
                                 ) : r.leaseDepreciation > 0 ? (
                                   <div>
                                     <span className="text-[color:var(--bvt-warn)]">-${r.leaseDepreciation.toLocaleString()}/yr</span>
-                                    <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-0.5">-{r.depreciationYield}% yield ({r.leaseYears}yr lease)</span>
+                                    <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-0.5">-{r.depreciationYield}% yield ({r.leaseYears}yr source-listed period)</span>
                                   </div>
                                 ) : (
                                   <span className="text-[color:var(--bvt-ink-faint)] text-[11px]">Term not stated</span>
