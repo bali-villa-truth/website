@@ -41,9 +41,9 @@ const completedImprovements = [
   {
     date: "2026-10-10",
     area: "Physical-size data quality / derived price protection",
-    title: "Withheld implausibly small area figures and per-square-metre prices",
-    status: "Public display guard deployed; data refresh pending",
-    why: "A current BHI detail page lists RF4514 at 2,200 m² land and 2,500 m² building, but the Inertia card's dot-grouped size strings were parsed as 2 m². A new strict read-only check found 161 audited rows with a nonzero area below 20 m². The public dossier now labels those stored figures Needs verification, omits the derived land price per m², and prevents the tiny values from entering its structured data. The local source parser and data-quality gates are fixed; a full quality-gated refresh is required before claiming corrected live records.",
+    title: "Repaired dot-grouped land and building sizes in production",
+    status: "Production data refreshed and verified",
+    why: "BHI's index cards use dot-grouped area strings such as 2.200 m², which the old parser stored as 2 m². A strict baseline found 161 affected audited rows. The parser now treats three-digit dot groups as thousands; the October 9 21:55 Phoenix full quality-gated refresh updated all 161 affected refs, published 2,492 audited listings, and left zero nonzero area values below 20 m². RF4514's live dossier and structured data now show 2,200 m² land and 2,500 m² building, matching its live source detail page. The public display guard still withholds any future implausible size and related price-per-m² math; the auditor, scrape validator, direct Supabase push and live verifier now fail closed on tiny values. These are source measurement corrections, not a new rental-rate or occupancy model; normal daily FX and inventory refresh may change USD price bases and modeled results.",
     url: `${SITE_URL}/listing/3-star-hotel-for-sale-leasehold-in-bali-canggu-near-echo-beach-rf4514`,
     progressFile: ".tmp/website_progress_2026-10-10_0434.md",
   },
@@ -1123,12 +1123,6 @@ const completedImprovements = [
 const pendingImprovements = [
   {
     priority: "High",
-    owner: "BHI source parser / full daily pipeline",
-    title: "Repair dot-grouped land and building sizes in live listing data",
-    nextAction: "A strict October 10 baseline found 161 audited rows with a nonzero land or building value below 20 m². RF4514's live detail page confirms 2.200 m² land and 2.500 m² building, while the old index parser stored 2 and 2. The local parser now treats three-digit dot groups as thousands, and the auditor/live verifier reject implausibly small sizes. Run the normal full scrape with all count, physical, and cloud-write gates; do not hand-edit Supabase rows or claim repaired live values until independent checks pass.",
-  },
-  {
-    priority: "High",
     owner: "Local automation / disk headroom",
     title: "Restore comfortable disk margin before the next full scrape",
     nextAction: "The October 9 16:33 UTC strict preflight failed at 256 MB free, but the October 10 04:34 UTC check passed at 2,860.4 MB. The cause of the swing is unknown. Recheck immediately before the next Phoenix-midnight scrape; preserve the unchanged 1,024 MB guard and do not assume this recovered margin will persist. No shared cache was deleted.",
@@ -1227,14 +1221,9 @@ const pendingImprovements = [
 
 const blockers = [
   {
-    blocker: "Dot-grouped physical sizes in current published rows",
-    status: "Public display guarded; full data repair pending",
-    note: "The October 10 strict read-only baseline found 161 audited listings with land or building sizes between 1 and 19 m². A live source detail page confirms the locale-grouping parse defect on RF4514. The dossier now withholds suspect values and related price-per-m² math. The parser and quality gates are fixed locally, but stored records require a complete gated refresh before they can be called corrected.",
-  },
-  {
     blocker: "Daily pipeline disk margin",
     status: "Volatile; latest check passed the 1,024 MB guard",
-    note: "The October 9 midnight run completed, but free space fell to 256 MB at 16:33 UTC and later recovered without cleanup. A separate October 10 04:34 UTC preflight passed at 2,860.4 MB; the cause of the swing is unknown. The next scheduled run must pass its own unchanged preflight; no shared cache was deleted and no scrape was forced. The local machine does not provide uninterrupted 24/7 execution.",
+    note: "The October 9 midnight run completed, but free space fell to 256 MB at 16:33 UTC and later recovered without cleanup. A separate full quality-gated run at 21:50 Phoenix passed its 2,844 MB disk preflight and completed at 21:55; the cause of earlier disk swings is unknown. The next scheduled midnight run must pass its own unchanged preflight; no shared cache was deleted. The local machine does not provide uninterrupted 24/7 execution.",
   },
   {
     blocker: "Free audit delivery and lead-write verification",
@@ -1264,7 +1253,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
-  "October 10 physical-size incident: 161 current audited rows have nonzero land/build figures below 20 m²; RF4514 is stored as 2/2 m² while its live source detail page shows 2.200/2.500 m². BHI's index-card strings use a dot thousands separator, which the old parser read as a decimal. The public dossier now withholds suspect sizes, schema values and derived land price per m². A parser fix, auditor flag guard and strict live-data check are prepared; a full quality-gated pipeline run is still required to correct stored rows.",
+  "October 10 physical-size incident resolved in current production data: the old Inertia parser read dot-grouped strings such as 2.200/2.500 m² as 2/2 m². A strict baseline found 161 affected audited refs; the October 9 21:55 Phoenix full gated refresh corrected all 161 in the new scrape, and the live 2,492-row audit found zero nonzero land/build figures below 20 m². RF4514's live dossier and JSON-LD now show 2,200/2,500 m², matching its live source detail page. The public guard still withholds future implausible values and related price-per-m² math. Monitor the next scheduled scrape; source measurements still need buyer verification.",
   "October 10 property-details clarification: the latest full pipeline's carry-forward report recorded 171 bathroom values retained from a prior matched scrape; land/build carry-forward counts were zero. The pipeline does not publish a distinct observation date for each physical field. Modeled and unmodeled dossiers now disclose the possible earlier observation beside the physical figures and direct buyers to current plans/title evidence. No source field, timestamp or yield was changed.",
   "October 9 source-date provenance: last_crawled_at is populated from the BHI index-card scraped_at value, while the pipeline can carry missing bathrooms/land/build sizes from an earlier matched verified scrape. The public header now labels the date as a source listing-card observation, and the visible disclaimer says it does not independently verify sale availability or carried-forward physical details. The underlying timestamps and fields were not rewritten.",
   "October 9 listing search metadata correction: modeled dossier titles now qualify their numeric yield as Modeled Net Yield, and descriptions identify the shared occupancy/cost scenario plus any noncash lease allowance. This avoids suggesting an observed owner return or measured resale-value decay. It is a presentation change, not a new rate sample, model recalculation, source-price verification or property-level booking audit.",
@@ -1453,17 +1442,17 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Last completed 2026-10-09; next preflight pending",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The genuine October 9 00:06:35 Phoenix completion log and strict reports recorded 2,488 audited listings, 39 disclosed physical-spec gaps, and exact 2,488 listing plus 20 static sitemap coverage. The job remains loaded; a separate October 10 04:34 UTC preflight passed at 2,860.4 MB free after an earlier low-disk failure, so the next run must still pass its own unchanged 1,024 MB guard. This is dated host verification, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Manual full refresh completed 2026-10-09 21:55 local; next scheduled preflight pending",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. A separate full quality-gated run completed October 9 21:55 Phoenix after a 2,844 MB disk preflight: 2,492 audited/upserted listings, two delisted, 39 disclosed physical-spec gaps, zero tiny nonzero land/build values, and exact 2,492 listing plus 20 static sitemap coverage. The launchd job remains loaded for its regular local-midnight run, which must pass its own unchanged 1,024 MB guard. This is dated host verification, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Physical-size display guard live; source-data repair pending",
+  title: "Physical-size source parse repaired and production data verified",
   summary:
-    "The public dossier withholds implausibly small stored area figures and their derived land price per m² while a source-data repair is pending. A live BHI detail page confirmed the dot-grouped size parse defect, and the strict baseline found 161 affected audited rows. Property Details also explains when source physical fields may be carried from an earlier matched scrape. The local parser and quality gates are fixed, but no corrected live rows are claimed until a complete gated refresh passes. Modeled yield, rate and occupancy inputs were not changed. Sitemap inclusion is not Google indexation; the rate replacement remains held and paid checkout remains off.",
-  requiredAction: "Run the normal full BHI pipeline only with its unchanged count, physical, disk and cloud-write gates, then prove zero implausibly small live sizes and exact sitemap coverage. Recheck disk before the run. Keep paid checkout off; reauthorize Google Sheets interactively and validate rate/occupancy samples before any model change.",
+    "The source parser now reads dot-grouped area strings as thousands, and a full quality-gated refresh corrected all 161 affected refs in the new scrape. The independent live check found zero nonzero area values below 20 m² across 2,492 audited rows, with exact 2,492 listing plus 20 static sitemap coverage. RF4514's dossier and schema match its live source detail values. Public pages still withhold any future implausibly small area and derived price per m²; Property Details explains possible earlier matched source observations. This repairs physical measurements, not the rental-rate or occupancy model. Sitemap inclusion is not Google indexation; the rate replacement remains held and paid checkout remains off.",
+  requiredAction: "Monitor the next scheduled local-midnight run under unchanged disk, inventory and physical-field gates. Confirm Google Sheets OAuth interactively; do not replace held rate data or enable paid checkout without its separate evidence and owner-approved tests. Continue strict live checks after every deploy.",
   affectedUrls: [
     `${SITE_URL}/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292`,
     `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
@@ -1494,6 +1483,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/supabase_data_quality_verification_2026-10-10_0455.json",
+    ".tmp/live_verification_2026-10-10_0455.json",
+    ".tmp/listing_page_verification_2026-10-10_0455.json",
+    ".tmp/sitemap_coverage_2026-10-10_0455.json",
+    ".tmp/dashboard_privacy_2026-10-10_0434_guard.json",
+    ".tmp/automation_freshness_2026-10-10_0450.json",
     ".tmp/physical_size_baseline_2026-10-10_0434.json",
     ".tmp/dashboard_privacy_2026-10-10_0434.json",
     ".tmp/live_verification_2026-10-10_0434.json",
