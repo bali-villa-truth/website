@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const CORE_PATHS = [
-  { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "We review source asking prices", "Every listing,", "Listings with review flags", "/listing/"] },
+  { name: "Homepage audit ledger", path: "/", expect: ["Bali villa ROI audits", "We review source asking prices", "Highest modeled yields", "Source-card dates shown", "source-listed", "Every listing,", "Listings with review flags", "/listing/"] },
   { name: "Methodology", path: "/methodology", expect: ["methodology", "one pooled operating-cost allowance", "not a measured market midpoint", "screening_years", "not a cash expense or an observed change in resale value"] },
   { name: "Listing enquiry path", path: "/contact", expect: ["Contact Bali Villa Truth", "Report a data correction", "Custom review enquiry"] },
   { name: "ROI guide", path: "/guides/bali-villa-roi", expect: ["Bali villa ROI", "FAQPage", "An unavailable yield is a model boundary", "source-listed 20-year period", "not a measured annual fall in resale value"] },
@@ -38,6 +38,15 @@ const CORE_PATHS = [
 const PREPARED_PATHS: Array<{ name: string; path: string; expect: string[]; blockedDetail: string }> = [];
 
 const completedImprovements = [
+  {
+    date: "2026-10-10",
+    area: "Homepage investor browsing / lease-period provenance",
+    title: "Stopped calling source-listed lease years verified time remaining in the audit ledger",
+    status: "Deployed and verified",
+    why: "The desktop ledger and short-lease warning described the source-listed period as years remaining, while the dossier and ROI guides already explained that no signed commencement or expiry date is held. The homepage now labels those years source-listed in the ledger and comparison view, discloses unverified signed remaining years in the shortcut and warning, identifies prominent yields as modeled, and calls the date a source-card observation rather than a full field check. The scheduled October 10 midnight refresh independently passed 2,492 audited rows, zero tiny areas, 39 physical gaps and exact 2,492 listing plus 20 static sitemap coverage. This release changes copy only; no lease value, source date, model input, stored yield or cloud row was rewritten.",
+    url: `${SITE_URL}/#listings-section`,
+    progressFile: ".tmp/website_progress_2026-10-10_1035.md",
+  },
   {
     date: "2026-10-10",
     area: "Physical-size data quality / derived price protection",
@@ -1125,7 +1134,7 @@ const pendingImprovements = [
     priority: "High",
     owner: "Local automation / disk headroom",
     title: "Restore comfortable disk margin before the next full scrape",
-    nextAction: "The October 9 16:33 UTC strict preflight failed at 256 MB free, but the October 10 04:34 UTC check passed at 2,860.4 MB. The cause of the swing is unknown. Recheck immediately before the next Phoenix-midnight scrape; preserve the unchanged 1,024 MB guard and do not assume this recovered margin will persist. No shared cache was deleted.",
+    nextAction: "The October 9 16:33 UTC strict preflight failed at 256 MB free. The scheduled October 10 midnight scrape passed its unchanged 1,024 MB gate at 1,732.9 MB and completed; the 09:17 UTC close measured 2,706.3 MB. The cause of the disk swings is unknown. Recheck before the next Phoenix-midnight scrape and do not assume this margin will persist. No shared cache was deleted.",
   },
   {
     priority: "Medium",
@@ -1253,6 +1262,7 @@ const blockers = [
 ];
 
 const dataQualityIssues = [
+  "October 10 homepage lease/date wording corrected: the source-listed lease period was called years remaining in the desktop ledger and short-lease warning, but no signed commencement or expiry evidence is held. The homepage now identifies source-listed years and treats a source-card date as a card observation, not fresh verification of every physical field or sale status. The prominent yield labels say modeled. This is presentation and provenance only; the source record, model denominator and stored ROI remain unchanged.",
   "October 10 physical-size incident resolved in current production data: the old Inertia parser read dot-grouped strings such as 2.200/2.500 m² as 2/2 m². A strict baseline found 161 affected audited refs; the October 9 21:55 Phoenix full gated refresh corrected all 161 in the new scrape, and the live 2,492-row audit found zero nonzero land/build figures below 20 m². RF4514's live dossier and JSON-LD now show 2,200/2,500 m², matching its live source detail page. The public guard still withholds future implausible values and related price-per-m² math. Monitor the next scheduled scrape; source measurements still need buyer verification.",
   "October 10 property-details clarification: the latest full pipeline's carry-forward report recorded 171 bathroom values retained from a prior matched scrape; land/build carry-forward counts were zero. The pipeline does not publish a distinct observation date for each physical field. Modeled and unmodeled dossiers now disclose the possible earlier observation beside the physical figures and direct buyers to current plans/title evidence. No source field, timestamp or yield was changed.",
   "October 9 source-date provenance: last_crawled_at is populated from the BHI index-card scraped_at value, while the pipeline can carry missing bathrooms/land/build sizes from an earlier matched verified scrape. The public header now labels the date as a source listing-card observation, and the visible disclaimer says it does not independently verify sale availability or carried-forward physical details. The underlying timestamps and fields were not rewritten.",
@@ -1442,17 +1452,17 @@ const scheduledJobs = [
   {
     id: "com.bvt.daily-pipeline",
     cadence: "Daily at 00:00 local time",
-    status: "Manual full refresh completed 2026-10-09 21:55 local; next scheduled preflight pending",
-    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. A separate full quality-gated run completed October 9 21:55 Phoenix after a 2,844 MB disk preflight: 2,492 audited/upserted listings, two delisted, 39 disclosed physical-spec gaps, zero tiny nonzero land/build values, and exact 2,492 listing plus 20 static sitemap coverage. The launchd job remains loaded for its regular local-midnight run, which must pass its own unchanged 1,024 MB guard. This is dated host verification, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
+    status: "Scheduled October 10 00:06 Phoenix run completed; next local-midnight run pending",
+    purpose: "Daily BHI listing refresh, quality gates, Sheets and Supabase sync, and live verification. The scheduled October 10 midnight run followed the separate physical-size repair refresh, passed its unchanged disk/source gates, fetched 85 pages, audited/upserted 2,492 listings and delisted zero. Strict checks found zero tiny nonzero areas, 39 disclosed physical gaps, and exact 2,492 listing plus 20 static sitemap coverage. Launchd was loaded at the 09:17 UTC check. This is dated host verification, not a live job-status feed. Google Sheets remains blocked by OAuth invalid_grant while the website refresh succeeds. The six-hour app checkpoints and local daily job are not uninterrupted 24/7 runtime.",
   },
 ];
 
 const deploymentGate = {
   status: "Live",
-  title: "Physical-size source parse repaired and production data verified",
+  title: "Homepage lease and yield provenance aligned with the dossiers",
   summary:
-    "The source parser now reads dot-grouped area strings as thousands, and a full quality-gated refresh corrected all 161 affected refs in the new scrape. The independent live check found zero nonzero area values below 20 m² across 2,492 audited rows, with exact 2,492 listing plus 20 static sitemap coverage. RF4514's dossier and schema match its live source detail values. Public pages still withhold any future implausibly small area and derived price per m²; Property Details explains possible earlier matched source observations. This repairs physical measurements, not the rental-rate or occupancy model. Sitemap inclusion is not Google indexation; the rate replacement remains held and paid checkout remains off.",
-  requiredAction: "Monitor the next scheduled local-midnight run under unchanged disk, inventory and physical-field gates. Confirm Google Sheets OAuth interactively; do not replace held rate data or enable paid checkout without its separate evidence and owner-approved tests. Continue strict live checks after every deploy.",
+    "The homepage ledger now calls lease years source-listed rather than verified time remaining, and its shortcut, warning and comparison view ask for signed expiry evidence. Yield labels say modeled; source-card dates no longer imply every field or sale status was rechecked. The scheduled October 10 midnight scrape completed independently with 2,492 audited rows, zero tiny physical areas and exact 2,492 listing plus 20 static sitemap coverage. The previously shipped physical-size repair and public display guard remain in place. No rate, occupancy, lease denominator, stored yield or cloud row changed in this copy release. Sitemap inclusion is not Google indexation; rate replacement stays held and paid checkout stays off.",
+  requiredAction: "Verify signed lease commencement, expiry and extension terms before treating source-listed years as remaining time. Monitor the next scheduled local-midnight run under unchanged disk, inventory and physical-field gates. Confirm Google Sheets OAuth interactively; do not replace held rate data or enable paid checkout without its separate evidence and owner-approved tests. Continue strict live checks after every deploy.",
   affectedUrls: [
     `${SITE_URL}/listing/off-plan-2-bedroom-villas-for-sale-in-nusa-dua-elegant-resort-living-rfw292`,
     `${SITE_URL}/listing/off-plan-modern-and-affordable-3-bedroom-villa-for-sale-in-kutuh-rf8894`,
@@ -1483,6 +1493,12 @@ const deploymentGate = {
     `${SITE_URL}/seo-dashboard`,
   ],
   latestVerification: [
+    ".tmp/seo_progress_2026-10-10.md",
+    ".tmp/supabase_data_quality_verification_2026-10-10_0706.json",
+    ".tmp/live_verification_2026-10-10_0706.json",
+    ".tmp/listing_page_verification_2026-10-10_0706.json",
+    ".tmp/sitemap_coverage_2026-10-10_0706.json",
+    ".tmp/automation_freshness_2026-10-10_0917_close.json",
     ".tmp/supabase_data_quality_verification_2026-10-10_0455.json",
     ".tmp/live_verification_2026-10-10_0455.json",
     ".tmp/listing_page_verification_2026-10-10_0455.json",

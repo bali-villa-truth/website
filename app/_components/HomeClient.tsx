@@ -75,7 +75,7 @@ function FAQSection() {
     },
     {
       q: 'How often is the data updated?',
-      a: 'Our source refresh is scheduled daily, but a failed source or quality check can delay an update. Each listing shows when its source data was last checked; use that date before relying on its assumptions.',
+      a: 'Our source refresh is scheduled daily, but a failed source or quality check can delay an update. Each listing shows when its source listing card was last seen; that date does not independently verify sale availability or every physical field.',
     },
     {
       q: 'Do you offer a paid deep audit?',
@@ -700,8 +700,8 @@ export default function HomeClient({
 
       if (missingLease) {
         flags.push(isRoiUnmodeled(villa)
-          ? { level: 'assumed', label: 'Lease Term Missing', detail: 'The source does not state the remaining lease term. BVT does not show a lease-value calculation or ROI for this unmodeled asset. Verify the signed term and extension rights before comparing it with villas.' }
-          : { level: 'assumed', label: 'Lease Term Assumed', detail: 'The source does not state the remaining lease term. BVT uses an illustrative 15-year term in the screening yield, not a verified expiry date. Check the signed lease and extension terms before relying on the estimate.' });
+          ? { level: 'assumed', label: 'Lease Term Missing', detail: 'The source does not state a lease period. BVT does not show a lease-value calculation or ROI for this unmodeled asset. Verify the signed remaining term and extension rights before comparing it with villas.' }
+          : { level: 'assumed', label: 'Lease Term Assumed', detail: 'The source does not state a lease period. BVT uses an illustrative 15-year term in the screening yield, not a verified expiry date. Check the signed remaining term and extension rights before relying on the estimate.' });
       }
       if (missingBeds) {
         flags.push({ level: 'assumed', label: 'Beds Missing', detail: `Source omitted a safe bedroom/unit count. BVT does not model ROI for this row until the count is verified from plans, room inventory, or management records.` });
@@ -742,8 +742,8 @@ export default function HomeClient({
       const annualDepreciation = years > 0 ? Math.round(priceUSD / years) : 0;
       const netRevenueAnnual = Math.round(netRevenue);
       flags.push({ level: 'danger', label: 'Short Lease', detail: nightly > 0
-        ? `${years} years are recorded as remaining. BVT's straight-line, noncash lease-value allowance is about $${annualDepreciation.toLocaleString()}/yr, compared with $${netRevenueAnnual.toLocaleString()}/yr in modeled rent after operating costs. This is a screening comparison, not a resale forecast or a cash bill. Verify the signed expiry and extension terms.`
-        : `${years} years are recorded as remaining. BVT withholds the rental comparison because the nightly-rate input is unavailable. Verify the signed expiry and extension terms.` });
+        ? `The source lists a ${years}-year lease period; signed remaining years are unverified. BVT's straight-line, noncash lease-value allowance is about $${annualDepreciation.toLocaleString()}/yr, compared with $${netRevenueAnnual.toLocaleString()}/yr in modeled rent after operating costs. This is a screening comparison, not a resale forecast or a cash bill. Verify the signed expiry and extension terms.`
+        : `The source lists a ${years}-year lease period; signed remaining years are unverified. BVT withholds the rental comparison because the nightly-rate input is unavailable. Verify the signed expiry and extension terms.` });
     }
 
     if (pipelineFlags.includes('INFLATED_ROI') && nightly > 0) {
@@ -956,7 +956,7 @@ export default function HomeClient({
             </div>
             <div className="flex items-center gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
               <Clock size={13} className="text-[color:var(--bvt-accent)]" />
-              <span className="text-[color:var(--bvt-ink-body)]">Source-check dates shown</span>
+              <span className="text-[color:var(--bvt-ink-body)]">Source-card dates shown</span>
               <span className="text-[color:var(--bvt-ink-dim)]">on each listing</span>
             </div>
             <div className="flex items-center gap-2 text-[12px] text-[color:var(--bvt-ink-muted)]">
@@ -987,7 +987,7 @@ export default function HomeClient({
                 className="group text-left border border-[color:var(--bvt-hairline)] hover:border-[color:var(--bvt-accent)]/60 bg-[color:var(--bvt-bg-elev)] rounded-md p-4 transition-colors"
               >
                 <TrendingUp size={16} className="text-[color:var(--bvt-accent)] mb-4" />
-                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Best net yield</div>
+                <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Highest modeled yields</div>
                 <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
                   Find 8%+ modeled screening yields, then inspect the expense and lease assumptions.
                 </p>
@@ -1022,7 +1022,7 @@ export default function HomeClient({
                 <Calendar size={16} className="text-[color:var(--bvt-accent)] mb-4" />
                 <div className="font-semibold text-[14px] text-[color:var(--bvt-ink)]">Leasehold math</div>
                 <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--bvt-ink-muted)]">
-                  Show leasehold villas first so the remaining years and decay are impossible to miss.
+                  Review source-listed lease periods and noncash allowances; signed remaining years still need proof.
                 </p>
               </button>
               <Link
@@ -1055,7 +1055,7 @@ export default function HomeClient({
             <span className="text-[color:var(--bvt-accent)]">reviewed.</span>
           </h2>
           <p className="md:col-span-4 text-[15px] leading-[1.7] text-[color:var(--bvt-ink-muted)]">
-            Filter by location, yield band, or lease structure. Each listing shows its source-check date, modeled assumptions, and diligence flags; unsupported assets have no ROI estimate.
+            Filter by location, yield band, or lease structure. Each listing shows its source-card observation date, modeled assumptions, and diligence flags; unsupported assets have no ROI estimate.
           </p>
         </div>
       </div>
@@ -1129,7 +1129,7 @@ export default function HomeClient({
                     </select>
                 </div>
                 <div>
-                    <label className="label-micro block mb-1.5">Min Net Yield</label>
+                    <label className="label-micro block mb-1.5">Min modeled yield</label>
                     <select value={filterRoi} onChange={(e) => setFilterRoi(Number(e.target.value))} className="w-full bg-transparent border-b border-[color:var(--bvt-hairline)] focus:border-[color:var(--bvt-accent)] hover:border-[color:var(--bvt-ink-muted)] text-[color:var(--bvt-ink)] text-[14px] font-mono tabular-nums py-2 outline-none cursor-pointer transition-colors">
                         <option value={-99} className="bg-[color:var(--bvt-bg)]">Any</option>
                         <option value={0} className="bg-[color:var(--bvt-bg)]">0%+</option>
@@ -1427,7 +1427,7 @@ export default function HomeClient({
                       )}
                     </div>
                     <div className="py-3 px-3 border-l border-[color:var(--bvt-hairline)]">
-                      <div className="label-micro mb-1">Net Yield</div>
+                      <div className="label-micro mb-1">Modeled yield</div>
                       <div className={`font-mono text-[15px] tabular-nums ${
                         isUnmodeled ? 'text-[color:var(--bvt-ink-muted)]' :
                         netRoi >= 12 ? 'text-[color:var(--bvt-good)]' :
@@ -1521,7 +1521,7 @@ export default function HomeClient({
                 <th className="py-3 pr-2 text-left font-medium"><span className="sr-only">No.</span></th>
                 <th className="py-3 pr-4 font-medium">Asset</th>
                 <th className="py-3 px-3 font-medium">Price · {displayCurrency}</th>
-                <th className="py-3 px-3 text-center font-medium">Net Yield</th>
+                <th className="py-3 px-3 text-center font-medium">Modeled yield</th>
                 <th className="py-3 px-3 font-medium">Tenure · Specs</th>
                 <th className="py-3 pl-3 text-right font-medium">Source</th>
               </tr>
@@ -1780,9 +1780,9 @@ export default function HomeClient({
                                     const isLeasehold = f.includes("Leasehold") || f.includes("Hak Sewa") || (years > 0 && years < 999);
                                     if (isFreehold) return <span className="text-[color:var(--bvt-good)] inline-flex items-center gap-1 font-medium"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-good)] rounded-full flex-shrink-0" />Freehold<GlossaryTip term="hak_milik" /></span>;
                                     if (isLeasehold) {
-                                        return <span className="text-[color:var(--bvt-ink-body)] inline-flex items-start gap-1 flex-wrap"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-ink-dim)] rounded-full flex-shrink-0 mt-1.5" /><span className="inline-flex items-center gap-1">Leasehold<GlossaryTip term="hak_sewa" /></span>{years > 0 && years < 999 && <span className="w-full"><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> remaining</span>}</span>;
+                                        return <span className="text-[color:var(--bvt-ink-body)] inline-flex items-start gap-1 flex-wrap"><span className="h-1.5 w-1.5 bg-[color:var(--bvt-ink-dim)] rounded-full flex-shrink-0 mt-1.5" /><span className="inline-flex items-center gap-1">Leasehold<GlossaryTip term="hak_sewa" /></span>{years > 0 && years < 999 && <span className="w-full"><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> source-listed</span>}</span>;
                                     }
-                                    if (years > 0 && years < 999) return <span className="text-[color:var(--bvt-ink-body)]"><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> remaining</span>;
+                                    if (years > 0 && years < 999) return <span className="text-[color:var(--bvt-ink-body)]"><span className="font-mono tabular-nums text-[color:var(--bvt-ink)]">{years}yr</span> source-listed</span>;
                                     if (years === 999) return <span className="text-[color:var(--bvt-good)] font-medium">Freehold</span>;
                                     return <span className="text-[color:var(--bvt-ink-faint)] italic">Unverified</span>;
                                 })()}
@@ -2018,7 +2018,7 @@ export default function HomeClient({
                         const isFH = f.includes('freehold') || f.includes('hak milik') || yrs === 999;
                         return (
                           <td key={v.id} className={`text-center py-3 px-3 font-mono tabular-nums ${isFH ? 'text-[color:var(--bvt-good)]' : 'text-[color:var(--bvt-ink-body)]'}`}>
-                            <span className="inline-flex items-center justify-center">{isFH ? <>Freehold<GlossaryTip term="hak_milik" /></> : yrs > 0 ? <>{yrs}yr lease<GlossaryTip term="hak_sewa" /></> : f.includes('leasehold') || getPipelineFlags(v).includes('LEASE_TERM_NOT_STATED') ? 'Leasehold; term not stated' : 'Tenure not stated'}</span>
+                            <span className="inline-flex items-center justify-center">{isFH ? <>Freehold<GlossaryTip term="hak_milik" /></> : yrs > 0 ? <>{yrs}yr source-listed<GlossaryTip term="hak_sewa" /></> : f.includes('leasehold') || getPipelineFlags(v).includes('LEASE_TERM_NOT_STATED') ? 'Leasehold; term not stated' : 'Tenure not stated'}</span>
                           </td>
                         );
                       })}
@@ -2130,7 +2130,7 @@ export default function HomeClient({
                           </tr>
                           <tr className="bg-[color:var(--bvt-accent)]/[0.08] border-t border-[color:var(--bvt-accent)]/25">
                             <td className="py-4 pr-4 text-[color:var(--bvt-accent)] text-[14px]">
-                              <span className="font-serif italic">Net Yield</span>
+                              <span className="font-serif italic">Modeled Net Yield</span>
                               <span className="block text-[9px] text-[color:var(--bvt-ink-muted)] mt-0.5 font-sans not-italic">After noncash lease allowance</span>
                             </td>
 	                            {results.map(r => {
@@ -2568,7 +2568,7 @@ function BaliMapViewInner({ listings, displayCurrency, rates, hoveredListingUrl,
               <div style="font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-size: 13px; color: #f5f0e6;">${priceStr}</div>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7080; margin-bottom: 3px;">Net Yield</div>
+              <div style="font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6b7080; margin-bottom: 3px;">Modeled Yield</div>
 	              <div style="font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-size: 18px; line-height: 1; color: ${dotColor};">${unmodeled ? 'N/A' : `${roi.toFixed(1)}<span style="font-size: 12px; color: #4a5060;">%</span>`}</div>
             </div>
           </div>
