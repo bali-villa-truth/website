@@ -594,6 +594,9 @@ export default async function ListingPage({ params }: Props) {
                     </div>
                   )}
                 </div>
+                <p className="mt-4 text-xs text-slate-400 leading-relaxed">
+                  Bathroom, land and building figures are source-derived. When a newer listing card omits one, BVT may retain a previously observed value from the same matched listing. Separate observation dates for these fields are not stored. Confirm current figures against plans and title documents.
+                </p>
                 <div className="mt-5 pt-4 border-t border-slate-800 flex flex-wrap gap-x-5 gap-y-3 text-xs">
                   <Link href={`/contact?listing=${encodeURIComponent(slug)}&reason=correction`} className="text-[color:var(--bvt-accent)] underline underline-offset-4 py-2">
                     Report a listing-data error
